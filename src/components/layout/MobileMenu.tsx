@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { X, LogIn, UserPlus, HelpCircle, LayoutGrid, Sparkles, PhoneCall } from 'lucide-react'
 import { useEffect } from 'react'
 import type { NavItem } from '@/lib/nav'
+import { FAVICON_URL } from '@/lib/utils'
 
 interface MobileMenuProps {
   open: boolean
@@ -31,7 +32,7 @@ export function MobileMenu({ open, onClose, items, showAuthLinks }: MobileMenuPr
       <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs overflow-y-auto bg-white p-5 shadow-card-lg animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="" className="size-8" />
+            <img src={FAVICON_URL} alt="" className="size-8" />
             <span className="text-lg font-extrabold text-navy">ResQ</span>
           </div>
           <button onClick={onClose} aria-label="ปิดเมนู" className="rounded-lg p-2 text-navy hover:bg-skyblue-light">

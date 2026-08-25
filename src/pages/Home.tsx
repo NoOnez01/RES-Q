@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button'
 import { InfoModal } from '@/components/ui/InfoModal'
 import { useInView } from '@/lib/useInView'
 import { useCountUp } from '@/lib/useCountUp'
+import { FAVICON_URL } from '@/lib/utils'
 import type { Role } from '@/lib/types'
 
 const FEATURES = [
@@ -369,7 +370,7 @@ function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[numb
           aria-hidden="true"
         >
           <span className="bg-fx absolute inset-0 rounded-full bg-primary/15 animate-ping-slow" />
-          <img src="/favicon.svg" alt="" className="relative size-14 sm:size-16 lg:size-[72px]" />
+          <img src={FAVICON_URL} alt="" className="relative size-14 sm:size-16 lg:size-[72px]" />
         </div>
       </div>
       <p className="text-center text-xs text-muted">กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ</p>

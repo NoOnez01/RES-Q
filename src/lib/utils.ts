@@ -1,3 +1,9 @@
+// Root-absolute string literals like "/favicon.svg" ignore Vite's base path
+// entirely, so they 404 the moment the app is served from a subpath (e.g.
+// GitHub Pages' /RES-Q/) instead of the domain root. BASE_URL always has a
+// trailing slash, so this resolves correctly everywhere the app runs.
+export const FAVICON_URL = `${import.meta.env.BASE_URL}favicon.svg`
+
 export function formatCaseNumber(seq: number, date = new Date()): string {
   return `RQ-${date.getFullYear()}-${String(seq).padStart(3, '0')}`
 }

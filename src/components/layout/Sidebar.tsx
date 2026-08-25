@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { LifeBuoy } from 'lucide-react'
 import type { NavItem } from '@/lib/nav'
 import { roleLabel } from '@/lib/nav'
+import { FAVICON_URL } from '@/lib/utils'
 import type { Role } from '@/lib/types'
 
 export function Sidebar({ items, role }: { items: NavItem[]; role: Role | null }) {
@@ -11,7 +12,7 @@ export function Sidebar({ items, role }: { items: NavItem[]; role: Role | null }
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-white lg:flex">
       <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <img src="/favicon.svg" alt="" className="size-8" />
+        <img src={FAVICON_URL} alt="" className="size-8" />
         <span className="text-lg font-extrabold text-navy">ResQ</span>
       </div>
 

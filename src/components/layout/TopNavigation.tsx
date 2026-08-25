@@ -3,6 +3,7 @@ import { ArrowLeft, Bell, Menu } from 'lucide-react'
 import clsx from 'clsx'
 import { useMemo } from 'react'
 import { useStore } from '@/lib/store'
+import { FAVICON_URL } from '@/lib/utils'
 import { Button } from '../ui/Button'
 
 interface TopNavigationProps {
@@ -61,7 +62,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
 
       {variant !== 'flow' && (
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src="/favicon.svg" alt="" className="size-8" />
+          <img src={FAVICON_URL} alt="" className="size-8" />
           <span className="text-lg font-extrabold text-navy">ResQ</span>
         </Link>
       )}
