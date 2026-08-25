@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+*.tsbuildinfo
+
+# Claude Code's own local session/settings files, not app code.
+.claude/
+
+# Capacitor native projects: keep the project files, drop generated build
+# output and machine-specific config (local.properties has an absolute SDK
+# path that only makes sense on this machine).
+android/.gradle
+android/local.properties
+android/app/build
+android/build
+android/capacitor-cordova-android-plugins/build
+ios/App/Pods
+ios/App/build
+ios/App/DerivedData
+*.apk
+*.ipa

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>ResQ</title>
+    <script type="text/javascript">
+      // GitHub Pages has no server-side rewrites, so a direct link to a
+      // client-side route (e.g. /dispatch/dashboard) 404s here instead of
+      // reaching the SPA. This re-encodes the path as a query string and
+      // redirects back to index.html, which decodes it back
+      // (see the matching script in index.html). Pattern from
+      // https://github.com/rafgraph/spa-github-pages
+      //
+      // pathSegmentsToKeep = 1 assumes a GitHub Pages *project* site
+      // (username.github.io/repo-name/) -- set it to 0 if this is ever
+      // deployed at the domain root instead.
+      var pathSegmentsToKeep = 1
+
+      var l = window.location
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash,
+      )
+    </script>
+  </head>
+  <body></body>
+</html>
