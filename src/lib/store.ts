@@ -13,6 +13,7 @@ import type {
   Hospital,
   IncidentDetails,
   NotificationAudience,
+  PhotoCategory,
   PatientInfo,
   Role,
   RescueTeam,
@@ -88,7 +89,7 @@ interface ResQState {
   createCase: (reporterName?: string, reporterPhone?: string) => string
   setActiveCase: (caseId: string | null) => void
   deleteCase: (caseId: string) => void
-  addPhoto: (caseId: string, dataUrl: string) => void
+  addPhoto: (caseId: string, dataUrl: string, category?: PhotoCategory) => void
   removePhoto: (caseId: string, photoId: string) => void
   addAudioRecording: (caseId: string, url: string, durationSec: number) => void
   removeAudioRecording: (caseId: string, recordingId: string) => void
@@ -185,12 +186,17 @@ export const useStore = create<ResQState>()(
           return { cases: next, activeCaseId: s.activeCaseId === caseId ? null : s.activeCaseId }
         }),
 
-      addPhoto: (caseId, dataUrl) =>
+      addPhoto: (caseId, dataUrl, category) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const photo: EmergencyPhoto = { id: uid('photo'), dataUrl, takenAt: Date.now() }
-          return { cases: { ...s.cases, [caseId]: { ...c, photos: [...c.photos, photo], updatedAt: Date.now() } } }
+          const photo: EmergencyPhoto = { id: uid('photo'), dataUrl, takenAt: Date.now(), category }
+          // Each guided category holds exactly one photo -- capturing a
+          // retake replaces the existing one instead of piling up alongside it.
+          const photos = category
+            ? [...c.photos.filter((p) => p.category !== category), photo]
+            : [...c.photos, photo]
+          return { cases: { ...s.cases, [caseId]: { ...c, photos, updatedAt: Date.now() } } }
         }),
 
       removePhoto: (caseId, photoId) =>

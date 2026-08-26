@@ -83,10 +83,13 @@ export interface GeoLocation {
   address: string
 }
 
+export type PhotoCategory = 'scene' | 'environment' | 'landmark'
+
 export interface EmergencyPhoto {
   id: string
   dataUrl: string
   takenAt: number
+  category?: PhotoCategory
 }
 
 export interface AudioRecording {

@@ -1,13 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, CameraOff, RotateCcw } from 'lucide-react'
+import { Camera, CameraOff, Check, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from './ui/Button'
+import type { EmergencyPhoto, PhotoCategory } from '@/lib/types'
 
-interface CameraCaptureProps {
-  onCapture: (dataUrl: string) => void
+export interface PhotoSlotConfig {
+  key: PhotoCategory
+  label: string
+  hint: string
 }
 
-export function CameraCapture({ onCapture }: CameraCaptureProps) {
+interface CameraCaptureProps {
+  slots: (PhotoSlotConfig & { photo: EmergencyPhoto | null })[]
+  onCapture: (dataUrl: string, key: PhotoCategory) => void
+}
+
+/**
+ * One shared camera preview with a guided checklist of shots underneath --
+ * each slot is its own shutter button until filled, then becomes a thumbnail
+ * with a retake action. Replaces the old single generic "ถ่ายรูป" button so
+ * reporters capture exactly the 3 angles that actually help triage (the
+ * scene/patient, the surroundings, a landmark), instead of an arbitrary pile
+ * of photos.
+ */
+export function CameraCapture({ slots, onCapture }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -49,7 +65,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     }
   }, [])
 
-  function handleCapture() {
+  function handleCapture(key: PhotoCategory) {
     if (status !== 'ready' || !videoRef.current || !canvasRef.current) return
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -58,7 +74,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    onCapture(canvas.toDataURL('image/jpeg', 0.85))
+    onCapture(canvas.toDataURL('image/jpeg', 0.85), key)
   }
 
   return (
@@ -90,16 +106,40 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      <div className="flex justify-center bg-navy p-3">
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleCapture}
-          disabled={status !== 'ready'}
-          icon={<Camera className="size-5" />}
-        >
-          ถ่ายรูป
-        </Button>
+      <div className="flex flex-col gap-2 bg-navy p-3">
+        {slots.map((slot, i) => (
+          <div
+            key={slot.key}
+            className={clsx(
+              'flex items-center gap-3 rounded-xl border p-2.5 transition-colors',
+              slot.photo ? 'border-success/30 bg-success/10' : 'border-white/15 bg-white/5',
+            )}
+          >
+            {slot.photo ? (
+              <img src={slot.photo.dataUrl} alt={slot.label} className="size-11 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-bold text-white/70">
+                {i + 1}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                {slot.label}
+                {slot.photo && <Check className="size-3.5 text-success" />}
+              </p>
+              <p className="truncate text-xs text-white/60">{slot.hint}</p>
+            </div>
+            <Button
+              variant={slot.photo ? 'outline' : 'primary'}
+              size="sm"
+              onClick={() => handleCapture(slot.key)}
+              disabled={status !== 'ready'}
+              icon={slot.photo ? <RotateCcw className="size-4" /> : <Camera className="size-4" />}
+            >
+              {slot.photo ? 'ถ่ายใหม่' : 'กดเพื่อถ่าย'}
+            </Button>
+          </div>
+        ))}
       </div>
     </div>
   )

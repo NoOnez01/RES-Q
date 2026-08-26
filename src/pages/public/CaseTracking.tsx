@@ -123,7 +123,11 @@ export default function CaseTracking() {
             )}
           >
             <h2 className="mb-4 text-sm font-bold text-navy">ขั้นตอนการดำเนินการ</h2>
-            <CaseTimeline timeline={activeCase.timeline} currentStatus={activeCase.status} />
+            <CaseTimeline
+              timeline={activeCase.timeline}
+              currentStatus={activeCase.status}
+              hiddenSteps={['contacted', 'photos-taken', 'called-1669', 'received', 'assisted']}
+            />
           </Card>
 
           {activeCase.photos.length > 0 && (

@@ -8,19 +8,23 @@ export function CaseTimeline({
   timeline,
   currentStatus,
   compact = false,
+  hiddenSteps,
 }: {
   timeline: TimelineEvent[]
   currentStatus: CaseStatus
   compact?: boolean
+  /** Steps to omit entirely, e.g. the reporter's own pre-dispatch actions. */
+  hiddenSteps?: CaseStatus[]
 }) {
   // Derived from the case's actual current status, not "the highest order
   // ever recorded" — a case can move backward (e.g. a rescue rejection),
   // and history alone can't tell current status apart from a past one.
   const currentOrder = statusMeta(currentStatus).order
+  const steps = hiddenSteps ? CASE_STATUS_FLOW.filter((s) => !hiddenSteps.includes(s.key)) : CASE_STATUS_FLOW
 
   return (
     <ol className="relative flex flex-col gap-0">
-      {CASE_STATUS_FLOW.map((step, i) => {
+      {steps.map((step, i) => {
         // Most recent occurrence, not the first — a status can now be
         // revisited (e.g. finding-rescue again after a rejection), and the
         // latest note/timestamp is the one worth showing.
@@ -29,7 +33,7 @@ export function CaseTimeline({
         const isDone = !!event
         const isCurrent = step.order === currentOrder
         const isNext = step.order === currentOrder + 1
-        const isLast = i === CASE_STATUS_FLOW.length - 1
+        const isLast = i === steps.length - 1
 
         return (
           <li key={step.key} className="relative flex gap-3 pb-6 last:pb-0">

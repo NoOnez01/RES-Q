@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Pause, Play, ShieldAlert, Trash2 } from 'lucide-react'
+import { MapPin, Pause, Play, ShieldAlert, Trash2, Upload } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
-import { CameraCapture } from '@/components/CameraCapture'
-import { ImageUploader } from '@/components/ImageUploader'
+import { CameraCapture, type PhotoSlotConfig } from '@/components/CameraCapture'
 import { AudioRecorder } from '@/components/AudioRecorder'
-import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -15,7 +13,13 @@ import { formatDuration } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { getCurrentPosition, reverseGeocode } from '@/lib/geolocation'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
-import type { AudioRecording } from '@/lib/types'
+import type { AudioRecording, PhotoCategory } from '@/lib/types'
+
+const PHOTO_CATEGORIES: PhotoSlotConfig[] = [
+  { key: 'scene', label: 'ลักษณะจุดเกิดเหตุ/ผู้บาดเจ็บ', hint: 'อาการหรือลักษณะผู้บาดเจ็บที่จุดเกิดเหตุ' },
+  { key: 'environment', label: 'สภาพแวดล้อมโดยรอบ', hint: 'ภาพกว้างของสภาพแวดล้อมบริเวณที่เกิดเหตุ' },
+  { key: 'landmark', label: 'จุดสังเกตของสถานที่', hint: 'ป้ายหรือจุดสังเกตที่ช่วยระบุตำแหน่งได้ง่าย' },
+]
 
 function AudioRecordingRow({ recording, onRemove }: { recording: AudioRecording; onRemove: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -58,7 +62,6 @@ export default function EmergencyPhoto() {
   const cases = useStore((s) => s.cases)
   const createCase = useStore((s) => s.createCase)
   const addPhoto = useStore((s) => s.addPhoto)
-  const removePhoto = useStore((s) => s.removePhoto)
   const addAudioRecording = useStore((s) => s.addAudioRecording)
   const removeAudioRecording = useStore((s) => s.removeAudioRecording)
   const finishPhotoStep = useStore((s) => s.finishPhotoStep)
@@ -68,11 +71,10 @@ export default function EmergencyPhoto() {
   const resolvedRef = useRef<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [flash, setFlash] = useState(false)
-  const [removeTargetId, setRemoveTargetId] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'ready' | 'failed'>('locating')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (resolvedRef.current) return
@@ -87,9 +89,10 @@ export default function EmergencyPhoto() {
     setCaseId(id)
     const c = useStore.getState().cases[id]
     if (c && !c.location) {
-      // Best-effort real GPS as the initial guess; falls back to the demo
-      // default if location access is denied/unavailable. The reporter can
-      // still refine or re-pick this later on the details step.
+      // Real GPS via the browser's Geolocation API as the initial guess;
+      // falls back to the demo default if location access is denied/
+      // unavailable. The reporter can still refine or re-pick this later on
+      // the details step.
       setLocation(id, DEFAULT_INCIDENT_LOCATION)
       getCurrentPosition()
         .then(async (pos) => {
@@ -123,12 +126,12 @@ export default function EmergencyPhoto() {
     }, 600)
   }
 
-  async function handleAddPhoto(dataUrl: string) {
+  async function handleAddPhoto(dataUrl: string, category: PhotoCategory) {
     if (!caseId || !activeCase) return
     setUploadingPhoto(true)
     try {
       const url = await uploadCasePhoto(activeCase.caseNumber, dataUrl)
-      addPhoto(caseId, url)
+      addPhoto(caseId, url, category)
       toast({ title: 'บันทึกรูปภาพแล้ว', tone: 'success' })
     } catch {
       toast({ title: 'อัปโหลดรูปภาพไม่สำเร็จ', tone: 'error' })
@@ -137,10 +140,16 @@ export default function EmergencyPhoto() {
     }
   }
 
-  function handleCameraCapture(dataUrl: string) {
-    setFlash(true)
-    window.setTimeout(() => setFlash(false), 150)
-    void handleAddPhoto(dataUrl)
+  function handleUploadFallback(files: FileList | null) {
+    const file = files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    const nextEmpty = PHOTO_CATEGORIES.find((cat) => !slots.find((s) => s.key === cat.key)?.photo)
+    if (!nextEmpty) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') void handleAddPhoto(reader.result, nextEmpty.key)
+    }
+    reader.readAsDataURL(file)
   }
 
   async function handleSaveAudio(blob: Blob, seconds: number) {
@@ -157,13 +166,6 @@ export default function EmergencyPhoto() {
     }
   }
 
-  function handleConfirmRemove() {
-    if (caseId && removeTargetId) {
-      removePhoto(caseId, removeTargetId)
-    }
-    setRemoveTargetId(null)
-  }
-
   if (!caseId || !activeCase) {
     return (
       <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack>
@@ -173,6 +175,11 @@ export default function EmergencyPhoto() {
   }
 
   const audioRecordings = activeCase.audioRecordings ?? []
+  const slots = PHOTO_CATEGORIES.map((cat) => ({
+    ...cat,
+    photo: activeCase.photos.find((p) => p.category === cat.key) ?? null,
+  }))
+  const filledCount = slots.filter((s) => s.photo).length
 
   return (
     <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack onBack={handleBack}>
@@ -183,17 +190,19 @@ export default function EmergencyPhoto() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h1 className="text-xl font-bold text-navy">ถ่ายรูปจุดเกิดเหตุ</h1>
-              <p className="mt-1.5 text-sm text-muted">
-                รูปภาพจะช่วยให้เจ้าหน้าที่เข้าใจสถานการณ์และเตรียมความช่วยเหลือได้เหมาะสม
-              </p>
+              <p className="mt-1.5 text-sm text-muted">ถ่ายรูปตามหัวข้อด้านล่างเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์ได้แม่นยำขึ้น</p>
             </div>
             <span
-              key={activeCase.photos.length}
+              key={filledCount}
               className="inline-flex shrink-0 animate-count-pop items-center gap-1.5 rounded-full border border-primary/30 bg-skyblue-light px-3 py-1.5 text-xs font-bold text-primary whitespace-nowrap"
             >
-              รูปภาพ: {activeCase.photos.length}
+              รูปภาพ: {filledCount}/{PHOTO_CATEGORIES.length}
             </span>
           </div>
+
+          <Button variant="ghost" size="sm" className="self-start" onClick={proceed} disabled={submitting}>
+            ข้ามขั้นตอนนี้
+          </Button>
 
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-white p-3.5">
             <div className="flex items-center gap-2 text-sm text-navy">
@@ -223,31 +232,31 @@ export default function EmergencyPhoto() {
             )}
           </div>
 
-          <div className="relative">
-            <CameraCapture onCapture={handleCameraCapture} />
-
-            <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[4/3] w-full overflow-hidden rounded-t-2xl">
-              <span className="absolute left-3 top-3 size-6 rounded-tl-lg border-l-2 border-t-2 border-primary-bright/70" />
-              <span className="absolute right-3 top-3 size-6 rounded-tr-lg border-r-2 border-t-2 border-primary-bright/70" />
-              <span className="absolute bottom-3 left-3 size-6 rounded-bl-lg border-b-2 border-l-2 border-primary-bright/70" />
-              <span className="absolute bottom-3 right-3 size-6 rounded-br-lg border-b-2 border-r-2 border-primary-bright/70" />
-              <div className="absolute inset-x-0 top-0 h-10 animate-scan-line bg-gradient-to-b from-transparent via-primary-bright/40 to-transparent" />
-              <div
-                className={clsx(
-                  'absolute inset-0 bg-white transition-opacity duration-300',
-                  flash ? 'opacity-90' : 'opacity-0',
-                )}
-              />
-            </div>
-          </div>
-
           <div className="animate-fade-in">
-            <ImageUploader
-              photos={activeCase.photos}
-              onAdd={handleAddPhoto}
-              onRemove={(id) => setRemoveTargetId(id)}
-            />
+            <CameraCapture slots={slots} onCapture={handleAddPhoto} />
             {uploadingPhoto && <p className="mt-2 text-xs font-medium text-primary">กำลังอัปโหลดรูปภาพ...</p>}
+            {filledCount < PHOTO_CATEGORIES.length && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleUploadFallback(e.target.files)
+                    e.target.value = ''
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  <Upload className="size-3.5" />
+                  หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -280,8 +289,6 @@ export default function EmergencyPhoto() {
               ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง
             </p>
           </div>
-
-          <p className="text-center text-xs text-muted">หากไม่สะดวกถ่ายรูป สามารถข้ามขั้นตอนนี้ได้</p>
         </div>
       </div>
 
@@ -290,22 +297,8 @@ export default function EmergencyPhoto() {
           <Button variant="primary" size="lg" fullWidth loading={submitting} onClick={proceed}>
             ไปต่อเพื่อโทร 1669
           </Button>
-          <Button variant="ghost" size="md" fullWidth onClick={proceed} disabled={submitting}>
-            ข้ามขั้นตอนนี้
-          </Button>
         </div>
       </div>
-
-      <ConfirmationModal
-        open={!!removeTargetId}
-        title="ลบรูปภาพนี้หรือไม่?"
-        message="รูปภาพที่ลบแล้วจะไม่สามารถกู้คืนได้"
-        confirmLabel="ลบรูปภาพ"
-        cancelLabel="ยกเลิก"
-        tone="danger"
-        onConfirm={handleConfirmRemove}
-        onCancel={() => setRemoveTargetId(null)}
-      />
     </AppShell>
   )
 }
