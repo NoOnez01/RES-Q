@@ -186,6 +186,9 @@ export interface EmergencyCase {
   timeline: TimelineEvent[]
   reporterName?: string
   reporterPhone?: string
+  /** Set once the reporter's post-case rating/complaint has been submitted
+   * (to Supabase's case_feedback table), so the form doesn't show again. */
+  feedbackSubmitted?: boolean
 }
 
 export type NotificationAudience = Role | 'all'

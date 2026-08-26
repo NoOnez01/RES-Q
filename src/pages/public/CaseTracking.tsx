@@ -10,6 +10,7 @@ import { SeverityBadge } from '@/components/SeverityBadge'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { MapPanel } from '@/components/MapPanel'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
+import { CaseFeedbackForm } from '@/components/CaseFeedbackForm'
 import { ErrorState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
@@ -20,6 +21,7 @@ export default function CaseTracking() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const activeCase = useStore((s) => (id ? s.cases[id] : undefined))
+  const markFeedbackSubmitted = useStore((s) => s.markFeedbackSubmitted)
 
   const [justUpdated, setJustUpdated] = useState(false)
   const prevStatusRef = useRef<string | undefined>(undefined)
@@ -99,6 +101,19 @@ export default function CaseTracking() {
               <p className="text-sm font-semibold text-navy">เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ</p>
             </div>
           )}
+
+          {activeCase.status === 'completed' &&
+            (activeCase.feedbackSubmitted ? (
+              <Card className="flex items-center gap-3">
+                <CheckCircle2 className="size-5 shrink-0 text-success" />
+                <p className="text-sm font-medium text-navy">ขอบคุณสำหรับความคิดเห็นของท่าน</p>
+              </Card>
+            ) : (
+              <CaseFeedbackForm
+                emergencyCase={activeCase}
+                onSubmitted={() => id && markFeedbackSubmitted(id)}
+              />
+            ))}
 
           <Card
             className={clsx(

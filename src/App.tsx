@@ -24,6 +24,7 @@ import Call1669 from '@/pages/public/Call1669'
 import CaseTracking from '@/pages/public/CaseTracking'
 
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
+import DispatchFeedbackStats from '@/pages/dispatch/FeedbackStats'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
 import DispatchCallScreen from '@/pages/dispatch/CallScreen'
 import DispatchCaseDetail from '@/pages/dispatch/CaseDetail'
@@ -85,6 +86,7 @@ export default function App() {
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
         <Route path="/dispatch/dashboard" element={<DispatchDashboard />} />
+        <Route path="/dispatch/feedback-stats" element={<DispatchFeedbackStats />} />
         <Route path="/dispatch/incoming-call" element={<DispatchIncomingCall />} />
         <Route path="/dispatch/call/:id" element={<DispatchCallScreen />} />
         <Route path="/dispatch/case/:id" element={<DispatchCaseDetail />} />

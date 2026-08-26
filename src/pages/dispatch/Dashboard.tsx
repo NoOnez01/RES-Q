@@ -114,11 +114,18 @@ export default function DispatchDashboard() {
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-navy">เคสทั้งหมด</h2>
-            <Link to="/dispatch/incoming-call">
-              <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                ดูสายเรียกเข้าทั้งหมด
-              </Button>
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/dispatch/feedback-stats">
+                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
+                  สถิติความพึงพอใจ
+                </Button>
+              </Link>
+              <Link to="/dispatch/incoming-call">
+                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
+                  ดูสายเรียกเข้าทั้งหมด
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="mt-4">

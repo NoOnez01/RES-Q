@@ -21,6 +21,7 @@ import type {
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
 import { formatCaseNumber, uid } from './utils'
+import { deleteCasePhotos } from './storageUploads'
 
 function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): EmergencyCase {
   const meta = statusMeta(status)
@@ -126,6 +127,9 @@ interface ResQState {
   // hospital
   hospitalConfirmAdmission: (caseId: string) => void
   completeCase: (caseId: string) => void
+
+  // public feedback
+  markFeedbackSubmitted: (caseId: string) => void
 
   // notifications
   addNotification: (n: Omit<AppNotification, 'id' | 'createdAt' | 'read'>) => void
@@ -500,10 +504,11 @@ export const useStore = create<ResQState>()(
       },
 
       completeCase: (caseId) => {
+        const caseNumber = get().cases[caseId]?.caseNumber
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: pushStatus(c, 'completed') } }
+          return { cases: { ...s.cases, [caseId]: pushStatus({ ...c, photos: [] }, 'completed') } }
         })
         notify(set, {
           audience: 'all',
@@ -512,7 +517,17 @@ export const useStore = create<ResQState>()(
           message: 'กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว',
           tone: 'success',
         })
+        // No agency has an operational reason to keep scene photos once the
+        // case is fully done -- best-effort, doesn't block completion if it fails.
+        if (caseNumber) void deleteCasePhotos(caseNumber).catch(() => {})
       },
+
+      markFeedbackSubmitted: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, feedbackSubmitted: true, updatedAt: Date.now() } } }
+        }),
 
       addNotification: (n) => notify(set, n),
 
