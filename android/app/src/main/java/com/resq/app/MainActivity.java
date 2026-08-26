@@ -10,25 +10,27 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The app uses the browser's own getUserMedia/geolocation APIs (camera photo
  * capture, voice recordings, the WebRTC video call, GPS) rather than
- * Capacitor's native plugins, so — unlike those plugins — nothing here
- * triggers Android's runtime permission flow automatically. Without this,
- * the WebView silently denies every camera/mic/location request even though
- * the manifest declares them.
+ * Capacitor's native plugins, so nothing else here triggers Android's
+ * runtime permission flow automatically.
+ *
+ * Permissions are requested reactively, exactly when the WebView asks for
+ * them — not eagerly at startup. Requesting eagerly created a race: the
+ * WebView could call getUserMedia() before the user had answered the OS
+ * dialog, see "not granted yet", and permanently deny that call (it never
+ * retries on its own). Holding the WebView's request object until
+ * onRequestPermissionsResult fires avoids that entirely.
  */
 public class MainActivity extends BridgeActivity {
-    private static final int PERMISSION_REQUEST_CODE = 1001;
-    private static final String[] REQUIRED_PERMISSIONS = {
-        Manifest.permission.CAMERA,
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-    };
+    private static final int CAMERA_MIC_REQUEST_CODE = 1001;
+    private static final int LOCATION_REQUEST_CODE = 1002;
+
+    private PermissionRequest pendingWebViewRequest;
+    private GeolocationPermissions.Callback pendingGeoCallback;
+    private String pendingGeoOrigin;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,19 +42,32 @@ public class MainActivity extends BridgeActivity {
                 runOnUiThread(() -> {
                     if (hasAnyGranted(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)) {
                         request.grant(request.getResources());
-                    } else {
-                        request.deny();
+                        return;
                     }
+                    pendingWebViewRequest = request;
+                    ActivityCompat.requestPermissions(
+                        MainActivity.this,
+                        new String[] { Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO },
+                        CAMERA_MIC_REQUEST_CODE
+                    );
                 });
             }
 
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                callback.invoke(origin, hasAnyGranted(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), false);
+                if (hasAnyGranted(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                    callback.invoke(origin, true, false);
+                    return;
+                }
+                pendingGeoCallback = callback;
+                pendingGeoOrigin = origin;
+                ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION },
+                    LOCATION_REQUEST_CODE
+                );
             }
         });
-
-        requestMissingPermissions();
     }
 
     private boolean hasAnyGranted(String... permissions) {
@@ -62,20 +77,27 @@ public class MainActivity extends BridgeActivity {
         return false;
     }
 
-    private void requestMissingPermissions() {
-        List<String> missing = new ArrayList<>();
-        for (String permission : REQUIRED_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                missing.add(permission);
-            }
-        }
-        if (!missing.isEmpty()) {
-            ActivityCompat.requestPermissions(this, missing.toArray(new String[0]), PERMISSION_REQUEST_CODE);
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == CAMERA_MIC_REQUEST_CODE && pendingWebViewRequest != null) {
+            PermissionRequest request = pendingWebViewRequest;
+            pendingWebViewRequest = null;
+            if (hasAnyGranted(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)) {
+                request.grant(request.getResources());
+            } else {
+                request.deny();
+            }
+        }
+
+        if (requestCode == LOCATION_REQUEST_CODE && pendingGeoCallback != null) {
+            GeolocationPermissions.Callback callback = pendingGeoCallback;
+            String origin = pendingGeoOrigin;
+            pendingGeoCallback = null;
+            pendingGeoOrigin = null;
+            boolean granted = hasAnyGranted(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
+            callback.invoke(origin, granted, false);
+        }
     }
 }
