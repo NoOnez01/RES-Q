@@ -113,6 +113,10 @@ interface ResQState {
   ) => void
   startFindingRescue: (caseId: string) => void
   assignRescueTeam: (caseId: string, team: RescueTeam, supportingTeam?: RescueTeam | null) => void
+  /** Adds a second, equipped unit alongside an already-assigned primary
+   * responder -- for when the equipment gap only becomes clear after the
+   * fact, not just at the moment of initial assignment. */
+  addSupportingRescueTeam: (caseId: string, team: RescueTeam) => void
 
   // rescue
   rescueAcceptCase: (caseId: string) => void
@@ -376,6 +380,29 @@ export const useStore = create<ResQState>()(
           title: 'มอบหมายหน่วยกู้ภัยแล้ว',
           message: `หน่วยกู้ภัย ${team.name} ได้รับมอบหมายเคสของคุณแล้ว`,
           tone: 'success',
+        })
+      },
+
+      addSupportingRescueTeam: (caseId, team) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, supportingRescueTeam: team, updatedAt: Date.now() } } }
+        })
+        const c = get().cases[caseId]
+        notify(set, {
+          audience: 'rescue',
+          caseId,
+          title: 'ได้รับมอบหมายเป็นหน่วยสนับสนุน',
+          message: `เคส ${c?.caseNumber ?? ''} ต้องการอุปกรณ์เฉพาะทางจากหน่วยของคุณ`,
+          tone: 'warning',
+        })
+        notify(set, {
+          audience: 'public',
+          caseId,
+          title: 'เพิ่มหน่วยสนับสนุนแล้ว',
+          message: `หน่วยกู้ภัย ${team.name} เข้าร่วมช่วยเหลือเคสของคุณ`,
+          tone: 'info',
         })
       },
 

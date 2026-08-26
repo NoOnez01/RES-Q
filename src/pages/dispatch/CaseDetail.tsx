@@ -30,7 +30,7 @@ import { ErrorState, SuccessState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { recommendAssignment } from '@/lib/rescueAssignment'
+import { recommendAssignment, rankRescueTeams, requiredEquipmentFor } from '@/lib/rescueAssignment'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
 
@@ -47,6 +47,7 @@ export default function DispatchCaseDetail() {
   const cases = useStore((s) => s.cases)
   const startFindingRescue = useStore((s) => s.startFindingRescue)
   const assignRescueTeam = useStore((s) => s.assignRescueTeam)
+  const addSupportingRescueTeam = useStore((s) => s.addSupportingRescueTeam)
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [includeSupport, setIncludeSupport] = useState(true)
@@ -54,6 +55,9 @@ export default function DispatchCaseDetail() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [assignLoading, setAssignLoading] = useState(false)
   const [justAssigned, setJustAssigned] = useState(false)
+  const [showAddSupport, setShowAddSupport] = useState(false)
+  const [addSupportTeamId, setAddSupportTeamId] = useState<string | null>(null)
+  const [addSupportLoading, setAddSupportLoading] = useState(false)
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
@@ -112,6 +116,30 @@ export default function DispatchCaseDetail() {
 
   const isAssignedOrLater =
     c.status !== 'received' && c.status !== 'finding-rescue' && c.status !== 'completed'
+
+  // For adding a support team *after* the primary is already assigned --
+  // unlike `recommendation` above, this doesn't exclude the current case
+  // from availability, so the already-assigned primary team correctly shows
+  // as busy (can't support its own case) instead of appearing pickable.
+  const requiredEquipment = requiredEquipmentFor(c.incidentDetails?.incidentType)
+  const supportCandidates = rankRescueTeams(c.location ?? DEFAULT_INCIDENT_LOCATION, requiredEquipment, Object.values(cases)).filter(
+    (r) => r.team.id !== c.assignedRescueTeam?.id,
+  )
+  const canAddSupport =
+    isAssignedOrLater && c.status !== 'completed' && !!c.assignedRescueTeam && !c.supportingRescueTeam
+
+  function handleAddSupport() {
+    const team = supportCandidates.find((r) => r.team.id === addSupportTeamId)?.team
+    if (!team || !id) return
+    setAddSupportLoading(true)
+    setTimeout(() => {
+      addSupportingRescueTeam(id, team)
+      setAddSupportLoading(false)
+      setShowAddSupport(false)
+      setAddSupportTeamId(null)
+      toast({ title: 'เพิ่มหน่วยสนับสนุนแล้ว', message: `${team.name} เข้าร่วมช่วยเหลือเคสนี้`, tone: 'success' })
+    }, 500)
+  }
 
   return (
     <AppShell variant="dashboard" title="รายละเอียดเคส">
@@ -407,6 +435,62 @@ export default function DispatchCaseDetail() {
                       <p className="text-sm font-semibold text-navy">
                         {c.supportingRescueTeam.name} · {c.supportingRescueTeam.unitCode}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {canAddSupport && !showAddSupport && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<Wrench className="size-4" />}
+                    onClick={() => setShowAddSupport(true)}
+                  >
+                    เพิ่มหน่วยสนับสนุนที่มีอุปกรณ์
+                  </Button>
+                )}
+
+                {canAddSupport && showAddSupport && (
+                  <div className="flex flex-col gap-2.5 rounded-xl border border-border p-3">
+                    <p className="text-sm font-semibold text-navy">เลือกหน่วยสนับสนุน</p>
+                    {requiredEquipment.length > 0 && (
+                      <p className="flex items-center gap-1.5 text-xs text-muted">
+                        <Wrench className="size-3.5 text-primary" />
+                        ต้องการอุปกรณ์: {requiredEquipment.join(', ')}
+                      </p>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      {supportCandidates.map((r) => (
+                        <RadioCard
+                          key={r.team.id}
+                          selected={addSupportTeamId === r.team.id}
+                          onClick={() => r.available && setAddSupportTeamId(r.team.id)}
+                          title={r.team.name}
+                          description={`${r.team.unitCode} · ${r.distanceKm.toFixed(1)} กม.${!r.available ? ' · ไม่ว่าง' : ''}`}
+                          className={clsx(!r.available && 'pointer-events-none opacity-50')}
+                          badge={
+                            requiredEquipment.length > 0 ? (
+                              <span
+                                className={clsx(
+                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                  r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                )}
+                              >
+                                <Wrench className="size-3" />
+                                {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
+                              </span>
+                            ) : undefined
+                          }
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>
+                        ยืนยันเพิ่มหน่วยสนับสนุน
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowAddSupport(false)} disabled={addSupportLoading}>
+                        ยกเลิก
+                      </Button>
                     </div>
                   </div>
                 )}
