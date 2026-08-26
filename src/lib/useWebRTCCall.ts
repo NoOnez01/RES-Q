@@ -12,31 +12,32 @@ type SignalPayload =
 // traverse directly -- two real phones on different networks (different
 // wifi, or mobile data with carrier-grade NAT) very often can't, and the
 // call just hangs with no video/audio on either end. TURN relays the media
-// through a server instead when a direct path can't be found. OpenRelay's
-// credentials below are published publicly by Metered.ca specifically for
-// this kind of testing/demo use (https://www.metered.ca/tools/openrelay/) --
-// fine for a prototype, but a production deployment should use its own paid
-// TURN provider instead (this free tier has bandwidth limits).
-const ICE_SERVERS: RTCIceServer[] = [
+// through a server instead when a direct path can't be found.
+//
+// This app's own Metered.ca TURN account issues short-lived credentials via
+// their REST API rather than using a fixed username/password -- fetched
+// fresh per call below. If that account isn't configured (env vars unset)
+// or the fetch fails, falling back to STUN-only means calls can still work
+// on simple networks, just not ones that actually require a TURN relay.
+const METERED_APP_NAME = import.meta.env.VITE_METERED_APP_NAME as string | undefined
+const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY as string | undefined
+
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:openrelay.metered.ca:80' },
-  {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
 ]
+
+async function fetchIceServers(): Promise<RTCIceServer[]> {
+  if (!METERED_APP_NAME || !METERED_API_KEY) return FALLBACK_ICE_SERVERS
+  try {
+    const res = await fetch(`https://${METERED_APP_NAME}/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`)
+    if (!res.ok) return FALLBACK_ICE_SERVERS
+    const servers = (await res.json()) as RTCIceServer[]
+    return servers.length ? servers : FALLBACK_ICE_SERVERS
+  } catch {
+    return FALLBACK_ICE_SERVERS
+  }
+}
 
 export type CameraState = 'idle' | 'requesting' | 'ready' | 'denied' | 'unavailable'
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed' | 'disconnected'
@@ -79,178 +80,199 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       resolveMediaReady = resolve
     })
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    // Held for the cleanup function below, which can run before init()
+    // finishes (component unmounted while the ICE server fetch was still in
+    // flight) -- everything else in this effect references the local `pc`/
+    // `channel` consts inside init() instead, so TypeScript doesn't need to
+    // treat every use as possibly-null.
+    let pcRef: RTCPeerConnection | null = null
+    let channelRef: ReturnType<typeof client.channel> | null = null
+    let connectTimeout: ReturnType<typeof setTimeout> | null = null
 
-    // The offering side (caller) pre-creates its own sendrecv transceivers so
-    // the initial offer always declares both directions. The answering side
-    // (callee) must NOT do this: transceivers created via addTransceiver()
-    // before any remote description exists are never reused once an offer
-    // comes in -- setRemoteDescription(offer) creates its own fresh
-    // transceivers for the negotiated m-lines (defaulting to recvonly, no
-    // track) and those are what createAnswer() actually uses, leaving the
-    // pre-created ones permanently orphaned (mid stays null forever). So the
-    // callee instead grabs the transceivers setRemoteDescription just made
-    // for it (see the 'offer' handler below) and configures those.
-    //
-    // Both sides route their outgoing tracks through one MediaStream so the
-    // SDP's msid grouping is established up front. replaceTrack() alone
-    // swaps which track is sent but never attaches a stream -- without a
-    // stream set on the transceiver, the far side's ontrack event arrives
-    // with an empty streams array and setRemoteStream(e.streams[0]) is
-    // permanently null, even though the underlying RTP connection is fine.
-    const outboundStream = new MediaStream()
-    let videoTransceiver: RTCRtpTransceiver | null = null
-    let audioTransceiver: RTCRtpTransceiver | null = null
-    let pendingVideoTrack: MediaStreamTrack | null = null
-    let pendingAudioTrack: MediaStreamTrack | null = null
-
-    async function attachLocalTracks() {
-      await Promise.all([
-        videoTransceiver && pendingVideoTrack ? videoTransceiver.sender.replaceTrack(pendingVideoTrack) : null,
-        audioTransceiver && pendingAudioTrack ? audioTransceiver.sender.replaceTrack(pendingAudioTrack) : null,
-      ])
-    }
-
-    if (role === 'caller') {
-      videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv', streams: [outboundStream] })
-      audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv', streams: [outboundStream] })
-    }
-
-    // iceConnectionState doesn't reliably reach 'failed' in a timely way (or
-    // at all, on some browsers) when NAT traversal just never succeeds --
-    // it can sit in 'checking' indefinitely. A hard timeout gives the UI a
-    // definite point to stop waiting and show the "connection failed"
-    // messaging instead of spinning forever.
-    let connectTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+    async function init() {
+      const iceServers = await fetchIceServers()
       if (cancelled) return
-      setConnectionState((s) => (s === 'connected' ? s : 'failed'))
-    }, 15000)
 
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
-        void channel.send({
-          type: 'broadcast',
-          event: 'signal',
-          payload: { type: 'ice-candidate', candidate: e.candidate.toJSON() } satisfies SignalPayload,
-        })
+      const pc = new RTCPeerConnection({ iceServers })
+      pcRef = pc
+
+      // The offering side (caller) pre-creates its own sendrecv transceivers so
+      // the initial offer always declares both directions. The answering side
+      // (callee) must NOT do this: transceivers created via addTransceiver()
+      // before any remote description exists are never reused once an offer
+      // comes in -- setRemoteDescription(offer) creates its own fresh
+      // transceivers for the negotiated m-lines (defaulting to recvonly, no
+      // track) and those are what createAnswer() actually uses, leaving the
+      // pre-created ones permanently orphaned (mid stays null forever). So the
+      // callee instead grabs the transceivers setRemoteDescription just made
+      // for it (see the 'offer' handler below) and configures those.
+      //
+      // Both sides route their outgoing tracks through one MediaStream so the
+      // SDP's msid grouping is established up front. replaceTrack() alone
+      // swaps which track is sent but never attaches a stream -- without a
+      // stream set on the transceiver, the far side's ontrack event arrives
+      // with an empty streams array and setRemoteStream(e.streams[0]) is
+      // permanently null, even though the underlying RTP connection is fine.
+      const outboundStream = new MediaStream()
+      let videoTransceiver: RTCRtpTransceiver | null = null
+      let audioTransceiver: RTCRtpTransceiver | null = null
+      let pendingVideoTrack: MediaStreamTrack | null = null
+      let pendingAudioTrack: MediaStreamTrack | null = null
+
+      async function attachLocalTracks() {
+        await Promise.all([
+          videoTransceiver && pendingVideoTrack ? videoTransceiver.sender.replaceTrack(pendingVideoTrack) : null,
+          audioTransceiver && pendingAudioTrack ? audioTransceiver.sender.replaceTrack(pendingAudioTrack) : null,
+        ])
       }
-    }
 
-    pc.ontrack = (e) => {
-      if (!cancelled) setRemoteStream(e.streams[0] ?? null)
-    }
+      if (role === 'caller') {
+        videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv', streams: [outboundStream] })
+        audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv', streams: [outboundStream] })
+      }
 
-    pc.oniceconnectionstatechange = () => {
-      if (cancelled) return
-      const state = pc.iceConnectionState
-      if (state === 'checking') setConnectionState('connecting')
-      else if (state === 'connected' || state === 'completed') {
-        setConnectionState('connected')
-        if (connectTimeout) {
-          clearTimeout(connectTimeout)
-          connectTimeout = null
+      // iceConnectionState doesn't reliably reach 'failed' in a timely way (or
+      // at all, on some browsers) when NAT traversal just never succeeds --
+      // it can sit in 'checking' indefinitely. A hard timeout gives the UI a
+      // definite point to stop waiting and show the "connection failed"
+      // messaging instead of spinning forever.
+      connectTimeout = setTimeout(() => {
+        if (cancelled) return
+        setConnectionState((s) => (s === 'connected' ? s : 'failed'))
+      }, 15000)
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          void channel.send({
+            type: 'broadcast',
+            event: 'signal',
+            payload: { type: 'ice-candidate', candidate: e.candidate.toJSON() } satisfies SignalPayload,
+          })
         }
-      } else if (state === 'failed') setConnectionState('failed')
-      else if (state === 'disconnected') setConnectionState('disconnected')
-    }
-
-    async function sendOffer() {
-      if (hasOffered) return
-      hasOffered = true
-      await mediaReady
-      if (cancelled) return
-      await attachLocalTracks()
-      const offer = await pc.createOffer()
-      await pc.setLocalDescription(offer)
-      void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer } satisfies SignalPayload })
-    }
-
-    async function handleSignal(msg: SignalPayload) {
-      if (cancelled) return
-      if (msg.type === 'join') {
-        setRemoteJoined(true)
-        if (role === 'caller' && msg.role === 'callee') void sendOffer()
-        return
       }
-      if (msg.type === 'offer' && role === 'callee') {
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
-        // Grab the transceivers setRemoteDescription just created for the
-        // negotiated m-lines (see the comment above pc.addTransceiver) and
-        // explicitly flip them to sendrecv -- they default to recvonly since
-        // this side had no track when they were created.
-        videoTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'video') ?? null
-        audioTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'audio') ?? null
-        // These transceivers were never given `streams` at creation (unlike
-        // the caller's, passed via addTransceiver's init) -- without this,
-        // the answer's msid has no stream grouping and the caller's ontrack
-        // fires with an empty streams array, same failure as before.
-        videoTransceiver?.sender.setStreams(outboundStream)
-        audioTransceiver?.sender.setStreams(outboundStream)
-        if (videoTransceiver) videoTransceiver.direction = 'sendrecv'
-        if (audioTransceiver) audioTransceiver.direction = 'sendrecv'
-        await attachLocalTracks()
-        for (const c of pendingCandidates.splice(0)) await pc.addIceCandidate(c)
+
+      pc.ontrack = (e) => {
+        if (!cancelled) setRemoteStream(e.streams[0] ?? null)
+      }
+
+      pc.oniceconnectionstatechange = () => {
+        if (cancelled) return
+        const state = pc.iceConnectionState
+        if (state === 'checking') setConnectionState('connecting')
+        else if (state === 'connected' || state === 'completed') {
+          setConnectionState('connected')
+          if (connectTimeout) {
+            clearTimeout(connectTimeout)
+            connectTimeout = null
+          }
+        } else if (state === 'failed') setConnectionState('failed')
+        else if (state === 'disconnected') setConnectionState('disconnected')
+      }
+
+      async function sendOffer() {
+        if (hasOffered) return
+        hasOffered = true
         await mediaReady
         if (cancelled) return
         await attachLocalTracks()
-        const answer = await pc.createAnswer()
-        await pc.setLocalDescription(answer)
-        void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'answer', sdp: answer } satisfies SignalPayload })
-        return
+        const offer = await pc.createOffer()
+        await pc.setLocalDescription(offer)
+        void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer } satisfies SignalPayload })
       }
-      if (msg.type === 'answer' && role === 'caller') {
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
-        for (const c of pendingCandidates.splice(0)) await pc.addIceCandidate(c)
-        return
-      }
-      if (msg.type === 'ice-candidate') {
-        if (pc.remoteDescription) await pc.addIceCandidate(msg.candidate)
-        else pendingCandidates.push(msg.candidate)
-        return
-      }
-      if (msg.type === 'hangup') {
-        setRemoteStream(null)
-        setRemoteJoined(false)
-      }
-    }
 
-    const channel = client.channel(`webrtc-call-${caseId}`)
-    channel
-      .on('broadcast', { event: 'signal' }, ({ payload }) => {
-        void handleSignal(payload as SignalPayload)
-      })
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED' || cancelled) return
-        void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'join', role } satisfies SignalPayload })
-      })
-
-    setCameraState('requesting')
-    navigator.mediaDevices
-      ?.getUserMedia({ video: true, audio: true })
-      .then(async (stream) => {
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop())
+      async function handleSignal(msg: SignalPayload) {
+        if (cancelled) return
+        if (msg.type === 'join') {
+          setRemoteJoined(true)
+          if (role === 'caller' && msg.role === 'callee') void sendOffer()
           return
         }
-        localStreamRef.current = stream
-        setLocalStream(stream)
-        setCameraState('ready')
-        pendingVideoTrack = stream.getVideoTracks()[0] ?? null
-        pendingAudioTrack = stream.getAudioTracks()[0] ?? null
-        await attachLocalTracks()
-        resolveMediaReady()
-      })
-      .catch((err: DOMException) => {
-        if (!cancelled) setCameraState(err.name === 'NotFoundError' ? 'unavailable' : 'denied')
-        resolveMediaReady()
-      })
+        if (msg.type === 'offer' && role === 'callee') {
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+          // Grab the transceivers setRemoteDescription just created for the
+          // negotiated m-lines (see the comment above pc.addTransceiver) and
+          // explicitly flip them to sendrecv -- they default to recvonly since
+          // this side had no track when they were created.
+          videoTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'video') ?? null
+          audioTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'audio') ?? null
+          // These transceivers were never given `streams` at creation (unlike
+          // the caller's, passed via addTransceiver's init) -- without this,
+          // the answer's msid has no stream grouping and the caller's ontrack
+          // fires with an empty streams array, same failure as before.
+          videoTransceiver?.sender.setStreams(outboundStream)
+          audioTransceiver?.sender.setStreams(outboundStream)
+          if (videoTransceiver) videoTransceiver.direction = 'sendrecv'
+          if (audioTransceiver) audioTransceiver.direction = 'sendrecv'
+          await attachLocalTracks()
+          for (const c of pendingCandidates.splice(0)) await pc.addIceCandidate(c)
+          await mediaReady
+          if (cancelled) return
+          await attachLocalTracks()
+          const answer = await pc.createAnswer()
+          await pc.setLocalDescription(answer)
+          void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'answer', sdp: answer } satisfies SignalPayload })
+          return
+        }
+        if (msg.type === 'answer' && role === 'caller') {
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+          for (const c of pendingCandidates.splice(0)) await pc.addIceCandidate(c)
+          return
+        }
+        if (msg.type === 'ice-candidate') {
+          if (pc.remoteDescription) await pc.addIceCandidate(msg.candidate)
+          else pendingCandidates.push(msg.candidate)
+          return
+        }
+        if (msg.type === 'hangup') {
+          setRemoteStream(null)
+          setRemoteJoined(false)
+        }
+      }
+
+      const channel = client.channel(`webrtc-call-${caseId}`)
+      channelRef = channel
+      channel
+        .on('broadcast', { event: 'signal' }, ({ payload }) => {
+          void handleSignal(payload as SignalPayload)
+        })
+        .subscribe((status) => {
+          if (status !== 'SUBSCRIBED' || cancelled) return
+          void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'join', role } satisfies SignalPayload })
+        })
+
+      setCameraState('requesting')
+      navigator.mediaDevices
+        ?.getUserMedia({ video: true, audio: true })
+        .then(async (stream) => {
+          if (cancelled) {
+            stream.getTracks().forEach((t) => t.stop())
+            return
+          }
+          localStreamRef.current = stream
+          setLocalStream(stream)
+          setCameraState('ready')
+          pendingVideoTrack = stream.getVideoTracks()[0] ?? null
+          pendingAudioTrack = stream.getAudioTracks()[0] ?? null
+          await attachLocalTracks()
+          resolveMediaReady()
+        })
+        .catch((err: DOMException) => {
+          if (!cancelled) setCameraState(err.name === 'NotFoundError' ? 'unavailable' : 'denied')
+          resolveMediaReady()
+        })
+    }
+
+    void init()
 
     return () => {
       cancelled = true
       if (connectTimeout) clearTimeout(connectTimeout)
-      void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'hangup' } satisfies SignalPayload })
-      pc.close()
-      void client.removeChannel(channel)
+      if (channelRef) {
+        const channel = channelRef
+        void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'hangup' } satisfies SignalPayload })
+        void client.removeChannel(channel)
+      }
+      pcRef?.close()
       localStreamRef.current?.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
       setLocalStream(null)

@@ -31,6 +31,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_METERED_APP_NAME: ${{ secrets.VITE_METERED_APP_NAME }}
+          VITE_METERED_API_KEY: ${{ secrets.VITE_METERED_API_KEY }}
           GH_PAGES_BASE: /${{ github.event.repository.name }}/
 
       - uses: actions/upload-pages-artifact@v3
