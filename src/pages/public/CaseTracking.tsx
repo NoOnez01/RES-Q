@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Building2, Ambulance } from 'lucide-react'
+import { CheckCircle2, Building2, Ambulance, Share2 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/StatusBadge'
 import { SeverityBadge } from '@/components/SeverityBadge'
@@ -11,6 +12,7 @@ import { MapPanel } from '@/components/MapPanel'
 import { ErrorState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
+import { toast } from '@/lib/toast'
 import { formatDateTime, estimateEtaMin, haversineKm } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 
@@ -33,6 +35,33 @@ export default function CaseTracking() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCase?.status])
+
+  // This page already renders from just the `id` route param and a case in
+  // the (Supabase-synced) store -- no session/ownership check -- so the
+  // current URL is itself a valid share link: anyone who opens it, on any
+  // device, sees the same live-updating tracking view.
+  async function handleShare() {
+    const url = window.location.href
+    const shareData = {
+      title: `ติดตามเคส ${activeCase?.caseNumber ?? ''}`,
+      text: 'ติดตามสถานะการนำส่งผู้ป่วยแบบเรียลไทม์',
+      url,
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {
+        // user cancelled the share sheet -- not an error
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast({ title: 'คัดลอกลิงก์แล้ว', message: 'ส่งลิงก์นี้ให้ญาติเพื่อติดตามสถานะได้ทันที', tone: 'success' })
+    } catch {
+      toast({ title: 'คัดลอกลิงก์ไม่สำเร็จ', tone: 'error' })
+    }
+  }
 
   if (!activeCase) {
     return (
@@ -86,6 +115,9 @@ export default function CaseTracking() {
               {activeCase.assessment && <SeverityBadge severity={activeCase.assessment.severity} />}
               <span className="text-xs text-muted">แจ้งเหตุเมื่อ {formatDateTime(activeCase.createdAt)}</span>
             </div>
+            <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={handleShare} className="self-start">
+              แชร์ให้ญาติติดตามสถานะ
+            </Button>
           </Card>
 
           {team && (
