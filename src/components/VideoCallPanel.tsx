@@ -42,7 +42,7 @@ export function VideoCallPanel({
   localStream: MediaStream | null
   remoteStream: MediaStream | null
   cameraState: CameraState
-  connectionState?: ConnectionState
+  connectionState: ConnectionState
   remoteLabel: string
   remoteWaitingLabel: string
   cameraOn: boolean
@@ -52,12 +52,18 @@ export function VideoCallPanel({
 }) {
   const errorLabel = CAMERA_STATE_LABEL[cameraState]
   const connectionFailed = connectionState === 'failed' || connectionState === 'disconnected'
+  // ontrack (and so remoteStream) fires as soon as the SDP negotiates a
+  // receiver -- well before ICE has actually finished connecting. Hiding the
+  // waiting/failed overlay on remoteStream alone made a real NAT/TURN
+  // failure look like a plain black video square instead of surfacing the
+  // "connection failed" messaging it's supposed to.
+  const videoReady = !!remoteStream && connectionState === 'connected'
 
   return (
     <div className="flex flex-col gap-2">
       <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-navy shadow-card">
-        <VideoTag stream={remoteStream} muted={false} />
-        {!remoteStream && (
+        <VideoTag stream={videoReady ? remoteStream : null} muted={false} />
+        {!videoReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/70">
             {connectionFailed ? (
               <>

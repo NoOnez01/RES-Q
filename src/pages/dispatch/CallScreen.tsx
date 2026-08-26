@@ -82,6 +82,7 @@ export default function DispatchCallScreen() {
             localStream={localStream}
             remoteStream={remoteStream}
             cameraState={cameraState}
+            connectionState={connectionState}
             remoteLabel={emergencyCase.reporterName ?? 'ผู้แจ้งเหตุ'}
             remoteWaitingLabel={remoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอผู้แจ้งเหตุเปิดกล้อง'}
             cameraOn={cameraOn}
