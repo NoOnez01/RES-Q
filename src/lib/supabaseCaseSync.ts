@@ -121,6 +121,7 @@ export function initSupabaseCaseSync(): void {
   }
 
   function pushCase(c: EmergencyCase) {
+    if (c.isDemo) return
     const row = toRow(c)
     const json = serialize(c)
     if (lastPulled.get(c.id) === json) return

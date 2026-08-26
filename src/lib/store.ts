@@ -600,6 +600,7 @@ export const useStore = create<ResQState>()(
         demo = pushStatus(demo, 'rescue-assigned')
         demo = { ...demo, rescueEnRoutePct: 45 }
         demo = pushStatus(demo, 'rescue-en-route')
+        demo = { ...demo, isDemo: true }
 
         set((s) => ({
           cases: { ...s.cases, [demo.id]: demo },

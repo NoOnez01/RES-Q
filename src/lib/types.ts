@@ -189,6 +189,9 @@ export interface EmergencyCase {
   /** Set once the reporter's post-case rating/complaint has been submitted
    * (to Supabase's case_feedback table), so the form doesn't show again. */
   feedbackSubmitted?: boolean
+  /** Local sample case shown to a first-time visitor with no cases yet.
+   * Never synced to Supabase -- it's not a real incident. */
+  isDemo?: boolean
 }
 
 export type NotificationAudience = Role | 'all'
