@@ -80,6 +80,16 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' })
     const audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv' })
 
+    // iceConnectionState doesn't reliably reach 'failed' in a timely way (or
+    // at all, on some browsers) when NAT traversal just never succeeds --
+    // it can sit in 'checking' indefinitely. A hard timeout gives the UI a
+    // definite point to stop waiting and show the "connection failed"
+    // messaging instead of spinning forever.
+    let connectTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      if (cancelled) return
+      setConnectionState((s) => (s === 'connected' ? s : 'failed'))
+    }, 15000)
+
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         void channel.send({
@@ -98,8 +108,13 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       if (cancelled) return
       const state = pc.iceConnectionState
       if (state === 'checking') setConnectionState('connecting')
-      else if (state === 'connected' || state === 'completed') setConnectionState('connected')
-      else if (state === 'failed') setConnectionState('failed')
+      else if (state === 'connected' || state === 'completed') {
+        setConnectionState('connected')
+        if (connectTimeout) {
+          clearTimeout(connectTimeout)
+          connectTimeout = null
+        }
+      } else if (state === 'failed') setConnectionState('failed')
       else if (state === 'disconnected') setConnectionState('disconnected')
     }
 
@@ -175,6 +190,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
 
     return () => {
       cancelled = true
+      if (connectTimeout) clearTimeout(connectTimeout)
       void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'hangup' } satisfies SignalPayload })
       pc.close()
       void client.removeChannel(channel)
