@@ -3,24 +3,8 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { ToastTone } from '@/lib/toast'
 import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/alertSound'
-import { showNativeNotification, showLoopingNativeNotification, cancelLoopingNotification } from '@/lib/nativeNotify'
+import { showNativeNotification } from '@/lib/nativeNotify'
 import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
-
-const REPEAT_MS = 3000
-
-// Hospital alerts specifically re-alert faster the more severe the case is
-// (severity 1 loops nearly twice as often as 4) so an incoming critical
-// patient reads as more urgent purely from how often the alert repeats, not
-// just its tone. Dispatch/rescue stay on the flat REPEAT_MS cadence.
-const HOSPITAL_REPEAT_MS: Record<1 | 2 | 3 | 4, number> = { 1: 1200, 2: 1800, 3: 2400, 4: 3000 }
-
-function repeatIntervalFor(h: HandoffAlert): number {
-  if (h.kind === 'hospital') {
-    const severity = h.case.assessment?.severity
-    if (severity) return HOSPITAL_REPEAT_MS[severity]
-  }
-  return REPEAT_MS
-}
 
 const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
   info: 'info',
@@ -122,10 +106,11 @@ function playHandoffSound(h: HandoffAlert) {
 
 /**
  * Headless: turns every new store notification relevant to the current
- * user's role into an on-screen toast + a short alert sound. Every case
- * event already calls the store's `notify()` (new case to dispatch, rescue
- * assigned, hospital handoff, etc.) — this is the single place that surfaces
- * all of them, instead of wiring toast+sound into each call site.
+ * user's role into an on-screen toast + a short alert sound, once, the
+ * moment it becomes relevant. Every case event already calls the store's
+ * `notify()` (new case to dispatch, rescue assigned, hospital handoff, etc.)
+ * — this is the single place that surfaces all of them, instead of wiring
+ * toast+sound into each call site.
  *
  * `notifications` is local, per-tab state (zustand `persist` -> localStorage
  * only), so it never reaches, say, a dispatcher whose tab didn't create it —
@@ -133,11 +118,7 @@ function playHandoffSound(h: HandoffAlert) {
  * other hand, genuinely syncs across tabs/devices via Supabase realtime, so
  * handoff alerts for each stage (public -> 1669, 1669 -> กู้ภัย, กู้ภัย ->
  * โรงพยาบาล) are additionally derived straight from that via `handoffsFor`.
- *
- * A pending handoff also re-alerts (sound only, no repeat toast) every
- * REPEAT_MS until whoever it's for actually acts on it — accepting,
- * assessing, confirming admission, etc. all remove the case from
- * `handoffsFor`'s result, which is what silences the loop.
+ * Each alert fires exactly once (deduped by key) and does not repeat.
  */
 export function NotificationAlertBridge() {
   const notifications = useStore((s) => s.notifications)
@@ -146,15 +127,9 @@ export function NotificationAlertBridge() {
   const seenNotificationIds = useRef<Set<string>>(new Set())
   const alertedCaseKeys = useRef<Set<string>>(new Set())
   const isFirstRun = useRef(true)
-  const activeLoopKeys = useRef<Set<string>>(new Set())
-  const latest = useRef<{ cases: Record<string, EmergencyCase>; audience: Role | 'public' }>({
-    cases: {},
-    audience: 'public',
-  })
 
   useEffect(() => {
     const audience = currentUser?.role ?? 'public'
-    latest.current = { cases, audience }
     const relevantNotifications = notifications.filter((n) => n.audience === audience || n.audience === 'all')
     const handoffs = handoffsFor(audience, Object.values(cases))
 
@@ -183,45 +158,6 @@ export function NotificationAlertBridge() {
       void showNativeNotification(h.title, h.message)
     }
   }, [notifications, cases, currentUser])
-
-  useEffect(() => {
-    // A plain setInterval can't vary its own cadence, and the hospital
-    // repeat rate needs to (see HOSPITAL_REPEAT_MS) -- so this reschedules
-    // itself via setTimeout each tick, picking the next delay from whatever
-    // alert just played.
-    let timer: ReturnType<typeof setTimeout>
-
-    function tick() {
-      const { cases: latestCases, audience } = latest.current
-      const pending = handoffsFor(audience, Object.values(latestCases))
-      const pendingKeys = new Set(pending.map((h) => h.key))
-
-      // A case that's no longer pending (handled elsewhere, or by us) needs
-      // its looping native notification cleared, same as the web loop going
-      // quiet once `handoffsFor` stops returning it.
-      for (const key of activeLoopKeys.current) {
-        if (!pendingKeys.has(key)) {
-          activeLoopKeys.current.delete(key)
-          void cancelLoopingNotification(key)
-        }
-      }
-
-      let delay = REPEAT_MS
-      if (pending.length > 0) {
-        const mostUrgent = [...pending].sort(
-          (a, b) => (a.case.assessment?.severity ?? 5) - (b.case.assessment?.severity ?? 5),
-        )[0]
-        playHandoffSound(mostUrgent)
-        activeLoopKeys.current.add(mostUrgent.key)
-        void showLoopingNativeNotification(mostUrgent.key, mostUrgent.title, mostUrgent.message)
-        delay = repeatIntervalFor(mostUrgent)
-      }
-      timer = setTimeout(tick, delay)
-    }
-
-    timer = setTimeout(tick, REPEAT_MS)
-    return () => clearTimeout(timer)
-  }, [])
 
   return null
 }
