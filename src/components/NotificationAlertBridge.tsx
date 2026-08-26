@@ -130,6 +130,7 @@ export function NotificationAlertBridge() {
 
   useEffect(() => {
     const audience = currentUser?.role ?? 'public'
+    const isStaff = audience !== 'public'
     const relevantNotifications = notifications.filter((n) => n.audience === audience || n.audience === 'all')
     const handoffs = handoffsFor(audience, Object.values(cases))
 
@@ -146,7 +147,9 @@ export function NotificationAlertBridge() {
       if (seenNotificationIds.current.has(n.id)) continue
       seenNotificationIds.current.add(n.id)
       toast({ title: n.title, message: n.message, tone: TONE_MAP[n.tone] })
-      if (n.tone === 'emergency' || n.tone === 'warning') playAlertSound(n.tone === 'emergency')
+      // Sound is reserved for staff, same policy as Button clicks and toast
+      // dings -- public-facing pages stay silent regardless of tone.
+      if (isStaff && (n.tone === 'emergency' || n.tone === 'warning')) playAlertSound(n.tone === 'emergency')
       if (n.tone === 'emergency' || n.tone === 'warning') void showNativeNotification(n.title, n.message)
     }
 

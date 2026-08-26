@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { uid } from './utils'
 import { playDingSound } from './alertSound'
+import { useStore } from './store'
 
 export type ToastTone = 'info' | 'success' | 'warning' | 'error'
 
@@ -22,7 +23,12 @@ export const useToastStore = create<ToastState>((set) => ({
   show: (t) => {
     const id = uid('toast')
     set((s) => ({ toasts: [...s.toasts, { ...t, id }] }))
-    if (t.tone === 'success') playDingSound()
+    // Sound feedback is reserved for staff (1669/rescue/hospital) working an
+    // active case load -- public-facing pages (reporting a case, taking
+    // photos, etc.) stay silent, same policy as Button's click sound.
+    const role = useStore.getState().currentUser?.role
+    const isStaff = role !== undefined && role !== 'public'
+    if (t.tone === 'success' && isStaff) playDingSound()
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) }))
     }, 4200)
