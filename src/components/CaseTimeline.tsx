@@ -54,7 +54,7 @@ export function CaseTimeline({
                 !isDone && !isCurrent && !isNext && 'border-border bg-white text-muted/50',
               )}
             >
-              {isDone ? <Check className="size-3.5" strokeWidth={3} /> : step.order}
+              {isDone ? <Check className="size-3.5" strokeWidth={3} /> : i + 1}
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">

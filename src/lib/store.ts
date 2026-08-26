@@ -98,9 +98,11 @@ interface ResQState {
   setCallStatus: (caseId: string, status: CallStatus) => void
   tickCallDuration: (caseId: string) => void
   finishCall: (caseId: string) => void
-  // The reporter's only remaining input after the call -- incident details
-  // are 1669's job now (see submitDispatcherAssessment), not the caller's.
-  submitCallbackPhone: (caseId: string, phone: string) => void
+  // Phone is entered on the photo step now, alongside the photos; the
+  // report itself finalizes once the call ends. Incident details are
+  // 1669's job (see submitDispatcherAssessment), not the caller's.
+  setReporterPhone: (caseId: string, phone: string) => void
+  submitReport: (caseId: string) => void
 
   // dispatcher
   answerCall: (caseId: string) => void
@@ -292,15 +294,18 @@ export const useStore = create<ResQState>()(
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
-      submitCallbackPhone: (caseId, phone) => {
+      setReporterPhone: (caseId, phone) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = {
-            ...c,
-            reporterPhone: phone,
-            location: c.location ?? { ...DEFAULT_INCIDENT_LOCATION },
-          }
+          return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, updatedAt: Date.now() } } }
+        }),
+
+      submitReport: (caseId) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const updated = { ...c, location: c.location ?? { ...DEFAULT_INCIDENT_LOCATION } }
           return { cases: { ...s.cases, [caseId]: pushStatus(updated, 'received') } }
         })
         const c = get().cases[caseId]

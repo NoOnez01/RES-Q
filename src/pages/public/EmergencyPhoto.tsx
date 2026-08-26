@@ -4,6 +4,8 @@ import { Camera, Check, MapPin, Pause, Play, ShieldAlert, Trash2, Upload } from 
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Field'
 import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -67,6 +69,7 @@ export default function EmergencyPhoto() {
   const finishPhotoStep = useStore((s) => s.finishPhotoStep)
   const setLocation = useStore((s) => s.setLocation)
   const deleteCase = useStore((s) => s.deleteCase)
+  const setReporterPhone = useStore((s) => s.setReporterPhone)
 
   const resolvedRef = useRef<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
@@ -75,6 +78,8 @@ export default function EmergencyPhoto() {
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'ready' | 'failed'>('locating')
   const [captureKey, setCaptureKey] = useState<PhotoCategory | null>(null)
+  const [callbackPhone, setCallbackPhoneInput] = useState('')
+  const [phoneError, setPhoneError] = useState<string>()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -89,6 +94,7 @@ export default function EmergencyPhoto() {
     resolvedRef.current = id
     setCaseId(id)
     const c = useStore.getState().cases[id]
+    if (c?.reporterPhone) setCallbackPhoneInput(c.reporterPhone)
     if (c && !c.location) {
       // Real GPS via the browser's Geolocation API as the initial guess;
       // falls back to the demo default if location access is denied/
@@ -120,7 +126,18 @@ export default function EmergencyPhoto() {
 
   function proceed() {
     if (!caseId || submitting) return
+    const digits = callbackPhone.replace(/\D/g, '')
+    if (!callbackPhone.trim()) {
+      setPhoneError('กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ')
+      return
+    }
+    if (digits.length < 9 || digits.length > 10) {
+      setPhoneError('เบอร์โทรศัพท์ไม่ถูกต้อง')
+      return
+    }
+    setPhoneError(undefined)
     setSubmitting(true)
+    setReporterPhone(caseId, callbackPhone)
     setTimeout(() => {
       finishPhotoStep(caseId)
       navigate('/public/call-1669')
@@ -255,6 +272,20 @@ export default function EmergencyPhoto() {
               </span>
             )}
           </div>
+
+          <Card className="flex flex-col gap-1">
+            <Input
+              label="เบอร์โทรศัพท์สำหรับติดต่อกลับ"
+              type="tel"
+              required
+              value={callbackPhone}
+              error={phoneError}
+              onChange={(e) => {
+                setCallbackPhoneInput(e.target.value)
+                if (phoneError) setPhoneError(undefined)
+              }}
+            />
+          </Card>
 
           <div className="flex flex-col gap-2.5">
             {slots.map((slot, i) => (

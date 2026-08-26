@@ -19,6 +19,7 @@ export default function Call1669() {
   const setCallStatus = useStore((s) => s.setCallStatus)
   const tickCallDuration = useStore((s) => s.tickCallDuration)
   const finishCall = useStore((s) => s.finishCall)
+  const submitReport = useStore((s) => s.submitReport)
 
   const activeCase = activeCaseId ? cases[activeCaseId] : null
 
@@ -96,7 +97,8 @@ export default function Call1669() {
     if (!activeCaseId) return
     clearTimers()
     finishCall(activeCaseId)
-    navigate('/public/emergency-details')
+    submitReport(activeCaseId)
+    navigate(`/public/case/${activeCaseId}`)
   }
 
   if (!activeCase) {

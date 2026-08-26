@@ -126,7 +126,7 @@ export default function CaseTracking() {
             <CaseTimeline
               timeline={activeCase.timeline}
               currentStatus={activeCase.status}
-              hiddenSteps={['contacted', 'photos-taken', 'called-1669', 'received', 'assisted']}
+              hiddenSteps={['contacted', 'photos-taken', 'called-1669', 'received', 'assisted', 'hospital-received']}
             />
           </Card>
 

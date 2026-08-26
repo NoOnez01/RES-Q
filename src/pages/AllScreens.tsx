@@ -27,9 +27,8 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
   {
     title: 'การแจ้งเหตุฉุกเฉิน',
     items: [
-      { label: 'ถ่ายรูปจุดเกิดเหตุ', path: '/public/emergency-photo' },
+      { label: 'ถ่ายรูปจุดเกิดเหตุ / เบอร์ติดต่อกลับ', path: '/public/emergency-photo' },
       { label: 'ติดต่อ 1669', path: '/public/call-1669' },
-      { label: 'กรอกรายละเอียดเหตุการณ์', path: '/public/emergency-details' },
     ],
   },
   {
