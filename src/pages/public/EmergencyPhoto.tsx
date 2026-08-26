@@ -63,6 +63,7 @@ export default function EmergencyPhoto() {
   const removeAudioRecording = useStore((s) => s.removeAudioRecording)
   const finishPhotoStep = useStore((s) => s.finishPhotoStep)
   const setLocation = useStore((s) => s.setLocation)
+  const deleteCase = useStore((s) => s.deleteCase)
 
   const resolvedRef = useRef<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
@@ -107,6 +108,11 @@ export default function EmergencyPhoto() {
   }, [])
 
   const activeCase = caseId ? cases[caseId] : null
+
+  function handleBack() {
+    if (caseId) deleteCase(caseId)
+    navigate(-1)
+  }
 
   function proceed() {
     if (!caseId || submitting) return
@@ -169,7 +175,7 @@ export default function EmergencyPhoto() {
   const audioRecordings = activeCase.audioRecordings ?? []
 
   return (
-    <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack>
+    <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack onBack={handleBack}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 

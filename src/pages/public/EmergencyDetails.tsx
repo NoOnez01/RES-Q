@@ -32,6 +32,7 @@ export default function EmergencyDetails() {
   const cases = useStore((s) => s.cases)
   const submitIncidentDetails = useStore((s) => s.submitIncidentDetails)
   const setCaseLocation = useStore((s) => s.setLocation)
+  const deleteCase = useStore((s) => s.deleteCase)
 
   const caseId = activeCaseId
   const activeCase = caseId ? cases[caseId] : null
@@ -154,6 +155,7 @@ export default function EmergencyDetails() {
     if (reviewMode) {
       setReviewMode(false)
     } else {
+      if (caseId) deleteCase(caseId)
       navigate(-1)
     }
   }
@@ -186,7 +188,7 @@ export default function EmergencyDetails() {
   const progressPct = Math.round((filledRequiredCount / totalRequiredCount) * 100)
 
   return (
-    <AppShell variant="flow" title="รายละเอียดเหตุการณ์" showBack>
+    <AppShell variant="flow" title="รายละเอียดเหตุการณ์" showBack onBack={handleBack}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 

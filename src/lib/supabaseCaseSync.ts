@@ -7,6 +7,12 @@ const lastPushed = new Map<string, string>()
 const lastPulled = new Map<string, string>()
 const pendingPushTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const PUSH_DEBOUNCE_MS = 250
+// A case just deleted locally (e.g. a discarded report draft) can still have
+// its own earlier "created"/"updated" realtime event in flight -- without
+// this, that late echo would land after the delete and silently resurrect
+// the case via applyRemote(). Once an id is deleted in this tab it stays
+// deleted for the rest of the session.
+const deletedIds = new Set<string>()
 
 function serialize(c: EmergencyCase): string {
   return JSON.stringify(c)
@@ -81,6 +87,7 @@ export function initSupabaseCaseSync(): void {
   const client = supabase
 
   function applyRemote(remote: EmergencyCase) {
+    if (deletedIds.has(remote.id)) return
     const json = serialize(remote)
     if (lastPushed.get(remote.id) === json) return
     // Belt-and-suspenders alongside the push-side debounce below: reject an
@@ -101,6 +108,7 @@ export function initSupabaseCaseSync(): void {
   }
 
   function removeRemote(id: string) {
+    deletedIds.add(id)
     cancelPendingPush(id)
     lastPushed.delete(id)
     lastPulled.delete(id)
@@ -183,6 +191,22 @@ export function initSupabaseCaseSync(): void {
     for (const [id, c] of Object.entries(state.cases)) {
       if (prevState.cases[id] === c) continue
       schedulePush(id)
+    }
+    // A case that disappeared locally (e.g. a discarded report draft) needs
+    // its row deleted too, otherwise the next initial pull just resurrects it.
+    for (const [id, prevCase] of Object.entries(prevState.cases)) {
+      if (id in state.cases) continue
+      deletedIds.add(id)
+      cancelPendingPush(id)
+      lastPushed.delete(id)
+      lastPulled.delete(id)
+      void client
+        .from('cases')
+        .delete()
+        .eq('case_id', prevCase.caseNumber)
+        .then(({ error }) => {
+          if (error) console.error('Failed to delete Supabase case:', error.message)
+        })
     }
   })
 }

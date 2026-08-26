@@ -87,6 +87,7 @@ interface ResQState {
   // case lifecycle — public
   createCase: (reporterName?: string, reporterPhone?: string) => string
   setActiveCase: (caseId: string | null) => void
+  deleteCase: (caseId: string) => void
   addPhoto: (caseId: string, dataUrl: string) => void
   removePhoto: (caseId: string, photoId: string) => void
   addAudioRecording: (caseId: string, url: string, durationSec: number) => void
@@ -172,6 +173,17 @@ export const useStore = create<ResQState>()(
       },
 
       setActiveCase: (caseId) => set({ activeCaseId: caseId }),
+
+      // Discards an in-progress report draft (e.g. the reporter backs out of
+      // the photo/details steps before submitting) so the next report starts
+      // clean instead of resuming stale photos/audio/answers.
+      deleteCase: (caseId) =>
+        set((s) => {
+          if (!(caseId in s.cases)) return {}
+          const next = { ...s.cases }
+          delete next[caseId]
+          return { cases: next, activeCaseId: s.activeCaseId === caseId ? null : s.activeCaseId }
+        }),
 
       addPhoto: (caseId, dataUrl) =>
         set((s) => {
