@@ -8,6 +8,8 @@ interface RadioCardProps {
   title: string
   description?: string
   icon?: ReactNode
+  /** Small pill rendered next to the title, e.g. an equipment-match status. */
+  badge?: ReactNode
   tone?: 'default' | 'emergency' | 'warning' | 'moderate' | 'success'
   className?: string
 }
@@ -26,6 +28,7 @@ export function RadioCard({
   title,
   description,
   icon,
+  badge,
   tone = 'default',
   className,
 }: RadioCardProps) {
@@ -43,7 +46,10 @@ export function RadioCard({
     >
       {icon && <div className="shrink-0 mt-0.5">{icon}</div>}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-navy">{title}</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="font-semibold text-navy">{title}</p>
+          {badge}
+        </div>
         {description && <p className="text-sm text-muted mt-0.5">{description}</p>}
       </div>
       <div

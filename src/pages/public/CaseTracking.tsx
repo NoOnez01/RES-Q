@@ -49,29 +49,40 @@ export default function CaseTracking() {
   const team = activeCase.assignedRescueTeam
   const isCompleted = activeCase.status === 'completed'
   const isEnRoute = activeCase.status === 'rescue-en-route'
+  const isTransporting = activeCase.status === 'transporting'
+  const hospitalLoc = activeCase.selectedHospital?.location ?? null
 
-  // Same base -> incident interpolation the rescue team's own navigation
-  // screen uses for its live position, driven by the same synced
-  // rescueEnRoutePct -- so the citizen sees the vehicle actually moving
-  // across the map instead of frozen at the team's home base the whole trip.
+  // Same base->incident (and, once transporting, incident->hospital)
+  // interpolation the rescue team's own navigation screen uses for its live
+  // position, driven by the same synced rescueEnRoutePct -- so the citizen
+  // sees the vehicle actually moving across the map for BOTH legs of the
+  // trip instead of a pin frozen at the team's home base throughout.
   const ratio = clamp(activeCase.rescueEnRoutePct, 0, 100) / 100
+  const leg =
+    isEnRoute
+      ? { from: team?.base ?? null, to: location, label: 'จุดเกิดเหตุ', kind: 'incident' as const }
+      : isTransporting
+        ? { from: location, to: hospitalLoc, label: activeCase.selectedHospital?.name ?? 'โรงพยาบาล', kind: 'hospital' as const }
+        : null
   const rescuePos =
-    team && isEnRoute
-      ? { lat: team.base.lat + (location.lat - team.base.lat) * ratio, lng: team.base.lng + (location.lng - team.base.lng) * ratio }
+    team && leg && leg.from && leg.to
+      ? { lat: leg.from.lat + (leg.to.lat - leg.from.lat) * ratio, lng: leg.from.lng + (leg.to.lng - leg.from.lng) * ratio }
       : team
         ? team.base
         : null
 
   let etaMin: number | null = null
-  if (team && isEnRoute && rescuePos) {
-    const distanceKm = haversineKm(rescuePos, location)
+  if (team && leg?.to && rescuePos) {
+    const distanceKm = haversineKm(rescuePos, leg.to)
     etaMin = estimateEtaMin(distanceKm || 0.1)
   }
 
   const pins =
     team && rescuePos
       ? [
-          { id: 'incident', lat: location.lat, lng: location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' as const },
+          ...(leg?.to
+            ? [{ id: 'destination', lat: leg.to.lat, lng: leg.to.lng, label: leg.label, kind: leg.kind }]
+            : [{ id: 'incident', lat: location.lat, lng: location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' as const }]),
           { id: 'rescue', lat: rescuePos.lat, lng: rescuePos.lng, label: team.name, kind: 'rescue' as const },
         ]
       : []
@@ -116,6 +127,11 @@ export default function CaseTracking() {
               <div className="text-sm">
                 <p className="font-semibold text-navy">{team.name}</p>
                 <p className="text-muted">{team.vehicle}</p>
+                {activeCase.status !== 'rescue-assigned' && team.driverName && (
+                  <p className="mt-1 text-muted">
+                    คนขับ {team.driverName} · ทะเบียน {team.plateNumber} · สังกัด {team.unitCode}
+                  </p>
+                )}
               </div>
               {etaMin !== null && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -151,7 +167,7 @@ export default function CaseTracking() {
             <CaseTimeline
               timeline={activeCase.timeline}
               currentStatus={activeCase.status}
-              hiddenSteps={['contacted', 'photos-taken', 'called-1669', 'received', 'assisted', 'hospital-received']}
+              hiddenSteps={['contacted', 'photos-taken', 'called-1669', 'received', 'rescue-assigned', 'assisted', 'hospital-received']}
             />
           </Card>
 

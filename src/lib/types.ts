@@ -141,6 +141,13 @@ export interface RescueTeam {
   vehicle: string
   phone: string
   base: GeoLocation
+  /** Special-purpose gear this unit carries, e.g. 'เครื่องตัดถ่าง' -- used to
+   * match a unit to incidents that need it, not just whoever's nearest. */
+  equipment: string[]
+  /** Driver shown once the unit accepts the case, alongside their vehicle
+   * plate and which unit they belong to. */
+  driverName?: string
+  plateNumber?: string
 }
 
 export interface Hospital {
@@ -170,6 +177,9 @@ export interface EmergencyCase {
   assessment: DispatcherAssessment | null
   patientInfo: PatientInfo | null
   assignedRescueTeam: RescueTeam | null
+  /** Second unit co-assigned alongside the primary responder when no single
+   * available/nearby unit had the equipment the incident needed. */
+  supportingRescueTeam?: RescueTeam | null
   selectedHospital: Hospital | null
   rescueEnRoutePct: number
   rescueRejectedAt: number | null

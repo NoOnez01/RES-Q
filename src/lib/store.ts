@@ -111,7 +111,7 @@ interface ResQState {
     data: Omit<IncidentDetails, 'callbackPhone'> & Omit<DispatcherAssessment, 'assessedAt'>,
   ) => void
   startFindingRescue: (caseId: string) => void
-  assignRescueTeam: (caseId: string, team: RescueTeam) => void
+  assignRescueTeam: (caseId: string, team: RescueTeam, supportingTeam?: RescueTeam | null) => void
 
   // rescue
   rescueAcceptCase: (caseId: string) => void
@@ -348,11 +348,14 @@ export const useStore = create<ResQState>()(
           return { cases: { ...s.cases, [caseId]: pushStatus(c, 'finding-rescue') } }
         }),
 
-      assignRescueTeam: (caseId, team) => {
+      assignRescueTeam: (caseId, team, supportingTeam) => {
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = pushStatus({ ...c, assignedRescueTeam: team }, 'rescue-assigned')
+          const updated = pushStatus(
+            { ...c, assignedRescueTeam: team, supportingRescueTeam: supportingTeam ?? null },
+            'rescue-assigned',
+          )
           return { cases: { ...s.cases, [caseId]: updated } }
         })
         const c = get().cases[caseId]
@@ -400,7 +403,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const reverted = { ...c, assignedRescueTeam: null, rescueRejectedAt: Date.now() }
+          const reverted = { ...c, assignedRescueTeam: null, supportingRescueTeam: null, rescueRejectedAt: Date.now() }
           return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ภัยปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
         }),
 

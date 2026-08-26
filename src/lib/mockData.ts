@@ -16,6 +16,9 @@ export const MOCK_RESCUE_TEAMS: RescueTeam[] = [
     vehicle: 'รถพยาบาลฉุกเฉิน ทะเบียน ชม-1145',
     phone: '053-100-1145',
     base: { lat: 18.7904, lng: 98.9847, address: 'จุดจอดประตูช้างเผือก อำเภอเมืองเชียงใหม่' },
+    equipment: ['เครื่องตัดถ่าง', 'เฝือกดามคอ', 'ชุดปฐมพยาบาล'],
+    driverName: 'สมชาย แก้วมณี',
+    plateNumber: 'ชม-1145',
   },
   {
     id: 'rt-02',
@@ -25,6 +28,9 @@ export const MOCK_RESCUE_TEAMS: RescueTeam[] = [
     vehicle: 'รถพยาบาลฉุกเฉิน ทะเบียน ชม-2278',
     phone: '053-100-2278',
     base: { lat: 18.7753, lng: 98.9955, address: 'ศูนย์วิทยุเชียงใหม่สามัคคี ตำบลวัดเกต อำเภอเมืองเชียงใหม่' },
+    equipment: ['ถังออกซิเจน', 'เปลสนาม', 'ชุดปฐมพยาบาล'],
+    driverName: 'วิชัย ศรีสุข',
+    plateNumber: 'ชม-2278',
   },
   {
     id: 'rt-03',
@@ -34,8 +40,22 @@ export const MOCK_RESCUE_TEAMS: RescueTeam[] = [
     vehicle: 'รถพยาบาลฉุกเฉิน ทะเบียน ชม-3091',
     phone: '053-100-3091',
     base: { lat: 18.8021, lng: 98.9694, address: 'ศูนย์กู้ชีพนเรศวร ตำบลช้างเผือก อำเภอเมืองเชียงใหม่' },
+    equipment: ['เครื่องตัดถ่าง', 'ถังออกซิเจน', 'เฝือกดามคอ'],
+    driverName: 'ประยุทธ บุญมา',
+    plateNumber: 'ชม-3091',
   },
 ]
+
+/**
+ * Which incident types need gear beyond a standard ambulance kit -- only
+ * types actually listed here constrain assignment by equipment; anything
+ * else (หมดสติ, เจ็บหน้าอก, etc.) can go to any available nearby unit.
+ */
+export const EQUIPMENT_FOR_INCIDENT: Record<string, string[]> = {
+  'อุบัติเหตุทางถนน': ['เครื่องตัดถ่าง'],
+  'พลัดตกจากที่สูง': ['เฝือกดามคอ'],
+  'ไฟไหม้ / ถูกความร้อน': ['เครื่องตัดถ่าง'],
+}
 
 export const MOCK_HOSPITALS: Hospital[] = [
   {

@@ -1,6 +1,22 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Phone, User, Users, Activity, FileText, StickyNote, Truck, Hash, CheckCircle2, ClipboardList, Pencil } from 'lucide-react'
+import {
+  Phone,
+  User,
+  Users,
+  Activity,
+  FileText,
+  StickyNote,
+  Truck,
+  Hash,
+  CheckCircle2,
+  ClipboardList,
+  Pencil,
+  Wrench,
+  AlertTriangle,
+  IdCard,
+} from 'lucide-react'
+import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -13,8 +29,9 @@ import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
-import { useStore, MOCK_RESCUE_TEAMS } from '@/lib/store'
-import type { RescueTeam } from '@/lib/types'
+import { useStore } from '@/lib/store'
+import { recommendAssignment } from '@/lib/rescueAssignment'
+import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
 
 const CONSCIOUS_LABEL: Record<string, string> = {
@@ -27,16 +44,28 @@ export default function DispatchCaseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const emergencyCase = useStore((s) => (id ? s.cases[id] : undefined))
+  const cases = useStore((s) => s.cases)
   const startFindingRescue = useStore((s) => s.startFindingRescue)
   const assignRescueTeam = useStore((s) => s.assignRescueTeam)
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const [includeSupport, setIncludeSupport] = useState(true)
   const [findingLoading, setFindingLoading] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [assignLoading, setAssignLoading] = useState(false)
   const [justAssigned, setJustAssigned] = useState(false)
 
-  if (!id || !emergencyCase) {
+  const recommendation = useMemo(() => {
+    if (!emergencyCase) return null
+    return recommendAssignment(
+      emergencyCase.location ?? DEFAULT_INCIDENT_LOCATION,
+      emergencyCase.incidentDetails?.incidentType,
+      Object.values(cases),
+      emergencyCase.id,
+    )
+  }, [emergencyCase, cases])
+
+  if (!id || !emergencyCase || !recommendation) {
     return (
       <AppShell variant="dashboard" title="รายละเอียดเคส">
         <ErrorState title="ไม่พบเคสนี้" description="เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ" />
@@ -46,7 +75,8 @@ export default function DispatchCaseDetail() {
 
   const c = emergencyCase
   const details = c.incidentDetails
-  const selectedTeam = MOCK_RESCUE_TEAMS.find((t) => t.id === selectedTeamId) ?? null
+  const selectedTeam = recommendation.ranked.find((r) => r.team.id === selectedTeamId)?.team ?? null
+  const supportTeam = includeSupport && recommendation.needsSupport ? recommendation.support?.team ?? null : null
 
   function handleStartFinding() {
     setFindingLoading(true)
@@ -65,13 +95,15 @@ export default function DispatchCaseDetail() {
     if (!selectedTeam) return
     setAssignLoading(true)
     setTimeout(() => {
-      assignRescueTeam(id!, selectedTeam as RescueTeam)
+      assignRescueTeam(id!, selectedTeam, supportTeam)
       setAssignLoading(false)
       setConfirmOpen(false)
       setJustAssigned(true)
       toast({
         title: 'มอบหมายหน่วยกู้ภัยสำเร็จ',
-        message: `${selectedTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`,
+        message: supportTeam
+          ? `${selectedTeam.name} และ ${supportTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`
+          : `${selectedTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`,
         tone: 'success',
       })
       setTimeout(() => setJustAssigned(false), 3200)
@@ -254,21 +286,62 @@ export default function DispatchCaseDetail() {
 
             {c.status === 'finding-rescue' && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted">เลือกหน่วยกู้ภัยที่ต้องการมอบหมายให้เคสนี้</p>
+                <p className="text-sm text-muted">
+                  เลือกหน่วยกู้ภัยที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
+                </p>
+                {recommendation.requiredEquipment.length > 0 && (
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                    <Wrench className="size-3.5 text-primary" />
+                    เหตุนี้ต้องการอุปกรณ์: {recommendation.requiredEquipment.join(', ')}
+                  </p>
+                )}
                 <div className="flex flex-col gap-3">
-                  {MOCK_RESCUE_TEAMS.map((team) => (
+                  {recommendation.ranked.map((r) => (
                     <RadioCard
-                      key={team.id}
-                      selected={selectedTeamId === team.id}
-                      onClick={() => setSelectedTeamId(team.id)}
+                      key={r.team.id}
+                      selected={selectedTeamId === r.team.id}
+                      onClick={() => r.available && setSelectedTeamId(r.team.id)}
                       icon={<Truck className="size-5 text-primary" />}
-                      title={team.name}
-                      description={`${team.unitCode} · ${team.vehicle} · ทีม ${team.members} คน`}
+                      title={r.team.name}
+                      description={`${r.team.unitCode} · ${r.distanceKm.toFixed(1)} กม. · ทีม ${r.team.members} คน${!r.available ? ' · ไม่ว่าง' : ''}`}
+                      className={clsx(!r.available && 'pointer-events-none opacity-50')}
+                      badge={
+                        recommendation.requiredEquipment.length > 0 ? (
+                          <span
+                            className={clsx(
+                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                              r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                            )}
+                          >
+                            <Wrench className="size-3" />
+                            {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
+                          </span>
+                        ) : undefined
+                      }
                     />
                   ))}
                 </div>
+
+                {recommendation.needsSupport && recommendation.support && (
+                  <div className="flex flex-col gap-2 rounded-xl border border-warning/30 bg-warning/5 p-3.5">
+                    <p className="flex items-start gap-2 text-sm font-semibold text-navy">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+                      หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์
+                    </p>
+                    <label className="flex items-center gap-2 text-sm text-navy">
+                      <input
+                        type="checkbox"
+                        checked={includeSupport}
+                        onChange={(e) => setIncludeSupport(e.target.checked)}
+                        className="size-4 accent-primary"
+                      />
+                      มอบหมายร่วมกับ {recommendation.support.team.name} ({recommendation.support.distanceKm.toFixed(1)} กม.)
+                    </label>
+                  </div>
+                )}
+
                 <Button fullWidth disabled={!selectedTeamId} onClick={() => setConfirmOpen(true)}>
-                  มอบหมายหน่วยนี้
+                  {supportTeam ? 'มอบหมายทั้ง 2 หน่วย' : 'มอบหมายหน่วยนี้'}
                 </Button>
               </div>
             )}
@@ -313,7 +386,30 @@ export default function DispatchCaseDetail() {
                       <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.phone}</p>
                     </div>
                   </div>
+                  {c.status !== 'rescue-assigned' && c.assignedRescueTeam.driverName && (
+                    <div className="flex items-start gap-2.5">
+                      <IdCard className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted">คนขับ · ทะเบียนรถ</p>
+                        <p className="text-sm font-semibold text-navy">
+                          {c.assignedRescueTeam.driverName} · {c.assignedRescueTeam.plateNumber} · สังกัด{' '}
+                          {c.assignedRescueTeam.unitCode}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                {c.supportingRescueTeam && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-border p-3">
+                    <Wrench className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-xs text-muted">หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)</p>
+                      <p className="text-sm font-semibold text-navy">
+                        {c.supportingRescueTeam.name} · {c.supportingRescueTeam.unitCode}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <p className="rounded-xl bg-skyblue-light px-3 py-2.5 text-xs font-medium text-muted">
                   หน่วยกู้ภัยรับผิดชอบเคสนี้แล้ว
                 </p>
