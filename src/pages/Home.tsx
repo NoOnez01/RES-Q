@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Accessibility,
@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   Building2,
   Camera,
-  ChevronDown,
   Clock,
   FileText,
   Lock,
@@ -16,7 +15,6 @@ import {
   PhoneIncoming,
   Shield,
   ShieldCheck,
-  User,
   Users,
 } from 'lucide-react'
 import clsx from 'clsx'
@@ -29,7 +27,6 @@ import { InfoModal } from '@/components/ui/InfoModal'
 import { useInView } from '@/lib/useInView'
 import { useCountUp } from '@/lib/useCountUp'
 import { FAVICON_URL } from '@/lib/utils'
-import type { Role } from '@/lib/types'
 
 const FEATURES = [
   {
@@ -76,15 +73,6 @@ const FEATURES = [
   },
 ] as const
 
-const PROCESS_STEPS = [
-  { n: 1, title: 'ติดต่อเจ้าหน้าที่', icon: <PhoneCall className="size-5" /> },
-  { n: 2, title: 'ถ่ายรูปจุดเกิดเหตุ', icon: <Camera className="size-5" /> },
-  { n: 3, title: 'โทร 1669', icon: <PhoneIncoming className="size-5" /> },
-  { n: 4, title: 'ส่งรายละเอียดเหตุการณ์', icon: <FileText className="size-5" /> },
-  { n: 5, title: 'หน่วยกู้ภัยเข้าช่วยเหลือ', icon: <Ambulance className="size-5" /> },
-  { n: 6, title: 'นำส่งโรงพยาบาล', icon: <Building2 className="size-5" /> },
-] as const
-
 const CONNECTION_NODES = [
   {
     key: 'public',
@@ -113,37 +101,6 @@ const CONNECTION_NODES = [
     icon: <Building2 className="size-5" />,
     detail: 'เตรียมทีมรักษาและยืนยันการรับผู้ป่วย',
     count: 12,
-  },
-] as const
-
-const ROLE_ITEMS = [
-  {
-    role: 'public' as Role,
-    icon: <User className="size-6" />,
-    title: 'บุคคลทั่วไป',
-    description: 'แจ้งเหตุ ถ่ายรูป โทร 1669 และติดตามสถานะได้ด้วยตนเอง',
-    tag: 'ไม่ต้องเข้าสู่ระบบ',
-  },
-  {
-    role: 'dispatch' as Role,
-    icon: <PhoneIncoming className="size-6" />,
-    title: 'ศูนย์รับแจ้งเหตุ 1669',
-    description: 'รับสาย ประเมินความรุนแรง และมอบหมายหน่วยกู้ภัยที่เหมาะสม',
-    tag: '24 เจ้าหน้าที่ออนไลน์',
-  },
-  {
-    role: 'rescue' as Role,
-    icon: <Ambulance className="size-6" />,
-    title: 'หน่วยกู้ภัย',
-    description: 'รับเคส นำทางไปจุดเกิดเหตุ และนำส่งผู้ป่วยถึงโรงพยาบาล',
-    tag: '18 หน่วยพร้อมงาน',
-  },
-  {
-    role: 'hospital' as Role,
-    icon: <Building2 className="size-6" />,
-    title: 'โรงพยาบาล',
-    description: 'รับข้อมูลผู้ป่วยล่วงหน้าและยืนยันความพร้อมก่อนถึง',
-    tag: '12 โรงพยาบาล',
   },
 ] as const
 
@@ -220,52 +177,6 @@ function InteractiveFeatureCard({
         {extra}
       </p>
     </button>
-  )
-}
-
-function ConnectionFlow() {
-  const [active, setActive] = useState<number | null>(null)
-
-  return (
-    <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-start sm:gap-1">
-      {CONNECTION_NODES.map((node, i) => (
-        <Fragment key={node.key}>
-          <div className="flex flex-1 flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActive((a) => (a === i ? null : i))}
-              aria-expanded={active === i}
-              aria-label={`${node.label}: ดูรายละเอียดบทบาท`}
-              className={clsx(
-                'flex min-h-[48px] w-full flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
-                active === i
-                  ? 'border-primary bg-skyblue-light shadow-card-lg'
-                  : 'border-border bg-white hover:border-primary/40 hover:shadow-card-lg',
-              )}
-            >
-              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                {node.icon}
-              </span>
-              <span className="text-xs font-bold text-navy sm:text-sm">{node.label}</span>
-            </button>
-            <div
-              className={clsx(
-                'overflow-hidden px-1 text-center transition-all duration-300',
-                active === i ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0',
-              )}
-            >
-              <p className="text-xs leading-relaxed text-muted">{node.detail}</p>
-            </div>
-          </div>
-          {i < CONNECTION_NODES.length - 1 && (
-            <div className="flex items-center justify-center py-1 sm:mt-5 sm:py-0">
-              <ArrowRight aria-hidden="true" className="hidden size-5 shrink-0 animate-pulse text-primary/60 sm:block" />
-              <ChevronDown aria-hidden="true" className="size-5 shrink-0 animate-pulse text-primary/60 sm:hidden" />
-            </div>
-          )}
-        </Fragment>
-      ))}
-    </div>
   )
 }
 
@@ -378,47 +289,6 @@ function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[numb
   )
 }
 
-function RoleGridCard({
-  icon,
-  title,
-  description,
-  tag,
-  onClick,
-  delayMs,
-}: {
-  icon: ReactNode
-  title: string
-  description: string
-  tag: string
-  onClick: () => void
-  delayMs: number
-}) {
-  return (
-    <Reveal delayMs={delayMs}>
-      <div className="group flex h-full flex-col gap-4 rounded-2xl border border-border bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg">
-        <div className="flex items-center justify-between">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-skyblue-light text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-white">
-            {icon}
-          </span>
-          <span className="rounded-full bg-skyblue-pale px-2.5 py-1 text-[11px] font-bold text-primary">{tag}</span>
-        </div>
-        <div>
-          <p className="font-bold text-navy">{title}</p>
-          <p className="mt-1 text-sm leading-relaxed text-muted">{description}</p>
-        </div>
-        <button
-          type="button"
-          onClick={onClick}
-          className="-mx-1 mt-auto inline-flex items-center gap-1.5 self-start rounded-lg px-1 text-sm font-bold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-        >
-          ดูรายละเอียด
-          <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-        </button>
-      </div>
-    </Reveal>
-  )
-}
-
 export default function Home() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -444,14 +314,6 @@ export default function Home() {
       default:
         navigate('/how-it-works')
     }
-  }
-
-  function handleRoleClick(role: Role) {
-    if (role === 'public') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    navigate('/login', { state: { role } })
   }
 
   return (
@@ -540,33 +402,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-skyblue-pale/60 px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <Reveal className="text-center">
+      <section className="px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-5xl text-center">
+          <Reveal>
             <h2 className="text-xl font-bold text-navy sm:text-2xl">วิธีการใช้งาน</h2>
             <p className="mt-2 text-sm text-muted">6 ขั้นตอน ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล</p>
           </Reveal>
 
-          <div className="relative mt-10">
-            <div
-              aria-hidden
-              className="absolute left-[8.33%] right-[8.33%] top-6 hidden h-0.5 bg-border sm:block"
-            />
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-              {PROCESS_STEPS.map((s, i) => (
-                <Reveal key={s.n} delayMs={i * 80} className="flex flex-col items-center gap-3 text-center">
-                  <span className="relative z-10 flex size-12 items-center justify-center rounded-full border-2 border-primary bg-white text-primary shadow-card">
-                    {s.icon}
-                  </span>
-                  <p className="text-xs font-bold leading-snug text-navy sm:text-sm">
-                    {s.n}. {s.title}
-                  </p>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button onClick={openHeroCta} iconRight={<ArrowRight className="size-4" />}>
               เริ่มต้นใช้งานทันที
             </Button>
@@ -574,36 +417,6 @@ export default function Home() {
               ดูรายละเอียดทั้งหมด
             </Button>
           </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <Reveal className="text-center">
-            <h2 className="text-xl font-bold text-navy sm:text-2xl">ResQ เชื่อมต่อทุกฝ่ายในการช่วยเหลือ</h2>
-            <p className="mt-2 text-sm text-muted">เลือกบทบาทเพื่อดูรายละเอียดการใช้งานของแต่ละฝ่าย</p>
-          </Reveal>
-
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {ROLE_ITEMS.map((item, i) => (
-              <RoleGridCard
-                key={item.role}
-                icon={item.icon}
-                title={item.title}
-                description={item.description}
-                tag={item.tag}
-                delayMs={i * 70}
-                onClick={() => handleRoleClick(item.role)}
-              />
-            ))}
-          </div>
-
-          <Reveal delayMs={120} className="mt-10">
-            <p className="text-center text-sm text-muted">กดที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่ายในเครือข่าย</p>
-            <div className="mt-6">
-              <ConnectionFlow />
-            </div>
-          </Reveal>
         </div>
       </section>
 
