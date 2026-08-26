@@ -3,7 +3,7 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { ToastTone } from '@/lib/toast'
 import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/alertSound'
-import { showNativeNotification } from '@/lib/nativeNotify'
+import { showNativeNotification, showLoopingNativeNotification, cancelLoopingNotification } from '@/lib/nativeNotify'
 import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 
 const REPEAT_MS = 3000
@@ -132,6 +132,7 @@ export function NotificationAlertBridge() {
   const seenNotificationIds = useRef<Set<string>>(new Set())
   const alertedCaseKeys = useRef<Set<string>>(new Set())
   const isFirstRun = useRef(true)
+  const activeLoopKeys = useRef<Set<string>>(new Set())
   const latest = useRef<{ cases: Record<string, EmergencyCase>; audience: Role | 'public' }>({
     cases: {},
     audience: 'public',
@@ -173,11 +174,25 @@ export function NotificationAlertBridge() {
     const interval = setInterval(() => {
       const { cases: latestCases, audience } = latest.current
       const pending = handoffsFor(audience, Object.values(latestCases))
+      const pendingKeys = new Set(pending.map((h) => h.key))
+
+      // A case that's no longer pending (handled elsewhere, or by us) needs
+      // its looping native notification cleared, same as the web loop going
+      // quiet once `handoffsFor` stops returning it.
+      for (const key of activeLoopKeys.current) {
+        if (!pendingKeys.has(key)) {
+          activeLoopKeys.current.delete(key)
+          void cancelLoopingNotification(key)
+        }
+      }
+
       if (pending.length === 0) return
       const mostUrgent = [...pending].sort(
         (a, b) => (a.case.assessment?.severity ?? 5) - (b.case.assessment?.severity ?? 5),
       )[0]
       playHandoffSound(mostUrgent)
+      activeLoopKeys.current.add(mostUrgent.key)
+      void showLoopingNativeNotification(mostUrgent.key, mostUrgent.title, mostUrgent.message)
     }, REPEAT_MS)
     return () => clearInterval(interval)
   }, [])
