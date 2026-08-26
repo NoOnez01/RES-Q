@@ -148,7 +148,7 @@ export default function DispatchCaseDetail() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted">ยังไม่มีรายละเอียดเหตุการณ์จากผู้แจ้ง</p>
+              <p className="text-sm text-muted">ยังไม่ได้กรอกรายละเอียดเหตุการณ์</p>
             )}
           </Card>
 

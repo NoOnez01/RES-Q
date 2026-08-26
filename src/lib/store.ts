@@ -98,11 +98,16 @@ interface ResQState {
   setCallStatus: (caseId: string, status: CallStatus) => void
   tickCallDuration: (caseId: string) => void
   finishCall: (caseId: string) => void
-  submitIncidentDetails: (caseId: string, details: IncidentDetails) => void
+  // The reporter's only remaining input after the call -- incident details
+  // are 1669's job now (see submitDispatcherAssessment), not the caller's.
+  submitCallbackPhone: (caseId: string, phone: string) => void
 
   // dispatcher
   answerCall: (caseId: string) => void
-  submitDispatcherAssessment: (caseId: string, assessment: Omit<DispatcherAssessment, 'assessedAt'>) => void
+  submitDispatcherAssessment: (
+    caseId: string,
+    data: Omit<IncidentDetails, 'callbackPhone'> & Omit<DispatcherAssessment, 'assessedAt'>,
+  ) => void
   startFindingRescue: (caseId: string) => void
   assignRescueTeam: (caseId: string, team: RescueTeam) => void
 
@@ -287,34 +292,36 @@ export const useStore = create<ResQState>()(
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
-      submitIncidentDetails: (caseId, details) => {
+      submitCallbackPhone: (caseId, phone) => {
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const withDetails = {
+          const updated = {
             ...c,
-            incidentDetails: details,
+            reporterPhone: phone,
             location: c.location ?? { ...DEFAULT_INCIDENT_LOCATION },
           }
-          return { cases: { ...s.cases, [caseId]: pushStatus(withDetails, 'received') } }
+          return { cases: { ...s.cases, [caseId]: pushStatus(updated, 'received') } }
         })
         const c = get().cases[caseId]
         notify(set, {
           audience: 'dispatch',
           caseId,
           title: 'มีเคสฉุกเฉินใหม่',
-          message: `เคส ${c?.caseNumber ?? ''} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ภัย`,
+          message: `เคส ${c?.caseNumber ?? ''} ถูกส่งเข้าระบบแล้ว รอเจ้าหน้าที่กรอกรายละเอียดและประเมิน`,
           tone: 'emergency',
         })
       },
 
-      submitDispatcherAssessment: (caseId, assessment) => {
+      submitDispatcherAssessment: (caseId, data) => {
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
+          const { severity, injuryDescription, ...incident } = data
           const updated: EmergencyCase = {
             ...c,
-            assessment: { ...assessment, assessedAt: Date.now() },
+            incidentDetails: { ...incident, callbackPhone: c.reporterPhone ?? '' },
+            assessment: { severity, injuryDescription, assessedAt: Date.now() },
             updatedAt: Date.now(),
           }
           return { cases: { ...s.cases, [caseId]: updated } }

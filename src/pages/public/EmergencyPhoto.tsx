@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Pause, Play, ShieldAlert, Trash2, Upload } from 'lucide-react'
+import { Camera, Check, MapPin, Pause, Play, ShieldAlert, Trash2, Upload } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
-import { CameraCapture, type PhotoSlotConfig } from '@/components/CameraCapture'
+import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
@@ -74,6 +74,7 @@ export default function EmergencyPhoto() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'ready' | 'failed'>('locating')
+  const [captureKey, setCaptureKey] = useState<PhotoCategory | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -126,6 +127,34 @@ export default function EmergencyPhoto() {
     }, 600)
   }
 
+  const slots = PHOTO_CATEGORIES.map((cat) => ({
+    ...cat,
+    photo: activeCase?.photos.find((p) => p.category === cat.key) ?? null,
+  }))
+  const filledCount = slots.filter((s) => s.photo).length
+  const activeSlot = slots.find((s) => s.key === captureKey) ?? null
+  const activeSlotIndex = activeSlot ? PHOTO_CATEGORIES.findIndex((c) => c.key === activeSlot.key) : -1
+
+  // With a starting key, only the *other* categories need checking -- the
+  // stale `slots` closure this reads (captured before the store update from
+  // the capture that just happened commits) still shows `key` itself as
+  // unfilled, so re-checking it here would wrongly reopen the same slot
+  // forever instead of closing the modal once all three are done.
+  function nextUnfilledAfter(key: PhotoCategory | null): PhotoCategory | null {
+    const startIdx = key ? PHOTO_CATEGORIES.findIndex((c) => c.key === key) : -1
+    const checks = key ? PHOTO_CATEGORIES.length - 1 : PHOTO_CATEGORIES.length
+    for (let i = 1; i <= checks; i++) {
+      const cat = PHOTO_CATEGORIES[(startIdx + i) % PHOTO_CATEGORIES.length]
+      if (!slots.find((s) => s.key === cat.key)?.photo) return cat.key
+    }
+    return null
+  }
+
+  function startCapture() {
+    const target = nextUnfilledAfter(null) ?? PHOTO_CATEGORIES[0].key
+    setCaptureKey(target)
+  }
+
   async function handleAddPhoto(dataUrl: string, category: PhotoCategory) {
     if (!caseId || !activeCase) return
     setUploadingPhoto(true)
@@ -133,8 +162,11 @@ export default function EmergencyPhoto() {
       const url = await uploadCasePhoto(activeCase.caseNumber, dataUrl)
       addPhoto(caseId, url, category)
       toast({ title: 'บันทึกรูปภาพแล้ว', tone: 'success' })
+      const next = nextUnfilledAfter(category)
+      setCaptureKey(next)
     } catch {
       toast({ title: 'อัปโหลดรูปภาพไม่สำเร็จ', tone: 'error' })
+      setCaptureKey(null)
     } finally {
       setUploadingPhoto(false)
     }
@@ -143,11 +175,11 @@ export default function EmergencyPhoto() {
   function handleUploadFallback(files: FileList | null) {
     const file = files?.[0]
     if (!file || !file.type.startsWith('image/')) return
-    const nextEmpty = PHOTO_CATEGORIES.find((cat) => !slots.find((s) => s.key === cat.key)?.photo)
+    const nextEmpty = nextUnfilledAfter(null)
     if (!nextEmpty) return
     const reader = new FileReader()
     reader.onload = () => {
-      if (typeof reader.result === 'string') void handleAddPhoto(reader.result, nextEmpty.key)
+      if (typeof reader.result === 'string') void handleAddPhoto(reader.result, nextEmpty)
     }
     reader.readAsDataURL(file)
   }
@@ -175,11 +207,6 @@ export default function EmergencyPhoto() {
   }
 
   const audioRecordings = activeCase.audioRecordings ?? []
-  const slots = PHOTO_CATEGORIES.map((cat) => ({
-    ...cat,
-    photo: activeCase.photos.find((p) => p.category === cat.key) ?? null,
-  }))
-  const filledCount = slots.filter((s) => s.photo).length
 
   return (
     <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack onBack={handleBack}>
@@ -190,7 +217,7 @@ export default function EmergencyPhoto() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h1 className="text-xl font-bold text-navy">ถ่ายรูปจุดเกิดเหตุ</h1>
-              <p className="mt-1.5 text-sm text-muted">ถ่ายรูปตามหัวข้อด้านล่างเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์ได้แม่นยำขึ้น</p>
+              <p className="mt-1.5 text-sm text-muted">กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน</p>
             </div>
             <span
               key={filledCount}
@@ -207,10 +234,7 @@ export default function EmergencyPhoto() {
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-white p-3.5">
             <div className="flex items-center gap-2 text-sm text-navy">
               <MapPin
-                className={clsx(
-                  'size-4 shrink-0 text-primary',
-                  gpsStatus === 'locating' && 'animate-bounce',
-                )}
+                className={clsx('size-4 shrink-0 text-primary', gpsStatus === 'locating' && 'animate-bounce')}
                 style={{ animationDuration: '2s' }}
               />
               <span>{activeCase?.location?.address ?? DEFAULT_INCIDENT_LOCATION.address}</span>
@@ -232,9 +256,41 @@ export default function EmergencyPhoto() {
             )}
           </div>
 
-          <div className="animate-fade-in">
-            <CameraCapture slots={slots} onCapture={handleAddPhoto} />
-            {uploadingPhoto && <p className="mt-2 text-xs font-medium text-primary">กำลังอัปโหลดรูปภาพ...</p>}
+          <div className="flex flex-col gap-2.5">
+            {slots.map((slot, i) => (
+              <button
+                key={slot.key}
+                type="button"
+                onClick={() => setCaptureKey(slot.key)}
+                className={clsx(
+                  'flex items-center gap-3 rounded-2xl border p-3 text-left transition-colors',
+                  slot.photo ? 'border-success/30 bg-success/5' : 'border-border bg-white hover:border-primary/40',
+                )}
+              >
+                {slot.photo ? (
+                  <img src={slot.photo.dataUrl} alt={slot.label} className="size-12 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-sm font-bold text-primary">
+                    {i + 1}
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-navy">
+                    {slot.label}
+                    {slot.photo && <Check className="size-3.5 text-success" />}
+                  </p>
+                  <p className="truncate text-xs text-muted">{slot.hint}</p>
+                </div>
+                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? 'ถ่ายใหม่' : 'ถ่าย'}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button variant="primary" size="lg" fullWidth icon={<Camera className="size-5" />} onClick={startCapture}>
+              {filledCount === 0 ? 'เริ่มถ่ายภาพ' : filledCount < PHOTO_CATEGORIES.length ? 'ถ่ายภาพต่อ' : 'ถ่ายภาพใหม่ทั้งหมด'}
+            </Button>
+            {uploadingPhoto && <p className="text-center text-xs font-medium text-primary">กำลังอัปโหลดรูปภาพ...</p>}
             {filledCount < PHOTO_CATEGORIES.length && (
               <>
                 <input
@@ -250,7 +306,7 @@ export default function EmergencyPhoto() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                  className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
                   <Upload className="size-3.5" />
                   หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย
@@ -299,6 +355,15 @@ export default function EmergencyPhoto() {
           </Button>
         </div>
       </div>
+
+      <PhotoCaptureModal
+        open={captureKey !== null}
+        slot={activeSlot}
+        stepIndex={activeSlotIndex + 1}
+        totalSteps={PHOTO_CATEGORIES.length}
+        onCapture={handleAddPhoto}
+        onClose={() => setCaptureKey(null)}
+      />
     </AppShell>
   )
 }

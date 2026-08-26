@@ -36,7 +36,7 @@ interface HandoffAlert {
  * The real handoffs in the pipeline — public -> 1669, 1669 -> กู้ภัย, กู้ภัย
  * -> โรงพยาบาล, and a rejection bouncing a case back to 1669 — each need to
  * alert whichever role the case just landed on (or landed back on). Mirrors
- * the same case fields the relevant store actions (submitIncidentDetails,
+ * the same case fields the relevant store actions (submitCallbackPhone,
  * assignRescueTeam, rescueRejectCase, selectHospital) transition, so a case
  * is "actionable for this role" independent of who or which tab moved it.
  */
