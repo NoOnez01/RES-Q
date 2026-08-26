@@ -73,6 +73,36 @@ export function getCurrentPosition(): Promise<Coords> {
   })
 }
 
+/**
+ * Keeps GPS live for as long as the caller wants it (e.g. the whole time a
+ * reporter is on the photo step), unlike `getCurrentPosition()` which stops
+ * after one good-enough fix. Every raw fix is passed straight to `onUpdate`
+ * — the caller decides how to throttle/react (e.g. only reverse-geocode
+ * once movement crosses a real threshold), since a browser can fire this
+ * many times a second on a device with a live GPS chip.
+ */
+export function watchPosition(onUpdate: (pos: Coords) => void, onError?: (err: GeolocationError) => void): () => void {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    onError?.(new GeolocationError('unsupported', 'อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง'))
+    return () => {}
+  }
+  const watchId = navigator.geolocation.watchPosition(
+    (pos) => onUpdate({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    (err) => {
+      if (!onError) return
+      if (err.code === err.PERMISSION_DENIED) {
+        onError(new GeolocationError('denied', 'กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ'))
+      } else if (err.code === err.TIMEOUT) {
+        onError(new GeolocationError('timeout', 'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่'))
+      } else {
+        onError(new GeolocationError('unavailable', 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้'))
+      }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+  )
+  return () => navigator.geolocation.clearWatch(watchId)
+}
+
 interface NominatimAddress {
   road?: string
   neighbourhood?: string

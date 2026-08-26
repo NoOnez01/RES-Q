@@ -13,7 +13,7 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDuration } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
-import { getCurrentPosition, reverseGeocode } from '@/lib/geolocation'
+import { watchPosition, reverseGeocode } from '@/lib/geolocation'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import type { AudioRecording, PhotoCategory } from '@/lib/types'
 
@@ -95,27 +95,35 @@ export default function EmergencyPhoto() {
     setCaseId(id)
     const c = useStore.getState().cases[id]
     if (c?.reporterPhone) setCallbackPhoneInput(c.reporterPhone)
-    if (c && !c.location) {
-      // Real GPS via the browser's Geolocation API as the initial guess;
-      // falls back to the demo default if location access is denied/
-      // unavailable. The reporter can still refine or re-pick this later on
-      // the details step.
-      setLocation(id, DEFAULT_INCIDENT_LOCATION)
-      getCurrentPosition()
-        .then(async (pos) => {
-          const address = await reverseGeocode(pos).catch(() => `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`)
-          setLocation(id, { ...pos, address })
-          setGpsStatus('ready')
-        })
-        .catch(() => {
-          // keep the default; the details step lets them fix it manually
-          setGpsStatus('failed')
-        })
-    } else {
-      setGpsStatus('ready')
-    }
+    // Instant placeholder so the UI never shows "no location" while the
+    // first real GPS fix comes in via the watch effect below.
+    if (c && !c.location) setLocation(id, DEFAULT_INCIDENT_LOCATION)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Keeps GPS live for as long as the reporter is on this page, instead of
+  // one fix-and-forget lookup -- useful if they're describing the scene
+  // while still moving (e.g. walking toward the patient). Reverse-geocoding
+  // is throttled to once every few seconds regardless of how often the GPS
+  // itself ticks, since Nominatim's free API asks callers not to hammer it.
+  useEffect(() => {
+    if (!caseId) return
+    let lastCallTime = 0
+    const MIN_INTERVAL_MS = 5000
+    const stopWatching = watchPosition(
+      (pos) => {
+        const now = Date.now()
+        if (now - lastCallTime < MIN_INTERVAL_MS) return
+        lastCallTime = now
+        setGpsStatus('ready')
+        reverseGeocode(pos)
+          .then((address) => setLocation(caseId, { ...pos, address }))
+          .catch(() => setLocation(caseId, { ...pos, address: `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}` }))
+      },
+      () => setGpsStatus('failed'),
+    )
+    return stopWatching
+  }, [caseId, setLocation])
 
   const activeCase = caseId ? cases[caseId] : null
 

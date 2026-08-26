@@ -13,7 +13,7 @@ import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { ErrorState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
-import { formatDateTime, estimateEtaMin, haversineKm } from '@/lib/utils'
+import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 
 export default function CaseTracking() {
@@ -48,19 +48,33 @@ export default function CaseTracking() {
   const location = activeCase.location ?? DEFAULT_INCIDENT_LOCATION
   const team = activeCase.assignedRescueTeam
   const isCompleted = activeCase.status === 'completed'
+  const isEnRoute = activeCase.status === 'rescue-en-route'
+
+  // Same base -> incident interpolation the rescue team's own navigation
+  // screen uses for its live position, driven by the same synced
+  // rescueEnRoutePct -- so the citizen sees the vehicle actually moving
+  // across the map instead of frozen at the team's home base the whole trip.
+  const ratio = clamp(activeCase.rescueEnRoutePct, 0, 100) / 100
+  const rescuePos =
+    team && isEnRoute
+      ? { lat: team.base.lat + (location.lat - team.base.lat) * ratio, lng: team.base.lng + (location.lng - team.base.lng) * ratio }
+      : team
+        ? team.base
+        : null
 
   let etaMin: number | null = null
-  if (team && activeCase.status === 'rescue-en-route') {
-    const distanceKm = activeCase.location ? haversineKm(team.base, activeCase.location) : 4.5
-    etaMin = estimateEtaMin(distanceKm || 4.5)
+  if (team && isEnRoute && rescuePos) {
+    const distanceKm = haversineKm(rescuePos, location)
+    etaMin = estimateEtaMin(distanceKm || 0.1)
   }
 
-  const pins = team
-    ? [
-        { id: 'incident', lat: location.lat, lng: location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' as const },
-        { id: 'rescue', lat: team.base.lat, lng: team.base.lng, label: team.name, kind: 'rescue' as const },
-      ]
-    : []
+  const pins =
+    team && rescuePos
+      ? [
+          { id: 'incident', lat: location.lat, lng: location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' as const },
+          { id: 'rescue', lat: rescuePos.lat, lng: rescuePos.lng, label: team.name, kind: 'rescue' as const },
+        ]
+      : []
 
   return (
     <AppShell variant="flow" title="ติดตามเคส" showBack onBack={() => navigate('/')}>
@@ -104,8 +118,13 @@ export default function CaseTracking() {
                 <p className="text-muted">{team.vehicle}</p>
               </div>
               {etaMin !== null && (
-                <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-                  คาดว่าถึงในอีกประมาณ {etaMin} นาที
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
+                    คาดว่าถึงในอีกประมาณ {etaMin} นาที
+                  </span>
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                    กำลังเดินทาง {Math.round(activeCase.rescueEnRoutePct)}%
+                  </span>
                 </div>
               )}
               <MapPanel pins={pins} height="220px" showRoute />
