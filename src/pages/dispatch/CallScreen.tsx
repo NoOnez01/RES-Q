@@ -20,7 +20,11 @@ export default function DispatchCallScreen() {
   const hasNavigatedAway = useRef(false)
 
   const isActive = emergencyCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined } = useWebRTCCall(id ?? null, 'callee', isActive)
+  const { localStream, remoteStream, cameraState, remoteJoined, connectionState } = useWebRTCCall(
+    id ?? null,
+    'callee',
+    isActive,
+  )
   const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
 
   // The call ending is driven purely by the synced callStatus field, so this

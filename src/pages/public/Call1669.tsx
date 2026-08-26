@@ -29,7 +29,11 @@ export default function Call1669() {
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined } = useWebRTCCall(activeCaseId, 'caller', callIsLive)
+  const { localStream, remoteStream, cameraState, remoteJoined, connectionState } = useWebRTCCall(
+    activeCaseId,
+    'caller',
+    callIsLive,
+  )
   const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
 
   useEffect(() => {
@@ -183,6 +187,7 @@ export default function Call1669() {
                 localStream={localStream}
                 remoteStream={remoteStream}
                 cameraState={cameraState}
+                connectionState={connectionState}
                 remoteLabel="เจ้าหน้าที่ 1669"
                 remoteWaitingLabel={remoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอเจ้าหน้าที่รับสาย'}
                 cameraOn={cameraOn}

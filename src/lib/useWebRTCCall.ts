@@ -8,9 +8,38 @@ type SignalPayload =
   | { type: 'ice-candidate'; candidate: RTCIceCandidateInit }
   | { type: 'hangup' }
 
-const ICE_SERVERS: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }]
+// STUN alone only works when at least one side has a NAT simple enough to
+// traverse directly -- two real phones on different networks (different
+// wifi, or mobile data with carrier-grade NAT) very often can't, and the
+// call just hangs with no video/audio on either end. TURN relays the media
+// through a server instead when a direct path can't be found. OpenRelay's
+// credentials below are published publicly by Metered.ca specifically for
+// this kind of testing/demo use (https://www.metered.ca/tools/openrelay/) --
+// fine for a prototype, but a production deployment should use its own paid
+// TURN provider instead (this free tier has bandwidth limits).
+const ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:openrelay.metered.ca:80' },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+]
 
 export type CameraState = 'idle' | 'requesting' | 'ready' | 'denied' | 'unavailable'
+export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed' | 'disconnected'
 
 /**
  * Peer-to-peer video call between the citizen (caller) and dispatcher
@@ -25,6 +54,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [cameraState, setCameraState] = useState<CameraState>('idle')
   const [remoteJoined, setRemoteJoined] = useState(false)
+  const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
 
   const localStreamRef = useRef<MediaStream | null>(null)
 
@@ -36,6 +66,19 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     const pendingCandidates: RTCIceCandidateInit[] = []
 
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+
+    // Pre-create sendrecv transceivers up front, before either side's camera
+    // is even ready, instead of relying on addTrack (called later, once
+    // getUserMedia resolves) to add them. addTrack only shapes the SDP if it
+    // runs *before* the offer/answer for this m-line is created -- and since
+    // getUserMedia is async (camera warm-up, permission prompts), whichever
+    // side's media happened to resolve after their offer/answer went out
+    // would get negotiated as recvonly forever, with no renegotiation to fix
+    // it. Declaring sendrecv immediately means both directions are always
+    // negotiated regardless of that race; replaceTrack() below just swaps
+    // the real track into the already-negotiated transceiver.
+    const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' })
+    const audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv' })
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
@@ -49,6 +92,15 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
 
     pc.ontrack = (e) => {
       if (!cancelled) setRemoteStream(e.streams[0] ?? null)
+    }
+
+    pc.oniceconnectionstatechange = () => {
+      if (cancelled) return
+      const state = pc.iceConnectionState
+      if (state === 'checking') setConnectionState('connecting')
+      else if (state === 'connected' || state === 'completed') setConnectionState('connected')
+      else if (state === 'failed') setConnectionState('failed')
+      else if (state === 'disconnected') setConnectionState('disconnected')
     }
 
     async function sendOffer() {
@@ -111,7 +163,10 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         localStreamRef.current = stream
         setLocalStream(stream)
         setCameraState('ready')
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+        const videoTrack = stream.getVideoTracks()[0]
+        const audioTrack = stream.getAudioTracks()[0]
+        if (videoTrack) void videoTransceiver.sender.replaceTrack(videoTrack)
+        if (audioTrack) void audioTransceiver.sender.replaceTrack(audioTrack)
       })
       .catch((err: DOMException) => {
         if (cancelled) return
@@ -129,10 +184,11 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       setRemoteStream(null)
       setCameraState('idle')
       setRemoteJoined(false)
+      setConnectionState('idle')
     }
   }, [active, caseId, role])
 
-  return { localStream, remoteStream, cameraState, remoteJoined }
+  return { localStream, remoteStream, cameraState, remoteJoined, connectionState }
 }
 
 /** Local mute/camera-off toggles — just flips `.enabled` on the existing tracks. */

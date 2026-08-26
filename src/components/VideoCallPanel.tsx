@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { Video, VideoOff, Mic, MicOff, UserRound } from 'lucide-react'
+import { Video, VideoOff, Mic, MicOff, UserRound, AlertTriangle } from 'lucide-react'
 import clsx from 'clsx'
-import type { CameraState } from '@/lib/useWebRTCCall'
+import type { CameraState, ConnectionState } from '@/lib/useWebRTCCall'
 
 function VideoTag({ stream, muted }: { stream: MediaStream | null; muted: boolean }) {
   const ref = useRef<HTMLVideoElement>(null)
@@ -31,6 +31,7 @@ export function VideoCallPanel({
   localStream,
   remoteStream,
   cameraState,
+  connectionState,
   remoteLabel,
   remoteWaitingLabel,
   cameraOn,
@@ -41,6 +42,7 @@ export function VideoCallPanel({
   localStream: MediaStream | null
   remoteStream: MediaStream | null
   cameraState: CameraState
+  connectionState?: ConnectionState
   remoteLabel: string
   remoteWaitingLabel: string
   cameraOn: boolean
@@ -49,6 +51,7 @@ export function VideoCallPanel({
   onToggleMic: () => void
 }) {
   const errorLabel = CAMERA_STATE_LABEL[cameraState]
+  const connectionFailed = connectionState === 'failed' || connectionState === 'disconnected'
 
   return (
     <div className="flex flex-col gap-2">
@@ -56,8 +59,20 @@ export function VideoCallPanel({
         <VideoTag stream={remoteStream} muted={false} />
         {!remoteStream && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/70">
-            <UserRound className="size-10" />
-            <p className="text-sm font-medium">{remoteWaitingLabel}</p>
+            {connectionFailed ? (
+              <>
+                <AlertTriangle className="size-10 text-warning" />
+                <p className="text-sm font-medium text-warning">เชื่อมต่อวิดีโอไม่สำเร็จ</p>
+                <p className="max-w-[220px] text-center text-xs text-white/60">
+                  เครือข่ายของทั้งสองฝ่ายอาจเชื่อมต่อโดยตรงไม่ได้ ลองสลับมาใช้ Wi-Fi หรือโทรผ่านเสียงแทน
+                </p>
+              </>
+            ) : (
+              <>
+                <UserRound className="size-10" />
+                <p className="text-sm font-medium">{remoteWaitingLabel}</p>
+              </>
+            )}
           </div>
         )}
         <span className="absolute bottom-2 left-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold text-white">
