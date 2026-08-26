@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes } from 'react'
 import clsx from 'clsx'
 import { Loader2 } from 'lucide-react'
 import { playClickSound } from '@/lib/alertSound'
+import { useStore } from '@/lib/store'
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success'
 type Size = 'sm' | 'md' | 'lg' | 'xl'
@@ -53,12 +54,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref,
 ) {
+  // Click feedback is reserved for staff (1669/rescue/hospital) working an
+  // active case load -- the public-facing site should stay silent on plain
+  // navigation and form taps.
+  const isStaff = useStore((s) => s.currentUser?.role !== undefined && s.currentUser.role !== 'public')
   return (
     <button
       ref={ref}
       disabled={disabled || loading}
       onClick={(e) => {
-        playClickSound()
+        if (isStaff) playClickSound()
         onClick?.(e)
       }}
       className={clsx(

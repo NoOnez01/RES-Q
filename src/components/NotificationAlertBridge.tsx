@@ -8,6 +8,20 @@ import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 
 const REPEAT_MS = 3000
 
+// Hospital alerts specifically re-alert faster the more severe the case is
+// (severity 1 loops nearly twice as often as 4) so an incoming critical
+// patient reads as more urgent purely from how often the alert repeats, not
+// just its tone. Dispatch/rescue stay on the flat REPEAT_MS cadence.
+const HOSPITAL_REPEAT_MS: Record<1 | 2 | 3 | 4, number> = { 1: 1200, 2: 1800, 3: 2400, 4: 3000 }
+
+function repeatIntervalFor(h: HandoffAlert): number {
+  if (h.kind === 'hospital') {
+    const severity = h.case.assessment?.severity
+    if (severity) return HOSPITAL_REPEAT_MS[severity]
+  }
+  return REPEAT_MS
+}
+
 const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
   info: 'info',
   success: 'success',
@@ -171,7 +185,13 @@ export function NotificationAlertBridge() {
   }, [notifications, cases, currentUser])
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    // A plain setInterval can't vary its own cadence, and the hospital
+    // repeat rate needs to (see HOSPITAL_REPEAT_MS) -- so this reschedules
+    // itself via setTimeout each tick, picking the next delay from whatever
+    // alert just played.
+    let timer: ReturnType<typeof setTimeout>
+
+    function tick() {
       const { cases: latestCases, audience } = latest.current
       const pending = handoffsFor(audience, Object.values(latestCases))
       const pendingKeys = new Set(pending.map((h) => h.key))
@@ -186,15 +206,21 @@ export function NotificationAlertBridge() {
         }
       }
 
-      if (pending.length === 0) return
-      const mostUrgent = [...pending].sort(
-        (a, b) => (a.case.assessment?.severity ?? 5) - (b.case.assessment?.severity ?? 5),
-      )[0]
-      playHandoffSound(mostUrgent)
-      activeLoopKeys.current.add(mostUrgent.key)
-      void showLoopingNativeNotification(mostUrgent.key, mostUrgent.title, mostUrgent.message)
-    }, REPEAT_MS)
-    return () => clearInterval(interval)
+      let delay = REPEAT_MS
+      if (pending.length > 0) {
+        const mostUrgent = [...pending].sort(
+          (a, b) => (a.case.assessment?.severity ?? 5) - (b.case.assessment?.severity ?? 5),
+        )[0]
+        playHandoffSound(mostUrgent)
+        activeLoopKeys.current.add(mostUrgent.key)
+        void showLoopingNativeNotification(mostUrgent.key, mostUrgent.title, mostUrgent.message)
+        delay = repeatIntervalFor(mostUrgent)
+      }
+      timer = setTimeout(tick, delay)
+    }
+
+    timer = setTimeout(tick, REPEAT_MS)
+    return () => clearTimeout(timer)
   }, [])
 
   return null
