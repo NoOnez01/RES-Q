@@ -64,21 +64,57 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     let cancelled = false
     let hasOffered = false
     const pendingCandidates: RTCIceCandidateInit[] = []
+    // createOffer()/createAnswer() force a transceiver's negotiated direction
+    // down to recvonly if its sender has no track *at that exact moment* --
+    // even when the transceiver was configured sendrecv. getUserMedia is
+    // async, so whichever side has to answer/offer before its own camera
+    // resolves gets locked into "receive only" for the rest of the call, with
+    // nothing to renegotiate it later. The callee in particular has almost no
+    // lead time (it must answer the instant the offer arrives), so this hit
+    // outgoing video from whoever answered far more often than the caller.
+    // Waiting for media to settle (success or failure) before creating the
+    // offer/answer avoids the downgrade entirely.
+    let resolveMediaReady: () => void
+    const mediaReady = new Promise<void>((resolve) => {
+      resolveMediaReady = resolve
+    })
 
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
 
-    // Pre-create sendrecv transceivers up front, before either side's camera
-    // is even ready, instead of relying on addTrack (called later, once
-    // getUserMedia resolves) to add them. addTrack only shapes the SDP if it
-    // runs *before* the offer/answer for this m-line is created -- and since
-    // getUserMedia is async (camera warm-up, permission prompts), whichever
-    // side's media happened to resolve after their offer/answer went out
-    // would get negotiated as recvonly forever, with no renegotiation to fix
-    // it. Declaring sendrecv immediately means both directions are always
-    // negotiated regardless of that race; replaceTrack() below just swaps
-    // the real track into the already-negotiated transceiver.
-    const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' })
-    const audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv' })
+    // The offering side (caller) pre-creates its own sendrecv transceivers so
+    // the initial offer always declares both directions. The answering side
+    // (callee) must NOT do this: transceivers created via addTransceiver()
+    // before any remote description exists are never reused once an offer
+    // comes in -- setRemoteDescription(offer) creates its own fresh
+    // transceivers for the negotiated m-lines (defaulting to recvonly, no
+    // track) and those are what createAnswer() actually uses, leaving the
+    // pre-created ones permanently orphaned (mid stays null forever). So the
+    // callee instead grabs the transceivers setRemoteDescription just made
+    // for it (see the 'offer' handler below) and configures those.
+    //
+    // Both sides route their outgoing tracks through one MediaStream so the
+    // SDP's msid grouping is established up front. replaceTrack() alone
+    // swaps which track is sent but never attaches a stream -- without a
+    // stream set on the transceiver, the far side's ontrack event arrives
+    // with an empty streams array and setRemoteStream(e.streams[0]) is
+    // permanently null, even though the underlying RTP connection is fine.
+    const outboundStream = new MediaStream()
+    let videoTransceiver: RTCRtpTransceiver | null = null
+    let audioTransceiver: RTCRtpTransceiver | null = null
+    let pendingVideoTrack: MediaStreamTrack | null = null
+    let pendingAudioTrack: MediaStreamTrack | null = null
+
+    async function attachLocalTracks() {
+      await Promise.all([
+        videoTransceiver && pendingVideoTrack ? videoTransceiver.sender.replaceTrack(pendingVideoTrack) : null,
+        audioTransceiver && pendingAudioTrack ? audioTransceiver.sender.replaceTrack(pendingAudioTrack) : null,
+      ])
+    }
+
+    if (role === 'caller') {
+      videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv', streams: [outboundStream] })
+      audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv', streams: [outboundStream] })
+    }
 
     // iceConnectionState doesn't reliably reach 'failed' in a timely way (or
     // at all, on some browsers) when NAT traversal just never succeeds --
@@ -121,6 +157,9 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     async function sendOffer() {
       if (hasOffered) return
       hasOffered = true
+      await mediaReady
+      if (cancelled) return
+      await attachLocalTracks()
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
       void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer } satisfies SignalPayload })
@@ -135,7 +174,25 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       }
       if (msg.type === 'offer' && role === 'callee') {
         await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+        // Grab the transceivers setRemoteDescription just created for the
+        // negotiated m-lines (see the comment above pc.addTransceiver) and
+        // explicitly flip them to sendrecv -- they default to recvonly since
+        // this side had no track when they were created.
+        videoTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'video') ?? null
+        audioTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'audio') ?? null
+        // These transceivers were never given `streams` at creation (unlike
+        // the caller's, passed via addTransceiver's init) -- without this,
+        // the answer's msid has no stream grouping and the caller's ontrack
+        // fires with an empty streams array, same failure as before.
+        videoTransceiver?.sender.setStreams(outboundStream)
+        audioTransceiver?.sender.setStreams(outboundStream)
+        if (videoTransceiver) videoTransceiver.direction = 'sendrecv'
+        if (audioTransceiver) audioTransceiver.direction = 'sendrecv'
+        await attachLocalTracks()
         for (const c of pendingCandidates.splice(0)) await pc.addIceCandidate(c)
+        await mediaReady
+        if (cancelled) return
+        await attachLocalTracks()
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
         void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'answer', sdp: answer } satisfies SignalPayload })
@@ -170,7 +227,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     setCameraState('requesting')
     navigator.mediaDevices
       ?.getUserMedia({ video: true, audio: true })
-      .then((stream) => {
+      .then(async (stream) => {
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop())
           return
@@ -178,14 +235,14 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         localStreamRef.current = stream
         setLocalStream(stream)
         setCameraState('ready')
-        const videoTrack = stream.getVideoTracks()[0]
-        const audioTrack = stream.getAudioTracks()[0]
-        if (videoTrack) void videoTransceiver.sender.replaceTrack(videoTrack)
-        if (audioTrack) void audioTransceiver.sender.replaceTrack(audioTrack)
+        pendingVideoTrack = stream.getVideoTracks()[0] ?? null
+        pendingAudioTrack = stream.getAudioTracks()[0] ?? null
+        await attachLocalTracks()
+        resolveMediaReady()
       })
       .catch((err: DOMException) => {
-        if (cancelled) return
-        setCameraState(err.name === 'NotFoundError' ? 'unavailable' : 'denied')
+        if (!cancelled) setCameraState(err.name === 'NotFoundError' ? 'unavailable' : 'denied')
+        resolveMediaReady()
       })
 
     return () => {
