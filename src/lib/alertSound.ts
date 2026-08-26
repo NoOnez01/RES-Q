@@ -1,6 +1,13 @@
+// Master switch for every synthesized sound in the app (clicks, toast dings,
+// case-alert tones, the call ringtone) -- flip to true to bring any of it
+// back. All sound functions below funnel through getContext(), so this one
+// flag silences everything without touching each call site.
+const SOUND_ENABLED = false
+
 let audioCtx: AudioContext | null = null
 
 function getContext(): AudioContext | null {
+  if (!SOUND_ENABLED) return null
   if (typeof window === 'undefined') return null
   const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
   if (!Ctx) return null
