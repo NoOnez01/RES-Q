@@ -13,14 +13,14 @@ const OPTIONS = [
   },
   {
     icon: <Ambulance className="size-6" />,
-    title: 'หน่วยกู้ภัย',
-    description: 'สมัครสำหรับหน่วยกู้ภัยที่รับเคสและนำส่งผู้ป่วย',
+    title: 'หน่วยกู้ชีพ',
+    description: 'สมัครสำหรับหน่วยกู้ชีพที่รับเคสและนำส่งผู้ป่วย',
     path: '/register/rescue',
   },
   {
     icon: <PhoneIncoming className="size-6" />,
     title: 'ศูนย์สั่งการ 1669',
-    description: 'สมัครสำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ภัย',
+    description: 'สมัครสำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ',
     path: '/register/dispatch',
   },
   {

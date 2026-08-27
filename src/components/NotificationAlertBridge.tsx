@@ -31,7 +31,7 @@ interface HandoffAlert {
 }
 
 /**
- * The real handoffs in the pipeline — public -> 1669, 1669 -> กู้ภัย, กู้ภัย
+ * The real handoffs in the pipeline — public -> 1669, 1669 -> กู้ชีพ, กู้ชีพ
  * -> โรงพยาบาล, and a rejection bouncing a case back to 1669 — each need to
  * alert whichever role the case just landed on (or landed back on). Mirrors
  * the same case fields the relevant store actions (submitReport,
@@ -45,7 +45,7 @@ function handoffsFor(role: Role | 'public', cases: EmergencyCase[]): HandoffAler
       .map((c) => ({
         case: c,
         title: 'มีเคสฉุกเฉินใหม่',
-        message: `เคส ${c.caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ภัย`,
+        message: `เคส ${c.caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ`,
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-new:${c.id}`,
@@ -54,8 +54,8 @@ function handoffsFor(role: Role | 'public', cases: EmergencyCase[]): HandoffAler
       .filter((c) => c.status === 'finding-rescue' && c.rescueRejectedAt)
       .map((c) => ({
         case: c,
-        title: 'หน่วยกู้ภัยปฏิเสธเคส',
-        message: `เคส ${c.caseNumber} ถูกปฏิเสธจากหน่วยกู้ภัย กรุณามอบหมายหน่วยใหม่`,
+        title: 'หน่วยกู้ชีพปฏิเสธเคส',
+        message: `เคส ${c.caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่`,
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-rejected:${c.id}:${c.rescueRejectedAt}`,
@@ -116,7 +116,7 @@ function playHandoffSound(h: HandoffAlert) {
  * only), so it never reaches, say, a dispatcher whose tab didn't create it —
  * e.g. a case submitted from a citizen's own phone/tab. `cases`, on the
  * other hand, genuinely syncs across tabs/devices via Supabase realtime, so
- * handoff alerts for each stage (public -> 1669, 1669 -> กู้ภัย, กู้ภัย ->
+ * handoff alerts for each stage (public -> 1669, 1669 -> กู้ชีพ, กู้ชีพ ->
  * โรงพยาบาล) are additionally derived straight from that via `handoffsFor`.
  * Each alert fires exactly once (deduped by key) and does not repeat.
  */

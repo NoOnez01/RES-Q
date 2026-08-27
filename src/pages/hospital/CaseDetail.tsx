@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/StatusBadge'
 import { SeverityBadge } from '@/components/SeverityBadge'
 import { PatientInformationCard } from '@/components/PatientInformationCard'
+import { CaseMediaGallery } from '@/components/CaseMediaGallery'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
@@ -135,12 +136,14 @@ export default function HospitalCaseDetail() {
           </Card>
         )}
 
-        {c.patientInfo && <PatientInformationCard patient={c.patientInfo} />}
+        {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
+
+        <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />
 
         {c.assignedRescueTeam && (
           <Card className="space-y-3">
             <h3 className="flex items-center gap-2 font-bold text-navy">
-              <Truck className="size-4 text-primary" /> หน่วยกู้ภัยที่นำส่ง
+              <Truck className="size-4 text-primary" /> หน่วยกู้ชีพที่นำส่ง
             </h3>
             <div className="grid gap-2 text-sm sm:grid-cols-3">
               <div>

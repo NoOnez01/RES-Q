@@ -54,7 +54,7 @@ export function playAlertSound(urgent = false): void {
  * alternating wail); severity 4 (เร่งด่วนต่ำ) is the highest-pitched but the
  * plainest — a single short beep. 2 and 3 sit between both axes.
  */
-export function playSeverityAlert(severity: 1 | 2 | 3 | 4): void {
+export function playSeverityAlert(severity: 1 | 2 | 3 | 4 | 5): void {
   const ctx = getContext()
   if (!ctx) return
   if (ctx.state === 'suspended') void ctx.resume()
@@ -77,14 +77,18 @@ export function playSeverityAlert(severity: 1 | 2 | 3 | 4): void {
     case 4:
       beep(ctx, 988, now, 0.14, 0.1)
       break
+    case 5:
+      beep(ctx, 1175, now, 0.12, 0.08)
+      break
   }
 }
 
-const HOSPITAL_RUNS: Record<1 | 2 | 3 | 4 | 0, number[]> = {
+const HOSPITAL_RUNS: Record<1 | 2 | 3 | 4 | 5 | 0, number[]> = {
   1: [349, 415, 494, 587],
   2: [415, 523, 659],
   3: [523, 659, 784],
   4: [659, 880],
+  5: [784, 988],
   0: [494, 622, 784],
 }
 
@@ -95,7 +99,7 @@ const HOSPITAL_RUNS: Record<1 | 2 | 3 | 4 | 0, number[]> = {
  * severe cases (lower `severity` number) get more notes in the run and a
  * lower starting pitch; unassessed cases fall back to a generic 3-note run.
  */
-export function playHospitalAlert(severity?: 1 | 2 | 3 | 4): void {
+export function playHospitalAlert(severity?: 1 | 2 | 3 | 4 | 5): void {
   const ctx = getContext()
   if (!ctx) return
   if (ctx.state === 'suspended') void ctx.resume()

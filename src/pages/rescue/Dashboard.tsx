@@ -41,11 +41,11 @@ export default function RescueDashboard() {
 
   function handleReject(c: EmergencyCase) {
     rescueRejectCase(c.id)
-    toast({ title: 'ปฏิเสธเคสแล้ว', message: `ระบบกำลังค้นหาหน่วยกู้ภัยใหม่สำหรับเคส ${c.caseNumber}`, tone: 'info' })
+    toast({ title: 'ปฏิเสธเคสแล้ว', message: `ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเคส ${c.caseNumber}`, tone: 'info' })
   }
 
   return (
-    <AppShell variant="dashboard" title="แดชบอร์ดหน่วยกู้ภัย">
+    <AppShell variant="dashboard" title="แดชบอร์ดหน่วยกู้ชีพ">
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">

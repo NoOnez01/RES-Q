@@ -43,13 +43,13 @@ function toRow(c: EmergencyCase) {
     injury_description: c.assessment?.injuryDescription ?? null,
     assessed_at: c.assessment ? new Date(c.assessment.assessedAt).toISOString() : null,
 
-    // หน่วยกู้ภัย: assignment + progress
+    // หน่วยกู้ชีพ: assignment + progress
     rescue_team_name: c.assignedRescueTeam?.name ?? null,
     rescue_team_unit_code: c.assignedRescueTeam?.unitCode ?? null,
     rescue_team_phone: c.assignedRescueTeam?.phone ?? null,
     rescue_en_route_pct: c.rescueEnRoutePct ?? null,
 
-    // หน่วยกู้ภัย: patient info recorded at the scene
+    // หน่วยกู้ชีพ: patient info recorded at the scene
     patient_name: c.patientInfo?.name ?? null,
     patient_age: c.patientInfo?.age ?? null,
     patient_gender: c.patientInfo?.gender ?? null,

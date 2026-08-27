@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Truck, Clock, CheckCircle2, Building2, Stethoscope, Users, BedDouble } from 'lucide-react'
+import { Truck, Clock, CheckCircle2, Building2, Stethoscope, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -10,11 +10,17 @@ import { DashboardCard } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
+import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { useStore, MOCK_HOSPITALS } from '@/lib/store'
+import { toast } from '@/lib/toast'
 
 export default function HospitalDashboard() {
   const cases = useStore((s) => s.cases)
+  const hospitalAcceptingCases = useStore((s) => s.hospitalAcceptingCases)
+  const setHospitalAcceptingCases = useStore((s) => s.setHospitalAcceptingCases)
+  const hospitalRejectCase = useStore((s) => s.hospitalRejectCase)
   const navigate = useNavigate()
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null)
 
   const hospitalCases = useMemo(
     () => Object.values(cases).filter((c) => !!c.selectedHospital),
@@ -39,11 +45,60 @@ export default function HospitalDashboard() {
   const erReady = arrivedCases.length < 4
   const teamReady = transportingCases.length < 4
 
+  function handleToggleAccepting() {
+    const next = !hospitalAcceptingCases
+    setHospitalAcceptingCases(next)
+    toast({
+      title: next ? 'เปิดรับเคสแล้ว' : 'ปิดรับเคสชั่วคราวแล้ว',
+      message: next ? 'โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม' : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่',
+      tone: next ? 'success' : 'warning',
+    })
+  }
+
+  function handleConfirmReject() {
+    if (!rejectTargetId) return
+    hospitalRejectCase(rejectTargetId)
+    toast({ title: 'ปฏิเสธเคสแล้ว', message: 'ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว', tone: 'warning' })
+    setRejectTargetId(null)
+  }
+
   return (
     <AppShell variant="dashboard" title="แดชบอร์ดโรงพยาบาล">
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10">
+          <Card
+            className={clsx(
+              'mb-5 flex flex-wrap items-center justify-between gap-3 animate-fade-in-up',
+              hospitalAcceptingCases ? 'border-success/30 bg-success/5' : 'border-emergency/30 bg-emergency/5',
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              {hospitalAcceptingCases ? (
+                <DoorOpen className="size-5 shrink-0 text-success" />
+              ) : (
+                <DoorClosed className="size-5 shrink-0 text-emergency" />
+              )}
+              <div>
+                <p className="text-sm font-bold text-navy">
+                  {hospitalAcceptingCases ? 'เปิดรับเคส' : 'ปิดรับเคสชั่วคราว'}
+                </p>
+                <p className="text-xs text-muted">
+                  {hospitalAcceptingCases
+                    ? 'หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้'
+                    : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'}
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant={hospitalAcceptingCases ? 'danger' : 'success'}
+              onClick={handleToggleAccepting}
+            >
+              {hospitalAcceptingCases ? 'ปิดรับเคส' : 'เปิดรับเคส'}
+            </Button>
+          </Card>
+
           <Card className="mb-5 animate-fade-in-up">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy">
               <Stethoscope className="size-4 text-primary" /> ความพร้อมของโรงพยาบาล
@@ -133,7 +188,23 @@ export default function HospitalDashboard() {
                         className="animate-fade-in-up"
                         style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}
                       >
-                        <EmergencyCaseCard emergencyCase={c} to={`/hospital/case/${c.id}`} />
+                        <EmergencyCaseCard
+                          emergencyCase={c}
+                          to={`/hospital/case/${c.id}`}
+                          actions={
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              icon={<XCircle className="size-3.5" />}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setRejectTargetId(c.id)
+                              }}
+                            >
+                              ปฏิเสธเคส
+                            </Button>
+                          }
+                        />
                       </div>
                     ))}
                   </div>
@@ -156,15 +227,28 @@ export default function HospitalDashboard() {
                           emergencyCase={c}
                           to={`/hospital/case/${c.id}`}
                           actions={
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                navigate(`/hospital/case/${c.id}`)
-                              }}
-                            >
-                              ยืนยันรับผู้ป่วย
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                icon={<XCircle className="size-3.5" />}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setRejectTargetId(c.id)
+                                }}
+                              >
+                                ปฏิเสธเคส
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  navigate(`/hospital/case/${c.id}`)
+                                }}
+                              >
+                                ยืนยันรับผู้ป่วย
+                              </Button>
+                            </div>
                           }
                         />
                       </div>
@@ -195,6 +279,16 @@ export default function HospitalDashboard() {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        open={!!rejectTargetId}
+        title="ยืนยันการปฏิเสธเคส"
+        message={`คุณต้องการปฏิเสธเคส ${rejectTargetId ? (cases[rejectTargetId]?.caseNumber ?? '') : ''} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่`}
+        confirmLabel="ยืนยันปฏิเสธ"
+        tone="danger"
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectTargetId(null)}
+      />
     </AppShell>
   )
 }

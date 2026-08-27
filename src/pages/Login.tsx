@@ -12,14 +12,14 @@ import type { Role } from '@/lib/types'
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: 'public', label: 'ประชาชน' },
   { value: 'dispatch', label: 'ศูนย์สั่งการ 1669' },
-  { value: 'rescue', label: 'หน่วยกู้ภัย' },
+  { value: 'rescue', label: 'หน่วยกู้ชีพ' },
   { value: 'hospital', label: 'โรงพยาบาล' },
 ]
 
 const ROLE_NAME: Record<Role, string> = {
   public: 'ผู้ใช้งานทั่วไป',
   dispatch: 'เจ้าหน้าที่ศูนย์สั่งการ',
-  rescue: 'เจ้าหน้าที่หน่วยกู้ภัย',
+  rescue: 'เจ้าหน้าที่หน่วยกู้ชีพ',
   hospital: 'เจ้าหน้าที่โรงพยาบาล',
 }
 

@@ -58,8 +58,8 @@ export default function DispatchDashboard() {
   function handleStartFinding(caseId: string, caseNumber: string) {
     startFindingRescue(caseId)
     toast({
-      title: 'เริ่มค้นหาหน่วยกู้ภัยแล้ว',
-      message: `เคส ${caseNumber} กำลังค้นหาหน่วยกู้ภัยที่พร้อมปฏิบัติงาน`,
+      title: 'เริ่มค้นหาหน่วยกู้ชีพแล้ว',
+      message: `เคส ${caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน`,
       tone: 'info',
     })
   }
@@ -81,7 +81,7 @@ export default function DispatchDashboard() {
               tone="emergency"
             />
             <DashboardCard
-              label="กำลังค้นหาหน่วยกู้ภัย"
+              label="กำลังค้นหาหน่วยกู้ชีพ"
               value={
                 <span key={findingCount} className="inline-block animate-count-pop">
                   {findingCount}
@@ -91,7 +91,7 @@ export default function DispatchDashboard() {
               tone="warning"
             />
             <DashboardCard
-              label="หน่วยกู้ภัยกำลังปฏิบัติงาน"
+              label="หน่วยกู้ชีพกำลังปฏิบัติงาน"
               value={
                 <span key={inProgressCount} className="inline-block animate-count-pop">
                   {inProgressCount}
@@ -164,7 +164,7 @@ export default function DispatchDashboard() {
                                     handleStartFinding(c.id, c.caseNumber)
                                   }}
                                 >
-                                  เริ่มค้นหาหน่วยกู้ภัย
+                                  เริ่มค้นหาหน่วยกู้ชีพ
                                 </Button>
                               ) : (
                                 <Button

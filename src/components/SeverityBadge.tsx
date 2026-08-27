@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { AlertTriangle, AlertOctagon, AlertCircle, Info } from 'lucide-react'
+import { AlertTriangle, AlertOctagon, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import type { Severity } from '@/lib/types'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 import { PulseRing } from './backgrounds/PulseRing'
@@ -9,6 +9,7 @@ const config: Record<Severity, { classes: string; icon: React.ElementType }> = {
   2: { classes: 'bg-warning/10 text-warning border-warning/30', icon: AlertTriangle },
   3: { classes: 'bg-moderate/15 text-[#8a6d00] border-moderate/40', icon: AlertCircle },
   4: { classes: 'bg-primary/10 text-primary border-primary/30', icon: Info },
+  5: { classes: 'bg-muted/10 text-muted border-border', icon: CheckCircle2 },
 }
 
 export function SeverityBadge({ severity, className }: { severity: Severity; className?: string }) {

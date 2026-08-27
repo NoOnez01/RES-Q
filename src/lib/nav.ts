@@ -55,7 +55,7 @@ export function roleLabel(role: Role | null): string {
     case 'dispatch':
       return 'ศูนย์สั่งการ 1669'
     case 'rescue':
-      return 'หน่วยกู้ภัย'
+      return 'หน่วยกู้ชีพ'
     case 'hospital':
       return 'โรงพยาบาล'
     default:

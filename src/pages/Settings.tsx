@@ -16,7 +16,7 @@ import type { Role } from '@/lib/types'
 const ROLE_OPTIONS: { role: Role; label: string; mockName: string; icon: React.ElementType }[] = [
   { role: 'public', label: 'ประชาชน', mockName: 'คุณสมชาย ใจดี', icon: Home },
   { role: 'dispatch', label: 'ศูนย์สั่งการ', mockName: 'เจ้าหน้าที่ศูนย์สั่งการ 1669', icon: Radio },
-  { role: 'rescue', label: 'หน่วยกู้ภัย', mockName: 'หน่วยกู้ชีพ อาสาเมตตา 1', icon: Ambulance },
+  { role: 'rescue', label: 'หน่วยกู้ชีพ', mockName: 'หน่วยกู้ชีพ อาสาเมตตา 1', icon: Ambulance },
   { role: 'hospital', label: 'โรงพยาบาล', mockName: 'เจ้าหน้าที่โรงพยาบาลจุฬาลงกรณ์', icon: Building2 },
 ]
 

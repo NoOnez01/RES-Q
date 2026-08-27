@@ -137,7 +137,7 @@ export default function CaseTracking() {
           {team && (
             <Card className="flex flex-col gap-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-navy">
-                <Ambulance className="size-4 text-primary" /> หน่วยกู้ภัยที่รับผิดชอบ
+                <Ambulance className="size-4 text-primary" /> หน่วยกู้ชีพที่รับผิดชอบ
               </div>
               <div className="text-sm">
                 <p className="font-semibold text-navy">{team.name}</p>

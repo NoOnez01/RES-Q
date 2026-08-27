@@ -24,6 +24,8 @@ import { RadioCard } from '@/components/ui/RadioCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import { SeverityBadge } from '@/components/SeverityBadge'
 import { CaseTimeline } from '@/components/CaseTimeline'
+import { CaseMediaGallery } from '@/components/CaseMediaGallery'
+import { PatientInformationCard } from '@/components/PatientInformationCard'
 import { MapPanel } from '@/components/MapPanel'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
@@ -88,8 +90,8 @@ export default function DispatchCaseDetail() {
       startFindingRescue(id!)
       setFindingLoading(false)
       toast({
-        title: 'เริ่มค้นหาหน่วยกู้ภัยแล้ว',
-        message: `เคส ${c.caseNumber} กำลังค้นหาหน่วยกู้ภัยที่พร้อมปฏิบัติงาน`,
+        title: 'เริ่มค้นหาหน่วยกู้ชีพแล้ว',
+        message: `เคส ${c.caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน`,
         tone: 'info',
       })
     }, 500)
@@ -104,7 +106,7 @@ export default function DispatchCaseDetail() {
       setConfirmOpen(false)
       setJustAssigned(true)
       toast({
-        title: 'มอบหมายหน่วยกู้ภัยสำเร็จ',
+        title: 'มอบหมายหน่วยกู้ชีพสำเร็จ',
         message: supportTeam
           ? `${selectedTeam.name} และ ${supportTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`
           : `${selectedTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`,
@@ -250,21 +252,9 @@ export default function DispatchCaseDetail() {
             )}
           </Card>
 
-          {c.photos.length > 0 && (
-            <Card>
-              <h2 className="mb-4 text-base font-bold text-navy">ภาพถ่ายจุดเกิดเหตุ</h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {c.photos.map((p) => (
-                  <img
-                    key={p.id}
-                    src={p.dataUrl}
-                    alt="ภาพจุดเกิดเหตุ"
-                    className="aspect-square w-full rounded-xl border border-border object-cover"
-                  />
-                ))}
-              </div>
-            </Card>
-          )}
+          {c.status !== 'completed' && <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />}
+
+          {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
 
           {c.location && (
             <Card className="p-0 overflow-hidden">
@@ -296,7 +286,7 @@ export default function DispatchCaseDetail() {
 
             {c.status === 'received' && !c.assessment && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted">กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ภัย</p>
+                <p className="text-sm text-muted">กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ชีพ</p>
                 <Button fullWidth icon={<ClipboardList className="size-4" />} onClick={() => navigate(`/dispatch/emergency-details/${id}`)}>
                   กรอกรายละเอียดเหตุการณ์
                 </Button>
@@ -305,9 +295,9 @@ export default function DispatchCaseDetail() {
 
             {c.status === 'received' && c.assessment && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted">เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ภัยที่ใกล้ที่สุด</p>
+                <p className="text-sm text-muted">เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด</p>
                 <Button fullWidth loading={findingLoading} onClick={handleStartFinding}>
-                  ค้นหาหน่วยกู้ภัย
+                  ค้นหาหน่วยกู้ชีพ
                 </Button>
               </div>
             )}
@@ -315,7 +305,7 @@ export default function DispatchCaseDetail() {
             {c.status === 'finding-rescue' && (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  เลือกหน่วยกู้ภัยที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
+                  เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
                 </p>
                 {recommendation.requiredEquipment.length > 0 && (
                   <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
@@ -382,14 +372,14 @@ export default function DispatchCaseDetail() {
                     className="animate-scale-in flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5 text-sm font-semibold text-success"
                   >
                     <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
-                    มอบหมายหน่วยกู้ภัยสำเร็จแล้ว
+                    มอบหมายหน่วยกู้ชีพสำเร็จแล้ว
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex items-start gap-2.5">
                     <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">หน่วยกู้ภัยที่รับผิดชอบ</p>
+                      <p className="text-xs text-muted">หน่วยกู้ชีพที่รับผิดชอบ</p>
                       <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.name}</p>
                     </div>
                   </div>
@@ -495,7 +485,7 @@ export default function DispatchCaseDetail() {
                   </div>
                 )}
                 <p className="rounded-xl bg-skyblue-light px-3 py-2.5 text-xs font-medium text-muted">
-                  หน่วยกู้ภัยรับผิดชอบเคสนี้แล้ว
+                  หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว
                 </p>
               </div>
             )}
@@ -509,7 +499,7 @@ export default function DispatchCaseDetail() {
 
       <ConfirmationModal
         open={confirmOpen}
-        title="ยืนยันการมอบหมายหน่วยกู้ภัย"
+        title="ยืนยันการมอบหมายหน่วยกู้ชีพ"
         message={selectedTeam ? `ต้องการมอบหมาย "${selectedTeam.name}" ให้รับผิดชอบเคส ${c.caseNumber} ใช่หรือไม่` : ''}
         confirmLabel="ยืนยันมอบหมาย"
         confirmLoading={assignLoading}

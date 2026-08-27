@@ -11,7 +11,8 @@ import { AudioRecorder } from '@/components/AudioRecorder'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
-import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness } from '@/lib/types'
+import { uploadCaseAudio } from '@/lib/storageUploads'
+import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness, BleedingStatus } from '@/lib/types'
 
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
@@ -38,8 +39,7 @@ const emptyPrimarySurvey: PrimarySurvey = {
   exsanguinatingHemorrhage: '',
   airway: '',
   breathing: '',
-  circulation: '',
-  disability: '',
+  circulationDisability: { status: undefined, detail: '' },
   exposure: '',
 }
 
@@ -50,8 +50,14 @@ const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
   { value: 'U', title: 'U - ไม่ตอบสนอง' },
 ]
 
+const BLEEDING_STATUS_OPTIONS: { value: BleedingStatus; title: string }[] = [
+  { value: 'no-bleeding', title: 'ไม่มีเลือดออก' },
+  { value: 'bleeding', title: 'มีเลือดออก' },
+  { value: 'other', title: 'อื่นๆ' },
+]
+
 const PRIMARY_SURVEY_FIELDS: {
-  key: Exclude<keyof PrimarySurvey, 'responsiveness'>
+  key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'circulationDisability'>
   letter: string
   label: string
   hint: string
@@ -86,20 +92,6 @@ const PRIMARY_SURVEY_FIELDS: {
     placeholder: 'เช่น หายใจปกติ ไม่มีอาการหอบเหนื่อย',
   },
   {
-    key: 'circulation',
-    letter: 'C',
-    label: 'การไหลเวียนโลหิต (Circulation)',
-    hint: 'ตรวจสอบชีพจร สีของผิวหนัง ความดันโลหิต',
-    placeholder: 'เช่น ชีพจรสม่ำเสมอ ผิวสีปกติ',
-  },
-  {
-    key: 'disability',
-    letter: 'D',
-    label: 'ระบบประสาท (Disability)',
-    hint: 'ประเมินการตอบสนองของลูกตา การเคลื่อนไหว การรับรู้สติสัมปชัญญะ',
-    placeholder: 'เช่น รูม่านตาตอบสนองต่อแสงปกติ',
-  },
-  {
     key: 'exposure',
     letter: 'E',
     label: 'สิ่งแวดล้อม (Exposure/Environment)',
@@ -113,6 +105,7 @@ export default function RescuePatientRecord() {
   const navigate = useNavigate()
   const c = useStore((s) => (id ? s.cases[id] : undefined))
   const submitPatientInfo = useStore((s) => s.submitPatientInfo)
+  const addAudioRecording = useStore((s) => s.addAudioRecording)
 
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
@@ -135,8 +128,23 @@ export default function RescuePatientRecord() {
     setVitals((v) => ({ ...v, [key]: value }))
   }
 
-  function updatePrimarySurvey(key: keyof PrimarySurvey, value: string) {
+  function updatePrimarySurvey(key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'circulationDisability'>, value: string) {
     setPrimarySurvey((p) => ({ ...p, [key]: value }))
+  }
+
+  function updateCirculationDisability(patch: Partial<NonNullable<PrimarySurvey['circulationDisability']>>) {
+    setPrimarySurvey((p) => ({ ...p, circulationDisability: { ...p.circulationDisability, ...patch } }))
+  }
+
+  async function handleSaveAudio(blob: Blob, seconds: number) {
+    if (!c) return
+    try {
+      const url = await uploadCaseAudio(c.caseNumber, blob)
+      addAudioRecording(c.id, url, seconds, 'rescue')
+      toast({ title: 'บันทึกเสียงแล้ว', tone: 'success' })
+    } catch {
+      toast({ title: 'อัปโหลดเสียงไม่สำเร็จ', tone: 'error' })
+    }
   }
 
   function handleSubmit() {
@@ -214,7 +222,47 @@ export default function RescuePatientRecord() {
             <p className="text-xs text-muted">ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ</p>
           </div>
 
-          {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
+          {PRIMARY_SURVEY_FIELDS.slice(1, 4).map((f) => (
+            <Input
+              key={f.key}
+              label={`${f.letter} - ${f.label}`}
+              hint={f.hint}
+              placeholder={f.placeholder}
+              value={primarySurvey[f.key]}
+              onChange={(e) => updatePrimarySurvey(f.key, e.target.value)}
+            />
+          ))}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-navy">C/D - การไหลเวียนโลหิตและระบบประสาท (Circulation/Disability)</label>
+            <div className="grid grid-cols-3 gap-2">
+              {BLEEDING_STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateCirculationDisability({ status: opt.value })}
+                  className={clsx(
+                    'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
+                    primarySurvey.circulationDisability?.status === opt.value
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
+                  )}
+                >
+                  {opt.title}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted">ตรวจสอบชีพจร สีผิว ความดันโลหิต และการตอบสนองของระบบประสาท</p>
+            {primarySurvey.circulationDisability?.status === 'other' && (
+              <SpeechToTextPanel
+                value={primarySurvey.circulationDisability?.detail ?? ''}
+                onChange={(v) => updateCirculationDisability({ detail: v })}
+                label="ระบุรายละเอียด (พิมพ์หรือพูด)"
+              />
+            )}
+          </div>
+
+          {PRIMARY_SURVEY_FIELDS.slice(4).map((f) => (
             <Input
               key={f.key}
               label={`${f.letter} - ${f.label}`}
@@ -264,7 +312,7 @@ export default function RescuePatientRecord() {
         </Card>
 
         <div className="animate-fade-in-up" style={{ animationDelay: '260ms', animationFillMode: 'backwards' }}>
-          <AudioRecorder label="บันทึกเสียงเพิ่มเติม (ถ้ามี)" />
+          <AudioRecorder label="บันทึกเสียงเพิ่มเติม (ถ้ามี)" onSave={handleSaveAudio} />
         </div>
 
         <Button variant="primary" size="lg" fullWidth loading={loading} onClick={handleSubmit}>

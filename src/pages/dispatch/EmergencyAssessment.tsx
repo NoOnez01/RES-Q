@@ -27,11 +27,22 @@ const CONSCIOUS_LABEL: Record<Exclude<Conscious, ''>, string> = {
 
 const INJURY_SOFT_LIMIT = 500
 
-const SEVERITY_OPTIONS: { value: Severity; title: string; tone: 'emergency' | 'warning' | 'moderate' | 'default' }[] = [
+const SEVERITY_OPTIONS: {
+  value: Severity
+  title: string
+  description?: string
+  tone: 'emergency' | 'warning' | 'moderate' | 'default' | 'success'
+}[] = [
   { value: 1, title: 'ระดับ 1: วิกฤต', tone: 'emergency' },
   { value: 2, title: 'ระดับ 2: ฉุกเฉินสูง', tone: 'warning' },
   { value: 3, title: 'ระดับ 3: ฉุกเฉินปานกลาง', tone: 'moderate' },
   { value: 4, title: 'ระดับ 4: เร่งด่วนต่ำ', tone: 'default' },
+  {
+    value: 5,
+    title: 'ระดับ 5: ไม่ฉุกเฉิน',
+    description: 'พิจารณาให้เดินทางไปโรงพยาบาลด้วยตนเอง (เช่น ป่วยไข้หวัด) หรือกรณีผู้ป่วยเสียชีวิตแล้ว',
+    tone: 'success',
+  },
 ]
 
 export default function DispatchEmergencyAssessment() {
@@ -110,7 +121,7 @@ export default function DispatchEmergencyAssessment() {
       setSubmitting(false)
       toast({
         title: isEditing ? 'แก้ไขข้อมูลแล้ว' : 'บันทึกรายละเอียดและการประเมินแล้ว',
-        message: `เคส ${c.caseNumber} พร้อมค้นหาหน่วยกู้ภัยแล้ว`,
+        message: `เคส ${c.caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว`,
         tone: 'success',
       })
       navigate(`/dispatch/case/${id}`)
@@ -240,6 +251,7 @@ export default function DispatchEmergencyAssessment() {
                   selected={severity === opt.value}
                   onClick={() => setSeverity(opt.value)}
                   title={opt.title}
+                  description={opt.description}
                   tone={opt.tone}
                   className={clsx(
                     'transition-transform duration-200',

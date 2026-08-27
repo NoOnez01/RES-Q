@@ -15,13 +15,13 @@ import type {
   NotificationAudience,
   PhotoCategory,
   PatientInfo,
+  PatientUpdate,
   Role,
   RescueTeam,
 } from './types'
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
 import { formatCaseNumber, uid } from './utils'
-import { deleteCasePhotos } from './storageUploads'
 
 function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): EmergencyCase {
   const meta = statusMeta(status)
@@ -63,6 +63,7 @@ function makeNewCase(seq: number, reporterName?: string, reporterPhone?: string)
     incidentDetails: null,
     assessment: null,
     patientInfo: null,
+    patientUpdates: [],
     assignedRescueTeam: null,
     selectedHospital: null,
     rescueEnRoutePct: 0,
@@ -92,7 +93,7 @@ interface ResQState {
   deleteCase: (caseId: string) => void
   addPhoto: (caseId: string, dataUrl: string, category?: PhotoCategory) => void
   removePhoto: (caseId: string, photoId: string) => void
-  addAudioRecording: (caseId: string, url: string, durationSec: number) => void
+  addAudioRecording: (caseId: string, url: string, durationSec: number, recordedBy?: 'public' | 'rescue') => void
   removeAudioRecording: (caseId: string, recordingId: string) => void
   finishPhotoStep: (caseId: string) => void
   setLocation: (caseId: string, location: GeoLocation) => void
@@ -124,11 +125,17 @@ interface ResQState {
   updateRescueProgress: (caseId: string, pct: number) => void
   rescueMarkArrived: (caseId: string) => void
   submitPatientInfo: (caseId: string, info: PatientInfo) => void
+  /** A follow-up note on the patient's condition after the initial record
+   * -- syncs in real time to dispatch/hospital like the rest of the case. */
+  addPatientUpdate: (caseId: string, note: string) => void
   selectHospital: (caseId: string, hospital: Hospital) => void
   startTransport: (caseId: string) => void
   markHospitalArrived: (caseId: string) => void
 
   // hospital
+  hospitalAcceptingCases: boolean
+  setHospitalAcceptingCases: (accepting: boolean) => void
+  hospitalRejectCase: (caseId: string) => void
   hospitalConfirmAdmission: (caseId: string) => void
   completeCase: (caseId: string) => void
 
@@ -166,6 +173,7 @@ export const useStore = create<ResQState>()(
       notifications: [],
       caseSeq: 0,
       hydratedDemo: false,
+      hospitalAcceptingCases: true,
 
       setUser: (user) => set({ currentUser: user }),
       logout: () => set({ currentUser: null }),
@@ -226,11 +234,11 @@ export const useStore = create<ResQState>()(
           }
         }),
 
-      addAudioRecording: (caseId, url, durationSec) =>
+      addAudioRecording: (caseId, url, durationSec, recordedBy = 'public') =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const recording: AudioRecording = { id: uid('audio'), url, durationSec, recordedAt: Date.now() }
+          const recording: AudioRecording = { id: uid('audio'), url, durationSec, recordedAt: Date.now(), recordedBy }
           return {
             cases: {
               ...s.cases,
@@ -377,8 +385,8 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'public',
           caseId,
-          title: 'มอบหมายหน่วยกู้ภัยแล้ว',
-          message: `หน่วยกู้ภัย ${team.name} ได้รับมอบหมายเคสของคุณแล้ว`,
+          title: 'มอบหมายหน่วยกู้ชีพแล้ว',
+          message: `หน่วยกู้ชีพ ${team.name} ได้รับมอบหมายเคสของคุณแล้ว`,
           tone: 'success',
         })
       },
@@ -401,7 +409,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId,
           title: 'เพิ่มหน่วยสนับสนุนแล้ว',
-          message: `หน่วยกู้ภัย ${team.name} เข้าร่วมช่วยเหลือเคสของคุณ`,
+          message: `หน่วยกู้ชีพ ${team.name} เข้าร่วมช่วยเหลือเคสของคุณ`,
           tone: 'info',
         })
       },
@@ -417,15 +425,15 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'dispatch',
           caseId,
-          title: 'หน่วยกู้ภัยรับเคสแล้ว',
-          message: `${c?.assignedRescueTeam?.name ?? 'หน่วยกู้ภัย'} กำลังเดินทางไปยังจุดเกิดเหตุ`,
+          title: 'หน่วยกู้ชีพรับเคสแล้ว',
+          message: `${c?.assignedRescueTeam?.name ?? 'หน่วยกู้ชีพ'} กำลังเดินทางไปยังจุดเกิดเหตุ`,
           tone: 'success',
         })
         notify(set, {
           audience: 'public',
           caseId,
-          title: 'หน่วยกู้ภัยกำลังเดินทาง',
-          message: 'หน่วยกู้ภัยตอบรับเคสของคุณแล้วและกำลังเดินทางมา',
+          title: 'หน่วยกู้ชีพกำลังเดินทาง',
+          message: 'หน่วยกู้ชีพตอบรับเคสของคุณแล้วและกำลังเดินทางมา',
           tone: 'success',
         })
       },
@@ -435,7 +443,7 @@ export const useStore = create<ResQState>()(
           const c = s.cases[caseId]
           if (!c) return {}
           const reverted = { ...c, assignedRescueTeam: null, supportingRescueTeam: null, rescueRejectedAt: Date.now() }
-          return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ภัยปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
+          return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ชีพปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
         }),
 
       updateRescueProgress: (caseId, pct) =>
@@ -454,8 +462,8 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'public',
           caseId,
-          title: 'หน่วยกู้ภัยถึงจุดเกิดเหตุแล้ว',
-          message: 'หน่วยกู้ภัยถึงที่เกิดเหตุและกำลังเข้าช่วยเหลือ',
+          title: 'หน่วยกู้ชีพถึงจุดเกิดเหตุแล้ว',
+          message: 'หน่วยกู้ชีพถึงที่เกิดเหตุและกำลังเข้าช่วยเหลือ',
           tone: 'success',
         })
       },
@@ -467,6 +475,35 @@ export const useStore = create<ResQState>()(
           const updated = pushStatus({ ...c, patientInfo: { ...info, recordedAt: Date.now() } }, 'assisted')
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
+
+      addPatientUpdate: (caseId, note) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const update: PatientUpdate = { id: uid('pu'), note, recordedAt: Date.now() }
+          return {
+            cases: {
+              ...s.cases,
+              [caseId]: { ...c, patientUpdates: [...(c.patientUpdates ?? []), update], updatedAt: Date.now() },
+            },
+          }
+        })
+        const c = get().cases[caseId]
+        notify(set, {
+          audience: 'dispatch',
+          caseId,
+          title: 'อัปเดตอาการผู้ป่วย',
+          message: `เคส ${c?.caseNumber ?? ''}: ${note}`,
+          tone: 'info',
+        })
+        notify(set, {
+          audience: 'hospital',
+          caseId,
+          title: 'อัปเดตอาการผู้ป่วย',
+          message: `เคส ${c?.caseNumber ?? ''}: ${note}`,
+          tone: 'info',
+        })
+      },
 
       selectHospital: (caseId, hospital) => {
         set((s) => {
@@ -494,7 +531,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId,
           title: 'กำลังนำส่งโรงพยาบาล',
-          message: 'หน่วยกู้ภัยกำลังนำส่งผู้ป่วยไปยังโรงพยาบาลที่เลือก',
+          message: 'หน่วยกู้ชีพกำลังนำส่งผู้ป่วยไปยังโรงพยาบาลที่เลือก',
           tone: 'info',
         })
       },
@@ -515,6 +552,30 @@ export const useStore = create<ResQState>()(
         })
       },
 
+      setHospitalAcceptingCases: (accepting) => set({ hospitalAcceptingCases: accepting }),
+
+      hospitalRejectCase: (caseId) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const reverted = { ...c, selectedHospital: null, rescueEnRoutePct: 0 }
+          return {
+            cases: {
+              ...s.cases,
+              [caseId]: pushStatus(reverted, 'assisted', 'โรงพยาบาลปฏิเสธเคส กรุณาเลือกโรงพยาบาลใหม่'),
+            },
+          }
+        })
+        const c = get().cases[caseId]
+        notify(set, {
+          audience: 'rescue',
+          caseId,
+          title: 'โรงพยาบาลปฏิเสธเคส',
+          message: `เคส ${c?.caseNumber ?? ''} ถูกปฏิเสธ กรุณาเลือกโรงพยาบาลใหม่`,
+          tone: 'warning',
+        })
+      },
+
       hospitalConfirmAdmission: (caseId) => {
         set((s) => {
           const c = s.cases[caseId]
@@ -531,11 +592,10 @@ export const useStore = create<ResQState>()(
       },
 
       completeCase: (caseId) => {
-        const caseNumber = get().cases[caseId]?.caseNumber
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: pushStatus({ ...c, photos: [] }, 'completed') } }
+          return { cases: { ...s.cases, [caseId]: pushStatus(c, 'completed') } }
         })
         notify(set, {
           audience: 'all',
@@ -544,9 +604,10 @@ export const useStore = create<ResQState>()(
           message: 'กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว',
           tone: 'success',
         })
-        // No agency has an operational reason to keep scene photos once the
-        // case is fully done -- best-effort, doesn't block completion if it fails.
-        if (caseNumber) void deleteCasePhotos(caseNumber).catch(() => {})
+        // Scene photos/audio stay in the case record for the hospital's
+        // records -- dispatch and rescue just stop *displaying* them once
+        // the case is completed (see the `completed` gate in their case
+        // detail views), so there's no separate per-agency copy to delete.
       },
 
       markFeedbackSubmitted: (caseId) =>
@@ -621,7 +682,7 @@ export const useStore = create<ResQState>()(
     }),
     {
       name: 'resq-storage',
-      version: 3,
+      version: 4,
       migrate: (persisted: any, version: number) => {
         if (version < 2 && persisted?.cases) {
           for (const c of Object.values(persisted.cases) as any[]) {
@@ -634,6 +695,13 @@ export const useStore = create<ResQState>()(
           for (const c of Object.values(persisted.cases) as any[]) {
             if (c && c.rescueRejectedAt === undefined) {
               c.rescueRejectedAt = null
+            }
+          }
+        }
+        if (version < 4 && persisted?.cases) {
+          for (const c of Object.values(persisted.cases) as any[]) {
+            if (c && !Array.isArray(c.patientUpdates)) {
+              c.patientUpdates = []
             }
           }
         }

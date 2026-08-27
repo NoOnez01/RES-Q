@@ -13,6 +13,8 @@ import type { MapPin as MapPinT } from '@/components/MapPanel'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { PatientInformationCard } from '@/components/PatientInformationCard'
+import { CaseMediaGallery } from '@/components/CaseMediaGallery'
+import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -87,9 +89,12 @@ export default function RescueCaseDetail() {
   const rescueAcceptCase = useStore((s) => s.rescueAcceptCase)
   const rescueRejectCase = useStore((s) => s.rescueRejectCase)
   const startTransport = useStore((s) => s.startTransport)
+  const addPatientUpdate = useStore((s) => s.addPatientUpdate)
 
   const [confirmOpen, setConfirmOpen] = useState<'accept' | 'reject' | null>(null)
   const [loading, setLoading] = useState(false)
+  const [updateNote, setUpdateNote] = useState('')
+  const [updateLoading, setUpdateLoading] = useState(false)
 
   if (!id || !c) {
     return (
@@ -115,7 +120,7 @@ export default function RescueCaseDetail() {
       rescueRejectCase(c!.id)
       setLoading(false)
       setConfirmOpen(null)
-      toast({ title: 'ปฏิเสธเคสแล้ว', message: 'ระบบกำลังค้นหาหน่วยกู้ภัยใหม่', tone: 'info' })
+      toast({ title: 'ปฏิเสธเคสแล้ว', message: 'ระบบกำลังค้นหาหน่วยกู้ชีพใหม่', tone: 'info' })
       navigate('/rescue/dashboard')
     }, 500)
   }
@@ -124,6 +129,17 @@ export default function RescueCaseDetail() {
     startTransport(c!.id)
     toast({ title: 'เริ่มนำส่งโรงพยาบาล', message: 'กำลังนำทางไปยังโรงพยาบาลที่เลือก', tone: 'info' })
     navigate(`/navigation/${c!.id}`)
+  }
+
+  function handleAddUpdate() {
+    if (!updateNote.trim()) return
+    setUpdateLoading(true)
+    setTimeout(() => {
+      addPatientUpdate(c!.id, updateNote.trim())
+      setUpdateNote('')
+      setUpdateLoading(false)
+      toast({ title: 'บันทึกอัปเดตอาการแล้ว', message: 'ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที', tone: 'success' })
+    }, 400)
   }
 
   const pins: MapPinT[] = []
@@ -192,21 +208,7 @@ export default function RescueCaseDetail() {
           </Card>
         )}
 
-        {c.photos.length > 0 && (
-          <Card>
-            <h3 className="mb-3 font-bold text-navy">ภาพถ่ายที่เกิดเหตุ</h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {c.photos.map((p) => (
-                <img
-                  key={p.id}
-                  src={p.dataUrl}
-                  alt="ภาพเหตุการณ์"
-                  className="aspect-square w-full rounded-xl border border-border object-cover"
-                />
-              ))}
-            </div>
-          </Card>
-        )}
+        {c.status !== 'completed' && <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />}
 
         {pins.length > 0 && (
           <Card className="!p-0 overflow-hidden">
@@ -216,7 +218,7 @@ export default function RescueCaseDetail() {
 
         {c.assignedRescueTeam && (
           <Card className="space-y-2">
-            <h3 className="font-bold text-navy">หน่วยกู้ภัยที่รับผิดชอบ</h3>
+            <h3 className="font-bold text-navy">หน่วยกู้ชีพที่รับผิดชอบ</h3>
             <p className="text-sm text-navy">{c.assignedRescueTeam.name}</p>
             <p className="text-xs text-muted">
               {c.assignedRescueTeam.unitCode} · {c.assignedRescueTeam.vehicle} · {c.assignedRescueTeam.members} คน
@@ -225,7 +227,30 @@ export default function RescueCaseDetail() {
           </Card>
         )}
 
-        {c.patientInfo && <PatientInformationCard patient={c.patientInfo} />}
+        {c.patientInfo && (
+          <>
+            <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />
+            {c.status !== 'completed' && (
+              <Card className="space-y-3">
+                <h3 className="font-bold text-navy">อัปเดตอาการผู้ป่วย</h3>
+                <SpeechToTextPanel
+                  value={updateNote}
+                  onChange={setUpdateNote}
+                  label="มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={updateLoading}
+                  disabled={!updateNote.trim()}
+                  onClick={handleAddUpdate}
+                >
+                  บันทึกอัปเดต
+                </Button>
+              </Card>
+            )}
+          </>
+        )}
 
         {c.selectedHospital && (
           <Card className="space-y-1">
@@ -312,7 +337,7 @@ export default function RescueCaseDetail() {
       <ConfirmationModal
         open={confirmOpen === 'reject'}
         title="ยืนยันการปฏิเสธเคส"
-        message={`คุณต้องการปฏิเสธเคส ${c.caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ภัยอื่นแทน`}
+        message={`คุณต้องการปฏิเสธเคส ${c.caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน`}
         confirmLabel="ยืนยันปฏิเสธ"
         tone="danger"
         onConfirm={handleReject}

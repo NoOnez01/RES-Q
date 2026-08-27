@@ -91,7 +91,7 @@ export default function DispatchFeedbackStats() {
                           <span className="text-sm font-semibold text-navy">เคส {row.case_id}</span>
                           <StarRow filled={row.rating} />
                         </div>
-                        {row.rescue_team_name && <p className="text-xs text-muted">หน่วยกู้ภัย: {row.rescue_team_name}</p>}
+                        {row.rescue_team_name && <p className="text-xs text-muted">หน่วยกู้ชีพ: {row.rescue_team_name}</p>}
                         <p className="text-sm text-navy">{row.complaint}</p>
                         <p className="text-xs text-muted">{formatDateTime(new Date(row.created_at).getTime())}</p>
                       </Card>

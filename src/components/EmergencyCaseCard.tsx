@@ -10,9 +10,9 @@ import { formatDateTime } from '@/lib/utils'
 type RescueResponseColor = 'yellow' | 'green' | 'red'
 
 const RESCUE_RESPONSE_STYLE: Record<RescueResponseColor, { classes: string; label: string }> = {
-  yellow: { classes: 'bg-warning text-white border-warning/40', label: 'รอหน่วยกู้ภัยตอบรับ' },
-  green: { classes: 'bg-success text-white border-success/40', label: 'หน่วยกู้ภัยตอบรับแล้ว' },
-  red: { classes: 'bg-emergency text-white border-emergency/40', label: 'หน่วยกู้ภัยปฏิเสธเคส' },
+  yellow: { classes: 'bg-warning text-white border-warning/40', label: 'รอหน่วยกู้ชีพตอบรับ' },
+  green: { classes: 'bg-success text-white border-success/40', label: 'หน่วยกู้ชีพตอบรับแล้ว' },
+  red: { classes: 'bg-emergency text-white border-emergency/40', label: 'หน่วยกู้ชีพปฏิเสธเคส' },
 }
 
 /** Sent to a team (yellow) -> accepted (green) or rejected, back to searching (red). */

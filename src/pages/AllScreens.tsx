@@ -19,7 +19,7 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
       { label: 'เข้าสู่ระบบ', path: '/login' },
       { label: 'สมัครสมาชิก', path: '/register' },
       { label: 'สมัครสมาชิก (ประชาชน)', path: '/register/public' },
-      { label: 'สมัครสมาชิก (หน่วยกู้ภัย)', path: '/register/rescue' },
+      { label: 'สมัครสมาชิก (หน่วยกู้ชีพ)', path: '/register/rescue' },
       { label: 'สมัครสมาชิก (ศูนย์สั่งการ)', path: '/register/dispatch' },
       { label: 'สมัครสมาชิก (โรงพยาบาล)', path: '/register/hospital' },
     ],
@@ -39,8 +39,8 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
     ],
   },
   {
-    title: 'หน่วยกู้ภัย',
-    items: [{ label: 'แดชบอร์ดหน่วยกู้ภัย', path: '/rescue/dashboard' }],
+    title: 'หน่วยกู้ชีพ',
+    items: [{ label: 'แดชบอร์ดหน่วยกู้ชีพ', path: '/rescue/dashboard' }],
   },
   {
     title: 'โรงพยาบาล',
@@ -63,7 +63,7 @@ function caseScreens(caseId: string): ScreenEntry[] {
     { label: 'ติดตามเคส (ประชาชน)', path: `/public/case/${caseId}` },
     { label: 'รายละเอียดเคส (ศูนย์สั่งการ)', path: `/dispatch/case/${caseId}` },
     { label: 'กรอกรายละเอียดเหตุการณ์ (ศูนย์สั่งการ)', path: `/dispatch/emergency-details/${caseId}` },
-    { label: 'รายละเอียดเคส (หน่วยกู้ภัย)', path: `/rescue/case/${caseId}` },
+    { label: 'รายละเอียดเคส (หน่วยกู้ชีพ)', path: `/rescue/case/${caseId}` },
     { label: 'รายละเอียดเคส (โรงพยาบาล)', path: `/hospital/case/${caseId}` },
     { label: 'บันทึกข้อมูลผู้ป่วย', path: `/rescue/patient-record/${caseId}` },
     { label: 'แผนที่นำทาง', path: `/navigation/${caseId}` },

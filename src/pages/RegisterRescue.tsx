@@ -40,7 +40,7 @@ export default function RegisterRescue() {
 
   function validate() {
     const next: typeof errors = {}
-    if (!form.unitName.trim()) next.unitName = 'กรุณากรอกชื่อหน่วยกู้ภัย'
+    if (!form.unitName.trim()) next.unitName = 'กรุณากรอกชื่อหน่วยกู้ชีพ'
     if (!form.unitCode.trim()) next.unitCode = 'กรุณากรอกรหัสหน่วย'
     if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์ติดต่อ'
     if (!form.memberCount.trim()) next.memberCount = 'กรุณากรอกจำนวนเจ้าหน้าที่'
@@ -76,7 +76,7 @@ export default function RegisterRescue() {
 
   if (submitted) {
     return (
-      <AppShell variant="public" title="สมัครสมาชิกหน่วยกู้ภัย">
+      <AppShell variant="public" title="สมัครสมาชิกหน่วยกู้ชีพ">
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
           <SuccessState title="สมัครสมาชิกสำเร็จ" description={`ยินดีต้อนรับ ${form.unitName}`} />
         </div>
@@ -85,14 +85,14 @@ export default function RegisterRescue() {
   }
 
   return (
-    <AppShell variant="public" title="สมัครสมาชิกหน่วยกู้ภัย">
+    <AppShell variant="public" title="สมัครสมาชิกหน่วยกู้ชีพ">
       <div className="relative">
         <AnimatedBackground variant="auth" />
         <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
           <Card className="animate-fade-in-up">
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <Input
-                label="ชื่อหน่วยกู้ภัย"
+                label="ชื่อหน่วยกู้ชีพ"
                 required
                 value={form.unitName}
                 onChange={(e) => update('unitName', e.target.value)}

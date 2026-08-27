@@ -1,5 +1,5 @@
 import { Activity, HeartPulse, Thermometer, Wind, Gauge } from 'lucide-react'
-import type { PatientInfo, Responsiveness } from '@/lib/types'
+import type { PatientInfo, Responsiveness, BleedingStatus } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
 import { Card } from './ui/Card'
 
@@ -18,17 +18,29 @@ const RESPONSIVENESS_LABEL: Record<Responsiveness, string> = {
   U: 'U - ไม่ตอบสนอง',
 }
 
+const BLEEDING_STATUS_LABEL: Record<BleedingStatus, string> = {
+  'no-bleeding': 'ไม่มีเลือดออก',
+  bleeding: 'มีเลือดออก',
+  other: 'อื่นๆ',
+}
+
 const PRIMARY_SURVEY_ITEMS = [
   { key: 'generalImpression', letter: 'G', label: 'ภาพรวมผู้ป่วย' },
   { key: 'exsanguinatingHemorrhage', letter: 'X', label: 'การห้ามเลือด' },
   { key: 'airway', letter: 'A', label: 'ทางเดินหายใจ' },
   { key: 'breathing', letter: 'B', label: 'การหายใจ' },
-  { key: 'circulation', letter: 'C', label: 'การไหลเวียนโลหิต' },
-  { key: 'disability', letter: 'D', label: 'ระบบประสาท' },
   { key: 'exposure', letter: 'E', label: 'สิ่งแวดล้อม' },
 ] as const
 
-export function PatientInformationCard({ patient }: { patient: PatientInfo }) {
+export function PatientInformationCard({
+  patient,
+  updates,
+}: {
+  patient: PatientInfo
+  /** Follow-up condition notes logged after this record, newest last. */
+  updates?: { id: string; note: string; recordedAt: number }[]
+}) {
+  const cd = patient.primarySurvey.circulationDisability
   return (
     <Card className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -70,8 +82,31 @@ export function PatientInformationCard({ patient }: { patient: PatientInfo }) {
               <p className="text-sm font-semibold text-navy truncate">{patient.primarySurvey[key] || '-'}</p>
             </div>
           ))}
+          <div className="rounded-xl bg-skyblue-pale p-3 col-span-2">
+            <p className="text-xs text-muted">C/D - การไหลเวียนโลหิต/ระบบประสาท</p>
+            <p className="text-sm font-semibold text-navy">
+              {cd?.status ? BLEEDING_STATUS_LABEL[cd.status] : '-'}
+              {cd?.detail && <span className="ml-1 font-normal text-muted">— {cd.detail}</span>}
+            </p>
+          </div>
         </div>
       </div>
+
+      {updates && updates.length > 0 && (
+        <div className="border-t border-border pt-4">
+          <p className="mb-2 text-sm font-semibold text-navy">อัปเดตอาการล่าสุด</p>
+          <div className="flex flex-col gap-2">
+            {[...updates]
+              .sort((a, b) => b.recordedAt - a.recordedAt)
+              .map((u) => (
+                <div key={u.id} className="rounded-xl bg-skyblue-pale p-3">
+                  <p className="text-sm text-navy whitespace-pre-wrap">{u.note}</p>
+                  <p className="mt-1 text-xs text-muted">{formatDateTime(u.recordedAt)}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-3">
         {vitalItems.map(({ key, label, icon: Icon, unit }) => (

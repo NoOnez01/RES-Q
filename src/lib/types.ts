@@ -8,13 +8,14 @@ export interface AppUser {
   org?: string
 }
 
-export type Severity = 1 | 2 | 3 | 4
+export type Severity = 1 | 2 | 3 | 4 | 5
 
 export const SEVERITY_LABEL: Record<Severity, string> = {
   1: 'ระดับ 1: วิกฤต',
   2: 'ระดับ 2: ฉุกเฉินสูง',
   3: 'ระดับ 3: ฉุกเฉินปานกลาง',
   4: 'ระดับ 4: เร่งด่วนต่ำ',
+  5: 'ระดับ 5: ไม่ฉุกเฉิน',
 }
 
 export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
@@ -22,6 +23,7 @@ export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
   2: 'ฉุกเฉินสูง',
   3: 'ฉุกเฉินปานกลาง',
   4: 'เร่งด่วนต่ำ',
+  5: 'ไม่ฉุกเฉิน',
 }
 
 export type CallStatus = 'idle' | 'connecting' | 'in-call' | 'ended'
@@ -31,9 +33,9 @@ export type CaseStatus =
   | 'photos-taken' // 2 ถ่ายรูปจุดเกิดเหตุแล้ว
   | 'called-1669' // 3 ติดต่อ 1669 แล้ว
   | 'received' // 4 รับแจ้งเหตุแล้ว
-  | 'finding-rescue' // 5 กำลังค้นหาหน่วยกู้ภัย
-  | 'rescue-assigned' // 6 มอบหมายหน่วยกู้ภัยแล้ว
-  | 'rescue-en-route' // 7 หน่วยกู้ภัยกำลังเดินทาง
+  | 'finding-rescue' // 5 กำลังค้นหาหน่วยกู้ชีพ
+  | 'rescue-assigned' // 6 มอบหมายหน่วยกู้ชีพแล้ว
+  | 'rescue-en-route' // 7 หน่วยกู้ชีพกำลังเดินทาง
   | 'rescue-arrived' // 8 ถึงจุดเกิดเหตุแล้ว
   | 'assisted' // 9 เข้าช่วยเหลือแล้ว
   | 'transporting' // 10 กำลังนำส่งโรงพยาบาล
@@ -45,7 +47,7 @@ export interface CaseStatusMeta {
   key: CaseStatus
   order: number
   label: string
-  org: 'ประชาชน' | 'ศูนย์ 1669' | 'หน่วยกู้ภัย' | 'โรงพยาบาล' | 'ระบบ'
+  org: 'ประชาชน' | 'ศูนย์ 1669' | 'หน่วยกู้ชีพ' | 'โรงพยาบาล' | 'ระบบ'
 }
 
 export const CASE_STATUS_FLOW: CaseStatusMeta[] = [
@@ -53,13 +55,13 @@ export const CASE_STATUS_FLOW: CaseStatusMeta[] = [
   { key: 'photos-taken', order: 2, label: 'ถ่ายรูปจุดเกิดเหตุแล้ว', org: 'ประชาชน' },
   { key: 'called-1669', order: 3, label: 'ติดต่อ 1669 แล้ว', org: 'ประชาชน' },
   { key: 'received', order: 4, label: 'รับแจ้งเหตุแล้ว', org: 'ศูนย์ 1669' },
-  { key: 'finding-rescue', order: 5, label: 'กำลังค้นหาหน่วยกู้ภัย', org: 'ศูนย์ 1669' },
-  { key: 'rescue-assigned', order: 6, label: 'มอบหมายหน่วยกู้ภัยแล้ว', org: 'ศูนย์ 1669' },
-  { key: 'rescue-en-route', order: 7, label: 'หน่วยกู้ภัยกำลังเดินทาง', org: 'หน่วยกู้ภัย' },
-  { key: 'rescue-arrived', order: 8, label: 'ถึงจุดเกิดเหตุแล้ว', org: 'หน่วยกู้ภัย' },
-  { key: 'assisted', order: 9, label: 'เข้าช่วยเหลือแล้ว', org: 'หน่วยกู้ภัย' },
-  { key: 'transporting', order: 10, label: 'กำลังนำส่งโรงพยาบาล', org: 'หน่วยกู้ภัย' },
-  { key: 'hospital-arrived', order: 11, label: 'ถึงโรงพยาบาลแล้ว', org: 'หน่วยกู้ภัย' },
+  { key: 'finding-rescue', order: 5, label: 'กำลังค้นหาหน่วยกู้ชีพ', org: 'ศูนย์ 1669' },
+  { key: 'rescue-assigned', order: 6, label: 'มอบหมายหน่วยกู้ชีพแล้ว', org: 'ศูนย์ 1669' },
+  { key: 'rescue-en-route', order: 7, label: 'หน่วยกู้ชีพกำลังเดินทาง', org: 'หน่วยกู้ชีพ' },
+  { key: 'rescue-arrived', order: 8, label: 'ถึงจุดเกิดเหตุแล้ว', org: 'หน่วยกู้ชีพ' },
+  { key: 'assisted', order: 9, label: 'เข้าช่วยเหลือแล้ว', org: 'หน่วยกู้ชีพ' },
+  { key: 'transporting', order: 10, label: 'กำลังนำส่งโรงพยาบาล', org: 'หน่วยกู้ชีพ' },
+  { key: 'hospital-arrived', order: 11, label: 'ถึงโรงพยาบาลแล้ว', org: 'หน่วยกู้ชีพ' },
   { key: 'hospital-received', order: 12, label: 'โรงพยาบาลรับผู้ป่วยแล้ว', org: 'โรงพยาบาล' },
   { key: 'completed', order: 13, label: 'เสร็จสิ้น', org: 'ระบบ' },
 ]
@@ -97,6 +99,19 @@ export interface AudioRecording {
   url: string
   durationSec: number
   recordedAt: number
+  /** Who recorded this clip -- lets the hospital tell a citizen's report
+   * apart from a rescue crew's field note. Missing on older recordings
+   * (assume 'public', the only source before rescue could record). */
+  recordedBy?: 'public' | 'rescue'
+}
+
+/** A follow-up note on the patient's condition logged after the initial
+ * patient-record submission -- syncs in real time like the rest of the
+ * case so dispatch/hospital see changes as they happen. */
+export interface PatientUpdate {
+  id: string
+  note: string
+  recordedAt: number
 }
 
 export interface IncidentDetails {
@@ -125,17 +140,27 @@ export interface VitalSigns {
 /** AVPU scale for the R (Responsiveness) step of the primary survey. */
 export type Responsiveness = 'A' | 'V' | 'P' | 'U'
 
+/** C (Circulation) and D (Disability) are collapsed into one field focused
+ * on bleeding status, with an "other" option for anything that doesn't fit. */
+export type BleedingStatus = 'no-bleeding' | 'bleeding' | 'other'
+
+export interface CirculationDisability {
+  status?: BleedingStatus
+  /** Free-text or speech-to-text detail -- required context when status is
+   * 'other', optional elaboration otherwise. */
+  detail?: string
+}
+
 /** Primary survey per the G-R-X-A-B-C-D-E framework used in Thai EMS
  * fieldwork: general impression, responsiveness (AVPU), exsanguinating
- * hemorrhage, airway, breathing, circulation, disability, exposure. */
+ * hemorrhage, airway, breathing, circulation+disability, exposure. */
 export interface PrimarySurvey {
   generalImpression?: string
   responsiveness?: Responsiveness
   exsanguinatingHemorrhage?: string
   airway?: string
   breathing?: string
-  circulation?: string
-  disability?: string
+  circulationDisability?: CirculationDisability
   exposure?: string
 }
 
@@ -192,6 +217,9 @@ export interface EmergencyCase {
   incidentDetails: IncidentDetails | null
   assessment: DispatcherAssessment | null
   patientInfo: PatientInfo | null
+  /** Follow-up condition notes logged after the initial patient record,
+   * newest last. */
+  patientUpdates: PatientUpdate[]
   assignedRescueTeam: RescueTeam | null
   /** Second unit co-assigned alongside the primary responder when no single
    * available/nearby unit had the equipment the incident needed. */

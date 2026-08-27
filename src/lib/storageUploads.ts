@@ -47,33 +47,3 @@ export async function uploadCaseAudio(caseNumber: string, blob: Blob): Promise<s
   await trackCaseMedia(caseNumber, 'audio', path, data.publicUrl)
   return data.publicUrl
 }
-
-/**
- * Once a case is fully completed no agency has an operational reason to
- * keep the scene photos around, so this removes them for good -- both the
- * actual files in storage and their case_media tracking rows. Audio stays
- * (not asked for), and this only runs at the terminal 'completed' status,
- * not at each per-agency handoff, since an earlier stage's photos may still
- * be genuinely useful to the next one (e.g. hospital reviewing what rescue
- * captured at the scene).
- */
-export async function deleteCasePhotos(caseNumber: string): Promise<void> {
-  if (!supabaseEnabled || !supabase) return
-  const prefix = `${caseNumber}/photos`
-  const { data: files, error: listError } = await supabase.storage.from(CASE_MEDIA_BUCKET).list(prefix)
-  if (listError) {
-    console.error('Failed to list case photos for cleanup:', listError.message)
-    return
-  }
-  if (files && files.length > 0) {
-    const paths = files.map((f) => `${prefix}/${f.name}`)
-    const { error: removeError } = await supabase.storage.from(CASE_MEDIA_BUCKET).remove(paths)
-    if (removeError) console.error('Failed to delete case photos from storage:', removeError.message)
-  }
-  const { error: rowError } = await supabase
-    .from('case_media')
-    .delete()
-    .eq('case_id', caseNumber)
-    .eq('media_type', 'photo')
-  if (rowError) console.error('Failed to delete case_media photo rows:', rowError.message)
-}

@@ -98,7 +98,7 @@ export default function NavigationPage() {
   }
 
   const pins: MapPinT[] = [
-    { id: 'rescue', lat: livePos.lat, lng: livePos.lng, label: 'หน่วยกู้ภัย', kind: 'rescue' },
+    { id: 'rescue', lat: livePos.lat, lng: livePos.lng, label: 'หน่วยกู้ชีพ', kind: 'rescue' },
     { id: 'dest', lat: target.lat, lng: target.lng, label: destinationLabel, kind: isTransporting ? 'hospital' : 'incident' },
   ]
 
