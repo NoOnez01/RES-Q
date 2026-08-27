@@ -77,7 +77,12 @@ security definer
 set search_path = public
 as $$
 begin
-  if not is_approved_dispatch_or_admin(auth.uid()) then
+  -- A direct query in the Supabase SQL Editor (or anything else running as
+  -- the table owner) has no auth.uid() at all -- that's trusted access, not
+  -- a self-service app request, and is exactly how the one-time admin
+  -- bootstrap below has to work. Only requests carrying a real Supabase
+  -- Auth session (auth.uid() present) go through the escalation check.
+  if auth.uid() is not null and not is_approved_dispatch_or_admin(auth.uid()) then
     if new.role is distinct from old.role
       or new.rescue_team_id is distinct from old.rescue_team_id
       or new.hospital_id is distinct from old.hospital_id
