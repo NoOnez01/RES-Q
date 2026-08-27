@@ -89,6 +89,33 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     let channelRef: ReturnType<typeof client.channel> | null = null
     let connectTimeout: ReturnType<typeof setTimeout> | null = null
 
+    // Subscribing to signaling has to happen before fetchIceServers() below,
+    // not after: that fetch is a real network round-trip (Metered.ca's TURN
+    // credential API), and it used to run first, delaying this side's
+    // channel subscription by however long it took. Supabase broadcast
+    // channels don't replay missed messages to a late subscriber, so on a
+    // slow fetch the other side's "join" could be sent and lost before this
+    // side was listening at all -- silently killing the call for both
+    // parties with neither side ever seeing a track. Subscribing immediately
+    // and queuing any signal that arrives before the RTCPeerConnection
+    // itself exists (which does have to wait on the ICE servers) closes that
+    // window.
+    const signalQueue: SignalPayload[] = []
+    let handleSignal: ((msg: SignalPayload) => Promise<void>) | null = null
+
+    const channel = client.channel(`webrtc-call-${caseId}`)
+    channelRef = channel
+    channel
+      .on('broadcast', { event: 'signal' }, ({ payload }) => {
+        const msg = payload as SignalPayload
+        if (handleSignal) void handleSignal(msg)
+        else signalQueue.push(msg)
+      })
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED' || cancelled) return
+        void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'join', role } satisfies SignalPayload })
+      })
+
     async function init() {
       const iceServers = await fetchIceServers()
       if (cancelled) return
@@ -180,7 +207,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer } satisfies SignalPayload })
       }
 
-      async function handleSignal(msg: SignalPayload) {
+      handleSignal = async (msg: SignalPayload) => {
         if (cancelled) return
         if (msg.type === 'join') {
           setRemoteJoined(true)
@@ -229,16 +256,9 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         }
       }
 
-      const channel = client.channel(`webrtc-call-${caseId}`)
-      channelRef = channel
-      channel
-        .on('broadcast', { event: 'signal' }, ({ payload }) => {
-          void handleSignal(payload as SignalPayload)
-        })
-        .subscribe((status) => {
-          if (status !== 'SUBSCRIBED' || cancelled) return
-          void channel.send({ type: 'broadcast', event: 'signal', payload: { type: 'join', role } satisfies SignalPayload })
-        })
+      // Now that pc/handleSignal exist, drain anything that arrived while
+      // this side was still waiting on the ICE server fetch.
+      for (const msg of signalQueue.splice(0)) void handleSignal(msg)
 
       setCameraState('requesting')
       navigator.mediaDevices
