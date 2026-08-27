@@ -21,3 +21,6 @@ ios/App/build
 ios/App/DerivedData
 *.apk
 *.ipa
+
+# Electron desktop build output (electron-builder)
+release/
