@@ -1,4 +1,4 @@
-import { MOCK_RESCUE_TEAMS, EQUIPMENT_FOR_INCIDENT } from './mockData'
+import { EQUIPMENT_FOR_INCIDENT } from './mockData'
 import { haversineKm } from './utils'
 import type { EmergencyCase, GeoLocation, RescueTeam } from './types'
 
@@ -44,12 +44,13 @@ function isTeamBusy(teamId: string, cases: EmergencyCase[], excludeCaseId?: stri
  * supporting) to some other still-open case.
  */
 export function rankRescueTeams(
+  teams: RescueTeam[],
   incidentLocation: GeoLocation,
   requiredEquipment: string[],
   cases: EmergencyCase[],
   excludeCaseId?: string,
 ): RankedTeam[] {
-  return MOCK_RESCUE_TEAMS.map((team) => ({
+  return teams.map((team) => ({
     team,
     distanceKm: haversineKm(team.base, incidentLocation),
     available: !isTeamBusy(team.id, cases, excludeCaseId),
@@ -67,13 +68,14 @@ export function rankRescueTeams(
  * it themselves.
  */
 export function recommendAssignment(
+  teams: RescueTeam[],
   incidentLocation: GeoLocation,
   incidentType: string | undefined,
   cases: EmergencyCase[],
   excludeCaseId?: string,
 ): AssignmentRecommendation {
   const requiredEquipment = requiredEquipmentFor(incidentType)
-  const ranked = rankRescueTeams(incidentLocation, requiredEquipment, cases, excludeCaseId)
+  const ranked = rankRescueTeams(teams, incidentLocation, requiredEquipment, cases, excludeCaseId)
   const primary = ranked.find((r) => r.available) ?? null
   const needsSupport = requiredEquipment.length > 0 && !!primary && !primary.hasRequiredEquipment
   const support = needsSupport

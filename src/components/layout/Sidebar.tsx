@@ -16,10 +16,11 @@ export function Sidebar({ items, role }: { items: NavItem[]; role: Role | null }
         <span className="text-lg font-extrabold text-navy">ResQ</span>
       </div>
 
-      <div className="px-6 py-4">
+      <Link to="/profile" className="block px-6 py-4 hover:bg-skyblue-light">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">บทบาทปัจจุบัน</p>
         <p className="mt-1 font-bold text-navy">{roleLabel(role)}</p>
-      </div>
+        <p className="mt-0.5 text-xs text-primary">แก้ไขข้อมูลส่วนตัว</p>
+      </Link>
 
       <nav className="flex-1 space-y-1 px-3">
         {items.map((item) => {

@@ -23,6 +23,7 @@ import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
 import { formatCaseNumber, uid } from './utils'
 import { signOut as authSignOut } from './auth'
+import { fetchOrgs } from './orgs'
 
 function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): EmergencyCase {
   const meta = statusMeta(status)
@@ -151,6 +152,14 @@ interface ResQState {
   // demo/reset
   seedDemoData: () => void
   resetAll: () => void
+
+  // org rosters -- start as the static seed data (so pickers/assignment
+  // work immediately) and get replaced by live Supabase rows once fetched,
+  // so a self-registered new team/hospital (see src/lib/orgs.ts) actually
+  // becomes visible/assignable app-wide, not just in its own profile.
+  rescueTeams: RescueTeam[]
+  hospitals: Hospital[]
+  refreshOrgs: () => Promise<void>
 }
 
 function notify(
@@ -175,6 +184,12 @@ export const useStore = create<ResQState>()(
       caseSeq: 0,
       hydratedDemo: false,
       hospitalAcceptingCases: true,
+      rescueTeams: MOCK_RESCUE_TEAMS,
+      hospitals: MOCK_HOSPITALS,
+      refreshOrgs: async () => {
+        const orgs = await fetchOrgs()
+        if (orgs) set({ rescueTeams: orgs.rescueTeams, hospitals: orgs.hospitals })
+      },
 
       setUser: (user) => set({ currentUser: user }),
       logout: () => {

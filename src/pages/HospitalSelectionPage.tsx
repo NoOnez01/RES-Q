@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { HospitalSelector } from '@/components/HospitalSelector'
 import { SeverityBadge } from '@/components/SeverityBadge'
-import { useStore, MOCK_HOSPITALS } from '@/lib/store'
+import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { Hospital } from '@/lib/types'
 
@@ -17,6 +17,7 @@ export default function HospitalSelectionPage() {
   const navigate = useNavigate()
 
   const c = useStore((s) => (caseId ? s.cases[caseId] : undefined))
+  const hospitals = useStore((s) => s.hospitals)
   const selectHospital = useStore((s) => s.selectHospital)
 
   const [selected, setSelected] = useState<Hospital | undefined>(undefined)
@@ -60,7 +61,7 @@ export default function HospitalSelectionPage() {
           )}
 
           <div className="animate-fade-in-up" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
-            <HospitalSelector hospitals={MOCK_HOSPITALS} selectedId={selected?.id} onSelect={setSelected} />
+            <HospitalSelector hospitals={hospitals} selectedId={selected?.id} onSelect={setSelected} />
           </div>
 
           {isFlowMode && selected && (

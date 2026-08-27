@@ -6,31 +6,45 @@ import { Card } from '@/components/ui/Card'
 import { Input, Select } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
+import { useStore } from '@/lib/store'
 import { registerAccount } from '@/lib/auth'
-import { MOCK_RESCUE_TEAMS } from '@/lib/mockData'
+import { createRescueTeam } from '@/lib/orgs'
 import { toast } from '@/lib/toast'
+
+const NEW_TEAM_VALUE = '__new__'
 
 interface FormState {
   name: string
   phone: string
   rescueTeamId: string
+  newTeamName: string
+  newTeamUnitCode: string
+  newTeamPhone: string
+  newTeamMembers: string
   email: string
   password: string
 }
 
 export default function RegisterRescue() {
   const navigate = useNavigate()
+  const rescueTeams = useStore((s) => s.rescueTeams)
 
   const [form, setForm] = useState<FormState>({
     name: '',
     phone: '',
     rescueTeamId: '',
+    newTeamName: '',
+    newTeamUnitCode: '',
+    newTeamPhone: '',
+    newTeamMembers: '',
     email: '',
     password: '',
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  const creatingNew = form.rescueTeamId === NEW_TEAM_VALUE
 
   function update<K extends keyof FormState>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -41,6 +55,14 @@ export default function RegisterRescue() {
     if (!form.name.trim()) next.name = 'กรุณากรอกชื่อ-นามสกุล'
     if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์ติดต่อ'
     if (!form.rescueTeamId) next.rescueTeamId = 'กรุณาเลือกหน่วยกู้ชีพ'
+    if (creatingNew) {
+      if (!form.newTeamName.trim()) next.newTeamName = 'กรุณากรอกชื่อหน่วยกู้ชีพ'
+      if (!form.newTeamUnitCode.trim()) next.newTeamUnitCode = 'กรุณากรอกรหัสหน่วย'
+      if (!form.newTeamPhone.trim()) next.newTeamPhone = 'กรุณากรอกเบอร์หน่วย'
+      if (!form.newTeamMembers.trim()) next.newTeamMembers = 'กรุณากรอกจำนวนเจ้าหน้าที่'
+      else if (Number.isNaN(Number(form.newTeamMembers)) || Number(form.newTeamMembers) <= 0)
+        next.newTeamMembers = 'กรุณากรอกจำนวนเป็นตัวเลขที่มากกว่า 0'
+    }
     if (!form.email.trim()) next.email = 'กรุณากรอกอีเมล'
     if (!form.password) next.password = 'กรุณากรอกรหัสผ่าน'
     else if (form.password.length < 6) next.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
@@ -53,13 +75,21 @@ export default function RegisterRescue() {
     if (!validate() || loading) return
     setLoading(true)
     try {
+      const rescueTeamId = creatingNew
+        ? await createRescueTeam({
+            name: form.newTeamName.trim(),
+            unitCode: form.newTeamUnitCode.trim(),
+            phone: form.newTeamPhone.trim(),
+            members: Number(form.newTeamMembers),
+          })
+        : form.rescueTeamId
       await registerAccount({
         email: form.email.trim(),
         password: form.password,
         name: form.name.trim(),
         phone: form.phone.trim(),
         role: 'rescue',
-        rescueTeamId: form.rescueTeamId,
+        rescueTeamId,
       })
       setSubmitted(true)
     } catch (err) {
@@ -116,12 +146,46 @@ export default function RegisterRescue() {
                 error={errors.rescueTeamId}
               >
                 <option value="">เลือกหน่วยกู้ชีพ</option>
-                {MOCK_RESCUE_TEAMS.map((t) => (
+                {rescueTeams.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.unitCode} — {t.name}
                   </option>
                 ))}
+                <option value={NEW_TEAM_VALUE}>+ หน่วยของฉันไม่มีในรายการ</option>
               </Select>
+              {creatingNew && (
+                <div className="flex flex-col gap-4 rounded-xl border border-border bg-bg p-3.5">
+                  <Input
+                    label="ชื่อหน่วยกู้ชีพ"
+                    required
+                    value={form.newTeamName}
+                    onChange={(e) => update('newTeamName', e.target.value)}
+                    error={errors.newTeamName}
+                  />
+                  <Input
+                    label="รหัสหน่วย"
+                    required
+                    value={form.newTeamUnitCode}
+                    onChange={(e) => update('newTeamUnitCode', e.target.value)}
+                    error={errors.newTeamUnitCode}
+                  />
+                  <Input
+                    label="เบอร์หน่วย"
+                    required
+                    value={form.newTeamPhone}
+                    onChange={(e) => update('newTeamPhone', e.target.value)}
+                    error={errors.newTeamPhone}
+                  />
+                  <Input
+                    label="จำนวนเจ้าหน้าที่"
+                    type="number"
+                    required
+                    value={form.newTeamMembers}
+                    onChange={(e) => update('newTeamMembers', e.target.value)}
+                    error={errors.newTeamMembers}
+                  />
+                </div>
+              )}
               <Input
                 label="อีเมล"
                 type="email"

@@ -98,6 +98,15 @@ export async function registerAccount(input: RegisterInput): Promise<void> {
   if (profileError) throw profileError
 }
 
+export async function updateProfile(userId: string, patch: { name: string; phone?: string }): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase
+    .from('profiles')
+    .update({ name: patch.name, phone: patch.phone ?? null })
+    .eq('id', userId)
+  if (error) throw error
+}
+
 export async function signOut(): Promise<void> {
   if (!supabase) return
   await supabase.auth.signOut()

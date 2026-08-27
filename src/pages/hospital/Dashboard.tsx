@@ -11,11 +11,12 @@ import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
-import { useStore, MOCK_HOSPITALS } from '@/lib/store'
+import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 
 export default function HospitalDashboard() {
   const cases = useStore((s) => s.cases)
+  const hospitals = useStore((s) => s.hospitals)
   const hospitalAcceptingCases = useStore((s) => s.hospitalAcceptingCases)
   const setHospitalAcceptingCases = useStore((s) => s.setHospitalAcceptingCases)
   const hospitalRejectCase = useStore((s) => s.hospitalRejectCase)
@@ -37,7 +38,7 @@ export default function HospitalDashboard() {
     .filter((c) => c.status === 'hospital-received' || c.status === 'completed')
     .sort((a, b) => b.updatedAt - a.updatedAt)
 
-  const totalBeds = useMemo(() => MOCK_HOSPITALS.reduce((sum, h) => sum + h.bedsAvailable, 0), [])
+  const totalBeds = useMemo(() => hospitals.reduce((sum, h) => sum + h.bedsAvailable, 0), [hospitals])
   const bedsInUse = transportingCases.length + arrivedCases.length
   const bedsRemaining = Math.max(0, totalBeds - bedsInUse)
   const bedCapacity = Math.max(totalBeds, 1)

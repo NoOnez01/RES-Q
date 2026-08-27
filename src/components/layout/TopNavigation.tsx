@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Menu } from 'lucide-react'
+import { ArrowLeft, Bell, Menu, UserCircle2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useMemo } from 'react'
 import { useStore } from '@/lib/store'
@@ -105,18 +105,27 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
         )}
 
         {variant === 'dashboard' && (
-          <button
-            onClick={() => navigate('/notifications')}
-            aria-label="การแจ้งเตือน"
-            className="relative rounded-lg p-2 text-navy hover:bg-skyblue-light"
-          >
-            <Bell className="size-5" />
-            {unread > 0 && (
-              <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-emergency text-[10px] font-bold text-white">
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </button>
+          <>
+            <button
+              onClick={() => navigate('/notifications')}
+              aria-label="การแจ้งเตือน"
+              className="relative rounded-lg p-2 text-navy hover:bg-skyblue-light"
+            >
+              <Bell className="size-5" />
+              {unread > 0 && (
+                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-emergency text-[10px] font-bold text-white">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => navigate('/profile')}
+              aria-label="ข้อมูลส่วนตัว"
+              className="rounded-lg p-2 text-navy hover:bg-skyblue-light"
+            >
+              <UserCircle2 className="size-5" />
+            </button>
+          </>
         )}
       </div>
     </header>

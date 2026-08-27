@@ -44,6 +44,7 @@ import HospitalSelectionPage from '@/pages/HospitalSelectionPage'
 
 import NavigationPage from '@/pages/Navigation'
 import Notifications from '@/pages/Notifications'
+import Profile from '@/pages/Profile'
 import Settings from '@/pages/Settings'
 import CaseHistory from '@/pages/CaseHistory'
 import AllScreens from '@/pages/AllScreens'
@@ -52,12 +53,14 @@ import NotFound from '@/pages/NotFound'
 export default function App() {
   const seedDemoData = useStore((s) => s.seedDemoData)
   const setUser = useStore((s) => s.setUser)
+  const refreshOrgs = useStore((s) => s.refreshOrgs)
   useTabVisibility()
 
   useEffect(() => {
     seedDemoData()
     void initNativeNotifications()
-  }, [seedDemoData])
+    void refreshOrgs()
+  }, [seedDemoData, refreshOrgs])
 
   // Case sync is RLS-scoped per signed-in identity (see supabaseCaseSync.ts),
   // so it can't start until a session exists -- citizens get one
@@ -135,6 +138,7 @@ export default function App() {
 
         <Route path="/navigation/:id" element={<NavigationPage />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/case-history" element={<CaseHistory />} />
         <Route path="/all-screens" element={<AllScreens />} />

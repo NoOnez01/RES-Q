@@ -47,6 +47,7 @@ export default function DispatchCaseDetail() {
   const navigate = useNavigate()
   const emergencyCase = useStore((s) => (id ? s.cases[id] : undefined))
   const cases = useStore((s) => s.cases)
+  const rescueTeams = useStore((s) => s.rescueTeams)
   const startFindingRescue = useStore((s) => s.startFindingRescue)
   const assignRescueTeam = useStore((s) => s.assignRescueTeam)
   const addSupportingRescueTeam = useStore((s) => s.addSupportingRescueTeam)
@@ -64,12 +65,13 @@ export default function DispatchCaseDetail() {
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
     return recommendAssignment(
+      rescueTeams,
       emergencyCase.location ?? DEFAULT_INCIDENT_LOCATION,
       emergencyCase.incidentDetails?.incidentType,
       Object.values(cases),
       emergencyCase.id,
     )
-  }, [emergencyCase, cases])
+  }, [emergencyCase, cases, rescueTeams])
 
   if (!id || !emergencyCase || !recommendation) {
     return (
@@ -124,7 +126,7 @@ export default function DispatchCaseDetail() {
   // from availability, so the already-assigned primary team correctly shows
   // as busy (can't support its own case) instead of appearing pickable.
   const requiredEquipment = requiredEquipmentFor(c.incidentDetails?.incidentType)
-  const supportCandidates = rankRescueTeams(c.location ?? DEFAULT_INCIDENT_LOCATION, requiredEquipment, Object.values(cases)).filter(
+  const supportCandidates = rankRescueTeams(rescueTeams, c.location ?? DEFAULT_INCIDENT_LOCATION, requiredEquipment, Object.values(cases)).filter(
     (r) => r.team.id !== c.assignedRescueTeam?.id,
   )
   const canAddSupport =

@@ -6,31 +6,43 @@ import { Card } from '@/components/ui/Card'
 import { Input, Select } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
+import { useStore } from '@/lib/store'
 import { registerAccount } from '@/lib/auth'
-import { MOCK_HOSPITALS } from '@/lib/mockData'
+import { createHospital } from '@/lib/orgs'
 import { toast } from '@/lib/toast'
+
+const NEW_HOSPITAL_VALUE = '__new__'
 
 interface FormState {
   name: string
   phone: string
   hospitalId: string
+  newHospitalName: string
+  newHospitalPhone: string
+  newHospitalAddress: string
   email: string
   password: string
 }
 
 export default function RegisterHospital() {
   const navigate = useNavigate()
+  const hospitals = useStore((s) => s.hospitals)
 
   const [form, setForm] = useState<FormState>({
     name: '',
     phone: '',
     hospitalId: '',
+    newHospitalName: '',
+    newHospitalPhone: '',
+    newHospitalAddress: '',
     email: '',
     password: '',
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  const creatingNew = form.hospitalId === NEW_HOSPITAL_VALUE
 
   function update<K extends keyof FormState>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -41,6 +53,11 @@ export default function RegisterHospital() {
     if (!form.name.trim()) next.name = 'กรุณากรอกชื่อ-นามสกุล'
     if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์ติดต่อ'
     if (!form.hospitalId) next.hospitalId = 'กรุณาเลือกโรงพยาบาล'
+    if (creatingNew) {
+      if (!form.newHospitalName.trim()) next.newHospitalName = 'กรุณากรอกชื่อโรงพยาบาล'
+      if (!form.newHospitalPhone.trim()) next.newHospitalPhone = 'กรุณากรอกเบอร์โรงพยาบาล'
+      if (!form.newHospitalAddress.trim()) next.newHospitalAddress = 'กรุณากรอกที่อยู่โรงพยาบาล'
+    }
     if (!form.email.trim()) next.email = 'กรุณากรอกอีเมล'
     if (!form.password) next.password = 'กรุณากรอกรหัสผ่าน'
     else if (form.password.length < 6) next.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
@@ -53,13 +70,20 @@ export default function RegisterHospital() {
     if (!validate() || loading) return
     setLoading(true)
     try {
+      const hospitalId = creatingNew
+        ? await createHospital({
+            name: form.newHospitalName.trim(),
+            phone: form.newHospitalPhone.trim(),
+            address: form.newHospitalAddress.trim(),
+          })
+        : form.hospitalId
       await registerAccount({
         email: form.email.trim(),
         password: form.password,
         name: form.name.trim(),
         phone: form.phone.trim(),
         role: 'hospital',
-        hospitalId: form.hospitalId,
+        hospitalId,
       })
       setSubmitted(true)
     } catch (err) {
@@ -116,12 +140,38 @@ export default function RegisterHospital() {
                 error={errors.hospitalId}
               >
                 <option value="">เลือกโรงพยาบาล</option>
-                {MOCK_HOSPITALS.map((h) => (
+                {hospitals.map((h) => (
                   <option key={h.id} value={h.id}>
                     {h.name}
                   </option>
                 ))}
+                <option value={NEW_HOSPITAL_VALUE}>+ โรงพยาบาลของฉันไม่มีในรายการ</option>
               </Select>
+              {creatingNew && (
+                <div className="flex flex-col gap-4 rounded-xl border border-border bg-bg p-3.5">
+                  <Input
+                    label="ชื่อโรงพยาบาล"
+                    required
+                    value={form.newHospitalName}
+                    onChange={(e) => update('newHospitalName', e.target.value)}
+                    error={errors.newHospitalName}
+                  />
+                  <Input
+                    label="เบอร์โรงพยาบาล"
+                    required
+                    value={form.newHospitalPhone}
+                    onChange={(e) => update('newHospitalPhone', e.target.value)}
+                    error={errors.newHospitalPhone}
+                  />
+                  <Input
+                    label="ที่อยู่โรงพยาบาล"
+                    required
+                    value={form.newHospitalAddress}
+                    onChange={(e) => update('newHospitalAddress', e.target.value)}
+                    error={errors.newHospitalAddress}
+                  />
+                </div>
+              )}
               <Input
                 label="อีเมล"
                 type="email"

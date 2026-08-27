@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { EmptyState, LoadingState } from '@/components/States'
 import { fetchPendingAccounts, approveAccount, rejectAccount } from '@/lib/pendingAccounts'
-import { MOCK_RESCUE_TEAMS, MOCK_HOSPITALS } from '@/lib/mockData'
+import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { AppUser, Role } from '@/lib/types'
 import { UserCheck, CheckCircle2, XCircle } from 'lucide-react'
@@ -18,14 +18,16 @@ const ROLE_LABEL: Record<Role, string> = {
   hospital: 'โรงพยาบาล',
 }
 
-function orgName(user: AppUser): string | null {
-  if (user.role === 'rescue') return MOCK_RESCUE_TEAMS.find((t) => t.id === user.rescueTeamId)?.name ?? null
-  if (user.role === 'hospital') return MOCK_HOSPITALS.find((h) => h.id === user.hospitalId)?.name ?? null
-  return null
-}
-
 export default function DispatchPendingApprovals() {
+  const rescueTeams = useStore((s) => s.rescueTeams)
+  const hospitals = useStore((s) => s.hospitals)
   const [accounts, setAccounts] = useState<AppUser[] | null>(null)
+
+  function orgName(user: AppUser): string | null {
+    if (user.role === 'rescue') return rescueTeams.find((t) => t.id === user.rescueTeamId)?.name ?? null
+    if (user.role === 'hospital') return hospitals.find((h) => h.id === user.hospitalId)?.name ?? null
+    return null
+  }
   const [rejectTarget, setRejectTarget] = useState<AppUser | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
 
