@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import clsx from 'clsx'
-import { UserCircle2, ShieldCheck, Trash2, Home, Radio, Ambulance, Building2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { UserCircle2, ShieldCheck, Trash2, LogOut, Radio, Ambulance, Building2, ShieldAlert } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
@@ -11,14 +10,6 @@ import { useStore } from '@/lib/store'
 import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
 import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
-import type { Role } from '@/lib/types'
-
-const ROLE_OPTIONS: { role: Role; label: string; mockName: string; icon: React.ElementType }[] = [
-  { role: 'public', label: 'ประชาชน', mockName: 'คุณสมชาย ใจดี', icon: Home },
-  { role: 'dispatch', label: 'ศูนย์สั่งการ', mockName: 'เจ้าหน้าที่ศูนย์สั่งการ 1669', icon: Radio },
-  { role: 'rescue', label: 'หน่วยกู้ชีพ', mockName: 'หน่วยกู้ชีพ อาสาเมตตา 1', icon: Ambulance },
-  { role: 'hospital', label: 'โรงพยาบาล', mockName: 'เจ้าหน้าที่โรงพยาบาลจุฬาลงกรณ์', icon: Building2 },
-]
 
 const NOTICES = [
   'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย',
@@ -26,29 +17,39 @@ const NOTICES = [
   'ระบบไม่ทดแทนการประเมินทางการแพทย์',
 ]
 
+const ADMIN_VIEWS = [
+  { path: '/dispatch/dashboard', label: 'ศูนย์สั่งการ', icon: Radio },
+  { path: '/rescue/dashboard', label: 'หน่วยกู้ชีพ (ทุกหน่วย)', icon: Ambulance },
+  { path: '/hospital/dashboard', label: 'โรงพยาบาล (ทุกแห่ง)', icon: Building2 },
+]
+
 export default function Settings() {
   const currentUser = useStore((s) => s.currentUser)
-  const setUser = useStore((s) => s.setUser)
+  const logout = useStore((s) => s.logout)
   const resetAll = useStore((s) => s.resetAll)
   const navigate = useNavigate()
 
   const [resetOpen, setResetOpen] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
 
-  function handleSwitchRole(option: (typeof ROLE_OPTIONS)[number]) {
-    setUser({ id: crypto.randomUUID(), name: option.mockName, role: option.role })
-    toast({ title: 'สลับบทบาทแล้ว', message: `เปลี่ยนเป็น ${roleLabel(option.role)}`, tone: 'success' })
-  }
-
   async function handleReset() {
     setResetLoading(true)
     resetAll()
     // Cases sync to Supabase, so clearing only local state means a reload
-    // (or another tab/device) would just pull all of it right back.
+    // (or another tab/device) would just pull all of it right back. Under
+    // the scoped RLS policies this only actually deletes anything for a
+    // dispatch/admin account -- other roles are correctly limited to their
+    // own cases.
     await clearAllSupabaseCases()
     setResetLoading(false)
     setResetOpen(false)
     toast({ title: 'ล้างข้อมูลทั้งหมดแล้ว', tone: 'success' })
+    navigate('/')
+  }
+
+  function handleLogout() {
+    logout()
+    toast({ title: 'ออกจากระบบแล้ว', tone: 'info' })
     navigate('/')
   }
 
@@ -66,36 +67,30 @@ export default function Settings() {
             <p className="text-sm text-muted">{roleLabel(currentUser?.role ?? null)}</p>
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-semibold text-navy">สลับบทบาท (สำหรับสาธิต)</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {ROLE_OPTIONS.map((option) => {
-                const Icon = option.icon
-                const active = currentUser?.role === option.role
-                return (
-                  <span
-                    key={active ? `${option.role}-active` : option.role}
-                    className={clsx(
-                      'block rounded-xl',
-                      active && 'animate-scale-in ring-2 ring-primary/40 ring-offset-2 ring-offset-bg',
-                    )}
-                  >
-                    <Button
-                      variant={active ? 'primary' : 'outline'}
-                      size="sm"
-                      fullWidth
-                      icon={<Icon className="size-4" />}
-                      aria-pressed={active}
-                      onClick={() => handleSwitchRole(option)}
-                    >
-                      {option.label}
-                    </Button>
-                  </span>
-                )
-              })}
-            </div>
-          </div>
+          {currentUser && currentUser.role !== 'public' && (
+            <Button variant="outline" size="sm" icon={<LogOut className="size-4" />} onClick={handleLogout}>
+              ออกจากระบบ
+            </Button>
+          )}
         </Card>
+
+        {currentUser?.isAdmin && (
+          <Card className="space-y-3 animate-fade-in-up border-primary/30 bg-skyblue-pale">
+            <h3 className="flex items-center gap-2 font-bold text-navy">
+              <ShieldAlert className="size-4 text-primary" /> มุมมองผู้ดูแลระบบ
+            </h3>
+            <p className="text-sm text-muted">เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {ADMIN_VIEWS.map((v) => (
+                <Link key={v.path} to={v.path}>
+                  <Button variant="outline" size="sm" fullWidth icon={<v.icon className="size-4" />}>
+                    {v.label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <Card className="space-y-3 animate-fade-in-up" style={{ animationDelay: '60ms', animationFillMode: 'backwards' }}>
           <h3 className="flex items-center gap-2 font-bold text-navy">

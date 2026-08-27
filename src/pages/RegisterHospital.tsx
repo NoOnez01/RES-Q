@@ -3,28 +3,28 @@ import { useNavigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Field'
+import { Input, Select } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
-import { useStore } from '@/lib/store'
+import { registerAccount } from '@/lib/auth'
+import { MOCK_HOSPITALS } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
 
 interface FormState {
-  hospitalName: string
-  address: string
+  name: string
   phone: string
+  hospitalId: string
   email: string
   password: string
 }
 
 export default function RegisterHospital() {
   const navigate = useNavigate()
-  const setUser = useStore((s) => s.setUser)
 
   const [form, setForm] = useState<FormState>({
-    hospitalName: '',
-    address: '',
+    name: '',
     phone: '',
+    hospitalId: '',
     email: '',
     password: '',
   })
@@ -38,42 +38,50 @@ export default function RegisterHospital() {
 
   function validate() {
     const next: typeof errors = {}
-    if (!form.hospitalName.trim()) next.hospitalName = 'กรุณากรอกชื่อโรงพยาบาล'
-    if (!form.address.trim()) next.address = 'กรุณากรอกที่อยู่'
+    if (!form.name.trim()) next.name = 'กรุณากรอกชื่อ-นามสกุล'
     if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์ติดต่อ'
+    if (!form.hospitalId) next.hospitalId = 'กรุณาเลือกโรงพยาบาล'
     if (!form.email.trim()) next.email = 'กรุณากรอกอีเมล'
     if (!form.password) next.password = 'กรุณากรอกรหัสผ่าน'
-    else if (form.password.length < 4) next.password = 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'
+    else if (form.password.length < 6) next.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!validate() || loading) return
     setLoading(true)
-    setTimeout(() => {
-      setUser({
-        id: crypto.randomUUID(),
-        name: form.hospitalName,
+    try {
+      await registerAccount({
+        email: form.email.trim(),
+        password: form.password,
+        name: form.name.trim(),
+        phone: form.phone.trim(),
         role: 'hospital',
-        phone: form.phone,
-        org: form.hospitalName,
+        hospitalId: form.hospitalId,
       })
-      toast({ title: 'สมัครสมาชิกสำเร็จ', message: `ยินดีต้อนรับ ${form.hospitalName}`, tone: 'success' })
-      setLoading(false)
       setSubmitted(true)
-      setTimeout(() => {
-        navigate('/hospital/dashboard')
-      }, 800)
-    }, 700)
+    } catch (err) {
+      toast({ title: 'สมัครสมาชิกไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
     return (
       <AppShell variant="public" title="สมัครสมาชิกโรงพยาบาล">
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
-          <SuccessState title="สมัครสมาชิกสำเร็จ" description={`ยินดีต้อนรับ ${form.hospitalName}`} />
+          <SuccessState
+            title="สมัครสมาชิกสำเร็จ"
+            description="บัญชีของคุณรอการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้"
+            action={
+              <Button variant="outline" onClick={() => navigate('/login')}>
+                ไปหน้าเข้าสู่ระบบ
+              </Button>
+            }
+          />
         </div>
       </AppShell>
     )
@@ -87,18 +95,11 @@ export default function RegisterHospital() {
           <Card className="animate-fade-in-up">
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <Input
-                label="ชื่อโรงพยาบาล"
+                label="ชื่อ-นามสกุล"
                 required
-                value={form.hospitalName}
-                onChange={(e) => update('hospitalName', e.target.value)}
-                error={errors.hospitalName}
-              />
-              <Input
-                label="ที่อยู่"
-                required
-                value={form.address}
-                onChange={(e) => update('address', e.target.value)}
-                error={errors.address}
+                value={form.name}
+                onChange={(e) => update('name', e.target.value)}
+                error={errors.name}
               />
               <Input
                 label="เบอร์ติดต่อ"
@@ -107,6 +108,20 @@ export default function RegisterHospital() {
                 onChange={(e) => update('phone', e.target.value)}
                 error={errors.phone}
               />
+              <Select
+                label="โรงพยาบาล"
+                required
+                value={form.hospitalId}
+                onChange={(e) => update('hospitalId', e.target.value)}
+                error={errors.hospitalId}
+              >
+                <option value="">เลือกโรงพยาบาล</option>
+                {MOCK_HOSPITALS.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
+                ))}
+              </Select>
               <Input
                 label="อีเมล"
                 type="email"
@@ -122,12 +137,15 @@ export default function RegisterHospital() {
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
                 error={errors.password}
-                hint="อย่างน้อย 4 ตัวอักษร"
+                hint="อย่างน้อย 6 ตัวอักษร"
               />
               <Button type="submit" fullWidth loading={loading}>
                 สมัครสมาชิก
               </Button>
             </form>
+            <p className="mt-4 text-center text-xs text-muted">
+              บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้
+            </p>
           </Card>
         </div>
       </div>

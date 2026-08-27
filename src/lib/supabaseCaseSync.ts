@@ -2,7 +2,6 @@ import { supabase, supabaseEnabled } from './supabase'
 import { useStore } from './store'
 import type { EmergencyCase } from './types'
 
-let initialized = false
 const lastPushed = new Map<string, string>()
 const lastPulled = new Map<string, string>()
 const pendingPushTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -13,6 +12,9 @@ const PUSH_DEBOUNCE_MS = 250
 // the case via applyRemote(). Once an id is deleted in this tab it stays
 // deleted for the rest of the session.
 const deletedIds = new Set<string>()
+
+let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null
+let unsubscribeStore: (() => void) | null = null
 
 function serialize(c: EmergencyCase): string {
   return JSON.stringify(c)
@@ -37,6 +39,11 @@ function toRow(c: EmergencyCase) {
     notes: c.incidentDetails?.notes ?? null,
     reporter_name: c.reporterName ?? null,
     reporter_phone: c.reporterPhone ?? null,
+    // Set once at creation from the reporter's own (usually anonymous)
+    // session and never touched again -- this is what "Case insert own
+    // report" / the select policy's public-role branch scope against, so a
+    // citizen only ever sees their own case, not everyone else's.
+    reporter_user_id: c.reporterUserId ?? null,
 
     // ศูนย์ 1669
     severity: c.assessment?.severity ?? null,
@@ -48,6 +55,12 @@ function toRow(c: EmergencyCase) {
     rescue_team_unit_code: c.assignedRescueTeam?.unitCode ?? null,
     rescue_team_phone: c.assignedRescueTeam?.phone ?? null,
     rescue_en_route_pct: c.rescueEnRoutePct ?? null,
+    // Real foreign keys (as opposed to the denormalized display fields
+    // above) -- what the scoped RLS policies on `cases` actually filter by,
+    // so a rescue/hospital account only ever sees cases belonging to it.
+    rescue_team_id: c.assignedRescueTeam?.id ?? null,
+    supporting_rescue_team_id: c.supportingRescueTeam?.id ?? null,
+    hospital_id: c.selectedHospital?.id ?? null,
 
     // หน่วยกู้ชีพ: patient info recorded at the scene
     patient_name: c.patientInfo?.name ?? null,
@@ -72,6 +85,18 @@ function toRow(c: EmergencyCase) {
   }
 }
 
+function teardown() {
+  if (channel && supabase) void supabase.removeChannel(channel)
+  channel = null
+  if (unsubscribeStore) unsubscribeStore()
+  unsubscribeStore = null
+  for (const timer of pendingPushTimers.values()) clearTimeout(timer)
+  pendingPushTimers.clear()
+  lastPushed.clear()
+  lastPulled.clear()
+  deletedIds.clear()
+}
+
 /**
  * Real-time two-way sync between the local zustand `cases` store and
  * Supabase's `cases` table — the single backend now, replacing the old
@@ -79,11 +104,21 @@ function toRow(c: EmergencyCase) {
  * last known value to avoid an endless push -> pull -> push loop. Requires
  * supabase-realtime-sync.sql to have been run (adds the `data` column,
  * turns on REPLICA IDENTITY FULL, and enables the realtime publication).
+ *
+ * This is deliberately re-runnable, not once-per-page-load: which cases a
+ * given "initial pull"/realtime subscription actually returns is entirely
+ * governed server-side by RLS on `cases` (see supabase-case-fk-columns.sql),
+ * evaluated against whoever is currently authenticated. When that identity
+ * changes -- login, logout, an admin switching which org they're viewing --
+ * the old channel and cached local `cases` map are stale for the new
+ * identity and have to be torn down and re-pulled from scratch, not merged
+ * with what the previous identity was authorized to see.
  */
 export function initSupabaseCaseSync(): void {
-  if (initialized || !supabaseEnabled || !supabase) return
-  initialized = true
+  if (!supabaseEnabled || !supabase) return
   const client = supabase
+  teardown()
+  useStore.setState({ cases: {} })
 
   function applyRemote(remote: EmergencyCase) {
     if (deletedIds.has(remote.id)) return
@@ -152,8 +187,12 @@ export function initSupabaseCaseSync(): void {
     pendingPushTimers.set(caseId, timer)
   }
 
-  // Initial full pull — realtime subscriptions only deliver changes from
-  // the moment they're established, not what's already in the table.
+  // Initial pull — RLS on `cases` already limits this to whatever the
+  // current session is authorized to see (dispatch/admin: everything;
+  // rescue/hospital: their own org's cases; public: their own report), so
+  // there's no client-side team/hospital filter to add here. Realtime
+  // subscriptions only deliver changes from the moment they're established,
+  // not what's already in the table, hence the separate pull.
   void client
     .from('cases')
     .select('data')
@@ -170,8 +209,8 @@ export function initSupabaseCaseSync(): void {
       for (const c of Object.values(useStore.getState().cases)) pushCase(c)
     })
 
-  client
-    .channel('cases-sync')
+  channel = client
+    .channel(`cases-sync-${Date.now()}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cases' }, (payload) => {
       const row = payload.new as { data?: EmergencyCase }
       if (row.data) applyRemote(row.data)
@@ -186,7 +225,7 @@ export function initSupabaseCaseSync(): void {
     })
     .subscribe()
 
-  useStore.subscribe((state, prevState) => {
+  unsubscribeStore = useStore.subscribe((state, prevState) => {
     if (state.cases === prevState.cases) return
     for (const [id, c] of Object.entries(state.cases)) {
       if (prevState.cases[id] === c) continue
@@ -214,7 +253,10 @@ export function initSupabaseCaseSync(): void {
 /**
  * "Clear all data" needs to delete the synced Supabase rows too, otherwise
  * they just sit there under the app's back and get pulled right back in via
- * realtime/the next initial fetch.
+ * realtime/the next initial fetch. Under the scoped RLS policies this only
+ * actually deletes anything for a dispatch/admin session -- rescue/hospital/
+ * public accounts are correctly limited to their own cases and can't wipe
+ * the whole table, so this silently no-ops (zero rows matched) for them.
  */
 export async function clearAllSupabaseCases(): Promise<void> {
   if (!supabaseEnabled || !supabase) return

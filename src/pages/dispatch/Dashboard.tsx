@@ -115,6 +115,11 @@ export default function DispatchDashboard() {
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-navy">เคสทั้งหมด</h2>
             <div className="flex flex-wrap gap-2">
+              <Link to="/dispatch/pending-approvals">
+                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
+                  บัญชีรออนุมัติ
+                </Button>
+              </Link>
               <Link to="/dispatch/feedback-stats">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
                   สถิติความพึงพอใจ

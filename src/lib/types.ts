@@ -1,11 +1,23 @@
 export type Role = 'public' | 'dispatch' | 'rescue' | 'hospital'
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+
 export interface AppUser {
   id: string
   name: string
   role: Role
   phone?: string
-  org?: string
+  /** Which specific rescue team this user represents -- only set for the
+   * 'rescue' role. Drives case visibility (a rescue user only ever sees
+   * cases assigned to their own team). */
+  rescueTeamId?: string
+  /** Which specific hospital this user represents -- only set for the
+   * 'hospital' role. Drives case visibility the same way. */
+  hospitalId?: string
+  approvalStatus: ApprovalStatus
+  /** Granted by hand only (never through registration) -- bypasses all
+   * team/hospital scoping and can approve/reject any pending account. */
+  isAdmin: boolean
 }
 
 export type Severity = 1 | 2 | 3 | 4 | 5
@@ -221,6 +233,10 @@ export interface EmergencyCase {
   timeline: TimelineEvent[]
   reporterName?: string
   reporterPhone?: string
+  /** The reporter's Supabase auth id (their anonymous session, transparent
+   * to them) -- lets RLS scope "their own case" without a visible login.
+   * Set once at creation and never touched by any other role's updates. */
+  reporterUserId?: string
   /** Set once the reporter's post-case rating/complaint has been submitted
    * (to Supabase's case_feedback table), so the form doesn't show again. */
   feedbackSubmitted?: boolean

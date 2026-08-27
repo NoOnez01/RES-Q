@@ -4,8 +4,6 @@ import { User, PhoneIncoming, Ambulance, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { RoleCard } from '@/components/RoleCard'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { useStore } from '@/lib/store'
-import { toast } from '@/lib/toast'
 import type { Role } from '@/lib/types'
 
 const ROLES: { role: Role; icon: JSX.Element; title: string; description: string; name: string; path: string }[] = [
@@ -45,18 +43,20 @@ const ROLES: { role: Role; icon: JSX.Element; title: string; description: string
 
 export default function RoleSelection() {
   const navigate = useNavigate()
-  const setUser = useStore((s) => s.setUser)
   const [loadingRole, setLoadingRole] = useState<Role | null>(null)
 
+  // Roles are real accounts now (see the auth rewrite) -- this page no
+  // longer fabricates a session on the spot, it just routes to the right
+  // place to actually get one: straight in for public, login for everyone
+  // else (their account already carries which org/role they are).
   function handleSelect(item: (typeof ROLES)[number]) {
     if (loadingRole) return
     setLoadingRole(item.role)
     setTimeout(() => {
-      setUser({ id: crypto.randomUUID(), name: item.name, role: item.role })
-      toast({ title: `เข้าสู่ระบบในฐานะ${item.title}แล้ว`, tone: 'success' })
       setLoadingRole(null)
-      navigate(item.path)
-    }, 600)
+      if (item.role === 'public') navigate(item.path)
+      else navigate('/login')
+    }, 300)
   }
 
   return (
@@ -64,9 +64,7 @@ export default function RoleSelection() {
       <div className="relative">
         <AnimatedBackground variant="auth" />
         <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
-          <p className="text-sm text-muted">
-            หน้านี้เป็นตัวสลับบทบาทสำหรับการสาธิต ใช้เพื่อทดลองมุมมองของผู้ใช้งานแต่ละประเภทในระบบ ResQ โดยไม่ต้องสมัครสมาชิกจริง
-          </p>
+          <p className="text-sm text-muted">เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ</p>
           <div className="mt-6 flex flex-col gap-3">
             {ROLES.map((item, i) => (
               <div

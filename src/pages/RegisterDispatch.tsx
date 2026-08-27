@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
-import { useStore } from '@/lib/store'
+import { registerAccount } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 
 interface FormState {
@@ -19,7 +19,6 @@ interface FormState {
 
 export default function RegisterDispatch() {
   const navigate = useNavigate()
-  const setUser = useStore((s) => s.setUser)
 
   const [form, setForm] = useState<FormState>({
     fullName: '',
@@ -43,37 +42,44 @@ export default function RegisterDispatch() {
     if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์ติดต่อ'
     if (!form.email.trim()) next.email = 'กรุณากรอกอีเมล'
     if (!form.password) next.password = 'กรุณากรอกรหัสผ่าน'
-    else if (form.password.length < 4) next.password = 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'
+    else if (form.password.length < 6) next.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!validate() || loading) return
     setLoading(true)
-    setTimeout(() => {
-      setUser({
-        id: crypto.randomUUID(),
-        name: form.fullName,
+    try {
+      await registerAccount({
+        email: form.email.trim(),
+        password: form.password,
+        name: form.fullName.trim(),
+        phone: form.phone.trim(),
         role: 'dispatch',
-        phone: form.phone,
-        org: form.organization,
       })
-      toast({ title: 'สมัครสมาชิกสำเร็จ', message: `ยินดีต้อนรับ ${form.fullName}`, tone: 'success' })
-      setLoading(false)
       setSubmitted(true)
-      setTimeout(() => {
-        navigate('/dispatch/dashboard')
-      }, 800)
-    }, 700)
+    } catch (err) {
+      toast({ title: 'สมัครสมาชิกไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
     return (
       <AppShell variant="public" title="สมัครสมาชิกศูนย์สั่งการ">
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
-          <SuccessState title="สมัครสมาชิกสำเร็จ" description={`ยินดีต้อนรับ ${form.fullName}`} />
+          <SuccessState
+            title="สมัครสมาชิกสำเร็จ"
+            description="บัญชีของคุณรอการอนุมัติก่อนเข้าใช้งานได้ (บัญชีศูนย์สั่งการที่มีอยู่แล้ว หรือผู้ดูแลระบบ เป็นผู้อนุมัติ)"
+            action={
+              <Button variant="outline" onClick={() => navigate('/login')}>
+                ไปหน้าเข้าสู่ระบบ
+              </Button>
+            }
+          />
         </div>
       </AppShell>
     )
@@ -122,12 +128,15 @@ export default function RegisterDispatch() {
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
                 error={errors.password}
-                hint="อย่างน้อย 4 ตัวอักษร"
+                hint="อย่างน้อย 6 ตัวอักษร"
               />
               <Button type="submit" fullWidth loading={loading}>
                 สมัครสมาชิก
               </Button>
             </form>
+            <p className="mt-4 text-center text-xs text-muted">
+              บัญชีศูนย์สั่งการต้องได้รับการอนุมัติก่อนเข้าใช้งานได้เช่นกัน
+            </p>
           </Card>
         </div>
       </div>

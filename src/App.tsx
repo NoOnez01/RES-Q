@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { useTabVisibility } from '@/lib/useReducedMotion'
 import { initSupabaseCaseSync } from '@/lib/supabaseCaseSync'
+import { ensureAnonymousSession, onAuthChange } from '@/lib/auth'
 import { primeAudio } from '@/lib/alertSound'
 import { initNativeNotifications } from '@/lib/nativeNotify'
 import { ToastViewport } from '@/components/ToastNotification'
@@ -26,6 +27,7 @@ import Call1669 from '@/pages/public/Call1669'
 import CaseTracking from '@/pages/public/CaseTracking'
 
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
+import DispatchPendingApprovals from '@/pages/dispatch/PendingApprovals'
 import DispatchFeedbackStats from '@/pages/dispatch/FeedbackStats'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
 import DispatchCallScreen from '@/pages/dispatch/CallScreen'
@@ -49,13 +51,39 @@ import NotFound from '@/pages/NotFound'
 
 export default function App() {
   const seedDemoData = useStore((s) => s.seedDemoData)
+  const setUser = useStore((s) => s.setUser)
   useTabVisibility()
 
   useEffect(() => {
     seedDemoData()
-    initSupabaseCaseSync()
     void initNativeNotifications()
   }, [seedDemoData])
+
+  // Case sync is RLS-scoped per signed-in identity (see supabaseCaseSync.ts),
+  // so it can't start until a session exists -- citizens get one
+  // transparently via anonymous auth, everyone else via a real login. It
+  // has to restart (not just update currentUser) whenever that identity
+  // actually changes, so the previously-cached, differently-scoped `cases`
+  // map doesn't linger after a login/logout/account switch.
+  useEffect(() => {
+    let lastUserId: string | null = null
+    function syncFor(userId: string | null) {
+      if (userId === lastUserId) return
+      lastUserId = userId
+      initSupabaseCaseSync()
+    }
+
+    void ensureAnonymousSession().then((user) => {
+      if (!user) return
+      setUser(user)
+      syncFor(user.id)
+    })
+
+    return onAuthChange((user) => {
+      setUser(user)
+      syncFor(user?.id ?? null)
+    })
+  }, [setUser])
 
   useEffect(() => {
     const unlock = () => primeAudio()
@@ -90,6 +118,7 @@ export default function App() {
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
         <Route path="/dispatch/dashboard" element={<DispatchDashboard />} />
+        <Route path="/dispatch/pending-approvals" element={<DispatchPendingApprovals />} />
         <Route path="/dispatch/feedback-stats" element={<DispatchFeedbackStats />} />
         <Route path="/dispatch/incoming-call" element={<DispatchIncomingCall />} />
         <Route path="/dispatch/call/:id" element={<DispatchCallScreen />} />

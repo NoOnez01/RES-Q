@@ -22,6 +22,7 @@ import type {
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
 import { formatCaseNumber, uid } from './utils'
+import { signOut as authSignOut } from './auth'
 
 function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): EmergencyCase {
   const meta = statusMeta(status)
@@ -84,7 +85,7 @@ interface ResQState {
   hydratedDemo: boolean
 
   // auth / role
-  setUser: (user: AppUser) => void
+  setUser: (user: AppUser | null) => void
   logout: () => void
 
   // case lifecycle — public
@@ -176,11 +177,15 @@ export const useStore = create<ResQState>()(
       hospitalAcceptingCases: true,
 
       setUser: (user) => set({ currentUser: user }),
-      logout: () => set({ currentUser: null }),
+      logout: () => {
+        set({ currentUser: null })
+        void authSignOut()
+      },
 
       createCase: (reporterName, reporterPhone) => {
         const seq = get().caseSeq + 1
         const c = makeNewCase(seq, reporterName, reporterPhone)
+        c.reporterUserId = get().currentUser?.id
         set((s) => ({
           cases: { ...s.cases, [c.id]: c },
           caseSeq: seq,
@@ -672,7 +677,6 @@ export const useStore = create<ResQState>()(
 
       resetAll: () =>
         set({
-          currentUser: null,
           cases: {},
           activeCaseId: null,
           notifications: [],
@@ -682,7 +686,16 @@ export const useStore = create<ResQState>()(
     }),
     {
       name: 'resq-storage',
-      version: 4,
+      version: 5,
+      // currentUser is no longer trustworthy from localStorage alone -- it's
+      // derived fresh from the live Supabase session + profile on load (see
+      // App.tsx), so persisting the old value here would just be a second,
+      // conflicting source of truth (and the pre-auth version had no
+      // approvalStatus/isAdmin fields at all).
+      partialize: (state) => {
+        const { currentUser: _currentUser, ...rest } = state
+        return rest
+      },
       migrate: (persisted: any, version: number) => {
         if (version < 2 && persisted?.cases) {
           for (const c of Object.values(persisted.cases) as any[]) {
