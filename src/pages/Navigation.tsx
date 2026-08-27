@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/Button'
 import { MapPanel } from '@/components/MapPanel'
 import type { MapPin as MapPinT } from '@/components/MapPanel'
 import { ETAWidget } from '@/components/ETAWidget'
+import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
-import { clamp, estimateEtaMin, haversineKm } from '@/lib/utils'
+import { clamp, estimateEtaMin, haversineKm, formatDateTime } from '@/lib/utils'
 import type { GeoLocation } from '@/lib/types'
 
 export default function NavigationPage() {
@@ -24,9 +25,12 @@ export default function NavigationPage() {
   const updateRescueProgress = useStore((s) => s.updateRescueProgress)
   const rescueMarkArrived = useStore((s) => s.rescueMarkArrived)
   const markHospitalArrived = useStore((s) => s.markHospitalArrived)
+  const addPatientUpdate = useStore((s) => s.addPatientUpdate)
 
   const [pct, setPct] = useState(c?.rescueEnRoutePct ?? 0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [updateNote, setUpdateNote] = useState('')
+  const [updateLoading, setUpdateLoading] = useState(false)
 
   const isEnRoute = c?.status === 'rescue-en-route'
   const isTransporting = c?.status === 'transporting'
@@ -118,6 +122,17 @@ export default function NavigationPage() {
     navigate(`/rescue/case/${id}`)
   }
 
+  function handleAddUpdate() {
+    if (!id || !updateNote.trim()) return
+    setUpdateLoading(true)
+    setTimeout(() => {
+      addPatientUpdate(id, updateNote.trim())
+      setUpdateNote('')
+      setUpdateLoading(false)
+      toast({ title: 'บันทึกอัปเดตอาการแล้ว', message: 'ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที', tone: 'success' })
+    }, 400)
+  }
+
   return (
     <AppShell variant="flow" title="กำลังนำทาง" showBack onBack={() => navigate(`/rescue/case/${c.id}`)}>
       <div className="relative">
@@ -150,6 +165,36 @@ export default function NavigationPage() {
               </span>
             )}
           </Card>
+
+          {c.patientInfo && (
+            <Card className="space-y-3">
+              <h3 className="font-bold text-navy">อัปเดตอาการผู้ป่วย</h3>
+              {c.patientUpdates.length > 0 && (
+                <div className="rounded-xl bg-skyblue-pale p-3">
+                  <p className="text-sm text-navy whitespace-pre-wrap">
+                    {c.patientUpdates[c.patientUpdates.length - 1].note}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    อัปเดตล่าสุด {formatDateTime(c.patientUpdates[c.patientUpdates.length - 1].recordedAt)}
+                  </p>
+                </div>
+              )}
+              <SpeechToTextPanel
+                value={updateNote}
+                onChange={setUpdateNote}
+                label="มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={updateLoading}
+                disabled={!updateNote.trim()}
+                onClick={handleAddUpdate}
+              >
+                บันทึกอัปเดต
+              </Button>
+            </Card>
+          )}
         </div>
 
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white/95 p-4 backdrop-blur sm:relative sm:border-0 sm:bg-transparent sm:p-0">
