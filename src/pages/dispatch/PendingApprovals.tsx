@@ -5,11 +5,11 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { EmptyState, LoadingState } from '@/components/States'
-import { fetchPendingAccounts, approveAccount, rejectAccount } from '@/lib/pendingAccounts'
+import { fetchPendingAccounts, approveAccount, rejectAccount, fetchApprovedStaff, setAdminStatus } from '@/lib/pendingAccounts'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { AppUser, Role } from '@/lib/types'
-import { UserCheck, CheckCircle2, XCircle } from 'lucide-react'
+import { UserCheck, CheckCircle2, XCircle, ShieldCheck, ShieldOff } from 'lucide-react'
 
 const ROLE_LABEL: Record<Role, string> = {
   public: 'ประชาชน',
@@ -21,7 +21,10 @@ const ROLE_LABEL: Record<Role, string> = {
 export default function DispatchPendingApprovals() {
   const rescueTeams = useStore((s) => s.rescueTeams)
   const hospitals = useStore((s) => s.hospitals)
+  const currentUser = useStore((s) => s.currentUser)
   const [accounts, setAccounts] = useState<AppUser[] | null>(null)
+  const [staff, setStaff] = useState<AppUser[] | null>(null)
+  const [adminBusyId, setAdminBusyId] = useState<string | null>(null)
 
   function orgName(user: AppUser): string | null {
     if (user.role === 'rescue') return rescueTeams.find((t) => t.id === user.rescueTeamId)?.name ?? null
@@ -35,9 +38,32 @@ export default function DispatchPendingApprovals() {
     setAccounts(await fetchPendingAccounts())
   }
 
+  async function reloadStaff() {
+    if (!currentUser?.isAdmin) return
+    setStaff(await fetchApprovedStaff())
+  }
+
   useEffect(() => {
     void reload()
-  }, [])
+    void reloadStaff()
+  }, [currentUser?.isAdmin])
+
+  async function handleSetAdmin(user: AppUser, isAdmin: boolean) {
+    setAdminBusyId(user.id)
+    try {
+      await setAdminStatus(user.id, isAdmin)
+      toast({
+        title: isAdmin ? 'ตั้งเป็นแอดมินแล้ว' : 'ถอดสิทธิ์แอดมินแล้ว',
+        message: user.name,
+        tone: 'success',
+      })
+      await reloadStaff()
+    } catch {
+      toast({ title: 'ดำเนินการไม่สำเร็จ', tone: 'error' })
+    } finally {
+      setAdminBusyId(null)
+    }
+  }
 
   async function handleApprove(user: AppUser) {
     setBusyId(user.id)
@@ -114,6 +140,57 @@ export default function DispatchPendingApprovals() {
             ))
           )}
         </div>
+
+        {currentUser?.isAdmin && (
+          <div className="mt-8 flex flex-col gap-3">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">จัดการสิทธิ์แอดมิน</h2>
+            {staff === null ? (
+              <LoadingState />
+            ) : staff.length === 0 ? (
+              <EmptyState
+                icon={<ShieldCheck className="size-6" />}
+                title="ยังไม่มีบัญชีที่อนุมัติแล้ว"
+                description="บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่"
+              />
+            ) : (
+              staff.map((user) => (
+                <Card key={user.id} className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-navy">
+                      {user.name}
+                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">แอดมิน</span>}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {ROLE_LABEL[user.role]}
+                      {orgName(user) && ` · ${orgName(user)}`}
+                    </p>
+                  </div>
+                  {user.isAdmin ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      icon={<ShieldOff className="size-3.5" />}
+                      loading={adminBusyId === user.id}
+                      disabled={user.id === currentUser.id}
+                      onClick={() => handleSetAdmin(user, false)}
+                    >
+                      ถอดสิทธิ์แอดมิน
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      icon={<ShieldCheck className="size-3.5" />}
+                      loading={adminBusyId === user.id}
+                      onClick={() => handleSetAdmin(user, true)}
+                    >
+                      ตั้งเป็นแอดมิน
+                    </Button>
+                  )}
+                </Card>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       <ConfirmationModal

@@ -52,3 +52,29 @@ export async function rejectAccount(userId: string): Promise<void> {
   const { error } = await supabase.from('profiles').update({ approval_status: 'rejected' }).eq('id', userId)
   if (error) throw error
 }
+
+/** Approved staff accounts (not the public role -- promoting an anonymous-
+ * style citizen row to admin doesn't make sense). Only returns rows at all
+ * for an approved dispatch/admin caller, same as fetchPendingAccounts. */
+export async function fetchApprovedStaff(): Promise<AppUser[]> {
+  if (!supabaseEnabled || !supabase) return []
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('approval_status', 'approved')
+    .neq('role', 'public')
+    .order('created_at', { ascending: true })
+  if (error) {
+    console.error('Failed to fetch approved staff:', error.message)
+    return []
+  }
+  return (data ?? []).map(toAppUser)
+}
+
+/** Only an already-approved admin can call this -- enforced server-side too
+ * (see supabase-admin-grant-policy.sql), so a non-admin request just fails. */
+export async function setAdminStatus(userId: string, isAdmin: boolean): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId)
+  if (error) throw error
+}
