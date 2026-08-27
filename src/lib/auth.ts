@@ -12,7 +12,7 @@ interface ProfileRow {
   is_admin: boolean
 }
 
-function toAppUser(row: ProfileRow): AppUser {
+function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
   return {
     id: row.id,
     name: row.name,
@@ -22,14 +22,20 @@ function toAppUser(row: ProfileRow): AppUser {
     hospitalId: row.hospital_id ?? undefined,
     approvalStatus: row.approval_status,
     isAdmin: row.is_admin,
+    isAnonymous,
   }
 }
 
-export async function fetchProfile(userId: string): Promise<AppUser | null> {
+/** `isAnonymous` has to come from the session, not the profiles row --
+ * an anonymous session and a real "public" registration both end up with
+ * role 'public', so the row alone can't tell them apart. This is what lets
+ * the UI tell "just an anonymous visitor" apart from "actually logged in"
+ * (e.g. whether to show login/register links or a profile menu). */
+export async function fetchProfile(userId: string, isAnonymous: boolean): Promise<AppUser | null> {
   if (!supabase) return null
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error || !data) return null
-  return toAppUser(data as ProfileRow)
+  return toAppUser(data as ProfileRow, isAnonymous)
 }
 
 /**
@@ -41,28 +47,28 @@ export async function fetchProfile(userId: string): Promise<AppUser | null> {
 export async function ensureAnonymousSession(): Promise<AppUser | null> {
   if (!supabase) return null
   const { data: sessionData } = await supabase.auth.getSession()
-  let userId = sessionData.session?.user.id
-  if (!userId) {
+  let user = sessionData.session?.user
+  if (!user) {
     const { data, error } = await supabase.auth.signInAnonymously()
     if (error || !data.user) return null
-    userId = data.user.id
+    user = data.user
   }
-  return fetchProfile(userId)
+  return fetchProfile(user.id, !!user.is_anonymous)
 }
 
 export async function getCurrentUser(): Promise<AppUser | null> {
   if (!supabase) return null
   const { data } = await supabase.auth.getSession()
-  const userId = data.session?.user.id
-  if (!userId) return null
-  return fetchProfile(userId)
+  const user = data.session?.user
+  if (!user) return null
+  return fetchProfile(user.id, !!user.is_anonymous)
 }
 
 export async function signIn(email: string, password: string): Promise<AppUser | null> {
   if (!supabase) return null
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error || !data.user) throw error ?? new Error('Sign in failed')
-  return fetchProfile(data.user.id)
+  return fetchProfile(data.user.id, false)
 }
 
 interface RegisterInput {
@@ -119,7 +125,7 @@ export function onAuthChange(callback: (user: AppUser | null) => void): () => vo
       callback(null)
       return
     }
-    void fetchProfile(session.user.id).then(callback)
+    void fetchProfile(session.user.id, !!session.user.is_anonymous).then(callback)
   })
   return () => data.subscription.unsubscribe()
 }

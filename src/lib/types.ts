@@ -18,6 +18,11 @@ export interface AppUser {
   /** Granted by hand only (never through registration) -- bypasses all
    * team/hospital scoping and can approve/reject any pending account. */
   isAdmin: boolean
+  /** True for the transparent anonymous session every citizen visitor gets
+   * (see ensureAnonymousSession). Not a real account -- the UI must not
+   * treat this as "logged in" (e.g. top nav should still show
+   * login/register, not a profile menu). */
+  isAnonymous?: boolean
 }
 
 export type Severity = 1 | 2 | 3 | 4 | 5

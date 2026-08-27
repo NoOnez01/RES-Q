@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Menu, UserCircle2 } from 'lucide-react'
+import { ArrowLeft, Bell, LogOut, Menu, UserCircle2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useMemo } from 'react'
 import { useStore } from '@/lib/store'
@@ -26,6 +26,8 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
   const location = useLocation()
   const notifications = useStore((s) => s.notifications)
   const currentUser = useStore((s) => s.currentUser)
+  const logout = useStore((s) => s.logout)
+  const loggedIn = !!currentUser && !currentUser.isAnonymous
   const unread = useMemo(
     () =>
       notifications.filter(
@@ -93,14 +95,36 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
       <div className="ml-auto flex items-center gap-2">
         {variant === 'public' && (
           <>
-            <div className="hidden items-center gap-2 lg:flex">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-                เข้าสู่ระบบ
-              </Button>
-              <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
-                สมัครสมาชิก
-              </Button>
-            </div>
+            {loggedIn ? (
+              <div className="hidden items-center gap-1 lg:flex">
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-navy hover:bg-skyblue-light"
+                >
+                  <UserCircle2 className="size-5" />
+                  {currentUser?.name}
+                </button>
+                <button
+                  onClick={() => {
+                    logout()
+                    navigate('/')
+                  }}
+                  aria-label="ออกจากระบบ"
+                  className="rounded-lg p-2 text-navy hover:bg-skyblue-light"
+                >
+                  <LogOut className="size-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="hidden items-center gap-2 lg:flex">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+                  เข้าสู่ระบบ
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
+                  สมัครสมาชิก
+                </Button>
+              </div>
+            )}
           </>
         )}
 
