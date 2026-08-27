@@ -23,6 +23,29 @@ export interface AppUser {
    * treat this as "logged in" (e.g. top nav should still show
    * login/register, not a profile menu). */
   isAnonymous?: boolean
+
+  // Personal/medical details, editable on the Profile page -- useful
+  // context for dispatch/rescue/hospital in a real emergency, not just
+  // account info.
+  avatarUrl?: string
+  nickname?: string
+  /** ISO date string ('YYYY-MM-DD'); age is computed from this, not stored. */
+  birthdate?: string
+  bloodType?: string
+  allergies?: string
+  chronicConditions?: string
+}
+
+/** Whole years between a 'YYYY-MM-DD' birthdate and today. */
+export function calculateAge(birthdate: string): number {
+  const birth = new Date(birthdate)
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--
+  }
+  return age
 }
 
 export type Severity = 1 | 2 | 3 | 4 | 5

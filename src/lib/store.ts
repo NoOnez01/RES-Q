@@ -88,6 +88,14 @@ interface ResQState {
   // auth / role
   setUser: (user: AppUser | null) => void
   logout: () => void
+  /** Admin-only "view as" override for which role's sidebar/menu to show --
+   * lets an admin open e.g. the rescue dashboard and still get the rescue
+   * nav items (case history routes, etc.), not their own account's. Data
+   * itself isn't scoped by this (RLS already gives admin everything
+   * unfiltered); this only changes which menu renders. Ignored for a
+   * non-admin currentUser. */
+  viewingRole: Role | null
+  setViewingRole: (role: Role | null) => void
 
   // case lifecycle — public
   createCase: (reporterName?: string, reporterPhone?: string) => string
@@ -193,9 +201,12 @@ export const useStore = create<ResQState>()(
 
       setUser: (user) => set({ currentUser: user }),
       logout: () => {
-        set({ currentUser: null })
+        set({ currentUser: null, viewingRole: null })
         void authSignOut()
       },
+
+      viewingRole: null,
+      setViewingRole: (role) => set({ viewingRole: role }),
 
       createCase: (reporterName, reporterPhone) => {
         const seq = get().caseSeq + 1

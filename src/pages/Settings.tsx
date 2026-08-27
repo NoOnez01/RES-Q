@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { UserCircle2, ShieldCheck, Trash2, LogOut, Radio, Ambulance, Building2, ShieldAlert } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -18,16 +18,25 @@ const NOTICES = [
 ]
 
 const ADMIN_VIEWS = [
-  { path: '/dispatch/dashboard', label: 'ศูนย์สั่งการ', icon: Radio },
-  { path: '/rescue/dashboard', label: 'หน่วยกู้ชีพ (ทุกหน่วย)', icon: Ambulance },
-  { path: '/hospital/dashboard', label: 'โรงพยาบาล (ทุกแห่ง)', icon: Building2 },
+  { path: '/dispatch/dashboard', role: 'dispatch' as const, label: 'ศูนย์สั่งการ', icon: Radio },
+  { path: '/rescue/dashboard', role: 'rescue' as const, label: 'หน่วยกู้ชีพ (ทุกหน่วย)', icon: Ambulance },
+  { path: '/hospital/dashboard', role: 'hospital' as const, label: 'โรงพยาบาล (ทุกแห่ง)', icon: Building2 },
 ]
 
 export default function Settings() {
   const currentUser = useStore((s) => s.currentUser)
   const logout = useStore((s) => s.logout)
   const resetAll = useStore((s) => s.resetAll)
+  const setViewingRole = useStore((s) => s.setViewingRole)
   const navigate = useNavigate()
+
+  function enterAdminView(view: (typeof ADMIN_VIEWS)[number]) {
+    // Also swaps the sidebar/menu to match (see AppShell's effectiveRole) --
+    // otherwise the admin would land on e.g. the rescue dashboard but still
+    // see their own dispatch menu, unable to reach rescue-only routes.
+    setViewingRole(view.role)
+    navigate(view.path)
+  }
 
   const [resetOpen, setResetOpen] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
@@ -82,11 +91,16 @@ export default function Settings() {
             <p className="text-sm text-muted">เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {ADMIN_VIEWS.map((v) => (
-                <Link key={v.path} to={v.path}>
-                  <Button variant="outline" size="sm" fullWidth icon={<v.icon className="size-4" />}>
-                    {v.label}
-                  </Button>
-                </Link>
+                <Button
+                  key={v.path}
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  icon={<v.icon className="size-4" />}
+                  onClick={() => enterAdminView(v)}
+                >
+                  {v.label}
+                </Button>
               ))}
             </div>
           </Card>

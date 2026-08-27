@@ -17,12 +17,22 @@ interface AppShellProps {
 export function AppShell({ variant, title, showBack, onBack, children }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUser = useStore((s) => s.currentUser)
-  const items = navItemsForRole(currentUser?.role ?? null)
+  const viewingRole = useStore((s) => s.viewingRole)
+  const setViewingRole = useStore((s) => s.setViewingRole)
+  // Admin "view as" only changes which menu renders (see setViewingRole) --
+  // never falls back to it for a non-admin account.
+  const effectiveRole = currentUser?.isAdmin && viewingRole ? viewingRole : (currentUser?.role ?? null)
+  const items = navItemsForRole(effectiveRole)
 
   if (variant === 'dashboard') {
     return (
       <div className="flex min-h-screen bg-bg">
-        <Sidebar items={items} role={currentUser?.role ?? null} />
+        <Sidebar
+          items={items}
+          role={effectiveRole}
+          viewingAs={currentUser?.isAdmin && viewingRole ? viewingRole : null}
+          onExitView={() => setViewingRole(null)}
+        />
         <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <TopNavigation variant="dashboard" title={title} onMenuClick={() => setMenuOpen(true)} />

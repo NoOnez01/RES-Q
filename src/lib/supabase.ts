@@ -8,3 +8,4 @@ export const supabaseEnabled = Boolean(supabaseUrl && supabaseAnonKey)
 export const supabase = supabaseEnabled ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 export const CASE_MEDIA_BUCKET = 'case-media'
+export const AVATAR_BUCKET = 'avatars'

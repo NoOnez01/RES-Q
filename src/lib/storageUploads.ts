@@ -1,4 +1,4 @@
-import { supabase, supabaseEnabled, CASE_MEDIA_BUCKET } from './supabase'
+import { supabase, supabaseEnabled, CASE_MEDIA_BUCKET, AVATAR_BUCKET } from './supabase'
 import { uid } from './utils'
 
 /**
@@ -33,6 +33,24 @@ export async function uploadCasePhoto(caseNumber: string, dataUrl: string): Prom
   const { data } = supabase.storage.from(CASE_MEDIA_BUCKET).getPublicUrl(path)
   await trackCaseMedia(caseNumber, 'photo', path, data.publicUrl)
   return data.publicUrl
+}
+
+/** Overwrites the same path each time (upsert) -- one avatar per user, no
+ * orphaned old files piling up in the bucket on every re-upload. The path's
+ * leading userId segment is also what the storage RLS policy checks (see
+ * supabase-avatar-storage-policy.sql) to keep users from overwriting
+ * someone else's avatar. */
+export async function uploadAvatar(userId: string, file: Blob, contentType: string): Promise<string> {
+  if (!supabaseEnabled || !supabase) throw new Error('Supabase not configured')
+  const ext = contentType === 'image/png' ? 'png' : 'jpg'
+  const path = `${userId}/avatar.${ext}`
+  const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, {
+    contentType,
+    upsert: true,
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  return `${data.publicUrl}?v=${Date.now()}`
 }
 
 export async function uploadCaseAudio(caseNumber: string, blob: Blob): Promise<string> {

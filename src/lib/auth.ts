@@ -10,6 +10,12 @@ interface ProfileRow {
   hospital_id: string | null
   approval_status: ApprovalStatus
   is_admin: boolean
+  avatar_url: string | null
+  nickname: string | null
+  birthdate: string | null
+  blood_type: string | null
+  allergies: string | null
+  chronic_conditions: string | null
 }
 
 function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
@@ -23,6 +29,12 @@ function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
     approvalStatus: row.approval_status,
     isAdmin: row.is_admin,
     isAnonymous,
+    avatarUrl: row.avatar_url ?? undefined,
+    nickname: row.nickname ?? undefined,
+    birthdate: row.birthdate ?? undefined,
+    bloodType: row.blood_type ?? undefined,
+    allergies: row.allergies ?? undefined,
+    chronicConditions: row.chronic_conditions ?? undefined,
   }
 }
 
@@ -104,11 +116,31 @@ export async function registerAccount(input: RegisterInput): Promise<void> {
   if (profileError) throw profileError
 }
 
-export async function updateProfile(userId: string, patch: { name: string; phone?: string }): Promise<void> {
+export interface ProfilePatch {
+  name: string
+  phone?: string
+  avatarUrl?: string
+  nickname?: string
+  birthdate?: string
+  bloodType?: string
+  allergies?: string
+  chronicConditions?: string
+}
+
+export async function updateProfile(userId: string, patch: ProfilePatch): Promise<void> {
   if (!supabase) return
   const { error } = await supabase
     .from('profiles')
-    .update({ name: patch.name, phone: patch.phone ?? null })
+    .update({
+      name: patch.name,
+      phone: patch.phone ?? null,
+      avatar_url: patch.avatarUrl ?? null,
+      nickname: patch.nickname ?? null,
+      birthdate: patch.birthdate ?? null,
+      blood_type: patch.bloodType ?? null,
+      allergies: patch.allergies ?? null,
+      chronic_conditions: patch.chronicConditions ?? null,
+    })
     .eq('id', userId)
   if (error) throw error
 }
