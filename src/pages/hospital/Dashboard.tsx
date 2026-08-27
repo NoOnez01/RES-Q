@@ -192,17 +192,28 @@ export default function HospitalDashboard() {
                           emergencyCase={c}
                           to={`/hospital/case/${c.id}`}
                           actions={
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              icon={<XCircle className="size-3.5" />}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setRejectTargetId(c.id)
-                              }}
-                            >
-                              ปฏิเสธเคส
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                icon={<XCircle className="size-3.5" />}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setRejectTargetId(c.id)
+                                }}
+                              >
+                                ปฏิเสธเคส
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  navigate(`/hospital/case/${c.id}`)
+                                }}
+                              >
+                                รับเคส
+                              </Button>
+                            </div>
                           }
                         />
                       </div>

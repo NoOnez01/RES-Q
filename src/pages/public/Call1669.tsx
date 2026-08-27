@@ -27,6 +27,8 @@ export default function Call1669() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const selfHungUpRef = useRef(false)
   const hasShownEndedRef = useRef(false)
+  const hasProceededRef = useRef(false)
+  const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
@@ -71,10 +73,29 @@ export default function Call1669() {
     }
   }, [activeCase?.callStatus])
 
+  // Once the call ends -- from either side -- move on automatically instead
+  // of waiting for a manual tap, so a citizen who just hung up isn't left
+  // stuck on the call screen.
+  useEffect(() => {
+    if (activeCase?.callStatus !== 'ended' || hasProceededRef.current) return
+    hasProceededRef.current = true
+    proceedTimerRef.current = setTimeout(() => {
+      handleProceed()
+    }, 1200)
+    return () => {
+      if (proceedTimerRef.current) clearTimeout(proceedTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCase?.callStatus])
+
   function clearTimers() {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
+    }
+    if (proceedTimerRef.current) {
+      clearTimeout(proceedTimerRef.current)
+      proceedTimerRef.current = null
     }
   }
 
@@ -82,6 +103,7 @@ export default function Call1669() {
     if (!activeCaseId) return
     selfHungUpRef.current = false
     hasShownEndedRef.current = false
+    hasProceededRef.current = false
     setConfirmOpen(false)
     setCallStatus(activeCaseId, 'connecting')
   }

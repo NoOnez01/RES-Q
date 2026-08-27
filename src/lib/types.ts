@@ -140,27 +140,22 @@ export interface VitalSigns {
 /** AVPU scale for the R (Responsiveness) step of the primary survey. */
 export type Responsiveness = 'A' | 'V' | 'P' | 'U'
 
-/** C (Circulation) and D (Disability) are collapsed into one field focused
- * on bleeding status, with an "other" option for anything that doesn't fit. */
-export type BleedingStatus = 'no-bleeding' | 'bleeding' | 'other'
-
-export interface CirculationDisability {
-  status?: BleedingStatus
-  /** Free-text or speech-to-text detail -- required context when status is
-   * 'other', optional elaboration otherwise. */
-  detail?: string
-}
-
 /** Primary survey per the G-R-X-A-B-C-D-E framework used in Thai EMS
- * fieldwork: general impression, responsiveness (AVPU), exsanguinating
- * hemorrhage, airway, breathing, circulation+disability, exposure. */
+ * fieldwork: general impression, responsiveness+disability (AVPU plus a
+ * neuro-exam detail -- both are about neurological/consciousness status,
+ * so they're recorded together), exsanguinating hemorrhage, airway,
+ * breathing, circulation, exposure. Every free-text field can be filled by
+ * typing or by speech-to-text. */
 export interface PrimarySurvey {
   generalImpression?: string
   responsiveness?: Responsiveness
+  /** D (Disability) detail -- pupils, movement, GCS-like notes -- recorded
+   * alongside the R (Responsiveness/AVPU) selection above. */
+  disabilityDetail?: string
   exsanguinatingHemorrhage?: string
   airway?: string
   breathing?: string
-  circulationDisability?: CirculationDisability
+  circulation?: string
   exposure?: string
 }
 

@@ -1,5 +1,5 @@
 import { Activity, HeartPulse, Thermometer, Wind, Gauge } from 'lucide-react'
-import type { PatientInfo, Responsiveness, BleedingStatus } from '@/lib/types'
+import type { PatientInfo, Responsiveness } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
 import { Card } from './ui/Card'
 
@@ -18,17 +18,12 @@ const RESPONSIVENESS_LABEL: Record<Responsiveness, string> = {
   U: 'U - ไม่ตอบสนอง',
 }
 
-const BLEEDING_STATUS_LABEL: Record<BleedingStatus, string> = {
-  'no-bleeding': 'ไม่มีเลือดออก',
-  bleeding: 'มีเลือดออก',
-  other: 'อื่นๆ',
-}
-
 const PRIMARY_SURVEY_ITEMS = [
   { key: 'generalImpression', letter: 'G', label: 'ภาพรวมผู้ป่วย' },
   { key: 'exsanguinatingHemorrhage', letter: 'X', label: 'การห้ามเลือด' },
   { key: 'airway', letter: 'A', label: 'ทางเดินหายใจ' },
   { key: 'breathing', letter: 'B', label: 'การหายใจ' },
+  { key: 'circulation', letter: 'C', label: 'การไหลเวียนโลหิต' },
   { key: 'exposure', letter: 'E', label: 'สิ่งแวดล้อม' },
 ] as const
 
@@ -40,7 +35,10 @@ export function PatientInformationCard({
   /** Follow-up condition notes logged after this record, newest last. */
   updates?: { id: string; note: string; recordedAt: number }[]
 }) {
-  const cd = patient.primarySurvey.circulationDisability
+  // Older locally-cached cases may predate this field entirely, so every
+  // access below goes through optional chaining -- a render crash here
+  // would otherwise blank the whole page (no error boundary catches it).
+  const survey = patient.primarySurvey
   return (
     <Card className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -68,10 +66,11 @@ export function PatientInformationCard({
       <div className="border-t border-border pt-4">
         <p className="mb-2 text-sm font-semibold text-navy">การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)</p>
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <div className="rounded-xl bg-skyblue-pale p-3">
-            <p className="text-xs text-muted">R - การตอบสนอง</p>
+          <div className="rounded-xl bg-skyblue-pale p-3 col-span-2">
+            <p className="text-xs text-muted">R/D - การตอบสนอง/ระบบประสาท</p>
             <p className="text-sm font-semibold text-navy">
-              {patient.primarySurvey.responsiveness ? RESPONSIVENESS_LABEL[patient.primarySurvey.responsiveness] : '-'}
+              {survey?.responsiveness ? RESPONSIVENESS_LABEL[survey.responsiveness] : '-'}
+              {survey?.disabilityDetail && <span className="ml-1 font-normal text-muted">— {survey.disabilityDetail}</span>}
             </p>
           </div>
           {PRIMARY_SURVEY_ITEMS.map(({ key, letter, label }) => (
@@ -79,16 +78,9 @@ export function PatientInformationCard({
               <p className="text-xs text-muted">
                 {letter} - {label}
               </p>
-              <p className="text-sm font-semibold text-navy truncate">{patient.primarySurvey[key] || '-'}</p>
+              <p className="text-sm font-semibold text-navy truncate">{survey?.[key] || '-'}</p>
             </div>
           ))}
-          <div className="rounded-xl bg-skyblue-pale p-3 col-span-2">
-            <p className="text-xs text-muted">C/D - การไหลเวียนโลหิต/ระบบประสาท</p>
-            <p className="text-sm font-semibold text-navy">
-              {cd?.status ? BLEEDING_STATUS_LABEL[cd.status] : '-'}
-              {cd?.detail && <span className="ml-1 font-normal text-muted">— {cd.detail}</span>}
-            </p>
-          </div>
         </div>
       </div>
 
@@ -115,7 +107,7 @@ export function PatientInformationCard({
             <div className="min-w-0">
               <p className="text-xs text-muted">{label}</p>
               <p className="text-sm font-semibold text-navy truncate">
-                {patient.vitals[key] || '-'} {patient.vitals[key] ? unit : ''}
+                {patient.vitals?.[key] || '-'} {patient.vitals?.[key] ? unit : ''}
               </p>
             </div>
           </div>

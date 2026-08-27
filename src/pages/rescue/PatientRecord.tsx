@@ -12,7 +12,7 @@ import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { uploadCaseAudio } from '@/lib/storageUploads'
-import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness, BleedingStatus } from '@/lib/types'
+import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness } from '@/lib/types'
 
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
@@ -36,10 +36,11 @@ const emptyVitals: VitalSigns = {
 const emptyPrimarySurvey: PrimarySurvey = {
   generalImpression: '',
   responsiveness: undefined,
+  disabilityDetail: '',
   exsanguinatingHemorrhage: '',
   airway: '',
   breathing: '',
-  circulationDisability: { status: undefined, detail: '' },
+  circulation: '',
   exposure: '',
 }
 
@@ -50,53 +51,47 @@ const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
   { value: 'U', title: 'U - ไม่ตอบสนอง' },
 ]
 
-const BLEEDING_STATUS_OPTIONS: { value: BleedingStatus; title: string }[] = [
-  { value: 'no-bleeding', title: 'ไม่มีเลือดออก' },
-  { value: 'bleeding', title: 'มีเลือดออก' },
-  { value: 'other', title: 'อื่นๆ' },
-]
-
 const PRIMARY_SURVEY_FIELDS: {
-  key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'circulationDisability'>
+  key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'disabilityDetail'>
   letter: string
   label: string
   hint: string
-  placeholder: string
 }[] = [
   {
     key: 'generalImpression',
     letter: 'G',
     label: 'ภาพรวมผู้ป่วย (General Impression)',
-    hint: 'ลักษณะทั่วไปของผู้ป่วยที่พบเมื่อแรกเห็น',
-    placeholder: 'เช่น นอนซึม ผิวซีด หายใจเร็ว',
+    hint: 'ลักษณะทั่วไปของผู้ป่วยที่พบเมื่อแรกเห็น เช่น นอนซึม ผิวซีด หายใจเร็ว',
   },
   {
     key: 'exsanguinatingHemorrhage',
     letter: 'X',
     label: 'การห้ามเลือด (Exsanguinating Hemorrhage)',
     hint: 'สำรวจผู้ป่วยและห้ามเลือดจุดที่จะเกิดภาวะคุกคามชีวิต',
-    placeholder: 'เช่น ไม่พบเลือดออกรุนแรง',
   },
   {
     key: 'airway',
     letter: 'A',
     label: 'ทางเดินหายใจ (Airway)',
     hint: 'ตรวจสอบและจัดการทางเดินหายใจให้โล่งและเปิดอยู่เสมอ',
-    placeholder: 'เช่น ทางเดินหายใจโล่งดี',
   },
   {
     key: 'breathing',
     letter: 'B',
     label: 'การหายใจ (Breathing)',
     hint: 'ประเมินว่าการหายใจปกติหรือไม่ อัตราเหมาะสมหรือมีอาการหอบเหนื่อยหรือไม่',
-    placeholder: 'เช่น หายใจปกติ ไม่มีอาการหอบเหนื่อย',
+  },
+  {
+    key: 'circulation',
+    letter: 'C',
+    label: 'การไหลเวียนโลหิต (Circulation)',
+    hint: 'ตรวจสอบชีพจร สีของผิวหนัง ความดันโลหิต',
   },
   {
     key: 'exposure',
     letter: 'E',
     label: 'สิ่งแวดล้อม (Exposure/Environment)',
     hint: 'ป้องกันการสูญเสียความร้อนของร่างกาย และประเมินสิ่งแวดล้อมรอบตัวเพื่อหาปัจจัยเสี่ยง',
-    placeholder: 'เช่น ห่มผ้าเก็บความอบอุ่นแล้ว ไม่พบอันตรายรอบตัว',
   },
 ]
 
@@ -128,12 +123,8 @@ export default function RescuePatientRecord() {
     setVitals((v) => ({ ...v, [key]: value }))
   }
 
-  function updatePrimarySurvey(key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'circulationDisability'>, value: string) {
+  function updatePrimarySurvey(key: Exclude<keyof PrimarySurvey, 'responsiveness'>, value: string) {
     setPrimarySurvey((p) => ({ ...p, [key]: value }))
-  }
-
-  function updateCirculationDisability(patch: Partial<NonNullable<PrimarySurvey['circulationDisability']>>) {
-    setPrimarySurvey((p) => ({ ...p, circulationDisability: { ...p.circulationDisability, ...patch } }))
   }
 
   async function handleSaveAudio(blob: Blob, seconds: number) {
@@ -192,16 +183,22 @@ export default function RescuePatientRecord() {
         <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
           <SectionHeader index={2} title="การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)" />
 
-          <Input
-            label={`${PRIMARY_SURVEY_FIELDS[0].letter} - ${PRIMARY_SURVEY_FIELDS[0].label}`}
-            hint={PRIMARY_SURVEY_FIELDS[0].hint}
-            placeholder={PRIMARY_SURVEY_FIELDS[0].placeholder}
-            value={primarySurvey.generalImpression}
-            onChange={(e) => updatePrimarySurvey('generalImpression', e.target.value)}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-navy">{PRIMARY_SURVEY_FIELDS[0].letter} - {PRIMARY_SURVEY_FIELDS[0].label}</label>
+            <p className="text-xs text-muted">{PRIMARY_SURVEY_FIELDS[0].hint}</p>
+            <SpeechToTextPanel
+              value={primarySurvey.generalImpression ?? ''}
+              onChange={(v) => updatePrimarySurvey('generalImpression', v)}
+              label="พิมพ์หรือพูดเพื่อบันทึก"
+            />
+          </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-navy">R - การตอบสนอง (Responsiveness)</label>
+            <label className="text-sm font-semibold text-navy">R/D - การตอบสนองและระบบประสาท (Responsiveness/Disability)</label>
+            <p className="text-xs text-muted">
+              ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น
+              การตอบสนองของลูกตา การเคลื่อนไหว
+            </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {RESPONSIVENESS_OPTIONS.map((opt) => (
                 <button
@@ -219,58 +216,23 @@ export default function RescuePatientRecord() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-muted">ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ</p>
+            <SpeechToTextPanel
+              value={primarySurvey.disabilityDetail ?? ''}
+              onChange={(v) => updatePrimarySurvey('disabilityDetail', v)}
+              label="รายละเอียดเพิ่มเติม (D - พิมพ์หรือพูด)"
+            />
           </div>
 
-          {PRIMARY_SURVEY_FIELDS.slice(1, 4).map((f) => (
-            <Input
-              key={f.key}
-              label={`${f.letter} - ${f.label}`}
-              hint={f.hint}
-              placeholder={f.placeholder}
-              value={primarySurvey[f.key]}
-              onChange={(e) => updatePrimarySurvey(f.key, e.target.value)}
-            />
-          ))}
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-navy">C/D - การไหลเวียนโลหิตและระบบประสาท (Circulation/Disability)</label>
-            <div className="grid grid-cols-3 gap-2">
-              {BLEEDING_STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => updateCirculationDisability({ status: opt.value })}
-                  className={clsx(
-                    'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
-                    primarySurvey.circulationDisability?.status === opt.value
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
-                  )}
-                >
-                  {opt.title}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted">ตรวจสอบชีพจร สีผิว ความดันโลหิต และการตอบสนองของระบบประสาท</p>
-            {primarySurvey.circulationDisability?.status === 'other' && (
+          {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
+            <div key={f.key} className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-navy">{f.letter} - {f.label}</label>
+              <p className="text-xs text-muted">{f.hint}</p>
               <SpeechToTextPanel
-                value={primarySurvey.circulationDisability?.detail ?? ''}
-                onChange={(v) => updateCirculationDisability({ detail: v })}
-                label="ระบุรายละเอียด (พิมพ์หรือพูด)"
+                value={primarySurvey[f.key] ?? ''}
+                onChange={(v) => updatePrimarySurvey(f.key, v)}
+                label="พิมพ์หรือพูดเพื่อบันทึก"
               />
-            )}
-          </div>
-
-          {PRIMARY_SURVEY_FIELDS.slice(4).map((f) => (
-            <Input
-              key={f.key}
-              label={`${f.letter} - ${f.label}`}
-              hint={f.hint}
-              placeholder={f.placeholder}
-              value={primarySurvey[f.key]}
-              onChange={(e) => updatePrimarySurvey(f.key, e.target.value)}
-            />
+            </div>
           ))}
         </Card>
 

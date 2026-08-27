@@ -8,6 +8,7 @@ import { initNativeNotifications } from '@/lib/nativeNotify'
 import { ToastViewport } from '@/components/ToastNotification'
 import { NotificationAlertBridge } from '@/components/NotificationAlertBridge'
 import { CallRingtoneBridge } from '@/components/CallRingtoneBridge'
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
 
 import Home from '@/pages/Home'
 import HowItWorks from '@/pages/HowItWorks'
@@ -70,6 +71,7 @@ export default function App() {
       <ToastViewport />
       <NotificationAlertBridge />
       <CallRingtoneBridge />
+      <RouteErrorBoundary>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
@@ -108,6 +110,7 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </RouteErrorBoundary>
     </>
   )
 }
