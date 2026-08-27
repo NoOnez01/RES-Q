@@ -120,7 +120,23 @@ export interface VitalSigns {
   temperature?: string
   respiration?: string
   oxygenSat?: string
-  consciousness?: string
+}
+
+/** AVPU scale for the R (Responsiveness) step of the primary survey. */
+export type Responsiveness = 'A' | 'V' | 'P' | 'U'
+
+/** Primary survey per the G-R-X-A-B-C-D-E framework used in Thai EMS
+ * fieldwork: general impression, responsiveness (AVPU), exsanguinating
+ * hemorrhage, airway, breathing, circulation, disability, exposure. */
+export interface PrimarySurvey {
+  generalImpression?: string
+  responsiveness?: Responsiveness
+  exsanguinatingHemorrhage?: string
+  airway?: string
+  breathing?: string
+  circulation?: string
+  disability?: string
+  exposure?: string
 }
 
 export interface PatientInfo {
@@ -128,8 +144,8 @@ export interface PatientInfo {
   age?: string
   gender?: string
   vitals: VitalSigns
+  primarySurvey: PrimarySurvey
   firstAid: string
-  additionalNotes?: string
   recordedAt?: number
 }
 

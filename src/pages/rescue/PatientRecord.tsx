@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input, Select, Textarea } from '@/components/ui/Field'
+import { Input, Select } from '@/components/ui/Field'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
-import type { PatientInfo, VitalSigns } from '@/lib/types'
+import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness } from '@/lib/types'
 
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
@@ -29,8 +30,83 @@ const emptyVitals: VitalSigns = {
   temperature: '',
   respiration: '',
   oxygenSat: '',
-  consciousness: '',
 }
+
+const emptyPrimarySurvey: PrimarySurvey = {
+  generalImpression: '',
+  responsiveness: undefined,
+  exsanguinatingHemorrhage: '',
+  airway: '',
+  breathing: '',
+  circulation: '',
+  disability: '',
+  exposure: '',
+}
+
+const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
+  { value: 'A', title: 'A - รู้สึกตัวดี' },
+  { value: 'V', title: 'V - ตอบสนองต่อเสียงเรียก' },
+  { value: 'P', title: 'P - ตอบสนองต่อความเจ็บปวด' },
+  { value: 'U', title: 'U - ไม่ตอบสนอง' },
+]
+
+const PRIMARY_SURVEY_FIELDS: {
+  key: Exclude<keyof PrimarySurvey, 'responsiveness'>
+  letter: string
+  label: string
+  hint: string
+  placeholder: string
+}[] = [
+  {
+    key: 'generalImpression',
+    letter: 'G',
+    label: 'ภาพรวมผู้ป่วย (General Impression)',
+    hint: 'ลักษณะทั่วไปของผู้ป่วยที่พบเมื่อแรกเห็น',
+    placeholder: 'เช่น นอนซึม ผิวซีด หายใจเร็ว',
+  },
+  {
+    key: 'exsanguinatingHemorrhage',
+    letter: 'X',
+    label: 'การห้ามเลือด (Exsanguinating Hemorrhage)',
+    hint: 'สำรวจผู้ป่วยและห้ามเลือดจุดที่จะเกิดภาวะคุกคามชีวิต',
+    placeholder: 'เช่น ไม่พบเลือดออกรุนแรง',
+  },
+  {
+    key: 'airway',
+    letter: 'A',
+    label: 'ทางเดินหายใจ (Airway)',
+    hint: 'ตรวจสอบและจัดการทางเดินหายใจให้โล่งและเปิดอยู่เสมอ',
+    placeholder: 'เช่น ทางเดินหายใจโล่งดี',
+  },
+  {
+    key: 'breathing',
+    letter: 'B',
+    label: 'การหายใจ (Breathing)',
+    hint: 'ประเมินว่าการหายใจปกติหรือไม่ อัตราเหมาะสมหรือมีอาการหอบเหนื่อยหรือไม่',
+    placeholder: 'เช่น หายใจปกติ ไม่มีอาการหอบเหนื่อย',
+  },
+  {
+    key: 'circulation',
+    letter: 'C',
+    label: 'การไหลเวียนโลหิต (Circulation)',
+    hint: 'ตรวจสอบชีพจร สีของผิวหนัง ความดันโลหิต',
+    placeholder: 'เช่น ชีพจรสม่ำเสมอ ผิวสีปกติ',
+  },
+  {
+    key: 'disability',
+    letter: 'D',
+    label: 'ระบบประสาท (Disability)',
+    hint: 'ประเมินการตอบสนองของลูกตา การเคลื่อนไหว การรับรู้สติสัมปชัญญะ',
+    placeholder: 'เช่น รูม่านตาตอบสนองต่อแสงปกติ',
+  },
+  {
+    key: 'exposure',
+    letter: 'E',
+    label: 'สิ่งแวดล้อม (Exposure/Environment)',
+    hint: 'ป้องกันการสูญเสียความร้อนของร่างกาย และประเมินสิ่งแวดล้อมรอบตัวเพื่อหาปัจจัยเสี่ยง',
+    placeholder: 'เช่น ห่มผ้าเก็บความอบอุ่นแล้ว ไม่พบอันตรายรอบตัว',
+  },
+]
 
 export default function RescuePatientRecord() {
   const { id } = useParams<{ id: string }>()
@@ -41,9 +117,9 @@ export default function RescuePatientRecord() {
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState('')
+  const [primarySurvey, setPrimarySurvey] = useState<PrimarySurvey>(emptyPrimarySurvey)
   const [vitals, setVitals] = useState<VitalSigns>(emptyVitals)
   const [firstAid, setFirstAid] = useState('')
-  const [additionalNotes, setAdditionalNotes] = useState('')
   const [firstAidError, setFirstAidError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -59,6 +135,10 @@ export default function RescuePatientRecord() {
     setVitals((v) => ({ ...v, [key]: value }))
   }
 
+  function updatePrimarySurvey(key: keyof PrimarySurvey, value: string) {
+    setPrimarySurvey((p) => ({ ...p, [key]: value }))
+  }
+
   function handleSubmit() {
     if (!firstAid.trim()) {
       setFirstAidError('กรุณาระบุการปฐมพยาบาลเบื้องต้น')
@@ -69,9 +149,9 @@ export default function RescuePatientRecord() {
       name: name || undefined,
       age: age || undefined,
       gender: gender || undefined,
+      primarySurvey,
       vitals,
       firstAid,
-      additionalNotes: additionalNotes || undefined,
     }
     setLoading(true)
     setTimeout(() => {
@@ -102,7 +182,52 @@ export default function RescuePatientRecord() {
         </Card>
 
         <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
-          <SectionHeader index={2} title="สัญญาณชีพ" />
+          <SectionHeader index={2} title="การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)" />
+
+          <Input
+            label={`${PRIMARY_SURVEY_FIELDS[0].letter} - ${PRIMARY_SURVEY_FIELDS[0].label}`}
+            hint={PRIMARY_SURVEY_FIELDS[0].hint}
+            placeholder={PRIMARY_SURVEY_FIELDS[0].placeholder}
+            value={primarySurvey.generalImpression}
+            onChange={(e) => updatePrimarySurvey('generalImpression', e.target.value)}
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-navy">R - การตอบสนอง (Responsiveness)</label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {RESPONSIVENESS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPrimarySurvey((p) => ({ ...p, responsiveness: opt.value }))}
+                  className={clsx(
+                    'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
+                    primarySurvey.responsiveness === opt.value
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
+                  )}
+                >
+                  {opt.title}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted">ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ</p>
+          </div>
+
+          {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
+            <Input
+              key={f.key}
+              label={`${f.letter} - ${f.label}`}
+              hint={f.hint}
+              placeholder={f.placeholder}
+              value={primarySurvey[f.key]}
+              onChange={(e) => updatePrimarySurvey(f.key, e.target.value)}
+            />
+          ))}
+        </Card>
+
+        <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>
+          <SectionHeader index={3} title="สัญญาณชีพ" />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="ความดันโลหิต"
@@ -129,32 +254,16 @@ export default function RescuePatientRecord() {
               value={vitals.oxygenSat}
               onChange={(e) => updateVital('oxygenSat', e.target.value)}
             />
-            <Input
-              label="ระดับความรู้สึกตัว"
-              placeholder="รู้สึกตัวดี"
-              value={vitals.consciousness}
-              onChange={(e) => updateVital('consciousness', e.target.value)}
-            />
           </div>
         </Card>
 
-        <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '160ms', animationFillMode: 'backwards' }}>
-          <SectionHeader index={3} title="การปฐมพยาบาล" />
+        <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <SectionHeader index={4} title="การปฐมพยาบาล" />
           <SpeechToTextPanel value={firstAid} onChange={setFirstAid} label="การปฐมพยาบาลเบื้องต้น (พิมพ์หรือพูด)" />
           {firstAidError && <p className="text-xs font-medium text-emergency">{firstAidError}</p>}
         </Card>
 
-        <Card className="animate-fade-in-up space-y-2" style={{ animationDelay: '220ms', animationFillMode: 'backwards' }}>
-          <Textarea
-            label="หมายเหตุเพิ่มเติม"
-            hint="ไม่บังคับ"
-            placeholder="ข้อมูลเพิ่มเติมเกี่ยวกับผู้ป่วยหรือสถานการณ์"
-            value={additionalNotes}
-            onChange={(e) => setAdditionalNotes(e.target.value)}
-          />
-        </Card>
-
-        <div className="animate-fade-in-up" style={{ animationDelay: '280ms', animationFillMode: 'backwards' }}>
+        <div className="animate-fade-in-up" style={{ animationDelay: '260ms', animationFillMode: 'backwards' }}>
           <AudioRecorder label="บันทึกเสียงเพิ่มเติม (ถ้ามี)" />
         </div>
 

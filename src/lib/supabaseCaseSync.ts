@@ -55,7 +55,6 @@ function toRow(c: EmergencyCase) {
     patient_gender: c.patientInfo?.gender ?? null,
     patient_vitals: c.patientInfo?.vitals ?? null,
     first_aid: c.patientInfo?.firstAid ?? null,
-    patient_notes: c.patientInfo?.additionalNotes ?? null,
 
     // โรงพยาบาล
     selected_hospital_name: c.selectedHospital?.name ?? null,
