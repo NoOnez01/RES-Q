@@ -66,11 +66,10 @@ export function PatientInformationCard({
       <div className="border-t border-border pt-4">
         <p className="mb-2 text-sm font-semibold text-navy">การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)</p>
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <div className="rounded-xl bg-skyblue-pale p-3 col-span-2">
+          <div className="rounded-xl bg-skyblue-pale p-3">
             <p className="text-xs text-muted">R/D - การตอบสนอง/ระบบประสาท</p>
             <p className="text-sm font-semibold text-navy">
               {survey?.responsiveness ? RESPONSIVENESS_LABEL[survey.responsiveness] : '-'}
-              {survey?.disabilityDetail && <span className="ml-1 font-normal text-muted">— {survey.disabilityDetail}</span>}
             </p>
           </div>
           {PRIMARY_SURVEY_ITEMS.map(({ key, letter, label }) => (

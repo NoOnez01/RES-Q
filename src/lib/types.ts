@@ -141,17 +141,13 @@ export interface VitalSigns {
 export type Responsiveness = 'A' | 'V' | 'P' | 'U'
 
 /** Primary survey per the G-R-X-A-B-C-D-E framework used in Thai EMS
- * fieldwork: general impression, responsiveness+disability (AVPU plus a
- * neuro-exam detail -- both are about neurological/consciousness status,
- * so they're recorded together), exsanguinating hemorrhage, airway,
- * breathing, circulation, exposure. Every free-text field can be filled by
- * typing or by speech-to-text. */
+ * fieldwork: general impression, responsiveness (AVPU, doubling as the R/D
+ * neuro/consciousness check), exsanguinating hemorrhage, airway, breathing,
+ * circulation, exposure. Every free-text field can be filled by typing or
+ * by speech-to-text. */
 export interface PrimarySurvey {
   generalImpression?: string
   responsiveness?: Responsiveness
-  /** D (Disability) detail -- pupils, movement, GCS-like notes -- recorded
-   * alongside the R (Responsiveness/AVPU) selection above. */
-  disabilityDetail?: string
   exsanguinatingHemorrhage?: string
   airway?: string
   breathing?: string

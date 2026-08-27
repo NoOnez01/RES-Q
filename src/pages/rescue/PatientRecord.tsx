@@ -36,7 +36,6 @@ const emptyVitals: VitalSigns = {
 const emptyPrimarySurvey: PrimarySurvey = {
   generalImpression: '',
   responsiveness: undefined,
-  disabilityDetail: '',
   exsanguinatingHemorrhage: '',
   airway: '',
   breathing: '',
@@ -52,7 +51,7 @@ const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
 ]
 
 const PRIMARY_SURVEY_FIELDS: {
-  key: Exclude<keyof PrimarySurvey, 'responsiveness' | 'disabilityDetail'>
+  key: Exclude<keyof PrimarySurvey, 'responsiveness'>
   letter: string
   label: string
   hint: string
@@ -216,11 +215,6 @@ export default function RescuePatientRecord() {
                 </button>
               ))}
             </div>
-            <SpeechToTextPanel
-              value={primarySurvey.disabilityDetail ?? ''}
-              onChange={(v) => updatePrimarySurvey('disabilityDetail', v)}
-              label="รายละเอียดเพิ่มเติม (D - พิมพ์หรือพูด)"
-            />
           </div>
 
           {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
