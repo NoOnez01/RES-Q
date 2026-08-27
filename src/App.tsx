@@ -9,6 +9,7 @@ import { ToastViewport } from '@/components/ToastNotification'
 import { NotificationAlertBridge } from '@/components/NotificationAlertBridge'
 import { CallRingtoneBridge } from '@/components/CallRingtoneBridge'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
+import { AppUpdateBanner } from '@/components/AppUpdateBanner'
 
 import Home from '@/pages/Home'
 import HowItWorks from '@/pages/HowItWorks'
@@ -71,6 +72,7 @@ export default function App() {
       <ToastViewport />
       <NotificationAlertBridge />
       <CallRingtoneBridge />
+      <AppUpdateBanner />
       <RouteErrorBoundary>
       <Routes>
         <Route path="/" element={<Home />} />
