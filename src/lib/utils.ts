@@ -4,8 +4,15 @@
 // trailing slash, so this resolves correctly everywhere the app runs.
 export const FAVICON_URL = `${import.meta.env.BASE_URL}favicon.svg`
 
+// `seq` is a per-device counter, not a shared/atomic one -- two different
+// phones/browsers independently create their own "case #2" and, without the
+// random suffix, both would upsert to the exact same case_id in Supabase and
+// silently clobber each other's data. The suffix makes that collision
+// astronomically unlikely while keeping the number short enough to read over
+// a radio.
 export function formatCaseNumber(seq: number, date = new Date()): string {
-  return `RQ-${date.getFullYear()}-${String(seq).padStart(3, '0')}`
+  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase()
+  return `RQ-${date.getFullYear()}-${String(seq).padStart(3, '0')}-${suffix}`
 }
 
 export function formatTime(ts: number): string {
