@@ -28,6 +28,7 @@ import CaseTracking from '@/pages/public/CaseTracking'
 
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
 import DispatchPendingApprovals from '@/pages/dispatch/PendingApprovals'
+import ManageOrgs from '@/pages/dispatch/ManageOrgs'
 import DispatchFeedbackStats from '@/pages/dispatch/FeedbackStats'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
 import DispatchCallScreen from '@/pages/dispatch/CallScreen'
@@ -123,6 +124,8 @@ export default function App() {
 
         <Route path="/dispatch/dashboard" element={<DispatchDashboard />} />
         <Route path="/dispatch/pending-approvals" element={<DispatchPendingApprovals />} />
+        <Route path="/org-approvals" element={<DispatchPendingApprovals />} />
+        <Route path="/manage-orgs" element={<ManageOrgs />} />
         <Route path="/dispatch/feedback-stats" element={<DispatchFeedbackStats />} />
         <Route path="/dispatch/incoming-call" element={<DispatchIncomingCall />} />
         <Route path="/dispatch/call/:id" element={<DispatchCallScreen />} />

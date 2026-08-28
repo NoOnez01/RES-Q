@@ -22,7 +22,7 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
   // Admin "view as" only changes which menu renders (see setViewingRole) --
   // never falls back to it for a non-admin account.
   const effectiveRole = currentUser?.isAdmin && viewingRole ? viewingRole : (currentUser?.role ?? null)
-  const items = navItemsForRole(effectiveRole)
+  const items = navItemsForRole(effectiveRole, !!currentUser?.isOrgLead)
 
   if (variant === 'dashboard') {
     return (

@@ -10,6 +10,7 @@ interface ProfileRow {
   hospital_id: string | null
   approval_status: 'pending' | 'approved' | 'rejected'
   is_admin: boolean
+  is_org_lead: boolean
 }
 
 function toAppUser(row: ProfileRow): AppUser {
@@ -22,11 +23,14 @@ function toAppUser(row: ProfileRow): AppUser {
     hospitalId: row.hospital_id ?? undefined,
     approvalStatus: row.approval_status,
     isAdmin: row.is_admin,
+    isOrgLead: row.is_org_lead,
   }
 }
 
-/** Only returns rows at all for an approved dispatch/admin caller -- RLS
- * (see supabase-profiles-table.sql) silently filters everyone else to zero. */
+/** Only returns rows at all for an approved dispatch/admin/org-lead caller
+ * -- RLS (see supabase-profiles-table.sql, supabase-org-lead-system.sql)
+ * silently filters everyone else to zero, and an org lead only ever gets
+ * back pending accounts for their own rescue team or hospital. */
 export async function fetchPendingAccounts(): Promise<AppUser[]> {
   if (!supabaseEnabled || !supabase) return []
   const { data, error } = await supabase
@@ -41,9 +45,14 @@ export async function fetchPendingAccounts(): Promise<AppUser[]> {
   return (data ?? []).map(toAppUser)
 }
 
-export async function approveAccount(userId: string): Promise<void> {
+/** `asOrgLead` also grants is_org_lead in the same update -- useful for the
+ * common case of approving the very first member of a newly self-registered
+ * org, who then becomes able to approve their own colleagues afterward. */
+export async function approveAccount(userId: string, asOrgLead = false): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase.from('profiles').update({ approval_status: 'approved' }).eq('id', userId)
+  const patch: { approval_status: 'approved'; is_org_lead?: boolean } = { approval_status: 'approved' }
+  if (asOrgLead) patch.is_org_lead = true
+  const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
   if (error) throw error
 }
 
@@ -76,5 +85,14 @@ export async function fetchApprovedStaff(): Promise<AppUser[]> {
 export async function setAdminStatus(userId: string, isAdmin: boolean): Promise<void> {
   if (!supabase) return
   const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId)
+  if (error) throw error
+}
+
+/** Admin/dispatch can call this for anyone; an org lead can only call it
+ * for a fellow member of their own org -- enforced server-side (see
+ * supabase-org-lead-system.sql), so a mismatched request just fails. */
+export async function setOrgLeadStatus(userId: string, isOrgLead: boolean): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('profiles').update({ is_org_lead: isOrgLead }).eq('id', userId)
   if (error) throw error
 }

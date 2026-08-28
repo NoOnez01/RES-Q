@@ -10,6 +10,7 @@ interface ProfileRow {
   hospital_id: string | null
   approval_status: ApprovalStatus
   is_admin: boolean
+  is_org_lead: boolean
   avatar_url: string | null
   nickname: string | null
   birthdate: string | null
@@ -28,6 +29,7 @@ function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
     hospitalId: row.hospital_id ?? undefined,
     approvalStatus: row.approval_status,
     isAdmin: row.is_admin,
+    isOrgLead: row.is_org_lead,
     isAnonymous,
     avatarUrl: row.avatar_url ?? undefined,
     nickname: row.nickname ?? undefined,

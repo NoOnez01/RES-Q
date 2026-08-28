@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { UserCircle2, ShieldCheck, Trash2, LogOut, Radio, Ambulance, Building2, ShieldAlert } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { UserCircle2, ShieldCheck, Trash2, LogOut, Radio, Ambulance, Building2, ShieldAlert, UserCheck, Wrench } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
@@ -102,6 +102,18 @@ export default function Settings() {
                   {v.label}
                 </Button>
               ))}
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Link to="/dispatch/pending-approvals">
+                <Button variant="outline" size="sm" fullWidth icon={<UserCheck className="size-4" />}>
+                  บัญชีรออนุมัติ / จัดการสิทธิ์
+                </Button>
+              </Link>
+              <Link to="/manage-orgs">
+                <Button variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
+                  จัดการหน่วยกู้ชีพ/โรงพยาบาล
+                </Button>
+              </Link>
             </div>
           </Card>
         )}

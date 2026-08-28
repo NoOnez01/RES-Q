@@ -4,6 +4,7 @@ import {
   PhoneIncoming,
   History,
   ListChecks,
+  UserCheck,
   Bell,
   Settings,
   Home,
@@ -17,7 +18,10 @@ export interface NavItem {
   icon: typeof Home
 }
 
-export function navItemsForRole(role: Role | null): NavItem[] {
+/** `isOrgLead` adds an approvals link for rescue/hospital -- someone
+ * designated to approve new registrations for their own org (see
+ * supabase-org-lead-system.sql), reusing the same page dispatch/admin use. */
+export function navItemsForRole(role: Role | null, isOrgLead = false): NavItem[] {
   switch (role) {
     case 'dispatch':
       return [
@@ -33,6 +37,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
         { label: 'แดชบอร์ด', path: '/rescue/dashboard', icon: Ambulance },
         { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        ...(isOrgLead ? [{ label: 'อนุมัติสมาชิกหน่วยงาน', path: '/org-approvals', icon: UserCheck }] : []),
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
       ]
@@ -41,6 +46,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
         { label: 'แดชบอร์ด', path: '/hospital/dashboard', icon: Building2 },
         { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        ...(isOrgLead ? [{ label: 'อนุมัติสมาชิกหน่วยงาน', path: '/org-approvals', icon: UserCheck }] : []),
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
       ]

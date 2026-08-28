@@ -18,6 +18,10 @@ export interface AppUser {
   /** Granted by hand only (never through registration) -- bypasses all
    * team/hospital scoping and can approve/reject any pending account. */
   isAdmin: boolean
+  /** Granted by dispatch/admin (or another lead of the same org) -- can
+   * approve/reject pending registrations for their own rescue team or
+   * hospital only, without needing full admin/dispatch power. */
+  isOrgLead?: boolean
   /** True for the transparent anonymous session every citizen visitor gets
    * (see ensureAnonymousSession). Not a real account -- the UI must not
    * treat this as "logged in" (e.g. top nav should still show
