@@ -106,12 +106,13 @@ const CONNECTION_NODES = [
   },
 ] as const
 
-// TODO: replace with the team's real LINE Official Account / Facebook Page
-// links before this goes live for real users -- these are placeholders.
-const CONTACT_LINKS = [
-  { key: 'line', label: 'LINE Official', href: 'https://line.me/', icon: <MessageCircle className="size-5" /> },
-  { key: 'facebook', label: 'Facebook', href: 'https://facebook.com/', icon: <Facebook className="size-5" /> },
-] as const
+// `href: null` means the real account doesn't exist yet -- shows as a
+// disabled "เร็วๆ นี้" chip instead of linking somewhere fake. Fill in the
+// real LINE OA / Facebook Page link here once it exists.
+const CONTACT_LINKS: { key: string; label: string; href: string | null; icon: ReactNode }[] = [
+  { key: 'line', label: 'LINE Official', href: null, icon: <MessageCircle className="size-5" /> },
+  { key: 'facebook', label: 'Facebook', href: null, icon: <Facebook className="size-5" /> },
+]
 
 const TRUST_POINTS = [
   { icon: <Shield className="size-5" />, text: 'ระบบออกแบบเพื่อการประสานงานฉุกเฉิน' },
@@ -467,18 +468,30 @@ export default function Home() {
             </p>
           </Reveal>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {CONTACT_LINKS.map((link) => (
-              <a
-                key={link.key}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-navy shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
-              >
-                {link.icon}
-                {link.label}
-              </a>
-            ))}
+            {CONTACT_LINKS.map((link) =>
+              link.href ? (
+                <a
+                  key={link.key}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-navy shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
+                >
+                  {link.icon}
+                  {link.label}
+                </a>
+              ) : (
+                <span
+                  key={link.key}
+                  aria-disabled="true"
+                  className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-white/60 px-5 py-3 text-sm font-semibold text-muted"
+                >
+                  {link.icon}
+                  {link.label}
+                  <span className="text-xs font-normal">(เร็วๆ นี้)</span>
+                </span>
+              ),
+            )}
           </div>
         </div>
       </section>
