@@ -111,7 +111,12 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
               onClick={onClose}
               className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
             >
-              <UserCircle2 className="size-4.5" /> {loggedInUser.name}
+              {loggedInUser.avatarUrl ? (
+                <img src={loggedInUser.avatarUrl} alt="" className="size-4.5 shrink-0 rounded-full object-cover" />
+              ) : (
+                <UserCircle2 className="size-4.5 shrink-0" />
+              )}
+              {loggedInUser.name}
             </Link>
             <button
               onClick={() => {

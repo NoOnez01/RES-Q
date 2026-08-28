@@ -21,6 +21,13 @@ const PUBLIC_NAV_LINKS = [
   { label: 'ติดต่อเรา', href: '/#contact' },
 ]
 
+function Avatar({ url, className }: { url?: string; className?: string }) {
+  if (url) {
+    return <img src={url} alt="" className={clsx('shrink-0 rounded-full object-cover', className)} />
+  }
+  return <UserCircle2 className={clsx('shrink-0', className)} />
+}
+
 export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }: TopNavigationProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -101,7 +108,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
                   onClick={() => navigate('/profile')}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-navy hover:bg-skyblue-light"
                 >
-                  <UserCircle2 className="size-5" />
+                  <Avatar url={currentUser?.avatarUrl} className="size-5" />
                   {currentUser?.name}
                 </button>
                 <button
@@ -145,9 +152,9 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
             <button
               onClick={() => navigate('/profile')}
               aria-label="ข้อมูลส่วนตัว"
-              className="rounded-lg p-2 text-navy hover:bg-skyblue-light"
+              className="rounded-lg p-1.5 text-navy hover:bg-skyblue-light"
             >
-              <UserCircle2 className="size-5" />
+              <Avatar url={currentUser?.avatarUrl} className="size-6" />
             </button>
           </>
         )}
