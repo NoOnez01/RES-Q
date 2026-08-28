@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   PhoneIncoming,
   History,
+  ListChecks,
   Bell,
   Settings,
   Home,
@@ -22,6 +23,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
       return [
         { label: 'แดชบอร์ด', path: '/dispatch/dashboard', icon: LayoutDashboard },
         { label: 'สายเรียกเข้า', path: '/dispatch/incoming-call', icon: PhoneIncoming },
+        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
@@ -29,6 +31,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
     case 'rescue':
       return [
         { label: 'แดชบอร์ด', path: '/rescue/dashboard', icon: Ambulance },
+        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
@@ -36,6 +39,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
     case 'hospital':
       return [
         { label: 'แดชบอร์ด', path: '/hospital/dashboard', icon: Building2 },
+        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
@@ -43,6 +47,7 @@ export function navItemsForRole(role: Role | null): NavItem[] {
     default:
       return [
         { label: 'หน้าหลัก', path: '/', icon: Home },
+        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },

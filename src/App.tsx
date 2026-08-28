@@ -47,6 +47,7 @@ import Notifications from '@/pages/Notifications'
 import Profile from '@/pages/Profile'
 import Settings from '@/pages/Settings'
 import CaseHistory from '@/pages/CaseHistory'
+import CurrentCases from '@/pages/CurrentCases'
 import AllScreens from '@/pages/AllScreens'
 import NotFound from '@/pages/NotFound'
 
@@ -140,6 +141,7 @@ export default function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/current-cases" element={<CurrentCases />} />
         <Route path="/case-history" element={<CaseHistory />} />
         <Route path="/all-screens" element={<AllScreens />} />
 
