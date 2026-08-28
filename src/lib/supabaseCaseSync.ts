@@ -52,7 +52,10 @@ function toRow(c: EmergencyCase) {
 
     // หน่วยกู้ชีพ: assignment + progress
     rescue_team_name: c.assignedRescueTeam?.name ?? null,
-    rescue_team_unit_code: c.assignedRescueTeam?.unitCode ?? null,
+    // The branch itself no longer has a single unit code (it can run
+    // several vehicles) -- this now reflects whichever vehicle the branch
+    // picked for this case, if any yet.
+    rescue_team_unit_code: c.assignedVehicle?.unitCode ?? null,
     rescue_team_phone: c.assignedRescueTeam?.phone ?? null,
     rescue_en_route_pct: c.rescueEnRoutePct ?? null,
     // Real foreign keys (as opposed to the denormalized display fields

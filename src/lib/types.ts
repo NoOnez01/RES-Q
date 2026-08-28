@@ -244,20 +244,44 @@ export interface PatientInfo {
   recordedAt?: number
 }
 
-export interface RescueTeam {
+/** One specific vehicle/crew within a rescue branch (RescueTeam) -- a
+ * branch typically runs several of these, each with its own equipment. */
+export interface RescueVehicle {
   id: string
-  name: string
+  rescueTeamId: string
   unitCode: string
   members: number
   vehicle: string
+  /** Special-purpose gear this vehicle carries, e.g. 'เครื่องตัดถ่าง' -- used
+   * to match a unit to incidents that need it, not just whoever's nearest. */
+  equipment: string[]
+  driverName?: string
+  plateNumber?: string
+}
+
+/** A provincial rescue branch/sub-unit -- dispatch assigns a case to the
+ * branch as a whole (see rescueAssignment.ts); the branch's own staff then
+ * pick which of its `vehicles` actually handles it (see
+ * EmergencyCase.assignedVehicle). Staff accounts belong to a branch
+ * (profiles.rescue_team_id), not to an individual vehicle. */
+export interface RescueTeam {
+  id: string
+  name: string
   phone: string
   base: GeoLocation
-  /** Special-purpose gear this unit carries, e.g. 'เครื่องตัดถ่าง' -- used to
-   * match a unit to incidents that need it, not just whoever's nearest. */
-  equipment: string[]
-  /** Driver shown once the unit accepts the case, alongside their vehicle
-   * plate and which unit they belong to. */
+  vehicles: RescueVehicle[]
+  /** @deprecated Kept only for reading older cached case data that
+   * predates the branch/vehicle split -- new code should use `vehicles`. */
+  unitCode?: string
+  /** @deprecated see unitCode */
+  members?: number
+  /** @deprecated see unitCode */
+  vehicle?: string
+  /** @deprecated see unitCode */
+  equipment?: string[]
+  /** @deprecated see unitCode */
   driverName?: string
+  /** @deprecated see unitCode */
   plateNumber?: string
 }
 
@@ -290,7 +314,12 @@ export interface EmergencyCase {
   /** Follow-up condition notes logged after the initial patient record,
    * newest last. */
   patientUpdates: PatientUpdate[]
+  /** Which branch is responsible -- dispatch assigns at this level (see
+   * rescueAssignment.ts). */
   assignedRescueTeam: RescueTeam | null
+  /** Which of the branch's vehicles/crews actually handles it -- picked by
+   * the branch's own staff after the branch accepts, not by dispatch. */
+  assignedVehicle?: RescueVehicle | null
   /** Second unit co-assigned alongside the primary responder when no single
    * available/nearby unit had the equipment the incident needed. */
   supportingRescueTeam?: RescueTeam | null

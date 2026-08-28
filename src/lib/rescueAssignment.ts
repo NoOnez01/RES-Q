@@ -56,7 +56,12 @@ export function rankRescueTeams(
     team,
     distanceKm: haversineKm(team.base, incidentLocation),
     available: !isTeamBusy(team.id, cases, excludeCaseId),
-    hasRequiredEquipment: requiredEquipment.every((eq) => team.equipment.includes(eq)),
+    // A branch "has" the required equipment if at least one of its own
+    // vehicles carries everything needed -- dispatch only assigns the
+    // branch (see the branch/vehicle split in types.ts), so what matters
+    // is whether some single crew of theirs can actually cover it, not
+    // whether the gear exists somewhere spread across different vehicles.
+    hasRequiredEquipment: team.vehicles.some((v) => requiredEquipment.every((eq) => v.equipment.includes(eq))),
   })).sort((a, b) => {
     if (a.available !== b.available) return a.available ? -1 : 1
     if (requiredEquipment.length > 0 && a.hasRequiredEquipment !== b.hasRequiredEquipment) {

@@ -155,7 +155,7 @@ export default function HospitalCaseDetail() {
               </div>
               <div>
                 <p className="text-muted">ยานพาหนะ</p>
-                <p className="font-semibold text-navy">{c.assignedRescueTeam.vehicle}</p>
+                <p className="font-semibold text-navy">{c.assignedVehicle?.vehicle ?? '-'}</p>
               </div>
               <div>
                 <p className="text-muted">เบอร์ติดต่อ</p>

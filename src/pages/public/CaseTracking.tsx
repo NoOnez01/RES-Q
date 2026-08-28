@@ -141,10 +141,11 @@ export default function CaseTracking() {
               </div>
               <div className="text-sm">
                 <p className="font-semibold text-navy">{team.name}</p>
-                <p className="text-muted">{team.vehicle}</p>
-                {activeCase.status !== 'rescue-assigned' && team.driverName && (
+                {activeCase.assignedVehicle && <p className="text-muted">{activeCase.assignedVehicle.vehicle}</p>}
+                {activeCase.status !== 'rescue-assigned' && activeCase.assignedVehicle?.driverName && (
                   <p className="mt-1 text-muted">
-                    คนขับ {team.driverName} · ทะเบียน {team.plateNumber} · สังกัด {team.unitCode}
+                    คนขับ {activeCase.assignedVehicle.driverName} · ทะเบียน {activeCase.assignedVehicle.plateNumber} · สังกัด{' '}
+                    {activeCase.assignedVehicle.unitCode}
                   </p>
                 )}
               </div>

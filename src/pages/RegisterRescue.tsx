@@ -78,9 +78,11 @@ export default function RegisterRescue() {
       const rescueTeamId = creatingNew
         ? await createRescueTeam({
             name: form.newTeamName.trim(),
-            unitCode: form.newTeamUnitCode.trim(),
             phone: form.newTeamPhone.trim(),
-            members: Number(form.newTeamMembers),
+            initialVehicle: {
+              unitCode: form.newTeamUnitCode.trim(),
+              members: Number(form.newTeamMembers),
+            },
           })
         : form.rescueTeamId
       await registerAccount({
@@ -148,7 +150,7 @@ export default function RegisterRescue() {
                 <option value="">เลือกหน่วยกู้ชีพ</option>
                 {rescueTeams.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.unitCode} — {t.name}
+                    {t.name}
                   </option>
                 ))}
                 <option value={NEW_TEAM_VALUE}>+ หน่วยของฉันไม่มีในรายการ</option>
@@ -163,18 +165,19 @@ export default function RegisterRescue() {
                     error={errors.newTeamName}
                   />
                   <Input
-                    label="รหัสหน่วย"
-                    required
-                    value={form.newTeamUnitCode}
-                    onChange={(e) => update('newTeamUnitCode', e.target.value)}
-                    error={errors.newTeamUnitCode}
-                  />
-                  <Input
                     label="เบอร์หน่วย"
                     required
                     value={form.newTeamPhone}
                     onChange={(e) => update('newTeamPhone', e.target.value)}
                     error={errors.newTeamPhone}
+                  />
+                  <p className="text-xs font-semibold text-muted">รถ/ทีมคันแรกของหน่วย (เพิ่มคันอื่นๆ ได้ภายหลัง)</p>
+                  <Input
+                    label="รหัสรถ/ทีม"
+                    required
+                    value={form.newTeamUnitCode}
+                    onChange={(e) => update('newTeamUnitCode', e.target.value)}
+                    error={errors.newTeamUnitCode}
                   />
                   <Input
                     label="จำนวนเจ้าหน้าที่"

@@ -24,3 +24,7 @@ ios/App/DerivedData
 
 # Electron desktop build output (electron-builder)
 release/
+
+# Supabase CLI's local cache (project ref, pooler URL, etc.) -- machine-
+# specific state from `supabase link`/`functions deploy`, not app code.
+supabase/.temp/

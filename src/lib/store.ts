@@ -20,6 +20,7 @@ import type {
   RelativeContact,
   Role,
   RescueTeam,
+  RescueVehicle,
 } from './types'
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
@@ -143,6 +144,10 @@ interface ResQState {
   // rescue
   rescueAcceptCase: (caseId: string) => void
   rescueRejectCase: (caseId: string) => void
+  /** Which of the branch's own vehicles/crews actually handles this case --
+   * picked by the branch's own staff, separate from (and after) dispatch's
+   * branch-level assignment. */
+  assignVehicle: (caseId: string, vehicle: RescueVehicle) => void
   updateRescueProgress: (caseId: string, pct: number) => void
   rescueMarkArrived: (caseId: string) => void
   submitPatientInfo: (caseId: string, info: PatientInfo) => void
@@ -511,8 +516,21 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const reverted = { ...c, assignedRescueTeam: null, supportingRescueTeam: null, rescueRejectedAt: Date.now() }
+          const reverted = {
+            ...c,
+            assignedRescueTeam: null,
+            assignedVehicle: null,
+            supportingRescueTeam: null,
+            rescueRejectedAt: Date.now(),
+          }
           return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ชีพปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
+        }),
+
+      assignVehicle: (caseId, vehicle) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, assignedVehicle: vehicle, updatedAt: Date.now() } } }
         }),
 
       updateRescueProgress: (caseId, pct) =>

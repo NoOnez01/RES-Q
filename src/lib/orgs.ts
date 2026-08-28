@@ -1,16 +1,21 @@
 import { supabase, supabaseEnabled } from './supabase'
-import type { Hospital, RescueTeam } from './types'
+import type { Hospital, RescueTeam, RescueVehicle } from './types'
 
 interface RescueTeamRow {
   id: string
   name: string
-  unit_code: string
-  members: number
-  vehicle: string
   phone: string
   base_lat: number
   base_lng: number
   base_address: string
+}
+
+interface RescueVehicleRow {
+  id: string
+  rescue_team_id: string
+  unit_code: string
+  members: number
+  vehicle: string
   equipment: string[]
   driver_name: string | null
   plate_number: string | null
@@ -30,18 +35,26 @@ interface HospitalRow {
   phone: string
 }
 
-function rowToRescueTeam(row: RescueTeamRow): RescueTeam {
+function rowToRescueVehicle(row: RescueVehicleRow): RescueVehicle {
   return {
     id: row.id,
-    name: row.name,
+    rescueTeamId: row.rescue_team_id,
     unitCode: row.unit_code,
     members: row.members,
     vehicle: row.vehicle,
-    phone: row.phone,
-    base: { lat: row.base_lat, lng: row.base_lng, address: row.base_address },
     equipment: row.equipment ?? [],
     driverName: row.driver_name ?? undefined,
     plateNumber: row.plate_number ?? undefined,
+  }
+}
+
+function rowToRescueTeam(row: RescueTeamRow, vehicles: RescueVehicle[]): RescueTeam {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    base: { lat: row.base_lat, lng: row.base_lng, address: row.base_address },
+    vehicles,
   }
 }
 
@@ -64,13 +77,23 @@ function rowToHospital(row: HospitalRow): Hospital {
  * won't show up anywhere until connectivity's back, not a hard failure. */
 export async function fetchOrgs(): Promise<{ rescueTeams: RescueTeam[]; hospitals: Hospital[] } | null> {
   if (!supabaseEnabled || !supabase) return null
-  const [teamsRes, hospitalsRes] = await Promise.all([
+  const [teamsRes, vehiclesRes, hospitalsRes] = await Promise.all([
     supabase.from('rescue_teams').select('*'),
+    supabase.from('rescue_vehicles').select('*'),
     supabase.from('hospitals').select('*'),
   ])
-  if (teamsRes.error || hospitalsRes.error || !teamsRes.data?.length || !hospitalsRes.data?.length) return null
+  if (teamsRes.error || vehiclesRes.error || hospitalsRes.error || !teamsRes.data?.length || !hospitalsRes.data?.length) {
+    return null
+  }
+  const vehiclesByTeam = new Map<string, RescueVehicle[]>()
+  for (const row of vehiclesRes.data as RescueVehicleRow[]) {
+    const vehicle = rowToRescueVehicle(row)
+    const list = vehiclesByTeam.get(vehicle.rescueTeamId) ?? []
+    list.push(vehicle)
+    vehiclesByTeam.set(vehicle.rescueTeamId, list)
+  }
   return {
-    rescueTeams: teamsRes.data.map(rowToRescueTeam),
+    rescueTeams: (teamsRes.data as RescueTeamRow[]).map((row) => rowToRescueTeam(row, vehiclesByTeam.get(row.id) ?? [])),
     hospitals: hospitalsRes.data.map(rowToHospital),
   }
 }
@@ -92,16 +115,40 @@ async function nextOrgId(table: 'rescue_teams' | 'hospitals', prefix: string): P
   return `${prefix}-${String(highest + 1).padStart(2, '0')}`
 }
 
-export interface NewRescueTeamInput {
-  name: string
+/** Next 'rt-04-v3'-style id, scoped to one branch's own vehicles. */
+async function nextVehicleId(rescueTeamId: string): Promise<string> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { data, error } = await supabase.from('rescue_vehicles').select('id').eq('rescue_team_id', rescueTeamId)
+  if (error) throw error
+  const pattern = /-v(\d+)$/
+  const highest = (data ?? [])
+    .map((row) => pattern.exec(row.id as string)?.[1])
+    .filter((n): n is string => !!n)
+    .map((n) => parseInt(n, 10))
+    .reduce((max, n) => Math.max(max, n), 0)
+  return `${rescueTeamId}-v${highest + 1}`
+}
+
+export interface NewRescueVehicleInput {
   unitCode: string
-  phone: string
   members: number
   vehicle?: string
   equipment?: string[]
+  driverName?: string
+  plateNumber?: string
+}
+
+export interface NewRescueTeamInput {
+  name: string
+  phone: string
   baseAddress?: string
   baseLat?: number
   baseLng?: number
+  /** Seeds the branch's first vehicle at creation time (e.g. from the
+   * signup form, which still collects unit-code/members) -- omit when
+   * creating an empty branch (e.g. from the admin screen) to add vehicles
+   * to separately afterward. */
+  initialVehicle?: NewRescueVehicleInput
 }
 
 export interface NewHospitalInput {
@@ -118,23 +165,20 @@ export interface NewHospitalInput {
 /** Registration lets rescue/hospital sign-up create their own org if it
  * isn't in the existing roster yet (see supabase-org-insert-policy.sql).
  * Also used by the admin "manage organizations" screen. Returns the new
- * row's id, to use as the profile's rescue_team_id. */
+ * branch's id, to use as the profile's rescue_team_id. */
 export async function createRescueTeam(input: NewRescueTeamInput): Promise<string> {
   if (!supabase) throw new Error('Supabase not configured')
   const id = await nextOrgId('rescue_teams', 'rt')
   const { error } = await supabase.from('rescue_teams').insert({
     id,
     name: input.name,
-    unit_code: input.unitCode,
     phone: input.phone,
-    members: input.members,
-    vehicle: input.vehicle ?? '',
     base_lat: input.baseLat ?? 18.7883,
     base_lng: input.baseLng ?? 98.9853,
     base_address: input.baseAddress ?? '',
-    equipment: input.equipment ?? [],
   })
   if (error) throw error
+  if (input.initialVehicle) await createRescueVehicle(id, input.initialVehicle)
   return id
 }
 
@@ -164,11 +208,7 @@ export async function updateRescueTeam(id: string, input: NewRescueTeamInput): P
     .from('rescue_teams')
     .update({
       name: input.name,
-      unit_code: input.unitCode,
       phone: input.phone,
-      members: input.members,
-      vehicle: input.vehicle ?? '',
-      equipment: input.equipment ?? [],
       base_address: input.baseAddress ?? '',
       ...(input.baseLat !== undefined ? { base_lat: input.baseLat } : {}),
       ...(input.baseLng !== undefined ? { base_lng: input.baseLng } : {}),
@@ -204,5 +244,44 @@ export async function deleteRescueTeam(id: string): Promise<void> {
 export async function deleteHospital(id: string): Promise<void> {
   if (!supabase) throw new Error('Supabase not configured')
   const { error } = await supabase.from('hospitals').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function createRescueVehicle(rescueTeamId: string, input: NewRescueVehicleInput): Promise<string> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const id = await nextVehicleId(rescueTeamId)
+  const { error } = await supabase.from('rescue_vehicles').insert({
+    id,
+    rescue_team_id: rescueTeamId,
+    unit_code: input.unitCode,
+    members: input.members,
+    vehicle: input.vehicle ?? '',
+    equipment: input.equipment ?? [],
+    driver_name: input.driverName ?? null,
+    plate_number: input.plateNumber ?? null,
+  })
+  if (error) throw error
+  return id
+}
+
+export async function updateRescueVehicle(id: string, input: NewRescueVehicleInput): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { error } = await supabase
+    .from('rescue_vehicles')
+    .update({
+      unit_code: input.unitCode,
+      members: input.members,
+      vehicle: input.vehicle ?? '',
+      equipment: input.equipment ?? [],
+      driver_name: input.driverName ?? null,
+      plate_number: input.plateNumber ?? null,
+    })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteRescueVehicle(id: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { error } = await supabase.from('rescue_vehicles').delete().eq('id', id)
   if (error) throw error
 }

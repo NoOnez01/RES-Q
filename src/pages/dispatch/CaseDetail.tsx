@@ -326,7 +326,7 @@ export default function DispatchCaseDetail() {
                       onClick={() => r.available && setSelectedTeamId(r.team.id)}
                       icon={<Truck className="size-5 text-primary" />}
                       title={r.team.name}
-                      description={`${r.team.unitCode} · ${r.distanceKm.toFixed(1)} กม. · ทีม ${r.team.members} คน${!r.available ? ' · ไม่ว่าง' : ''}`}
+                      description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
                       className={clsx(!r.available && 'pointer-events-none opacity-50')}
                       badge={
                         recommendation.requiredEquipment.length > 0 ? (
@@ -388,20 +388,26 @@ export default function DispatchCaseDetail() {
                       <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2.5">
-                    <Hash className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted">รหัสหน่วย</p>
-                      <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.unitCode}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted">ยานพาหนะ</p>
-                      <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.vehicle}</p>
-                    </div>
-                  </div>
+                  {c.assignedVehicle ? (
+                    <>
+                      <div className="flex items-start gap-2.5">
+                        <Hash className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted">รหัสรถ/ทีม</p>
+                          <p className="text-sm font-semibold text-navy">{c.assignedVehicle.unitCode}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted">ยานพาหนะ</p>
+                          <p className="text-sm font-semibold text-navy">{c.assignedVehicle.vehicle}</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted">หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ</p>
+                  )}
                   <div className="flex items-start gap-2.5">
                     <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
@@ -409,14 +415,14 @@ export default function DispatchCaseDetail() {
                       <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.phone}</p>
                     </div>
                   </div>
-                  {c.status !== 'rescue-assigned' && c.assignedRescueTeam.driverName && (
+                  {c.status !== 'rescue-assigned' && c.assignedVehicle?.driverName && (
                     <div className="flex items-start gap-2.5">
                       <IdCard className="mt-0.5 size-4 shrink-0 text-primary" />
                       <div>
                         <p className="text-xs text-muted">คนขับ · ทะเบียนรถ</p>
                         <p className="text-sm font-semibold text-navy">
-                          {c.assignedRescueTeam.driverName} · {c.assignedRescueTeam.plateNumber} · สังกัด{' '}
-                          {c.assignedRescueTeam.unitCode}
+                          {c.assignedVehicle.driverName} · {c.assignedVehicle.plateNumber} · สังกัด{' '}
+                          {c.assignedVehicle.unitCode}
                         </p>
                       </div>
                     </div>
@@ -427,9 +433,7 @@ export default function DispatchCaseDetail() {
                     <Wrench className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
                       <p className="text-xs text-muted">หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)</p>
-                      <p className="text-sm font-semibold text-navy">
-                        {c.supportingRescueTeam.name} · {c.supportingRescueTeam.unitCode}
-                      </p>
+                      <p className="text-sm font-semibold text-navy">{c.supportingRescueTeam.name}</p>
                     </div>
                   </div>
                 )}
@@ -461,7 +465,7 @@ export default function DispatchCaseDetail() {
                           selected={addSupportTeamId === r.team.id}
                           onClick={() => r.available && setAddSupportTeamId(r.team.id)}
                           title={r.team.name}
-                          description={`${r.team.unitCode} · ${r.distanceKm.toFixed(1)} กม.${!r.available ? ' · ไม่ว่าง' : ''}`}
+                          description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
                           className={clsx(!r.available && 'pointer-events-none opacity-50')}
                           badge={
                             requiredEquipment.length > 0 ? (

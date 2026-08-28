@@ -16,11 +16,13 @@ import { PatientInformationCard } from '@/components/PatientInformationCard'
 import { CaseMediaGallery } from '@/components/CaseMediaGallery'
 import { RelativeContacts } from '@/components/RelativeContacts'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
+import { RadioCard } from '@/components/ui/RadioCard'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDateTime } from '@/lib/utils'
 import type { CaseStatus } from '@/lib/types'
+import { Truck } from 'lucide-react'
 
 const WORKFLOW_STEPS = ['เดินทาง', 'ถึงที่เกิดเหตุ', 'บันทึกข้อมูล', 'เลือกโรงพยาบาล', 'นำส่ง', 'เสร็จสิ้น']
 
@@ -87,8 +89,11 @@ export default function RescueCaseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const c = useStore((s) => (id ? s.cases[id] : undefined))
+  const currentUser = useStore((s) => s.currentUser)
+  const rescueTeams = useStore((s) => s.rescueTeams)
   const rescueAcceptCase = useStore((s) => s.rescueAcceptCase)
   const rescueRejectCase = useStore((s) => s.rescueRejectCase)
+  const assignVehicle = useStore((s) => s.assignVehicle)
   const startTransport = useStore((s) => s.startTransport)
   const addPatientUpdate = useStore((s) => s.addPatientUpdate)
 
@@ -132,6 +137,14 @@ export default function RescueCaseDetail() {
     navigate(`/navigation/${c!.id}`)
   }
 
+  function handleSelectVehicle(vehicleId: string) {
+    const ownBranch = rescueTeams.find((t) => t.id === currentUser?.rescueTeamId)
+    const vehicle = ownBranch?.vehicles.find((v) => v.id === vehicleId)
+    if (!vehicle || !c) return
+    assignVehicle(c.id, vehicle)
+    toast({ title: 'เลือกรถ/ทีมที่รับผิดชอบแล้ว', message: vehicle.unitCode, tone: 'success' })
+  }
+
   function handleAddUpdate() {
     if (!updateNote.trim()) return
     setUpdateLoading(true)
@@ -142,6 +155,8 @@ export default function RescueCaseDetail() {
       toast({ title: 'บันทึกอัปเดตอาการแล้ว', message: 'ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที', tone: 'success' })
     }, 400)
   }
+
+  const ownVehicles = rescueTeams.find((t) => t.id === currentUser?.rescueTeamId)?.vehicles ?? []
 
   const pins: MapPinT[] = []
   if (c.location) {
@@ -220,13 +235,42 @@ export default function RescueCaseDetail() {
         )}
 
         {c.assignedRescueTeam && (
-          <Card className="space-y-2">
+          <Card className="space-y-3">
             <h3 className="font-bold text-navy">หน่วยกู้ชีพที่รับผิดชอบ</h3>
             <p className="text-sm text-navy">{c.assignedRescueTeam.name}</p>
-            <p className="text-xs text-muted">
-              {c.assignedRescueTeam.unitCode} · {c.assignedRescueTeam.vehicle} · {c.assignedRescueTeam.members} คน
-            </p>
             <p className="text-xs text-muted">{c.assignedRescueTeam.phone}</p>
+
+            {c.assignedVehicle ? (
+              <div className="rounded-xl border border-primary/20 bg-skyblue-pale p-3">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                  <Truck className="size-4 text-primary" /> {c.assignedVehicle.unitCode}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {c.assignedVehicle.vehicle} · {c.assignedVehicle.members} คน
+                  {c.assignedVehicle.plateNumber && ` · ทะเบียน ${c.assignedVehicle.plateNumber}`}
+                </p>
+                {c.assignedVehicle.driverName && (
+                  <p className="mt-0.5 text-xs text-muted">คนขับ: {c.assignedVehicle.driverName}</p>
+                )}
+              </div>
+            ) : (
+              c.status !== 'completed' &&
+              ownVehicles.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-navy">เลือกรถ/ทีมที่รับผิดชอบ</p>
+                  {ownVehicles.map((v) => (
+                    <RadioCard
+                      key={v.id}
+                      selected={false}
+                      onClick={() => handleSelectVehicle(v.id)}
+                      icon={<Truck className="size-5 text-primary" />}
+                      title={v.unitCode}
+                      description={`${v.vehicle} · ${v.members} คน`}
+                    />
+                  ))}
+                </div>
+              )
+            )}
           </Card>
         )}
 
