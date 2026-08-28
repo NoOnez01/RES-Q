@@ -52,9 +52,17 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
     )
   }
 
+  const loggedIn = !!currentUser && !currentUser.isAnonymous
+
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} showAuthLinks />
+      <MobileMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={items}
+        showAuthLinks={!loggedIn}
+        loggedInUser={loggedIn ? currentUser : null}
+      />
       <TopNavigation variant="public" title={title} onMenuClick={() => setMenuOpen(true)} />
       <main className="flex-1">{children}</main>
     </div>

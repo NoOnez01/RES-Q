@@ -1,20 +1,27 @@
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { X, LogIn, UserPlus, HelpCircle, LayoutGrid, Sparkles, PhoneCall } from 'lucide-react'
+import { X, LogIn, LogOut, UserPlus, UserCircle2, HelpCircle, LayoutGrid, Sparkles, PhoneCall } from 'lucide-react'
 import { useEffect } from 'react'
 import type { NavItem } from '@/lib/nav'
+import type { AppUser } from '@/lib/types'
 import { FAVICON_URL } from '@/lib/utils'
+import { useStore } from '@/lib/store'
 
 interface MobileMenuProps {
   open: boolean
   onClose: () => void
   items: NavItem[]
   showAuthLinks?: boolean
+  /** Set (non-null) when a real account -- not an anonymous citizen
+   * session -- is signed in; shows a profile/logout section instead of
+   * the login/register links. */
+  loggedInUser?: AppUser | null
 }
 
-export function MobileMenu({ open, onClose, items, showAuthLinks }: MobileMenuProps) {
+export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }: MobileMenuProps) {
   const location = useLocation()
+  const logout = useStore((s) => s.logout)
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
@@ -97,23 +104,44 @@ export function MobileMenu({ open, onClose, items, showAuthLinks }: MobileMenuPr
           )}
         </nav>
 
-        {showAuthLinks && (
+        {loggedInUser ? (
           <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
             <Link
-              to="/login"
+              to="/profile"
               onClick={onClose}
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+            >
+              <UserCircle2 className="size-4.5" /> {loggedInUser.name}
+            </Link>
+            <button
+              onClick={() => {
+                onClose()
+                logout()
+              }}
               className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
             >
-              <LogIn className="size-4.5" /> เข้าสู่ระบบ
-            </Link>
-            <Link
-              to="/register"
-              onClick={onClose}
-              className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
-            >
-              <UserPlus className="size-4.5" /> สมัครสมาชิก
-            </Link>
+              <LogOut className="size-4.5" /> ออกจากระบบ
+            </button>
           </div>
+        ) : (
+          showAuthLinks && (
+            <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
+              >
+                <LogIn className="size-4.5" /> เข้าสู่ระบบ
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
+              >
+                <UserPlus className="size-4.5" /> สมัครสมาชิก
+              </Link>
+            </div>
+          )
         )}
       </div>
     </div>,
