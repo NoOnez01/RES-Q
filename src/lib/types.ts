@@ -234,6 +234,10 @@ export interface PatientInfo {
   name?: string
   age?: string
   gender?: string
+  /** Thai national ID number, 13 digits -- optional, usually filled from
+   * scanning the patient's ID card (see IdCardScannerModal) rather than
+   * typed by hand. */
+  idNumber?: string
   vitals: VitalSigns
   primarySurvey: PrimarySurvey
   firstAid: string

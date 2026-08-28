@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { ScanLine } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Field'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { AudioRecorder } from '@/components/AudioRecorder'
+import { IdCardScannerModal } from '@/components/IdCardScannerModal'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -116,6 +118,8 @@ export default function RescuePatientRecord() {
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState('')
+  const [idNumber, setIdNumber] = useState('')
+  const [scannerOpen, setScannerOpen] = useState(false)
   const [primarySurvey, setPrimarySurvey] = useState<PrimarySurvey>(emptyPrimarySurvey)
   const [vitals, setVitals] = useState<VitalSigns>(emptyVitals)
   const [firstAid, setFirstAid] = useState('')
@@ -163,6 +167,7 @@ export default function RescuePatientRecord() {
       name: name || undefined,
       age: age || undefined,
       gender: gender || undefined,
+      idNumber: idNumber || undefined,
       primarySurvey,
       vitals,
       firstAid,
@@ -182,9 +187,15 @@ export default function RescuePatientRecord() {
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
         <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
-          <SectionHeader index={1} title="ข้อมูลผู้ป่วย" />
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <SectionHeader index={1} title="ข้อมูลผู้ป่วย" />
+            <Button variant="outline" size="sm" icon={<ScanLine className="size-4" />} onClick={() => setScannerOpen(true)}>
+              สแกนบัตรประชาชน
+            </Button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input label="ชื่อผู้ป่วย" placeholder="ไม่ทราบชื่อ" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input label="เลขบัตรประชาชน" placeholder="ไม่ทราบ" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} maxLength={13} />
             <Input label="อายุ" placeholder="เช่น 45" value={age} onChange={(e) => setAge(e.target.value)} />
             <Select label="เพศ" value={gender} onChange={(e) => setGender(e.target.value)}>
               <option value="">ไม่ระบุ</option>
@@ -194,6 +205,16 @@ export default function RescuePatientRecord() {
             </Select>
           </div>
         </Card>
+
+        <IdCardScannerModal
+          open={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onApply={({ name: scannedName, idNumber: scannedId }) => {
+            if (scannedName) setName(scannedName)
+            if (scannedId) setIdNumber(scannedId)
+            toast({ title: 'นำข้อมูลจากบัตรมาใช้แล้ว', message: 'กรุณาตรวจสอบความถูกต้องอีกครั้ง', tone: 'info' })
+          }}
+        />
 
         <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
           <SectionHeader index={2} title="การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)" />

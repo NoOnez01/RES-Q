@@ -68,6 +68,10 @@ export function PatientInformationCard({
           <p className="text-muted">เพศ</p>
           <p className="font-semibold text-navy">{patient.gender || '-'}</p>
         </div>
+        <div>
+          <p className="text-muted">เลขบัตรประชาชน</p>
+          <p className="font-semibold text-navy">{patient.idNumber || '-'}</p>
+        </div>
       </div>
 
       <div className="border-t border-border pt-4">
