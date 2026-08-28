@@ -202,11 +202,15 @@ async function verifySignature(rawBody: string, signature: string | null): Promi
 }
 
 async function replyMessage(replyToken: string, text: string) {
-  await fetch('https://api.line.me/v2/bot/message/reply', {
+  const res = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` },
     body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
   })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    console.error(`LINE reply API rejected the message: ${res.status} ${body}`)
+  }
 }
 
 async function downloadLineContent(messageId: string): Promise<Blob> {
