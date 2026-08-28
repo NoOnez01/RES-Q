@@ -54,11 +54,14 @@ export function calculateAge(birthdate: string): number {
 
 export type Severity = 1 | 2 | 3 | 4 | 5
 
+// "เร่งด่วน" vs "ฉุกเฉิน" used to be mixed across levels (level 4 was the
+// only one saying "เร่งด่วนต่ำ") -- standardized on "ฉุกเฉิน" throughout to
+// match levels 2/3/5, so the wording reads as one consistent scale.
 export const SEVERITY_LABEL: Record<Severity, string> = {
   1: 'ระดับ 1: วิกฤต',
   2: 'ระดับ 2: ฉุกเฉินสูง',
   3: 'ระดับ 3: ฉุกเฉินปานกลาง',
-  4: 'ระดับ 4: เร่งด่วนต่ำ',
+  4: 'ระดับ 4: ฉุกเฉินต่ำ',
   5: 'ระดับ 5: ไม่ฉุกเฉิน',
 }
 
@@ -66,7 +69,7 @@ export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
   1: 'วิกฤต',
   2: 'ฉุกเฉินสูง',
   3: 'ฉุกเฉินปานกลาง',
-  4: 'เร่งด่วนต่ำ',
+  4: 'ฉุกเฉินต่ำ',
   5: 'ไม่ฉุกเฉิน',
 }
 
@@ -169,11 +172,13 @@ export interface PatientUpdate {
   recordedAt: number
 }
 
+export type Consciousness = 'conscious' | 'unconscious' | 'unknown'
+
 export interface IncidentDetails {
   incidentType: string
   location: string
   patientCount: number
-  conscious: 'conscious' | 'unconscious' | 'unknown'
+  conscious: Consciousness
   callbackPhone: string
   notes?: string
 }
@@ -195,6 +200,18 @@ export interface VitalSigns {
 /** AVPU scale for the R (Responsiveness) step of the primary survey. */
 export type Responsiveness = 'A' | 'V' | 'P' | 'U'
 
+/** ATLS/PHTLS hemorrhagic shock classification (Class I <15% blood loss
+ * through Class IV >40%) -- structured instead of free text since it's a
+ * recognized scale that drives real treatment decisions, not just a
+ * description. */
+export type HemorrhageClass = 1 | 2 | 3 | 4
+
+/** The free-text G-X-A-B-C-E findings a treatment note can be logged
+ * against -- kept as a separate keyed map (not merged into each finding
+ * field) so existing records, which only ever had the finding text, don't
+ * need a migration. */
+export type PrimarySurveyFindingKey = 'generalImpression' | 'exsanguinatingHemorrhage' | 'airway' | 'breathing' | 'circulation' | 'exposure'
+
 /** Primary survey per the G-R-X-A-B-C-D-E framework used in Thai EMS
  * fieldwork: general impression, responsiveness (AVPU, doubling as the R/D
  * neuro/consciousness check), exsanguinating hemorrhage, airway, breathing,
@@ -204,10 +221,13 @@ export interface PrimarySurvey {
   generalImpression?: string
   responsiveness?: Responsiveness
   exsanguinatingHemorrhage?: string
+  hemorrhageClass?: HemorrhageClass
   airway?: string
   breathing?: string
   circulation?: string
   exposure?: string
+  /** What's already been done for each finding above, keyed the same way. */
+  treatments?: Partial<Record<PrimarySurveyFindingKey, string>>
 }
 
 export interface PatientInfo {
@@ -276,6 +296,11 @@ export interface EmergencyCase {
   timeline: TimelineEvent[]
   reporterName?: string
   reporterPhone?: string
+  /** Collected from the reporter during the photo step, before dispatch
+   * ever sees the case -- prefills (but doesn't lock) dispatch's own
+   * consciousness field on the assessment form, since the reporter is the
+   * one actually standing next to the patient. */
+  reporterConsciousness?: Consciousness
   /** The reporter's Supabase auth id (their anonymous session, transparent
    * to them) -- lets RLS scope "their own case" without a visible login.
    * Set once at creation and never touched by any other role's updates. */

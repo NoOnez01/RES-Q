@@ -9,8 +9,10 @@ import {
   Building2,
   Camera,
   Clock,
+  Facebook,
   FileText,
   Lock,
+  MessageCircle,
   PhoneCall,
   PhoneIncoming,
   Shield,
@@ -102,6 +104,13 @@ const CONNECTION_NODES = [
     detail: 'เตรียมทีมรักษาและยืนยันการรับผู้ป่วย',
     count: 12,
   },
+] as const
+
+// TODO: replace with the team's real LINE Official Account / Facebook Page
+// links before this goes live for real users -- these are placeholders.
+const CONTACT_LINKS = [
+  { key: 'line', label: 'LINE Official', href: 'https://line.me/', icon: <MessageCircle className="size-5" /> },
+  { key: 'facebook', label: 'Facebook', href: 'https://facebook.com/', icon: <Facebook className="size-5" /> },
 ] as const
 
 const TRUST_POINTS = [
@@ -345,7 +354,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div id="contact" className="hero-grid-circle flex items-center justify-center">
+          <div id="emergency-circle" className="hero-grid-circle flex items-center justify-center">
             <EmergencyContactCircle />
           </div>
 
@@ -446,6 +455,31 @@ export default function Home() {
           <p className="mx-auto mt-8 max-w-xl text-center text-xs leading-relaxed text-muted">
             ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์
           </p>
+        </div>
+      </section>
+
+      <section id="contact" className="px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Reveal>
+            <h2 className="text-xl font-bold text-navy sm:text-2xl">ติดต่อเรา</h2>
+            <p className="mt-2 text-sm text-muted">
+              สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)
+            </p>
+          </Reveal>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {CONTACT_LINKS.map((link) => (
+              <a
+                key={link.key}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-navy shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
+              >
+                {link.icon}
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 

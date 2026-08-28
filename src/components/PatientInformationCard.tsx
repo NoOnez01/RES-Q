@@ -27,6 +27,13 @@ const PRIMARY_SURVEY_ITEMS = [
   { key: 'exposure', letter: 'E', label: 'สิ่งแวดล้อม' },
 ] as const
 
+const HEMORRHAGE_CLASS_LABEL: Record<1 | 2 | 3 | 4, string> = {
+  1: 'Class I (< 15%)',
+  2: 'Class II (15-30%)',
+  3: 'Class III (30-40%)',
+  4: 'Class IV (> 40%)',
+}
+
 export function PatientInformationCard({
   patient,
   updates,
@@ -76,8 +83,14 @@ export function PatientInformationCard({
             <div key={key} className="rounded-xl bg-skyblue-pale p-3">
               <p className="text-xs text-muted">
                 {letter} - {label}
+                {key === 'exsanguinatingHemorrhage' && survey?.hemorrhageClass && (
+                  <span className="ml-1 font-bold text-emergency">{HEMORRHAGE_CLASS_LABEL[survey.hemorrhageClass]}</span>
+                )}
               </p>
               <p className="text-sm font-semibold text-navy truncate">{survey?.[key] || '-'}</p>
+              {survey?.treatments?.[key] && (
+                <p className="mt-1 text-xs text-muted truncate">รักษาแล้ว: {survey.treatments[key]}</p>
+              )}
             </div>
           ))}
         </div>

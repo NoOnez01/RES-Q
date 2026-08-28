@@ -6,6 +6,7 @@ import type {
   AudioRecording,
   CallStatus,
   CaseStatus,
+  Consciousness,
   DispatcherAssessment,
   EmergencyCase,
   EmergencyPhoto,
@@ -116,6 +117,10 @@ interface ResQState {
   // report itself finalizes once the call ends. Incident details are
   // 1669's job (see submitDispatcherAssessment), not the caller's.
   setReporterPhone: (caseId: string, phone: string) => void
+  /** Also collected on the photo step -- the reporter is the one actually
+   * with the patient, so this prefills (not replaces) dispatch's own
+   * consciousness field on the assessment form. */
+  setReporterConsciousness: (caseId: string, consciousness: Consciousness) => void
   submitReport: (caseId: string) => void
 
   // dispatcher
@@ -352,6 +357,13 @@ export const useStore = create<ResQState>()(
           const c = s.cases[caseId]
           if (!c) return {}
           return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, updatedAt: Date.now() } } }
+        }),
+
+      setReporterConsciousness: (caseId, consciousness) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, reporterConsciousness: consciousness, updatedAt: Date.now() } } }
         }),
 
       submitReport: (caseId) => {

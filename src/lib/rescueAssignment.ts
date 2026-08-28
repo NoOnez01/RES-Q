@@ -38,10 +38,12 @@ function isTeamBusy(teamId: string, cases: EmergencyCase[], excludeCaseId?: stri
 }
 
 /**
- * Every unit ranked by availability first, then distance to the incident --
- * with an equipment-match flag so dispatch can see who's actually suited,
- * not just who's closest. "Busy" means already assigned (primary or
- * supporting) to some other still-open case.
+ * Every unit ranked by availability first, then (when the incident needs
+ * specific gear) whether they actually carry it, then distance to the
+ * incident -- so the first entry is always the genuinely best pick, not
+ * just the nearest one regardless of whether they can actually handle the
+ * incident. "Busy" means already assigned (primary or supporting) to some
+ * other still-open case.
  */
 export function rankRescueTeams(
   teams: RescueTeam[],
@@ -57,6 +59,9 @@ export function rankRescueTeams(
     hasRequiredEquipment: requiredEquipment.every((eq) => team.equipment.includes(eq)),
   })).sort((a, b) => {
     if (a.available !== b.available) return a.available ? -1 : 1
+    if (requiredEquipment.length > 0 && a.hasRequiredEquipment !== b.hasRequiredEquipment) {
+      return a.hasRequiredEquipment ? -1 : 1
+    }
     return a.distanceKm - b.distanceKm
   })
 }

@@ -12,7 +12,7 @@ import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { uploadCaseAudio } from '@/lib/storageUploads'
-import type { PatientInfo, VitalSigns, PrimarySurvey, Responsiveness } from '@/lib/types'
+import type { PatientInfo, VitalSigns, PrimarySurvey, PrimarySurveyFindingKey, Responsiveness, HemorrhageClass } from '@/lib/types'
 
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
@@ -37,10 +37,12 @@ const emptyPrimarySurvey: PrimarySurvey = {
   generalImpression: '',
   responsiveness: undefined,
   exsanguinatingHemorrhage: '',
+  hemorrhageClass: undefined,
   airway: '',
   breathing: '',
   circulation: '',
   exposure: '',
+  treatments: {},
 }
 
 const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
@@ -50,8 +52,18 @@ const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
   { value: 'U', title: 'U - ไม่ตอบสนอง' },
 ]
 
+// Standard ATLS/PHTLS hemorrhagic shock classification -- estimated blood
+// loss and the clinical signs that go with each class, so rescue can pick
+// a level instead of just describing it in free text.
+const HEMORRHAGE_CLASS_OPTIONS: { value: HemorrhageClass; title: string; description: string }[] = [
+  { value: 1, title: 'Class I (< 15%)', description: 'เสียเลือด < 750 มล. · ชีพจรและความดันปกติ' },
+  { value: 2, title: 'Class II (15-30%)', description: 'เสียเลือด 750-1500 มล. · ชีพจรเร็วขึ้น เริ่มกระสับกระส่าย' },
+  { value: 3, title: 'Class III (30-40%)', description: 'เสียเลือด 1500-2000 มล. · ความดันตก ชีพจรเบาเร็ว สับสน' },
+  { value: 4, title: 'Class IV (> 40%)', description: 'เสียเลือด > 2000 มล. · ความดันตกมาก ซึมลงมาก อันตรายถึงชีวิต' },
+]
+
 const PRIMARY_SURVEY_FIELDS: {
-  key: Exclude<keyof PrimarySurvey, 'responsiveness'>
+  key: PrimarySurveyFindingKey
   letter: string
   label: string
   hint: string
@@ -122,8 +134,12 @@ export default function RescuePatientRecord() {
     setVitals((v) => ({ ...v, [key]: value }))
   }
 
-  function updatePrimarySurvey(key: Exclude<keyof PrimarySurvey, 'responsiveness'>, value: string) {
+  function updatePrimarySurvey(key: PrimarySurveyFindingKey, value: string) {
     setPrimarySurvey((p) => ({ ...p, [key]: value }))
+  }
+
+  function updateTreatment(key: PrimarySurveyFindingKey, value: string) {
+    setPrimarySurvey((p) => ({ ...p, treatments: { ...p.treatments, [key]: value } }))
   }
 
   async function handleSaveAudio(blob: Blob, seconds: number) {
@@ -190,6 +206,11 @@ export default function RescuePatientRecord() {
               onChange={(v) => updatePrimarySurvey('generalImpression', v)}
               label="พิมพ์หรือพูดเพื่อบันทึก"
             />
+            <Input
+              label="การรักษาที่ให้ไปแล้ว (ถ้ามี)"
+              value={primarySurvey.treatments?.generalImpression ?? ''}
+              onChange={(e) => updateTreatment('generalImpression', e.target.value)}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -221,10 +242,35 @@ export default function RescuePatientRecord() {
             <div key={f.key} className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-navy">{f.letter} - {f.label}</label>
               <p className="text-xs text-muted">{f.hint}</p>
+              {f.key === 'exsanguinatingHemorrhage' && (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {HEMORRHAGE_CLASS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPrimarySurvey((p) => ({ ...p, hemorrhageClass: opt.value }))}
+                      className={clsx(
+                        'rounded-xl border px-3 py-2 text-left text-xs transition-colors',
+                        primarySurvey.hemorrhageClass === opt.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border bg-white hover:border-primary/40',
+                      )}
+                    >
+                      <p className="font-bold text-navy">{opt.title}</p>
+                      <p className="text-muted">{opt.description}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
               <SpeechToTextPanel
                 value={primarySurvey[f.key] ?? ''}
                 onChange={(v) => updatePrimarySurvey(f.key, v)}
                 label="พิมพ์หรือพูดเพื่อบันทึก"
+              />
+              <Input
+                label="การรักษาที่ให้ไปแล้ว (ถ้ามี)"
+                value={primarySurvey.treatments?.[f.key] ?? ''}
+                onChange={(e) => updateTreatment(f.key, e.target.value)}
               />
             </div>
           ))}

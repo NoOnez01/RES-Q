@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Field'
+import { Input, Select } from '@/components/ui/Field'
 import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { RelativeContacts } from '@/components/RelativeContacts'
@@ -17,7 +17,13 @@ import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { watchPosition, reverseGeocode } from '@/lib/geolocation'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import { supabaseEnabled } from '@/lib/supabase'
-import type { AudioRecording, PhotoCategory } from '@/lib/types'
+import type { AudioRecording, Consciousness, PhotoCategory } from '@/lib/types'
+
+const CONSCIOUSNESS_LABEL: Record<Consciousness, string> = {
+  conscious: 'มีสติ รู้สึกตัวดี',
+  unconscious: 'ไม่มีสติ / ไม่รู้สึกตัว',
+  unknown: 'ไม่แน่ใจ',
+}
 
 const PHOTO_CATEGORIES: PhotoSlotConfig[] = [
   { key: 'scene', label: 'ลักษณะจุดเกิดเหตุ/ผู้บาดเจ็บ', hint: 'อาการหรือลักษณะผู้บาดเจ็บที่จุดเกิดเหตุ' },
@@ -72,6 +78,7 @@ export default function EmergencyPhoto() {
   const setLocation = useStore((s) => s.setLocation)
   const deleteCase = useStore((s) => s.deleteCase)
   const setReporterPhone = useStore((s) => s.setReporterPhone)
+  const setReporterConsciousness = useStore((s) => s.setReporterConsciousness)
   const currentUser = useStore((s) => s.currentUser)
   const loggedIn = !!currentUser && !currentUser.isAnonymous
 
@@ -84,6 +91,8 @@ export default function EmergencyPhoto() {
   const [captureKey, setCaptureKey] = useState<PhotoCategory | null>(null)
   const [callbackPhone, setCallbackPhoneInput] = useState('')
   const [phoneError, setPhoneError] = useState<string>()
+  const [consciousness, setConsciousnessInput] = useState<Consciousness | ''>('')
+  const [consciousnessError, setConsciousnessError] = useState<string>()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -109,6 +118,7 @@ export default function EmergencyPhoto() {
     const c = useStore.getState().cases[id]
     if (c?.reporterPhone) setCallbackPhoneInput(c.reporterPhone)
     else if (loggedIn && currentUser?.phone) setCallbackPhoneInput(currentUser.phone)
+    if (c?.reporterConsciousness) setConsciousnessInput(c.reporterConsciousness)
     // Instant placeholder so the UI never shows "no location" while the
     // first real GPS fix comes in via the watch effect below.
     if (c && !c.location) setLocation(id, DEFAULT_INCIDENT_LOCATION)
@@ -160,9 +170,15 @@ export default function EmergencyPhoto() {
       setPhoneError('เบอร์โทรศัพท์ไม่ถูกต้อง')
       return
     }
+    if (!consciousness) {
+      setConsciousnessError('กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่')
+      return
+    }
     setPhoneError(undefined)
+    setConsciousnessError(undefined)
     setSubmitting(true)
     setReporterPhone(caseId, callbackPhone)
+    setReporterConsciousness(caseId, consciousness)
     setTimeout(() => {
       finishPhotoStep(caseId)
       navigate('/public/call-1669')
@@ -298,7 +314,7 @@ export default function EmergencyPhoto() {
             )}
           </div>
 
-          <Card className="flex flex-col gap-1">
+          <Card className="flex flex-col gap-4">
             <Input
               label="เบอร์โทรศัพท์สำหรับติดต่อกลับ"
               type="tel"
@@ -311,6 +327,22 @@ export default function EmergencyPhoto() {
                 if (phoneError) setPhoneError(undefined)
               }}
             />
+            <Select
+              label="ผู้ป่วยยังมีสติหรือไม่"
+              required
+              value={consciousness}
+              error={consciousnessError}
+              hint="ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น"
+              onChange={(e) => {
+                setConsciousnessInput(e.target.value as Consciousness)
+                if (consciousnessError) setConsciousnessError(undefined)
+              }}
+            >
+              <option value="">เลือกระดับความรู้สึกตัว</option>
+              <option value="conscious">{CONSCIOUSNESS_LABEL.conscious}</option>
+              <option value="unconscious">{CONSCIOUSNESS_LABEL.unconscious}</option>
+              <option value="unknown">{CONSCIOUSNESS_LABEL.unknown}</option>
+            </Select>
           </Card>
 
           <RelativeContacts caseId={caseId} contacts={activeCase.relativeContacts} />

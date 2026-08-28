@@ -59,7 +59,7 @@ const SEVERITY_OPTIONS: {
   },
   {
     value: 4,
-    title: 'ระดับ 4: เร่งด่วนต่ำ',
+    title: 'ระดับ 4: ฉุกเฉินต่ำ',
     description: 'อาการไม่รุนแรง ต้องการการดูแลเพียงเล็กน้อย (ESI 4 - Less Urgent)',
     tone: 'default',
   },
@@ -87,7 +87,10 @@ export default function DispatchEmergencyAssessment() {
   const [coords, setCoords] = useState<Coords | null>(c?.location ? { lat: c.location.lat, lng: c.location.lng } : null)
   const [showMap, setShowMap] = useState(false)
   const [patientCount, setPatientCount] = useState(details ? String(details.patientCount) : '1')
-  const [conscious, setConscious] = useState<Conscious>(details?.conscious ?? '')
+  // Prefilled from what the reporter said during the photo step (they're
+  // the one actually with the patient) -- still fully editable here, e.g.
+  // if the photos suggest otherwise.
+  const [conscious, setConscious] = useState<Conscious>(details?.conscious ?? c?.reporterConsciousness ?? '')
   const [notes, setNotes] = useState(details?.notes ?? '')
   const [severity, setSeverity] = useState<Severity | null>(c?.assessment?.severity ?? null)
   const [injuryDescription, setInjuryDescription] = useState(c?.assessment?.injuryDescription ?? '')
@@ -254,6 +257,11 @@ export default function DispatchEmergencyAssessment() {
             required
             value={conscious}
             error={errors.conscious}
+            hint={
+              !errors.conscious && c.reporterConsciousness
+                ? `ผู้แจ้งเหตุระบุว่า: ${CONSCIOUS_LABEL[c.reporterConsciousness]} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป`
+                : undefined
+            }
             onChange={(e) => setConscious(e.target.value as Conscious)}
             className={clsx(highlight && errors.conscious && 'animate-pulse')}
           >
