@@ -11,21 +11,48 @@ import { CaseTimeline } from '@/components/CaseTimeline'
 import { MapPanel } from '@/components/MapPanel'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { CaseFeedbackForm } from '@/components/CaseFeedbackForm'
-import { ErrorState } from '@/components/States'
+import { ErrorState, LoadingState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
+import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
+import type { EmergencyCase } from '@/lib/types'
 
 export default function CaseTracking() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const activeCase = useStore((s) => (id ? s.cases[id] : undefined))
+  const storedCase = useStore((s) => (id ? s.cases[id] : undefined))
   const markFeedbackSubmitted = useStore((s) => s.markFeedbackSubmitted)
 
   const [justUpdated, setJustUpdated] = useState(false)
   const prevStatusRef = useRef<string | undefined>(undefined)
   const [shareOpen, setShareOpen] = useState(false)
+
+  // A case reported through the LINE bot has no Supabase Auth session
+  // behind it (reporter_user_id is null), so it never syncs into this
+  // browser's live `cases` store the way a self-reported web case does --
+  // fall back to a one-time read-only snapshot via get_case_snapshot (see
+  // supabase-case-tracking-by-id.sql) when the normal lookup comes up
+  // empty. No live updates on this path; refresh the page to re-check.
+  const [remoteCase, setRemoteCase] = useState<EmergencyCase | null>(null)
+  const [remoteFeedbackSubmitted, setRemoteFeedbackSubmitted] = useState(false)
+  const [remoteStatus, setRemoteStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+
+  useEffect(() => {
+    if (storedCase || !id || !supabaseEnabled || !supabase || remoteStatus !== 'idle') return
+    setRemoteStatus('loading')
+    supabase
+      .rpc('get_case_snapshot', { p_case_id: id })
+      .then(({ data, error }) => {
+        if (!error && data) setRemoteCase(data as EmergencyCase)
+        setRemoteStatus('done')
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedCase, id])
+
+  const activeCase = storedCase ?? remoteCase ?? undefined
+  const isRemoteOnly = !storedCase && !!remoteCase
 
   useEffect(() => {
     if (!activeCase) return
@@ -42,7 +69,11 @@ export default function CaseTracking() {
   if (!activeCase) {
     return (
       <AppShell variant="flow" title="ติดตามเคส" showBack onBack={() => navigate('/')}>
-        <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือรหัสไม่ถูกต้อง" />
+        {storedCase === undefined && remoteStatus === 'loading' ? (
+          <LoadingState label="กำลังค้นหาเคส..." />
+        ) : (
+          <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือรหัสไม่ถูกต้อง" />
+        )}
       </AppShell>
     )
   }
@@ -103,7 +134,7 @@ export default function CaseTracking() {
           )}
 
           {activeCase.status === 'completed' &&
-            (activeCase.feedbackSubmitted ? (
+            (activeCase.feedbackSubmitted || remoteFeedbackSubmitted ? (
               <Card className="flex items-center gap-3">
                 <CheckCircle2 className="size-5 shrink-0 text-success" />
                 <p className="text-sm font-medium text-navy">ขอบคุณสำหรับความคิดเห็นของท่าน</p>
@@ -111,7 +142,7 @@ export default function CaseTracking() {
             ) : (
               <CaseFeedbackForm
                 emergencyCase={activeCase}
-                onSubmitted={() => id && markFeedbackSubmitted(id)}
+                onSubmitted={() => (isRemoteOnly ? setRemoteFeedbackSubmitted(true) : id && markFeedbackSubmitted(id))}
               />
             ))}
 

@@ -18,6 +18,10 @@ const LINE_CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET') ?? ''
 const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+// The deployed web app's tracking page reads a case reported here via
+// get_case_snapshot (see supabase-case-tracking-by-id.sql), since a LINE
+// report has no Supabase Auth session for the normal RLS-scoped lookup.
+const WEB_APP_BASE_URL = 'https://noonez01.github.io/RES-Q'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -371,9 +375,10 @@ async function handleEvent(event: LineEvent) {
     const finalCase = pushStatus({ ...c, location: c.location ?? { lat: 18.7883, lng: 98.9853, address: 'ไม่ระบุตำแหน่ง' } }, 'received')
     await saveCase(finalCase, lineUserId)
     await clearSession(lineUserId)
+    const trackingUrl = `${WEB_APP_BASE_URL}/public/case/${finalCase.id}`
     await replyMessage(
       event.replyToken,
-      `แจ้งเหตุสำเร็จ! หมายเลขเคส: ${finalCase.caseNumber}\n\nเจ้าหน้าที่ศูนย์ 1669 จะติดต่อกลับที่เบอร์ที่ท่านแจ้งไว้โดยเร็วที่สุด`,
+      `แจ้งเหตุสำเร็จ! หมายเลขเคส: ${finalCase.caseNumber}\n\nเจ้าหน้าที่ศูนย์ 1669 จะติดต่อกลับที่เบอร์ที่ท่านแจ้งไว้โดยเร็วที่สุด\n\nติดตามสถานะเคสได้ที่:\n${trackingUrl}`,
     )
   }
 }
