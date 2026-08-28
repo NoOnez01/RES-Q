@@ -66,8 +66,9 @@ export default function Profile() {
       const url = await uploadAvatar(currentUser.id, file, file.type === 'image/png' ? 'image/png' : 'image/jpeg')
       setAvatarUrl(url)
       toast({ title: 'อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน', tone: 'success' })
-    } catch {
-      toast({ title: 'อัปโหลดรูปไม่สำเร็จ', tone: 'error' })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : undefined
+      toast({ title: 'อัปโหลดรูปไม่สำเร็จ', message, tone: 'error' })
     } finally {
       setAvatarUploading(false)
     }
