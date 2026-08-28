@@ -38,7 +38,11 @@ interface HandoffAlert {
  * assignRescueTeam, rescueRejectCase, selectHospital) transition, so a case
  * is "actionable for this role" independent of who or which tab moved it.
  */
-function handoffsFor(role: Role | 'public', cases: EmergencyCase[]): HandoffAlert[] {
+function handoffsFor(
+  role: Role | 'public',
+  cases: EmergencyCase[],
+  currentUser: { rescueTeamId?: string; hospitalId?: string } | null,
+): HandoffAlert[] {
   if (role === 'dispatch') {
     const newCases = cases
       .filter((c) => c.status === 'received' && !c.assessment)
@@ -64,7 +68,7 @@ function handoffsFor(role: Role | 'public', cases: EmergencyCase[]): HandoffAler
   }
   if (role === 'rescue') {
     return cases
-      .filter((c) => c.status === 'rescue-assigned')
+      .filter((c) => c.status === 'rescue-assigned' && c.assignedRescueTeam?.id === currentUser?.rescueTeamId)
       .map((c) => ({
         case: c,
         title: 'ได้รับมอบหมายเคสใหม่',
@@ -76,7 +80,12 @@ function handoffsFor(role: Role | 'public', cases: EmergencyCase[]): HandoffAler
   }
   if (role === 'hospital') {
     return cases
-      .filter((c) => c.selectedHospital && c.status !== 'hospital-received' && c.status !== 'completed')
+      .filter(
+        (c) =>
+          c.selectedHospital?.id === currentUser?.hospitalId &&
+          c.status !== 'hospital-received' &&
+          c.status !== 'completed',
+      )
       .map((c) => ({
         case: c,
         title: 'มีผู้ป่วยกำลังนำส่ง',
@@ -132,7 +141,7 @@ export function NotificationAlertBridge() {
     const audience = currentUser?.role ?? 'public'
     const isStaff = audience !== 'public'
     const relevantNotifications = notifications.filter((n) => n.audience === audience || n.audience === 'all')
-    const handoffs = handoffsFor(audience, Object.values(cases))
+    const handoffs = handoffsFor(audience, Object.values(cases), currentUser)
 
     if (isFirstRun.current) {
       // Don't alert for anything that already existed on mount (seeded demo

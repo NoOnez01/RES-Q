@@ -22,13 +22,26 @@ const DONE_STATUSES: CaseStatus[] = ['hospital-received', 'completed']
 
 export default function RescueDashboard() {
   const cases = useStore((s) => s.cases)
+  const currentUser = useStore((s) => s.currentUser)
+  const viewingRole = useStore((s) => s.viewingRole)
   const rescueAcceptCase = useStore((s) => s.rescueAcceptCase)
   const rescueRejectCase = useStore((s) => s.rescueRejectCase)
 
-  const allCases = useMemo(
-    () => Object.values(cases).sort((a, b) => b.createdAt - a.createdAt),
-    [cases],
-  )
+  // A real rescue account is already scoped to its own team by RLS -- this
+  // filter is a no-op for them. It matters for an admin whose own base role
+  // is 'rescue': is_admin bypasses RLS entirely, so `cases` would otherwise
+  // contain every team's cases even when just browsing as themselves (not
+  // explicitly using the "view as -- all teams" switcher from Settings).
+  const viewingAllTeams = currentUser?.isAdmin && viewingRole === 'rescue'
+  const allCases = useMemo(() => {
+    let list = Object.values(cases)
+    if (!viewingAllTeams) {
+      list = list.filter(
+        (c) => c.assignedRescueTeam?.id === currentUser?.rescueTeamId || c.supportingRescueTeam?.id === currentUser?.rescueTeamId,
+      )
+    }
+    return list.sort((a, b) => b.createdAt - a.createdAt)
+  }, [cases, viewingAllTeams, currentUser?.rescueTeamId])
 
   const newCases = allCases.filter((c) => c.status === 'rescue-assigned')
   const inProgressCases = allCases.filter((c) => IN_PROGRESS_STATUSES.includes(c.status))

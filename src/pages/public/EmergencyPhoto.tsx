@@ -16,6 +16,7 @@ import { formatDuration } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { watchPosition, reverseGeocode } from '@/lib/geolocation'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
+import { supabaseEnabled } from '@/lib/supabase'
 import type { AudioRecording, PhotoCategory } from '@/lib/types'
 
 const PHOTO_CATEGORIES: PhotoSlotConfig[] = [
@@ -92,8 +93,15 @@ export default function EmergencyPhoto() {
     if (activeCaseId && cases[activeCaseId] && preFlow.has(cases[activeCaseId].status)) {
       id = activeCaseId
     } else {
-      // A real signed-in reporter (not the transparent anonymous citizen
-      // session) already has this on file -- no reason to ask again.
+      // createCase() stamps reporterUserId from the current session (see
+      // store.ts), which Supabase's insert policy requires to be set -- if
+      // this runs before App.tsx's session bootstrap resolves (e.g. a cold
+      // load straight into this page), reporterUserId would be null and the
+      // case would be created locally but silently rejected on sync. Wait
+      // for a session first; the bootstrap is normally near-instant, and
+      // this effect re-runs (via the `currentUser` dependency below) the
+      // moment it resolves.
+      if (supabaseEnabled && !currentUser) return
       id = createCase(loggedIn ? currentUser?.name : undefined, loggedIn ? currentUser?.phone : undefined)
     }
     resolvedRef.current = id
@@ -104,8 +112,11 @@ export default function EmergencyPhoto() {
     // Instant placeholder so the UI never shows "no location" while the
     // first real GPS fix comes in via the watch effect below.
     if (c && !c.location) setLocation(id, DEFAULT_INCIDENT_LOCATION)
+    // Only `currentUser` is a real dependency (to retry once the session
+    // resolves) -- activeCaseId/cases/etc are deliberately read once at
+    // whatever they are when this settles, not re-watched.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentUser])
 
   // Keeps GPS live for as long as the reporter is on this page, instead of
   // one fix-and-forget lookup -- useful if they're describing the scene

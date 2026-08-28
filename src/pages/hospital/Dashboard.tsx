@@ -17,16 +17,26 @@ import { toast } from '@/lib/toast'
 export default function HospitalDashboard() {
   const cases = useStore((s) => s.cases)
   const hospitals = useStore((s) => s.hospitals)
+  const currentUser = useStore((s) => s.currentUser)
+  const viewingRole = useStore((s) => s.viewingRole)
   const hospitalAcceptingCases = useStore((s) => s.hospitalAcceptingCases)
   const setHospitalAcceptingCases = useStore((s) => s.setHospitalAcceptingCases)
   const hospitalRejectCase = useStore((s) => s.hospitalRejectCase)
   const navigate = useNavigate()
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null)
 
-  const hospitalCases = useMemo(
-    () => Object.values(cases).filter((c) => !!c.selectedHospital),
-    [cases],
-  )
+  // Same reasoning as rescue/Dashboard.tsx: a no-op for a real hospital
+  // account (RLS already scoped it), but closes the gap for an admin whose
+  // own base role is 'hospital' browsing without the explicit "view as --
+  // all hospitals" switcher.
+  const viewingAllHospitals = currentUser?.isAdmin && viewingRole === 'hospital'
+  const hospitalCases = useMemo(() => {
+    let list = Object.values(cases).filter((c) => !!c.selectedHospital)
+    if (!viewingAllHospitals) {
+      list = list.filter((c) => c.selectedHospital?.id === currentUser?.hospitalId)
+    }
+    return list
+  }, [cases, viewingAllHospitals, currentUser?.hospitalId])
 
   const transportingCases = hospitalCases
     .filter((c) => c.status === 'transporting')
