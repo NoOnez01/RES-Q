@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
+import { RelativeContacts } from '@/components/RelativeContacts'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -70,6 +71,8 @@ export default function EmergencyPhoto() {
   const setLocation = useStore((s) => s.setLocation)
   const deleteCase = useStore((s) => s.deleteCase)
   const setReporterPhone = useStore((s) => s.setReporterPhone)
+  const currentUser = useStore((s) => s.currentUser)
+  const loggedIn = !!currentUser && !currentUser.isAnonymous
 
   const resolvedRef = useRef<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
@@ -89,12 +92,15 @@ export default function EmergencyPhoto() {
     if (activeCaseId && cases[activeCaseId] && preFlow.has(cases[activeCaseId].status)) {
       id = activeCaseId
     } else {
-      id = createCase()
+      // A real signed-in reporter (not the transparent anonymous citizen
+      // session) already has this on file -- no reason to ask again.
+      id = createCase(loggedIn ? currentUser?.name : undefined, loggedIn ? currentUser?.phone : undefined)
     }
     resolvedRef.current = id
     setCaseId(id)
     const c = useStore.getState().cases[id]
     if (c?.reporterPhone) setCallbackPhoneInput(c.reporterPhone)
+    else if (loggedIn && currentUser?.phone) setCallbackPhoneInput(currentUser.phone)
     // Instant placeholder so the UI never shows "no location" while the
     // first real GPS fix comes in via the watch effect below.
     if (c && !c.location) setLocation(id, DEFAULT_INCIDENT_LOCATION)
@@ -288,12 +294,15 @@ export default function EmergencyPhoto() {
               required
               value={callbackPhone}
               error={phoneError}
+              hint={loggedIn && !phoneError ? `ดึงจากโปรไฟล์ของคุณ (${currentUser?.name}) แก้ไขได้หากต้องการเปลี่ยน` : undefined}
               onChange={(e) => {
                 setCallbackPhoneInput(e.target.value)
                 if (phoneError) setPhoneError(undefined)
               }}
             />
           </Card>
+
+          <RelativeContacts caseId={caseId} contacts={activeCase.relativeContacts} />
 
           <div className="flex flex-col gap-2.5">
             {slots.map((slot, i) => (

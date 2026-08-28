@@ -26,6 +26,7 @@ import { SeverityBadge } from '@/components/SeverityBadge'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { CaseMediaGallery } from '@/components/CaseMediaGallery'
 import { PatientInformationCard } from '@/components/PatientInformationCard'
+import { RelativeContacts } from '@/components/RelativeContacts'
 import { MapPanel } from '@/components/MapPanel'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
@@ -255,6 +256,8 @@ export default function DispatchCaseDetail() {
           </Card>
 
           {c.status !== 'completed' && <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />}
+
+          <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
 
           {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
 

@@ -14,6 +14,7 @@ import { CaseTimeline } from '@/components/CaseTimeline'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { PatientInformationCard } from '@/components/PatientInformationCard'
 import { CaseMediaGallery } from '@/components/CaseMediaGallery'
+import { RelativeContacts } from '@/components/RelativeContacts'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
@@ -209,6 +210,8 @@ export default function RescueCaseDetail() {
         )}
 
         {c.status !== 'completed' && <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />}
+
+        <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
 
         {pins.length > 0 && (
           <Card className="!p-0 overflow-hidden">

@@ -145,6 +145,17 @@ export interface AudioRecording {
   recordedBy?: 'public' | 'rescue'
 }
 
+/** A family/relative contact for the patient -- an append-only list (like
+ * PatientUpdate below) since more than one can come in over the course of
+ * a case, from whichever role happens to have them at the time. */
+export interface RelativeContact {
+  id: string
+  name?: string
+  phone: string
+  addedBy: Role
+  addedAt: number
+}
+
 /** A follow-up note on the patient's condition logged after the initial
  * patient-record submission -- syncs in real time like the rest of the
  * case so dispatch/hospital see changes as they happen. */
@@ -265,6 +276,10 @@ export interface EmergencyCase {
    * to them) -- lets RLS scope "their own case" without a visible login.
    * Set once at creation and never touched by any other role's updates. */
   reporterUserId?: string
+  /** A patient's family/relative contacts -- addable at any point in the
+   * case lifecycle by whoever has them at the time (the reporter, 1669,
+   * rescue, or the hospital), not just collected once up front. */
+  relativeContacts: RelativeContact[]
   /** Set once the reporter's post-case rating/complaint has been submitted
    * (to Supabase's case_feedback table), so the form doesn't show again. */
   feedbackSubmitted?: boolean

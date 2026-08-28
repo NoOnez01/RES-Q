@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { SeverityBadge } from '@/components/SeverityBadge'
 import { PatientInformationCard } from '@/components/PatientInformationCard'
 import { CaseMediaGallery } from '@/components/CaseMediaGallery'
+import { RelativeContacts } from '@/components/RelativeContacts'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
@@ -139,6 +140,8 @@ export default function HospitalCaseDetail() {
         {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
 
         <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />
+
+        <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
 
         {c.assignedRescueTeam && (
           <Card className="space-y-3">

@@ -16,6 +16,7 @@ import type {
   PhotoCategory,
   PatientInfo,
   PatientUpdate,
+  RelativeContact,
   Role,
   RescueTeam,
 } from './types'
@@ -73,6 +74,7 @@ function makeNewCase(seq: number, reporterName?: string, reporterPhone?: string)
     timeline: [],
     reporterName,
     reporterPhone,
+    relativeContacts: [],
   }
   return pushStatus(base, 'contacted')
 }
@@ -128,6 +130,10 @@ interface ResQState {
    * responder -- for when the equipment gap only becomes clear after the
    * fact, not just at the moment of initial assignment. */
   addSupportingRescueTeam: (caseId: string, team: RescueTeam) => void
+
+  // shared -- addable by any role (reporter, 1669, rescue, or hospital) at
+  // any point in the case lifecycle, not collected once up front.
+  addRelativeContact: (caseId: string, phone: string, name?: string) => void
 
   // rescue
   rescueAcceptCase: (caseId: string) => void
@@ -445,6 +451,26 @@ export const useStore = create<ResQState>()(
         })
       },
 
+      addRelativeContact: (caseId, phone, name) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const contact: RelativeContact = {
+            id: uid('rc'),
+            phone,
+            name,
+            addedBy: get().currentUser?.role ?? 'public',
+            addedAt: Date.now(),
+          }
+          return {
+            cases: {
+              ...s.cases,
+              [caseId]: { ...c, relativeContacts: [...(c.relativeContacts ?? []), contact], updatedAt: Date.now() },
+            },
+          }
+        })
+      },
+
       rescueAcceptCase: (caseId) => {
         set((s) => {
           const c = s.cases[caseId]
@@ -712,7 +738,7 @@ export const useStore = create<ResQState>()(
     }),
     {
       name: 'resq-storage',
-      version: 5,
+      version: 6,
       // currentUser is no longer trustworthy from localStorage alone -- it's
       // derived fresh from the live Supabase session + profile on load (see
       // App.tsx), so persisting the old value here would just be a second,
@@ -741,6 +767,13 @@ export const useStore = create<ResQState>()(
           for (const c of Object.values(persisted.cases) as any[]) {
             if (c && !Array.isArray(c.patientUpdates)) {
               c.patientUpdates = []
+            }
+          }
+        }
+        if (version < 6 && persisted?.cases) {
+          for (const c of Object.values(persisted.cases) as any[]) {
+            if (c && !Array.isArray(c.relativeContacts)) {
+              c.relativeContacts = []
             }
           }
         }
