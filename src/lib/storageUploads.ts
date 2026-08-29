@@ -13,7 +13,7 @@ async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
   return res.blob()
 }
 
-async function trackCaseMedia(caseNumber: string, mediaType: 'photo' | 'audio', path: string, url: string) {
+async function trackCaseMedia(caseNumber: string, mediaType: 'photo' | 'audio' | 'signature', path: string, url: string) {
   if (!supabase) return
   const { error } = await supabase
     .from('case_media')
@@ -51,6 +51,22 @@ export async function uploadAvatar(userId: string, file: Blob, contentType: stri
   if (error) throw error
   const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
   return `${data.publicUrl}?v=${Date.now()}`
+}
+
+/** A relative's drawn refusal signature (see SignaturePad) -- just another
+ * uploaded file's URL, tracked the same way a photo's is. */
+export async function uploadCaseSignature(caseNumber: string, dataUrl: string): Promise<string> {
+  if (!supabaseEnabled || !supabase) return dataUrl
+  const path = `${caseNumber}/signatures/${uid('sig')}.png`
+  const blob = await dataUrlToBlob(dataUrl)
+  const { error } = await supabase.storage.from(CASE_MEDIA_BUCKET).upload(path, blob, {
+    contentType: 'image/png',
+    upsert: true,
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from(CASE_MEDIA_BUCKET).getPublicUrl(path)
+  await trackCaseMedia(caseNumber, 'signature', path, data.publicUrl)
+  return data.publicUrl
 }
 
 export async function uploadCaseAudio(caseNumber: string, blob: Blob): Promise<string> {

@@ -1,5 +1,5 @@
 import { supabase, supabaseEnabled } from './supabase'
-import type { Hospital, RescueTeam, RescueVehicle } from './types'
+import type { Hospital, RescueTeam, RescueVehicle, VehicleLevel } from './types'
 
 interface RescueTeamRow {
   id: string
@@ -17,6 +17,7 @@ interface RescueVehicleRow {
   members: number
   vehicle: string
   equipment: string[]
+  level: string
   driver_name: string | null
   plate_number: string | null
 }
@@ -43,6 +44,10 @@ function rowToRescueVehicle(row: RescueVehicleRow): RescueVehicle {
     members: row.members,
     vehicle: row.vehicle,
     equipment: row.equipment ?? [],
+    // Rows fetched before supabase-rescue-vehicle-level.sql runs (or a
+    // stale schema cache) may not carry the column at all -- default to the
+    // lowest/safest tier rather than claim capability that isn't confirmed.
+    level: (row.level as VehicleLevel) || 'BLS',
     driverName: row.driver_name ?? undefined,
     plateNumber: row.plate_number ?? undefined,
   }
@@ -134,6 +139,7 @@ export interface NewRescueVehicleInput {
   members: number
   vehicle?: string
   equipment?: string[]
+  level?: VehicleLevel
   driverName?: string
   plateNumber?: string
 }
@@ -257,6 +263,7 @@ export async function createRescueVehicle(rescueTeamId: string, input: NewRescue
     members: input.members,
     vehicle: input.vehicle ?? '',
     equipment: input.equipment ?? [],
+    level: input.level ?? 'BLS',
     driver_name: input.driverName ?? null,
     plate_number: input.plateNumber ?? null,
   })
@@ -273,6 +280,7 @@ export async function updateRescueVehicle(id: string, input: NewRescueVehicleInp
       members: input.members,
       vehicle: input.vehicle ?? '',
       equipment: input.equipment ?? [],
+      level: input.level ?? 'BLS',
       driver_name: input.driverName ?? null,
       plate_number: input.plateNumber ?? null,
     })

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card, Checkbox } from '@/components/ui/Card'
@@ -22,11 +23,13 @@ import {
   type NewRescueVehicleInput,
   type NewHospitalInput,
 } from '@/lib/orgs'
+import { VEHICLE_LEVEL_RANK, VEHICLE_LEVEL_LABEL } from '@/lib/types'
 import type { RescueTeam, RescueVehicle, Hospital } from '@/lib/types'
+import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
 import { Ambulance, Building2, Plus, Pencil, Trash2, Truck } from 'lucide-react'
 
 const EMPTY_TEAM_FORM: NewRescueTeamInput = { name: '', phone: '', baseAddress: '' }
-const EMPTY_VEHICLE_FORM: NewRescueVehicleInput = { unitCode: '', members: 3, vehicle: '', equipment: [] }
+const EMPTY_VEHICLE_FORM: NewRescueVehicleInput = { unitCode: '', members: 3, vehicle: '', equipment: [], level: 'BLS' }
 const EMPTY_HOSPITAL_FORM: NewHospitalInput = { name: '', phone: '', address: '', erAvailable: true, bedsAvailable: 0, specialties: [] }
 
 function splitList(text: string): string[] {
@@ -116,6 +119,7 @@ function VehicleForm({
           members: initial.members,
           vehicle: initial.vehicle,
           equipment: initial.equipment,
+          level: initial.level ?? 'BLS',
           driverName: initial.driverName,
           plateNumber: initial.plateNumber,
         }
@@ -151,6 +155,26 @@ function VehicleForm({
         <Input label="ยานพาหนะ" value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} />
         <Input label="ทะเบียนรถ" value={form.plateNumber ?? ''} onChange={(e) => setForm({ ...form, plateNumber: e.target.value })} />
         <Input label="ชื่อคนขับ" value={form.driverName ?? ''} onChange={(e) => setForm({ ...form, driverName: e.target.value })} />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-navy">ระดับรถ</label>
+        <div className="flex gap-2">
+          {VEHICLE_LEVEL_RANK.map((lvl) => (
+            <button
+              key={lvl}
+              type="button"
+              onClick={() => setForm({ ...form, level: lvl })}
+              className={clsx(
+                'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
+                (form.level ?? 'BLS') === lvl
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-white text-muted hover:border-primary/40',
+              )}
+            >
+              {VEHICLE_LEVEL_LABEL[lvl]}
+            </button>
+          ))}
+        </div>
       </div>
       <Input
         label="อุปกรณ์เฉพาะทาง (คั่นด้วยจุลภาค)"
@@ -326,7 +350,10 @@ function TeamVehicles({
         ) : (
           <div key={vehicle.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-bg p-3">
             <div>
-              <p className="text-sm font-semibold text-navy">{vehicle.unitCode}</p>
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                {vehicle.unitCode}
+                <VehicleLevelBadge level={vehicle.level} />
+              </p>
               <p className="text-xs text-muted">
                 {vehicle.vehicle} · {vehicle.members} คน
                 {vehicle.plateNumber && ` · ${vehicle.plateNumber}`}

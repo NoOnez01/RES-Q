@@ -18,6 +18,8 @@ import { RelativeContacts } from '@/components/RelativeContacts'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { RadioCard } from '@/components/ui/RadioCard'
 import { ErrorState } from '@/components/States'
+import { Input } from '@/components/ui/Field'
+import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDateTime } from '@/lib/utils'
@@ -101,6 +103,8 @@ export default function RescueCaseDetail() {
   const [loading, setLoading] = useState(false)
   const [updateNote, setUpdateNote] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
+  const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
+  const [crewCount, setCrewCount] = useState('')
 
   if (!id || !c) {
     return (
@@ -142,12 +146,20 @@ export default function RescueCaseDetail() {
     navigate(`/navigation/${c!.id}`)
   }
 
-  function handleSelectVehicle(vehicleId: string) {
-    const ownBranch = rescueTeams.find((t) => t.id === currentUser?.rescueTeamId)
-    const vehicle = ownBranch?.vehicles.find((v) => v.id === vehicleId)
-    if (!vehicle || !c) return
-    assignVehicle(c.id, vehicle)
-    toast({ title: 'เลือกรถ/ทีมที่รับผิดชอบแล้ว', message: vehicle.unitCode, tone: 'success' })
+  function handlePickVehicle(vehicleId: string) {
+    const vehicle = ownVehicles.find((v) => v.id === vehicleId)
+    if (!vehicle) return
+    setPendingVehicleId(vehicleId)
+    setCrewCount(String(vehicle.members))
+  }
+
+  function handleConfirmVehicle() {
+    const vehicle = ownVehicles.find((v) => v.id === pendingVehicleId)
+    const count = Number(crewCount)
+    if (!vehicle || !c || !crewCount.trim() || Number.isNaN(count) || count < 1) return
+    assignVehicle(c.id, vehicle, count)
+    setPendingVehicleId(null)
+    toast({ title: 'เลือกรถ/ทีมที่รับผิดชอบแล้ว', message: `${vehicle.unitCode} · ${count} คน`, tone: 'success' })
   }
 
   function handleAddUpdate() {
@@ -249,9 +261,10 @@ export default function RescueCaseDetail() {
               <div className="rounded-xl border border-primary/20 bg-skyblue-pale p-3">
                 <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
                   <Truck className="size-4 text-primary" /> {c.assignedVehicle.unitCode}
+                  <VehicleLevelBadge level={c.assignedVehicle.level} />
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
-                  {c.assignedVehicle.vehicle} · {c.assignedVehicle.members} คน
+                  {c.assignedVehicle.vehicle} · {c.assignedVehicleCrewCount ?? c.assignedVehicle.members} คน
                   {c.assignedVehicle.plateNumber && ` · ทะเบียน ${c.assignedVehicle.plateNumber}`}
                 </p>
                 {c.assignedVehicle.driverName && (
@@ -266,13 +279,33 @@ export default function RescueCaseDetail() {
                   {ownVehicles.map((v) => (
                     <RadioCard
                       key={v.id}
-                      selected={false}
-                      onClick={() => handleSelectVehicle(v.id)}
+                      selected={pendingVehicleId === v.id}
+                      onClick={() => handlePickVehicle(v.id)}
                       icon={<Truck className="size-5 text-primary" />}
                       title={v.unitCode}
                       description={`${v.vehicle} · ${v.members} คน`}
+                      badge={<VehicleLevelBadge level={v.level} />}
                     />
                   ))}
+                  {pendingVehicleId && (
+                    <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3">
+                      <Input
+                        label="จำนวนทีมที่ออกปฏิบัติงานจริง"
+                        type="number"
+                        min={1}
+                        value={crewCount}
+                        onChange={(e) => setCrewCount(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button fullWidth onClick={handleConfirmVehicle} disabled={!crewCount.trim()}>
+                          ยืนยันเลือกรถ/ทีม
+                        </Button>
+                        <Button variant="outline" onClick={() => setPendingVehicleId(null)}>
+                          ยกเลิก
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             )}

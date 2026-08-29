@@ -15,6 +15,7 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { INCIDENT_TYPES, DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { reverseGeocode, type Coords } from '@/lib/geolocation'
+import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
 import type { Severity } from '@/lib/types'
 
 type Conscious = '' | 'conscious' | 'unconscious' | 'unknown'
@@ -26,51 +27,6 @@ const CONSCIOUS_LABEL: Record<Exclude<Conscious, ''>, string> = {
 }
 
 const INJURY_SOFT_LIMIT = 500
-
-// Matched against the Emergency Severity Index (ESI) -- the 5-level triage
-// scale taught in Thai EMS/hospital accreditation training -- so the
-// dispatcher's call maps onto criteria staff already know, instead of an
-// ad-hoc scale unique to this app. The Thai wording/level numbers are the
-// same ones already in use; this just grounds each one in the recognized
-// definition rather than replacing them.
-const SEVERITY_OPTIONS: {
-  value: Severity
-  title: string
-  description?: string
-  tone: 'emergency' | 'warning' | 'moderate' | 'default' | 'success'
-}[] = [
-  {
-    value: 1,
-    title: 'ระดับ 1: วิกฤต (Critical)',
-    description: 'ต้องช่วยชีวิตทันที (ESI 1 - Resuscitation) เช่น หัวใจหยุดเต้น หยุดหายใจ ไม่ตอบสนอง',
-    tone: 'emergency',
-  },
-  {
-    value: 2,
-    title: 'ระดับ 2: ฉุกเฉินสูง (High Emergency)',
-    description: 'มีความเสี่ยงสูง อาการรุนแรงหรือซึมลง รอไม่ได้ (ESI 2 - Emergent)',
-    tone: 'warning',
-  },
-  {
-    value: 3,
-    title: 'ระดับ 3: ฉุกเฉินปานกลาง (Moderate Emergency)',
-    description: 'อาการคงที่แต่ต้องตรวจรักษาหลายรายการ (ESI 3 - Urgent)',
-    tone: 'moderate',
-  },
-  {
-    value: 4,
-    title: 'ระดับ 4: ฉุกเฉินต่ำ (Low Emergency)',
-    description: 'อาการไม่รุนแรง ต้องการการดูแลเพียงเล็กน้อย (ESI 4 - Less Urgent)',
-    tone: 'default',
-  },
-  {
-    value: 5,
-    title: 'ระดับ 5: ไม่ฉุกเฉิน (Non-Urgent)',
-    description:
-      'พิจารณาให้เดินทางไปโรงพยาบาลด้วยตนเอง (เช่น ป่วยไข้หวัด) หรือกรณีผู้ป่วยเสียชีวิตแล้ว (ESI 5 - Non-Urgent)',
-    tone: 'success',
-  },
-]
 
 export default function DispatchEmergencyAssessment() {
   const { id } = useParams<{ id: string }>()

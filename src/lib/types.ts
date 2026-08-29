@@ -187,6 +187,20 @@ export interface DispatcherAssessment {
   severity: Severity
   injuryDescription: string
   assessedAt: number
+  /** Set when dispatch confirms a rescue-proposed severity update (see
+   * EmergencyCase.rescueSeverityProposal) -- absent means severity is still
+   * exactly what was set at the original assessedAt. */
+  severityConfirmedAt?: number
+}
+
+/** A severity re-assessment rescue proposes after their own on-scene
+ * findings (e.g. a GCS score) suggest the phone-reported severity was off --
+ * sits alongside the original DispatcherAssessment until 1669 confirms or
+ * dismisses it (see confirmRescueSeverity in store.ts). */
+export interface RescueSeverityProposal {
+  severity: Severity
+  note?: string
+  proposedAt: number
 }
 
 export interface VitalSigns {
@@ -199,6 +213,20 @@ export interface VitalSigns {
 
 /** AVPU scale for the R (Responsiveness) step of the primary survey. */
 export type Responsiveness = 'A' | 'V' | 'P' | 'U'
+
+/** Glasgow Coma Scale -- a separate, numeric neuro score alongside AVPU
+ * (kept distinct rather than replacing it, since AVPU is faster to check in
+ * the field and existing records only ever had AVPU). Total is 3-15,
+ * derived rather than stored so it can never drift from its parts. */
+export interface GcsScore {
+  eye: 1 | 2 | 3 | 4
+  verbal: 1 | 2 | 3 | 4 | 5
+  motor: 1 | 2 | 3 | 4 | 5 | 6
+}
+
+export function gcsTotal(g: GcsScore): number {
+  return g.eye + g.verbal + g.motor
+}
 
 /** ATLS/PHTLS hemorrhagic shock classification (Class I <15% blood loss
  * through Class IV >40%) -- structured instead of free text since it's a
@@ -220,6 +248,9 @@ export type PrimarySurveyFindingKey = 'generalImpression' | 'exsanguinatingHemor
 export interface PrimarySurvey {
   generalImpression?: string
   responsiveness?: Responsiveness
+  /** Only set when all three sub-scores are recorded -- a partial GCS total
+   * would be clinically misleading, so this is all-or-nothing. */
+  gcs?: GcsScore
   exsanguinatingHemorrhage?: string
   hemorrhageClass?: HemorrhageClass
   airway?: string
@@ -244,6 +275,20 @@ export interface PatientInfo {
   recordedAt?: number
 }
 
+/** Vehicle capability tier, highest to lowest -- drives dispatch's
+ * level-filtered search (see rescueAssignment.ts) and the escalation prompt
+ * when a severity re-assessment gets worse. Flip this one array if the
+ * intended order turns out to be reversed. */
+export type VehicleLevel = 'CLS' | 'ALS' | 'BLS'
+
+export const VEHICLE_LEVEL_RANK: VehicleLevel[] = ['CLS', 'ALS', 'BLS']
+
+export const VEHICLE_LEVEL_LABEL: Record<VehicleLevel, string> = {
+  CLS: 'CLS',
+  ALS: 'ALS',
+  BLS: 'BLS',
+}
+
 /** One specific vehicle/crew within a rescue branch (RescueTeam) -- a
  * branch typically runs several of these, each with its own equipment. */
 export interface RescueVehicle {
@@ -255,6 +300,11 @@ export interface RescueVehicle {
   /** Special-purpose gear this vehicle carries, e.g. 'เครื่องตัดถ่าง' -- used
    * to match a unit to incidents that need it, not just whoever's nearest. */
   equipment: string[]
+  /** Capability tier -- optional at the type level only so an older cached
+   * RescueVehicle embedded in a case's assignedVehicle still type-checks;
+   * every live read defaults a missing level to 'BLS' (see rowToRescueVehicle
+   * in orgs.ts and the v8 migrate() backfill in store.ts). */
+  level?: VehicleLevel
   driverName?: string
   plateNumber?: string
 }
@@ -297,6 +347,25 @@ export interface Hospital {
   phone: string
 }
 
+/** How the hospital leg of a case was actually decided -- distinguishes a
+ * normal pick from a family's informed refusal, which needs its own
+ * documentation trail (see signatureUrl). */
+export type HospitalDecisionType = 'selected' | 'declined-all' | 'declined-nearest-chose-own'
+
+export interface HospitalDecision {
+  type: HospitalDecisionType
+  /** Absent only for 'declined-all' -- every other type ends with a real
+   * hospital target (also mirrored onto EmergencyCase.selectedHospital so
+   * existing status gates that read it keep working unchanged). */
+  hospital?: Hospital
+  /** Drawn-signature PNG data URL (see SignaturePad/uploadCaseSignature) --
+   * required for either declined-* type when severity is 1 or 2. */
+  signatureUrl?: string
+  decidedAt: number
+  /** The relative's name, if captured alongside the signature. */
+  decidedBy?: string
+}
+
 export interface EmergencyCase {
   id: string
   caseNumber: string
@@ -320,12 +389,25 @@ export interface EmergencyCase {
   /** Which of the branch's vehicles/crews actually handles it -- picked by
    * the branch's own staff after the branch accepts, not by dispatch. */
   assignedVehicle?: RescueVehicle | null
+  /** Crew headcount for THIS dispatch, chosen by the branch's own staff
+   * alongside the vehicle -- separate from RescueVehicle.members (that
+   * vehicle's static default), so one crew size doesn't leak across runs.
+   * Falls back to assignedVehicle.members when absent (older cases). */
+  assignedVehicleCrewCount?: number
   /** Second unit co-assigned alongside the primary responder when no single
    * available/nearby unit had the equipment the incident needed. */
   supportingRescueTeam?: RescueTeam | null
+  /** A severity re-assessment rescue proposed from on-scene findings,
+   * awaiting 1669's confirmation -- see confirmRescueSeverity in store.ts. */
+  rescueSeverityProposal?: RescueSeverityProposal | null
   selectedHospital: Hospital | null
+  /** How the hospital leg was actually decided -- see HospitalDecision. */
+  hospitalDecision?: HospitalDecision | null
   rescueEnRoutePct: number
   rescueRejectedAt: number | null
+  /** True once closed via 1669's advice-only path (see closeCaseWithAdvice)
+   * -- distinguishes it from a normal full-pipeline completion in history. */
+  closedWithoutDispatch?: boolean
   timeline: TimelineEvent[]
   reporterName?: string
   reporterPhone?: string

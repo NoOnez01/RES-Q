@@ -15,6 +15,8 @@ import {
   Wrench,
   AlertTriangle,
   IdCard,
+  XCircle,
+  ArrowUpCircle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
@@ -33,9 +35,13 @@ import { ErrorState, SuccessState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { recommendAssignment, rankRescueTeams, requiredEquipmentFor } from '@/lib/rescueAssignment'
+import { recommendAssignment, rankRescueTeams, requiredEquipmentFor, nextLevelUp } from '@/lib/rescueAssignment'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
+import { VEHICLE_LEVEL_RANK } from '@/lib/types'
+import type { VehicleLevel } from '@/lib/types'
+import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
+import { Textarea } from '@/components/ui/Field'
 
 const CONSCIOUS_LABEL: Record<string, string> = {
   conscious: 'รู้สึกตัวดี',
@@ -52,6 +58,8 @@ export default function DispatchCaseDetail() {
   const startFindingRescue = useStore((s) => s.startFindingRescue)
   const assignRescueTeam = useStore((s) => s.assignRescueTeam)
   const addSupportingRescueTeam = useStore((s) => s.addSupportingRescueTeam)
+  const closeCaseWithAdvice = useStore((s) => s.closeCaseWithAdvice)
+  const confirmRescueSeverity = useStore((s) => s.confirmRescueSeverity)
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [includeSupport, setIncludeSupport] = useState(true)
@@ -62,6 +70,11 @@ export default function DispatchCaseDetail() {
   const [showAddSupport, setShowAddSupport] = useState(false)
   const [addSupportTeamId, setAddSupportTeamId] = useState<string | null>(null)
   const [addSupportLoading, setAddSupportLoading] = useState(false)
+  const [selectedLevel, setSelectedLevel] = useState<VehicleLevel | null>(null)
+  const [showCloseAdvice, setShowCloseAdvice] = useState(false)
+  const [closeAdviceNote, setCloseAdviceNote] = useState('')
+  const [closeAdviceLoading, setCloseAdviceLoading] = useState(false)
+  const [escalateConfirmOpen, setEscalateConfirmOpen] = useState(false)
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
@@ -71,8 +84,9 @@ export default function DispatchCaseDetail() {
       emergencyCase.incidentDetails?.incidentType,
       Object.values(cases),
       emergencyCase.id,
+      selectedLevel ?? undefined,
     )
-  }, [emergencyCase, cases, rescueTeams])
+  }, [emergencyCase, cases, rescueTeams, selectedLevel])
 
   if (!id || !emergencyCase || !recommendation) {
     return (
@@ -98,6 +112,28 @@ export default function DispatchCaseDetail() {
         tone: 'info',
       })
     }, 500)
+  }
+
+  function handleCloseAdvice() {
+    if (!id || !closeAdviceNote.trim()) return
+    setCloseAdviceLoading(true)
+    setTimeout(() => {
+      closeCaseWithAdvice(id, closeAdviceNote.trim())
+      setCloseAdviceLoading(false)
+      toast({ title: 'ปิดเคสแล้ว', message: 'บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ', tone: 'success' })
+      navigate('/dispatch/dashboard')
+    }, 400)
+  }
+
+  const escalateLevel = c.assignedVehicle?.level ? nextLevelUp(c.assignedVehicle.level) : null
+
+  function handleConfirmSeverity(accept: boolean) {
+    if (!id || !c.rescueSeverityProposal) return
+    const gotWorse = accept && c.assessment && c.rescueSeverityProposal.severity < c.assessment.severity
+    confirmRescueSeverity(id, accept)
+    if (gotWorse && escalateLevel) {
+      setEscalateConfirmOpen(true)
+    }
   }
 
   function handleConfirmAssign() {
@@ -255,6 +291,38 @@ export default function DispatchCaseDetail() {
             )}
           </Card>
 
+          {c.rescueSeverityProposal && (
+            <Card className="border-warning/30 bg-warning/5">
+              <h2 className="mb-3 flex items-center gap-1.5 text-base font-bold text-navy">
+                <AlertTriangle className="size-4 text-warning" />
+                หน่วยกู้ชีพเสนอปรับระดับความรุนแรง
+              </h2>
+              <div className="flex flex-wrap items-center gap-3">
+                {c.assessment && (
+                  <div className="flex flex-col items-start gap-1">
+                    <p className="text-xs text-muted">เดิม</p>
+                    <SeverityBadge severity={c.assessment.severity} />
+                  </div>
+                )}
+                <div className="flex flex-col items-start gap-1">
+                  <p className="text-xs text-muted">เสนอโดยหน่วยกู้ชีพ</p>
+                  <SeverityBadge severity={c.rescueSeverityProposal.severity} />
+                </div>
+              </div>
+              {c.rescueSeverityProposal.note && (
+                <p className="mt-3 text-sm text-navy">{c.rescueSeverityProposal.note}</p>
+              )}
+              <div className="mt-4 flex gap-2">
+                <Button fullWidth onClick={() => handleConfirmSeverity(true)}>
+                  ยืนยันระดับสี
+                </Button>
+                <Button variant="outline" fullWidth onClick={() => handleConfirmSeverity(false)}>
+                  ไม่ยืนยัน
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {c.status !== 'completed' && <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />}
 
           <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
@@ -295,6 +363,40 @@ export default function DispatchCaseDetail() {
                 <Button fullWidth icon={<ClipboardList className="size-4" />} onClick={() => navigate(`/dispatch/emergency-details/${id}`)}>
                   กรอกรายละเอียดเหตุการณ์
                 </Button>
+
+                {!showCloseAdvice ? (
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    icon={<XCircle className="size-4" />}
+                    onClick={() => setShowCloseAdvice(true)}
+                  >
+                    ปิดเคส (ให้คำแนะนำแล้ว)
+                  </Button>
+                ) : (
+                  <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
+                    <p className="text-sm font-semibold text-navy">บันทึกคำแนะนำที่ให้ทางโทรศัพท์</p>
+                    <Textarea
+                      value={closeAdviceNote}
+                      onChange={(e) => setCloseAdviceNote(e.target.value)}
+                      rows={2}
+                      placeholder="เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        fullWidth
+                        disabled={!closeAdviceNote.trim()}
+                        loading={closeAdviceLoading}
+                        onClick={handleCloseAdvice}
+                      >
+                        ยืนยันปิดเคส
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
+                        ยกเลิก
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -312,6 +414,26 @@ export default function DispatchCaseDetail() {
                 <p className="text-sm text-muted">
                   เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
                 </p>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-semibold text-navy">กรองตามระดับรถ (ไม่บังคับ)</p>
+                  <div className="flex gap-2">
+                    {VEHICLE_LEVEL_RANK.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setSelectedLevel((cur) => (cur === lvl ? null : lvl))}
+                        className={clsx(
+                          'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
+                          selectedLevel === lvl
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-white text-muted hover:border-primary/40',
+                        )}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {recommendation.requiredEquipment.length > 0 && (
                   <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
                     <Wrench className="size-3.5 text-primary" />
@@ -329,15 +451,29 @@ export default function DispatchCaseDetail() {
                       description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
                       className={clsx(!r.available && 'pointer-events-none opacity-50')}
                       badge={
-                        recommendation.requiredEquipment.length > 0 ? (
-                          <span
-                            className={clsx(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                              r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                        selectedLevel || recommendation.requiredEquipment.length > 0 ? (
+                          <span className="flex flex-col items-end gap-1">
+                            {selectedLevel && (
+                              <span
+                                className={clsx(
+                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                  r.hasVehicleAtLevel ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                )}
+                              >
+                                {r.hasVehicleAtLevel ? `มีรถระดับ ${selectedLevel}` : `ไม่มีรถระดับ ${selectedLevel}`}
+                              </span>
                             )}
-                          >
-                            <Wrench className="size-3" />
-                            {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
+                            {recommendation.requiredEquipment.length > 0 && (
+                              <span
+                                className={clsx(
+                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                  r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                )}
+                              >
+                                <Wrench className="size-3" />
+                                {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
+                              </span>
+                            )}
                           </span>
                         ) : undefined
                       }
@@ -394,14 +530,19 @@ export default function DispatchCaseDetail() {
                         <Hash className="mt-0.5 size-4 shrink-0 text-primary" />
                         <div>
                           <p className="text-xs text-muted">รหัสรถ/ทีม</p>
-                          <p className="text-sm font-semibold text-navy">{c.assignedVehicle.unitCode}</p>
+                          <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                            {c.assignedVehicle.unitCode}
+                            <VehicleLevelBadge level={c.assignedVehicle.level} />
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2.5">
                         <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
                         <div>
                           <p className="text-xs text-muted">ยานพาหนะ</p>
-                          <p className="text-sm font-semibold text-navy">{c.assignedVehicle.vehicle}</p>
+                          <p className="text-sm font-semibold text-navy">
+                            {c.assignedVehicle.vehicle} · {c.assignedVehicleCrewCount ?? c.assignedVehicle.members} คน
+                          </p>
                         </div>
                       </div>
                     </>
@@ -514,6 +655,23 @@ export default function DispatchCaseDetail() {
         confirmLoading={assignLoading}
         onConfirm={handleConfirmAssign}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <ConfirmationModal
+        open={escalateConfirmOpen}
+        title="ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่"
+        message={
+          escalateLevel
+            ? `ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ ${escalateLevel} เพิ่มเติมหรือไม่`
+            : ''
+        }
+        confirmLabel="มอบหมายหน่วยสนับสนุน"
+        cancelLabel="ไม่ต้อง"
+        onConfirm={() => {
+          setEscalateConfirmOpen(false)
+          setShowAddSupport(true)
+        }}
+        onCancel={() => setEscalateConfirmOpen(false)}
       />
         </div>
       </div>

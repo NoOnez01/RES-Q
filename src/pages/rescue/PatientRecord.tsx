@@ -7,6 +7,7 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Field'
+import { RadioCard } from '@/components/ui/RadioCard'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { AudioRecorder } from '@/components/AudioRecorder'
 import { IdCardScannerModal } from '@/components/IdCardScannerModal'
@@ -14,7 +15,18 @@ import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { uploadCaseAudio } from '@/lib/storageUploads'
-import type { PatientInfo, VitalSigns, PrimarySurvey, PrimarySurveyFindingKey, Responsiveness, HemorrhageClass } from '@/lib/types'
+import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
+import { gcsTotal } from '@/lib/types'
+import type {
+  PatientInfo,
+  VitalSigns,
+  PrimarySurvey,
+  PrimarySurveyFindingKey,
+  Responsiveness,
+  HemorrhageClass,
+  GcsScore,
+  Severity,
+} from '@/lib/types'
 
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
@@ -52,6 +64,30 @@ const RESPONSIVENESS_OPTIONS: { value: Responsiveness; title: string }[] = [
   { value: 'V', title: 'V - ตอบสนองต่อเสียงเรียก' },
   { value: 'P', title: 'P - ตอบสนองต่อความเจ็บปวด' },
   { value: 'U', title: 'U - ไม่ตอบสนอง' },
+]
+
+const GCS_EYE_OPTIONS: { value: GcsScore['eye']; title: string }[] = [
+  { value: 4, title: '4 - ลืมตาเอง' },
+  { value: 3, title: '3 - ลืมตาเมื่อเรียก' },
+  { value: 2, title: '2 - ลืมตาเมื่อเจ็บ' },
+  { value: 1, title: '1 - ไม่ลืมตา' },
+]
+
+const GCS_VERBAL_OPTIONS: { value: GcsScore['verbal']; title: string }[] = [
+  { value: 5, title: '5 - พูดคุยรู้เรื่อง' },
+  { value: 4, title: '4 - พูดสับสน' },
+  { value: 3, title: '3 - พูดเป็นคำๆ' },
+  { value: 2, title: '2 - ส่งเสียงไม่เป็นคำ' },
+  { value: 1, title: '1 - ไม่ส่งเสียง' },
+]
+
+const GCS_MOTOR_OPTIONS: { value: GcsScore['motor']; title: string }[] = [
+  { value: 6, title: '6 - ทำตามคำสั่ง' },
+  { value: 5, title: '5 - ปัดตำแหน่งที่เจ็บได้' },
+  { value: 4, title: '4 - ชักแขนขาหนีเจ็บ' },
+  { value: 3, title: '3 - งอแขนขาผิดปกติ' },
+  { value: 2, title: '2 - เหยียดแขนขาผิดปกติ' },
+  { value: 1, title: '1 - ไม่ขยับ' },
 ]
 
 // Standard ATLS/PHTLS hemorrhagic shock classification -- estimated blood
@@ -121,9 +157,12 @@ export default function RescuePatientRecord() {
   const [idNumber, setIdNumber] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [primarySurvey, setPrimarySurvey] = useState<PrimarySurvey>(emptyPrimarySurvey)
+  const [gcs, setGcs] = useState<Partial<GcsScore>>({})
   const [vitals, setVitals] = useState<VitalSigns>(emptyVitals)
   const [firstAid, setFirstAid] = useState('')
   const [firstAidError, setFirstAidError] = useState('')
+  const [proposedSeverity, setProposedSeverity] = useState<Severity | null>(null)
+  const [severityNote, setSeverityNote] = useState('')
   const [loading, setLoading] = useState(false)
 
   if (!id || !c) {
@@ -168,18 +207,30 @@ export default function RescuePatientRecord() {
       return
     }
     setFirstAidError('')
+    // A partial GCS total would be clinically misleading -- only attach it
+    // once all three sub-scores are actually recorded.
+    const fullGcs =
+      gcs.eye !== undefined && gcs.verbal !== undefined && gcs.motor !== undefined
+        ? { eye: gcs.eye, verbal: gcs.verbal, motor: gcs.motor }
+        : undefined
     const info: PatientInfo = {
       name: name || undefined,
       age: age || undefined,
       gender: gender || undefined,
       idNumber: idNumber || undefined,
-      primarySurvey,
+      primarySurvey: fullGcs ? { ...primarySurvey, gcs: fullGcs } : primarySurvey,
       vitals,
       firstAid,
     }
+    // Only worth proposing when it actually differs from what 1669 already
+    // has -- no point sending a no-op re-assessment.
+    const severityProposal =
+      proposedSeverity && proposedSeverity !== c!.assessment?.severity
+        ? { severity: proposedSeverity, note: severityNote.trim() || undefined }
+        : undefined
     setLoading(true)
     setTimeout(() => {
-      submitPatientInfo(c!.id, info)
+      submitPatientInfo(c!.id, info, severityProposal)
       setLoading(false)
       toast({ title: 'บันทึกข้อมูลผู้ป่วยแล้ว', message: `เคส ${c!.caseNumber} พร้อมสำหรับขั้นตอนต่อไป`, tone: 'success' })
       navigate(`/rescue/case/${c!.id}`)
@@ -262,6 +313,43 @@ export default function RescuePatientRecord() {
                 </button>
               ))}
             </div>
+
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+              <p className="text-xs font-semibold text-navy">Glasgow Coma Scale (GCS) — ไม่บังคับ</p>
+              {gcs.eye !== undefined && gcs.verbal !== undefined && gcs.motor !== undefined && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                  รวม {gcsTotal({ eye: gcs.eye, verbal: gcs.verbal, motor: gcs.motor })}/15
+                </span>
+              )}
+            </div>
+            {(
+              [
+                ['E - การลืมตา (Eye)', GCS_EYE_OPTIONS, gcs.eye, (v: GcsScore['eye']) => setGcs((g) => ({ ...g, eye: v }))],
+                ['V - การพูด (Verbal)', GCS_VERBAL_OPTIONS, gcs.verbal, (v: GcsScore['verbal']) => setGcs((g) => ({ ...g, verbal: v }))],
+                ['M - การเคลื่อนไหว (Motor)', GCS_MOTOR_OPTIONS, gcs.motor, (v: GcsScore['motor']) => setGcs((g) => ({ ...g, motor: v }))],
+              ] as const
+            ).map(([label, options, current, setValue]) => (
+              <div key={label} className="flex flex-col gap-1.5">
+                <p className="text-xs font-medium text-muted">{label}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {options.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setValue(opt.value as never)}
+                      className={clsx(
+                        'rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                        current === opt.value
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
+                      )}
+                    >
+                      {opt.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
@@ -337,6 +425,33 @@ export default function RescuePatientRecord() {
           <SectionHeader index={4} title="การปฐมพยาบาล" />
           <SpeechToTextPanel value={firstAid} onChange={setFirstAid} label="การปฐมพยาบาลเบื้องต้น (พิมพ์หรือพูด)" />
           {firstAidError && <p className="text-xs font-medium text-emergency">{firstAidError}</p>}
+        </Card>
+
+        <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '230ms', animationFillMode: 'backwards' }}>
+          <SectionHeader index={5} title="เสนอปรับระดับความรุนแรง (ถ้าจำเป็น)" />
+          <p className="text-xs text-muted">
+            เลือกเฉพาะเมื่อการประเมินจากที่เกิดเหตุจริงต่างจากที่ศูนย์ 1669 ประเมินไว้ทางโทรศัพท์
+            {c.assessment && ' — ไม่เลือกหมายถึงเห็นด้วยกับระดับเดิม'}
+          </p>
+          <div className="flex flex-col gap-2.5">
+            {SEVERITY_OPTIONS.map((opt) => (
+              <RadioCard
+                key={opt.value}
+                selected={proposedSeverity === opt.value}
+                onClick={() => setProposedSeverity((cur) => (cur === opt.value ? null : opt.value))}
+                title={opt.title}
+                description={opt.description}
+                tone={opt.tone}
+              />
+            ))}
+          </div>
+          {proposedSeverity && (
+            <SpeechToTextPanel
+              value={severityNote}
+              onChange={setSeverityNote}
+              label="เหตุผลที่เสนอปรับระดับ (พิมพ์หรือพูด)"
+            />
+          )}
         </Card>
 
         <div className="animate-fade-in-up" style={{ animationDelay: '260ms', animationFillMode: 'backwards' }}>

@@ -21,6 +21,8 @@ import type {
   Role,
   RescueTeam,
   RescueVehicle,
+  Severity,
+  HospitalDecisionType,
 } from './types'
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
@@ -136,6 +138,15 @@ interface ResQState {
    * responder -- for when the equipment gap only becomes clear after the
    * fact, not just at the moment of initial assignment. */
   addSupportingRescueTeam: (caseId: string, team: RescueTeam) => void
+  /** Rescue proposes an updated severity from on-scene findings (e.g. GCS)
+   * -- sits pending until 1669 confirms or dismisses it. */
+  proposeRescueSeverity: (caseId: string, severity: Severity, note?: string) => void
+  /** 1669 confirms (copies the proposal into `assessment`) or dismisses a
+   * pending rescue severity proposal. */
+  confirmRescueSeverity: (caseId: string, accept: boolean) => void
+  /** 1669 closes a case straight from `received` when the call was resolved
+   * by phone advice alone -- no rescue/hospital pipeline needed. */
+  closeCaseWithAdvice: (caseId: string, note: string) => void
 
   // shared -- addable by any role (reporter, 1669, rescue, or hospital) at
   // any point in the case lifecycle, not collected once up front.
@@ -146,15 +157,26 @@ interface ResQState {
   rescueRejectCase: (caseId: string) => void
   /** Which of the branch's own vehicles/crews actually handles this case --
    * picked by the branch's own staff, separate from (and after) dispatch's
-   * branch-level assignment. */
-  assignVehicle: (caseId: string, vehicle: RescueVehicle) => void
+   * branch-level assignment. `crewCount` defaults to the vehicle's own
+   * static `members` when omitted. */
+  assignVehicle: (caseId: string, vehicle: RescueVehicle, crewCount?: number) => void
   updateRescueProgress: (caseId: string, pct: number) => void
   rescueMarkArrived: (caseId: string) => void
-  submitPatientInfo: (caseId: string, info: PatientInfo) => void
+  /** `severityProposal` is only passed when the rescuer's on-scene findings
+   * suggest a different severity than the original phone assessment. */
+  submitPatientInfo: (caseId: string, info: PatientInfo, severityProposal?: { severity: Severity; note?: string }) => void
   /** A follow-up note on the patient's condition after the initial record
    * -- syncs in real time to dispatch/hospital like the rest of the case. */
   addPatientUpdate: (caseId: string, note: string) => void
   selectHospital: (caseId: string, hospital: Hospital) => void
+  /** Single entry point for how the hospital leg gets decided -- a normal
+   * pick, or a documented refusal (see HospitalDecision). Sets
+   * `selectedHospital` too when a hospital is included, and for
+   * 'declined-all' takes the case straight to `completed`. */
+  recordHospitalDecision: (
+    caseId: string,
+    input: { type: HospitalDecisionType; hospital?: Hospital; signatureUrl?: string; decidedBy?: string },
+  ) => void
   startTransport: (caseId: string) => void
   markHospitalArrived: (caseId: string) => void
 
@@ -163,7 +185,7 @@ interface ResQState {
   setHospitalAcceptingCases: (accepting: boolean) => void
   hospitalRejectCase: (caseId: string) => void
   hospitalConfirmAdmission: (caseId: string) => void
-  completeCase: (caseId: string) => void
+  completeCase: (caseId: string, opts?: { reason?: string; skippedPipeline?: boolean }) => void
 
   // public feedback
   markFeedbackSubmitted: (caseId: string) => void
@@ -468,6 +490,46 @@ export const useStore = create<ResQState>()(
         })
       },
 
+      proposeRescueSeverity: (caseId, severity, note) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const updated = { ...c, rescueSeverityProposal: { severity, note, proposedAt: Date.now() }, updatedAt: Date.now() }
+          return { cases: { ...s.cases, [caseId]: updated } }
+        })
+        const c = get().cases[caseId]
+        notify(set, {
+          audience: 'dispatch',
+          caseId,
+          title: 'หน่วยกู้ชีพเสนอปรับระดับความรุนแรง',
+          message: `เคส ${c?.caseNumber ?? ''}: หน่วยกู้ชีพประเมินจากที่เกิดเหตุแล้วเสนอปรับระดับความรุนแรง กรุณายืนยัน`,
+          tone: 'warning',
+        })
+      },
+
+      confirmRescueSeverity: (caseId, accept) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c || !c.rescueSeverityProposal) return {}
+          const updated: EmergencyCase = accept
+            ? {
+                ...c,
+                assessment: c.assessment
+                  ? { ...c.assessment, severity: c.rescueSeverityProposal.severity, severityConfirmedAt: Date.now() }
+                  : c.assessment,
+                rescueSeverityProposal: null,
+                updatedAt: Date.now(),
+              }
+            : { ...c, rescueSeverityProposal: null, updatedAt: Date.now() }
+          return { cases: { ...s.cases, [caseId]: updated } }
+        }),
+
+      closeCaseWithAdvice: (caseId, note) => {
+        const c = get().cases[caseId]
+        if (!c || c.status !== 'received' || !note.trim()) return
+        get().completeCase(caseId, { reason: note.trim(), skippedPipeline: true })
+      },
+
       addRelativeContact: (caseId, phone, name) => {
         set((s) => {
           const c = s.cases[caseId]
@@ -526,11 +588,17 @@ export const useStore = create<ResQState>()(
           return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ชีพปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
         }),
 
-      assignVehicle: (caseId, vehicle) =>
+      assignVehicle: (caseId, vehicle, crewCount) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, assignedVehicle: vehicle, updatedAt: Date.now() } } }
+          const updated = {
+            ...c,
+            assignedVehicle: vehicle,
+            assignedVehicleCrewCount: crewCount ?? vehicle.members,
+            updatedAt: Date.now(),
+          }
+          return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
       updateRescueProgress: (caseId, pct) =>
@@ -555,11 +623,15 @@ export const useStore = create<ResQState>()(
         })
       },
 
-      submitPatientInfo: (caseId, info) =>
+      submitPatientInfo: (caseId, info, severityProposal) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = pushStatus({ ...c, patientInfo: { ...info, recordedAt: Date.now() } }, 'assisted')
+          const withInfo = { ...c, patientInfo: { ...info, recordedAt: Date.now() } }
+          const withProposal = severityProposal
+            ? { ...withInfo, rescueSeverityProposal: { ...severityProposal, proposedAt: Date.now() } }
+            : withInfo
+          const updated = pushStatus(withProposal, 'assisted')
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
@@ -606,6 +678,45 @@ export const useStore = create<ResQState>()(
           message: `เคส ${c?.caseNumber ?? ''} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา`,
           tone: 'emergency',
         })
+      },
+
+      recordHospitalDecision: (caseId, input) => {
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          let updated: EmergencyCase = {
+            ...c,
+            hospitalDecision: { ...input, decidedAt: Date.now() },
+            updatedAt: Date.now(),
+          }
+          if (input.hospital) updated = { ...updated, selectedHospital: input.hospital }
+          if (input.type === 'declined-all') {
+            updated = pushStatus(
+              { ...updated, closedWithoutDispatch: true },
+              'completed',
+              'ญาติไม่ประสงค์ส่งโรงพยาบาล',
+            )
+          }
+          return { cases: { ...s.cases, [caseId]: updated } }
+        })
+        const c = get().cases[caseId]
+        if (input.type === 'declined-all') {
+          notify(set, {
+            audience: 'all',
+            caseId,
+            title: 'เคสเสร็จสิ้น',
+            message: `เคส ${c?.caseNumber ?? ''}: ญาติไม่ประสงค์ส่งโรงพยาบาล`,
+            tone: 'info',
+          })
+        } else if (input.hospital) {
+          notify(set, {
+            audience: 'hospital',
+            caseId,
+            title: 'มีผู้ป่วยกำลังนำส่ง',
+            message: `เคส ${c?.caseNumber ?? ''} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา`,
+            tone: 'emergency',
+          })
+        }
       },
 
       startTransport: (caseId) => {
@@ -678,17 +789,18 @@ export const useStore = create<ResQState>()(
         })
       },
 
-      completeCase: (caseId) => {
+      completeCase: (caseId, opts) => {
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: pushStatus(c, 'completed') } }
+          const withFlag = opts?.skippedPipeline ? { ...c, closedWithoutDispatch: true } : c
+          return { cases: { ...s.cases, [caseId]: pushStatus(withFlag, 'completed', opts?.reason) } }
         })
         notify(set, {
           audience: 'all',
           caseId,
           title: 'เคสเสร็จสิ้น',
-          message: 'กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว',
+          message: opts?.reason ?? 'กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว',
           tone: 'success',
         })
         // Scene photos/audio stay in the case record for the hospital's
@@ -768,7 +880,7 @@ export const useStore = create<ResQState>()(
     }),
     {
       name: 'resq-storage',
-      version: 7,
+      version: 8,
       // currentUser is no longer trustworthy from localStorage alone -- it's
       // derived fresh from the live Supabase session + profile on load (see
       // App.tsx), so persisting the old value here would just be a second,
@@ -829,6 +941,16 @@ export const useStore = create<ResQState>()(
                     },
                   ]
                 : []
+            }
+          }
+        }
+        if (version < 8 && Array.isArray(persisted?.rescueTeams)) {
+          // Vehicle capability tiers (CLS/ALS/BLS) are new -- a vehicle
+          // cached before this defaults to the lowest/safest tier rather
+          // than claim capability that was never confirmed.
+          for (const team of persisted.rescueTeams as any[]) {
+            for (const v of team?.vehicles ?? []) {
+              if (v && !v.level) v.level = 'BLS'
             }
           }
         }
