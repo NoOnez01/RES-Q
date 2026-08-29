@@ -5,6 +5,7 @@ import type {
   AppUser,
   AudioRecording,
   CallStatus,
+  CallerRole,
   CaseStatus,
   Consciousness,
   DispatcherAssessment,
@@ -113,7 +114,10 @@ interface ResQState {
   removeAudioRecording: (caseId: string, recordingId: string) => void
   finishPhotoStep: (caseId: string) => void
   setLocation: (caseId: string, location: GeoLocation) => void
-  setCallStatus: (caseId: string, status: CallStatus) => void
+  /** `callerRole` is only meaningful (and only need be passed) when setting
+   * status to 'connecting' -- it stamps who's calling for CallScreen.tsx's
+   * remote-party label; other status changes leave it as-is. */
+  setCallStatus: (caseId: string, status: CallStatus, callerRole?: CallerRole) => void
   tickCallDuration: (caseId: string) => void
   finishCall: (caseId: string) => void
   // Phone is entered on the photo step now, alongside the photos; the
@@ -346,11 +350,13 @@ export const useStore = create<ResQState>()(
           return { cases: { ...s.cases, [caseId]: { ...c, location, updatedAt: Date.now() } } }
         }),
 
-      setCallStatus: (caseId, status) =>
+      setCallStatus: (caseId, status, callerRole) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, callStatus: status, updatedAt: Date.now() } } }
+          const updated = { ...c, callStatus: status, updatedAt: Date.now() }
+          if (status === 'connecting' && callerRole) updated.activeCallerRole = callerRole
+          return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
       // Dispatcher presses "รับสาย" on a ringing call — this is what actually

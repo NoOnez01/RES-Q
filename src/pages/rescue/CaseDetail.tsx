@@ -205,6 +205,17 @@ export default function RescueCaseDetail() {
               <StatusBadge status={c.status} />
             </div>
           </div>
+          {c.status !== 'completed' && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Phone className="size-4" />}
+              className="mt-3"
+              onClick={() => navigate(`/contact-1669/${c.id}`)}
+            >
+              ติดต่อ 1669
+            </Button>
+          )}
         </Card>
 
         <Card>

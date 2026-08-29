@@ -75,6 +75,12 @@ export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
 
 export type CallStatus = 'idle' | 'connecting' | 'in-call' | 'ended'
 
+/** Who initiated the current/most recent call on this case -- lets 1669's
+ * call screen show the right remote-party label (reporter vs. rescue crew)
+ * since either can now ring in at any time, not just the original reporter
+ * during intake. Stamped whenever a caller sets callStatus to 'connecting'. */
+export type CallerRole = 'public' | 'rescue'
+
 export type CaseStatus =
   | 'contacted' // 1 ติดต่อเจ้าหน้าที่แล้ว
   | 'photos-taken' // 2 ถ่ายรูปจุดเกิดเหตุแล้ว
@@ -377,6 +383,8 @@ export interface EmergencyCase {
   audioRecordings: AudioRecording[]
   callStatus: CallStatus
   callDurationSec: number
+  /** Set alongside callStatus 'connecting' -- see CallerRole. */
+  activeCallerRole?: CallerRole
   incidentDetails: IncidentDetails | null
   assessment: DispatcherAssessment | null
   patientInfo: PatientInfo | null

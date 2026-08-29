@@ -25,7 +25,7 @@ import {
 } from '@/lib/orgs'
 import { VEHICLE_LEVEL_RANK, VEHICLE_LEVEL_LABEL } from '@/lib/types'
 import type { RescueTeam, RescueVehicle, Hospital } from '@/lib/types'
-import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
+import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Ambulance, Building2, Plus, Pencil, Trash2, Truck } from 'lucide-react'
 
 const EMPTY_TEAM_FORM: NewRescueTeamInput = { name: '', phone: '', baseAddress: '' }
@@ -167,7 +167,7 @@ function VehicleForm({
               className={clsx(
                 'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
                 (form.level ?? 'BLS') === lvl
-                  ? 'border-primary bg-primary/10 text-primary'
+                  ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
                   : 'border-border bg-white text-muted hover:border-primary/40',
               )}
             >

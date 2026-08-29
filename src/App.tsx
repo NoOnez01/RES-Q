@@ -24,6 +24,7 @@ import RegisterHospital from '@/pages/RegisterHospital'
 
 import EmergencyPhoto from '@/pages/public/EmergencyPhoto'
 import Call1669 from '@/pages/public/Call1669'
+import Contact1669 from '@/pages/Contact1669'
 import CaseTracking from '@/pages/public/CaseTracking'
 
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
@@ -120,6 +121,7 @@ export default function App() {
 
         <Route path="/public/emergency-photo" element={<EmergencyPhoto />} />
         <Route path="/public/call-1669" element={<Call1669 />} />
+        <Route path="/contact-1669/:caseId" element={<Contact1669 />} />
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
         <Route path="/dispatch/dashboard" element={<DispatchDashboard />} />

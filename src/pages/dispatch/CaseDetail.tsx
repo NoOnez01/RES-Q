@@ -39,8 +39,8 @@ import { recommendAssignment, rankRescueTeams, requiredEquipmentFor, nextLevelUp
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
 import { VEHICLE_LEVEL_RANK } from '@/lib/types'
-import type { VehicleLevel } from '@/lib/types'
-import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
+import type { VehicleLevel, RescueTeam } from '@/lib/types'
+import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Textarea } from '@/components/ui/Field'
 
 const CONSCIOUS_LABEL: Record<string, string> = {
@@ -75,6 +75,7 @@ export default function DispatchCaseDetail() {
   const [closeAdviceNote, setCloseAdviceNote] = useState('')
   const [closeAdviceLoading, setCloseAdviceLoading] = useState(false)
   const [escalateConfirmOpen, setEscalateConfirmOpen] = useState(false)
+  const [escalating, setEscalating] = useState(false)
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
@@ -127,6 +128,33 @@ export default function DispatchCaseDetail() {
 
   const escalateLevel = c.assignedVehicle?.level ? nextLevelUp(c.assignedVehicle.level) : null
 
+  // Reused wherever a "close without dispatch" option applies -- both when
+  // there's no assessment yet, and (below) when the assessed severity turns
+  // out to be non-urgent -- so the note/confirm markup exists in one place.
+  const closeAdviceBlock = !showCloseAdvice ? (
+    <Button variant="outline" fullWidth icon={<XCircle className="size-4" />} onClick={() => setShowCloseAdvice(true)}>
+      ปิดเคส (ให้คำแนะนำแล้ว)
+    </Button>
+  ) : (
+    <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
+      <p className="text-sm font-semibold text-navy">บันทึกคำแนะนำที่ให้ทางโทรศัพท์</p>
+      <Textarea
+        value={closeAdviceNote}
+        onChange={(e) => setCloseAdviceNote(e.target.value)}
+        rows={2}
+        placeholder="เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ"
+      />
+      <div className="flex gap-2">
+        <Button fullWidth disabled={!closeAdviceNote.trim()} loading={closeAdviceLoading} onClick={handleCloseAdvice}>
+          ยืนยันปิดเคส
+        </Button>
+        <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
+          ยกเลิก
+        </Button>
+      </div>
+    </div>
+  )
+
   function handleConfirmSeverity(accept: boolean) {
     if (!id || !c.rescueSeverityProposal) return
     const gotWorse = accept && c.assessment && c.rescueSeverityProposal.severity < c.assessment.severity
@@ -163,9 +191,22 @@ export default function DispatchCaseDetail() {
   // from availability, so the already-assigned primary team correctly shows
   // as busy (can't support its own case) instead of appearing pickable.
   const requiredEquipment = requiredEquipmentFor(c.incidentDetails?.incidentType)
-  const supportCandidates = rankRescueTeams(rescueTeams, c.location ?? DEFAULT_INCIDENT_LOCATION, requiredEquipment, Object.values(cases)).filter(
+  const bestTeamLevel = (team: RescueTeam): VehicleLevel =>
+    team.vehicles.reduce<VehicleLevel>((best, v) => {
+      const lvl = v.level ?? 'BLS'
+      return VEHICLE_LEVEL_RANK.indexOf(lvl) < VEHICLE_LEVEL_RANK.indexOf(best) ? lvl : best
+    }, 'BLS')
+  let supportCandidates = rankRescueTeams(rescueTeams, c.location ?? DEFAULT_INCIDENT_LOCATION, requiredEquipment, Object.values(cases)).filter(
     (r) => r.team.id !== c.assignedRescueTeam?.id,
   )
+  if (escalating) {
+    // Escalating after a worse severity re-assessment -- consider ALS/CLS
+    // units first regardless of equipment match, since capability is the
+    // point of this particular support request.
+    supportCandidates = [...supportCandidates].sort(
+      (a, b) => VEHICLE_LEVEL_RANK.indexOf(bestTeamLevel(a.team)) - VEHICLE_LEVEL_RANK.indexOf(bestTeamLevel(b.team)),
+    )
+  }
   const canAddSupport =
     isAssignedOrLater && c.status !== 'completed' && !!c.assignedRescueTeam && !c.supportingRescueTeam
 
@@ -364,48 +405,30 @@ export default function DispatchCaseDetail() {
                   กรอกรายละเอียดเหตุการณ์
                 </Button>
 
-                {!showCloseAdvice ? (
-                  <Button
-                    variant="outline"
-                    fullWidth
-                    icon={<XCircle className="size-4" />}
-                    onClick={() => setShowCloseAdvice(true)}
-                  >
-                    ปิดเคส (ให้คำแนะนำแล้ว)
-                  </Button>
-                ) : (
-                  <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
-                    <p className="text-sm font-semibold text-navy">บันทึกคำแนะนำที่ให้ทางโทรศัพท์</p>
-                    <Textarea
-                      value={closeAdviceNote}
-                      onChange={(e) => setCloseAdviceNote(e.target.value)}
-                      rows={2}
-                      placeholder="เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        fullWidth
-                        disabled={!closeAdviceNote.trim()}
-                        loading={closeAdviceLoading}
-                        onClick={handleCloseAdvice}
-                      >
-                        ยืนยันปิดเคส
-                      </Button>
-                      <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
-                        ยกเลิก
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                {closeAdviceBlock}
               </div>
             )}
 
             {c.status === 'received' && c.assessment && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted">เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด</p>
-                <Button fullWidth loading={findingLoading} onClick={handleStartFinding}>
-                  ค้นหาหน่วยกู้ชีพ
-                </Button>
+                {c.assessment.severity === 5 ? (
+                  <>
+                    <p className="text-sm text-muted">
+                      เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้
+                    </p>
+                    <Button fullWidth variant="outline" loading={findingLoading} onClick={handleStartFinding}>
+                      ค้นหาหน่วยกู้ชีพ
+                    </Button>
+                    {closeAdviceBlock}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted">เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด</p>
+                    <Button fullWidth loading={findingLoading} onClick={handleStartFinding}>
+                      ค้นหาหน่วยกู้ชีพ
+                    </Button>
+                  </>
+                )}
               </div>
             )}
 
@@ -425,7 +448,7 @@ export default function DispatchCaseDetail() {
                         className={clsx(
                           'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
                           selectedLevel === lvl
-                            ? 'border-primary bg-primary/10 text-primary'
+                            ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
                             : 'border-border bg-white text-muted hover:border-primary/40',
                         )}
                       >
@@ -584,7 +607,10 @@ export default function DispatchCaseDetail() {
                     variant="outline"
                     size="sm"
                     icon={<Wrench className="size-4" />}
-                    onClick={() => setShowAddSupport(true)}
+                    onClick={() => {
+                      setEscalating(false)
+                      setShowAddSupport(true)
+                    }}
                   >
                     เพิ่มหน่วยสนับสนุนที่มีอุปกรณ์
                   </Button>
@@ -592,7 +618,9 @@ export default function DispatchCaseDetail() {
 
                 {canAddSupport && showAddSupport && (
                   <div className="flex flex-col gap-2.5 rounded-xl border border-border p-3">
-                    <p className="text-sm font-semibold text-navy">เลือกหน่วยสนับสนุน</p>
+                    <p className="text-sm font-semibold text-navy">
+                      {escalating ? `เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)` : 'เลือกหน่วยสนับสนุน'}
+                    </p>
                     {requiredEquipment.length > 0 && (
                       <p className="flex items-center gap-1.5 text-xs text-muted">
                         <Wrench className="size-3.5 text-primary" />
@@ -609,17 +637,20 @@ export default function DispatchCaseDetail() {
                           description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
                           className={clsx(!r.available && 'pointer-events-none opacity-50')}
                           badge={
-                            requiredEquipment.length > 0 ? (
-                              <span
-                                className={clsx(
-                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                  r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
-                                )}
-                              >
-                                <Wrench className="size-3" />
-                                {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
-                              </span>
-                            ) : undefined
+                            <span className="flex flex-col items-end gap-1">
+                              <VehicleLevelBadge level={bestTeamLevel(r.team)} />
+                              {requiredEquipment.length > 0 && (
+                                <span
+                                  className={clsx(
+                                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                    r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                  )}
+                                >
+                                  <Wrench className="size-3" />
+                                  {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
+                                </span>
+                              )}
+                            </span>
                           }
                         />
                       ))}
@@ -628,7 +659,14 @@ export default function DispatchCaseDetail() {
                       <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>
                         ยืนยันเพิ่มหน่วยสนับสนุน
                       </Button>
-                      <Button variant="outline" onClick={() => setShowAddSupport(false)} disabled={addSupportLoading}>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddSupport(false)
+                          setEscalating(false)
+                        }}
+                        disabled={addSupportLoading}
+                      >
                         ยกเลิก
                       </Button>
                     </div>
@@ -669,6 +707,7 @@ export default function DispatchCaseDetail() {
         cancelLabel="ไม่ต้อง"
         onConfirm={() => {
           setEscalateConfirmOpen(false)
+          setEscalating(true)
           setShowAddSupport(true)
         }}
         onCancel={() => setEscalateConfirmOpen(false)}

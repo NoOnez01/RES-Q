@@ -83,8 +83,18 @@ export default function DispatchCallScreen() {
             remoteStream={remoteStream}
             cameraState={cameraState}
             connectionState={connectionState}
-            remoteLabel={emergencyCase.reporterName ?? 'ผู้แจ้งเหตุ'}
-            remoteWaitingLabel={remoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอผู้แจ้งเหตุเปิดกล้อง'}
+            remoteLabel={
+              emergencyCase.activeCallerRole === 'rescue'
+                ? (emergencyCase.assignedRescueTeam?.name ?? 'หน่วยกู้ชีพ')
+                : (emergencyCase.reporterName ?? 'ผู้แจ้งเหตุ')
+            }
+            remoteWaitingLabel={
+              remoteJoined
+                ? 'กำลังเชื่อมต่อวิดีโอ...'
+                : emergencyCase.activeCallerRole === 'rescue'
+                  ? 'รอหน่วยกู้ชีพเปิดกล้อง'
+                  : 'รอผู้แจ้งเหตุเปิดกล้อง'
+            }
             cameraOn={cameraOn}
             onToggleCamera={() => setCameraOn((v) => !v)}
             micOn={micOn}

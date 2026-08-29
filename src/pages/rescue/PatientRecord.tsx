@@ -313,43 +313,6 @@ export default function RescuePatientRecord() {
                 </button>
               ))}
             </div>
-
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
-              <p className="text-xs font-semibold text-navy">Glasgow Coma Scale (GCS) — ไม่บังคับ</p>
-              {gcs.eye !== undefined && gcs.verbal !== undefined && gcs.motor !== undefined && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                  รวม {gcsTotal({ eye: gcs.eye, verbal: gcs.verbal, motor: gcs.motor })}/15
-                </span>
-              )}
-            </div>
-            {(
-              [
-                ['E - การลืมตา (Eye)', GCS_EYE_OPTIONS, gcs.eye, (v: GcsScore['eye']) => setGcs((g) => ({ ...g, eye: v }))],
-                ['V - การพูด (Verbal)', GCS_VERBAL_OPTIONS, gcs.verbal, (v: GcsScore['verbal']) => setGcs((g) => ({ ...g, verbal: v }))],
-                ['M - การเคลื่อนไหว (Motor)', GCS_MOTOR_OPTIONS, gcs.motor, (v: GcsScore['motor']) => setGcs((g) => ({ ...g, motor: v }))],
-              ] as const
-            ).map(([label, options, current, setValue]) => (
-              <div key={label} className="flex flex-col gap-1.5">
-                <p className="text-xs font-medium text-muted">{label}</p>
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                  {options.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setValue(opt.value as never)}
-                      className={clsx(
-                        'rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                        current === opt.value
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
-                      )}
-                    >
-                      {opt.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
 
           {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
@@ -388,6 +351,46 @@ export default function RescuePatientRecord() {
               />
             </div>
           ))}
+
+          <div className="flex flex-col gap-1.5 border-t border-border pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm font-semibold text-navy">Glasgow Coma Scale (GCS) — ไม่บังคับ</label>
+              {gcs.eye !== undefined && gcs.verbal !== undefined && gcs.motor !== undefined && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                  รวม {gcsTotal({ eye: gcs.eye, verbal: gcs.verbal, motor: gcs.motor })}/15
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted">คะแนนแยกจาก AVPU ด้านบน ใช้เสริมการประเมินระดับความรู้สึกตัวให้ละเอียดขึ้น</p>
+            {(
+              [
+                ['E - การลืมตา (Eye)', GCS_EYE_OPTIONS, gcs.eye, (v: GcsScore['eye']) => setGcs((g) => ({ ...g, eye: v }))],
+                ['V - การพูด (Verbal)', GCS_VERBAL_OPTIONS, gcs.verbal, (v: GcsScore['verbal']) => setGcs((g) => ({ ...g, verbal: v }))],
+                ['M - การเคลื่อนไหว (Motor)', GCS_MOTOR_OPTIONS, gcs.motor, (v: GcsScore['motor']) => setGcs((g) => ({ ...g, motor: v }))],
+              ] as const
+            ).map(([label, options, current, setValue]) => (
+              <div key={label} className="flex flex-col gap-1.5">
+                <p className="text-xs font-medium text-muted">{label}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {options.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setValue(opt.value as never)}
+                      className={clsx(
+                        'rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                        current === opt.value
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-white text-navy hover:border-primary hover:text-primary',
+                      )}
+                    >
+                      {opt.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>

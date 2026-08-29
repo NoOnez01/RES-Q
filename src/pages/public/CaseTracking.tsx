@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Building2, Ambulance, Share2 } from 'lucide-react'
+import { CheckCircle2, Building2, Ambulance, Share2, Phone } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -10,6 +10,7 @@ import { SeverityBadge } from '@/components/SeverityBadge'
 import { CaseTimeline } from '@/components/CaseTimeline'
 import { MapPanel } from '@/components/MapPanel'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
+import { CaseQrPanel } from '@/components/CaseQrPanel'
 import { CaseFeedbackForm } from '@/components/CaseFeedbackForm'
 import { ErrorState, LoadingState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -168,10 +169,24 @@ export default function CaseTracking() {
               {activeCase.assessment && <SeverityBadge severity={activeCase.assessment.severity} />}
               <span className="text-xs text-muted">แจ้งเหตุเมื่อ {formatDateTime(activeCase.createdAt)}</span>
             </div>
-            <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)} className="self-start">
-              แชร์ให้ญาติติดตามสถานะ
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
+                แชร์ให้ญาติติดตามสถานะ
+              </Button>
+              {!isRemoteOnly && !isCompleted && id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={<Phone className="size-4" />}
+                  onClick={() => navigate(`/contact-1669/${id}`)}
+                >
+                  ติดต่อ 1669
+                </Button>
+              )}
+            </div>
           </Card>
+
+          <CaseQrPanel url={window.location.href} />
 
           {team && (
             <Card className="flex flex-col gap-3">
