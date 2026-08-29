@@ -39,7 +39,12 @@ export default function Profile() {
   if (!currentUser) {
     return (
       <AppShell variant="dashboard" title="ข้อมูลส่วนตัว">
-        <ErrorState title="ยังไม่ได้เข้าสู่ระบบ" description="กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว" onRetry={() => navigate('/login')} />
+        <ErrorState
+          title="ยังไม่ได้เข้าสู่ระบบ"
+          description="กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว"
+          onRetry={() => navigate('/login')}
+          retryLabel="เข้าสู่ระบบ"
+        />
       </AppShell>
     )
   }

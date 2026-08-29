@@ -129,7 +129,12 @@ export default function RescuePatientRecord() {
   if (!id || !c) {
     return (
       <AppShell variant="dashboard" title="บันทึกข้อมูลผู้ป่วย">
-        <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ" onRetry={() => navigate('/rescue/dashboard')} />
+        <ErrorState
+          title="ไม่พบเคสนี้"
+          description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ"
+          onRetry={() => navigate('/rescue/dashboard')}
+          retryLabel="กลับแดชบอร์ด"
+        />
       </AppShell>
     )
   }

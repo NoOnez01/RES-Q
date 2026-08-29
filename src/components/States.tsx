@@ -38,10 +38,15 @@ export function ErrorState({
   title = 'เกิดข้อผิดพลาด',
   description = 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
   onRetry,
+  retryLabel = 'ลองอีกครั้ง',
 }: {
   title?: string
   description?: string
   onRetry?: () => void
+  /** Override when onRetry actually navigates elsewhere (e.g. to login or a
+   * dashboard) rather than retrying the same action -- "ลองอีกครั้ง" would
+   * misdescribe what the button does. */
+  retryLabel?: string
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-emergency/20 bg-emergency/5 py-14 px-6 text-center">
@@ -52,7 +57,7 @@ export function ErrorState({
       <p className="max-w-sm text-sm text-muted">{description}</p>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          ลองอีกครั้ง
+          {retryLabel}
         </Button>
       )}
     </div>

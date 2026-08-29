@@ -70,7 +70,12 @@ export default function NavigationPage() {
         <div className="relative">
           <AnimatedBackground variant="map" />
           <div className="relative z-10">
-            <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ" onRetry={() => navigate('/rescue/dashboard')} />
+            <ErrorState
+              title="ไม่พบเคสนี้"
+              description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ"
+              onRetry={() => navigate('/rescue/dashboard')}
+              retryLabel="กลับแดชบอร์ด"
+            />
           </div>
         </div>
       </AppShell>

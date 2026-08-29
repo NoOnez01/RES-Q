@@ -105,7 +105,12 @@ export default function RescueCaseDetail() {
   if (!id || !c) {
     return (
       <AppShell variant="dashboard" title="รายละเอียดเคส">
-        <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ" onRetry={() => navigate('/rescue/dashboard')} />
+        <ErrorState
+          title="ไม่พบเคสนี้"
+          description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ"
+          onRetry={() => navigate('/rescue/dashboard')}
+          retryLabel="กลับแดชบอร์ด"
+        />
       </AppShell>
     )
   }
