@@ -241,6 +241,25 @@ async function uploadCasePhoto(caseNumber: string, blob: Blob): Promise<string> 
 const CANCEL_WORDS = ['ยกเลิก', 'cancel']
 const DONE_WORDS = ['เสร็จ', 'done', 'ต่อไป']
 
+// Entry-point keywords -- previously ANY message with no session in
+// progress silently started a brand new emergency case, so an accidental
+// "hi" or a mis-tap created a real case row and paged dispatch. Now the
+// user has to explicitly say which they want.
+const WAKE_PROMPT =
+  'พิมพ์ "แจ้งเหตุ" เพื่อแจ้งเหตุฉุกเฉิน หรือ "ข้อมูล" เพื่อดูข้อมูลเกี่ยวกับแอป ResQ'
+const INFO_MESSAGE =
+  'ResQ คือระบบประสานงานการแพทย์ฉุกเฉิน เชื่อมต่อประชาชน ศูนย์ 1669 หน่วยกู้ชีพ และโรงพยาบาล ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล\n\n' +
+  'พิมพ์ "แจ้งเหตุ" เพื่อเริ่มแจ้งเหตุฉุกเฉินผ่านแชทนี้ได้ทันที ระบบจะพาทำทีละขั้นตอน (ถ่ายรูป ตำแหน่ง เบอร์ติดต่อกลับ)\n\n' +
+  `ดูรายละเอียดเพิ่มเติมได้ที่: ${WEB_APP_BASE_URL}/how-it-works`
+
+function wantsReport(text: string): boolean {
+  return text.includes('แจ้งเหตุ')
+}
+
+function wantsInfo(text: string): boolean {
+  return text.includes('ข้อมูล') || text.toLowerCase() === 'info'
+}
+
 interface LineEvent {
   type: string
   replyToken: string
@@ -257,10 +276,7 @@ interface LineEvent {
 
 async function handleEvent(event: LineEvent) {
   if (event.type === 'follow') {
-    await replyMessage(
-      event.replyToken,
-      'สวัสดีค่ะ นี่คือระบบแจ้งเหตุฉุกเฉิน ResQ ผ่าน LINE\n\nพิมพ์ข้อความอะไรก็ได้เพื่อเริ่มแจ้งเหตุฉุกเฉิน ระบบจะพาทำทีละขั้นตอน',
-    )
+    await replyMessage(event.replyToken, `สวัสดีค่ะ นี่คือระบบแจ้งเหตุฉุกเฉิน ResQ ผ่าน LINE\n\n${WAKE_PROMPT}`)
     return
   }
   if (event.type !== 'message') return
@@ -272,15 +288,24 @@ async function handleEvent(event: LineEvent) {
   const text = message.text?.trim() ?? ''
   if (CANCEL_WORDS.includes(text.toLowerCase())) {
     await clearSession(lineUserId)
-    await replyMessage(event.replyToken, 'ยกเลิกการแจ้งเหตุแล้ว พิมพ์ข้อความใดๆ เพื่อเริ่มใหม่ได้ทุกเมื่อ')
+    await replyMessage(event.replyToken, `ยกเลิกการแจ้งเหตุแล้ว\n\n${WAKE_PROMPT}`)
     return
   }
 
   let session = await getSession(lineUserId)
 
-  // No conversation in progress -- any message starts a brand new report,
-  // since this OA is dedicated to emergency reporting, not general chat.
+  // No conversation in progress -- require an explicit "แจ้งเหตุ"/"ข้อมูล"
+  // instead of treating any message as "start a new report" (that used to
+  // turn a stray "hi" into a real case that paged dispatch).
   if (!session) {
+    if (wantsInfo(text)) {
+      await replyMessage(event.replyToken, INFO_MESSAGE)
+      return
+    }
+    if (!wantsReport(text)) {
+      await replyMessage(event.replyToken, WAKE_PROMPT)
+      return
+    }
     const c = makeNewCase()
     await saveCase(c, lineUserId)
     session = { line_user_id: lineUserId, case_id: c.caseNumber, step: 'awaiting_photo', case_data: c }

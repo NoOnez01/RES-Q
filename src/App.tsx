@@ -22,6 +22,9 @@ import RegisterRescue from '@/pages/RegisterRescue'
 import RegisterDispatch from '@/pages/RegisterDispatch'
 import RegisterHospital from '@/pages/RegisterHospital'
 
+import AuthCallback from '@/pages/auth/AuthCallback'
+import LineCallback from '@/pages/auth/LineCallback'
+
 import EmergencyPhoto from '@/pages/public/EmergencyPhoto'
 import Call1669 from '@/pages/public/Call1669'
 import Contact1669 from '@/pages/Contact1669'
@@ -118,6 +121,8 @@ export default function App() {
         <Route path="/register/rescue" element={<RegisterRescue />} />
         <Route path="/register/dispatch" element={<RegisterDispatch />} />
         <Route path="/register/hospital" element={<RegisterHospital />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/line-callback" element={<LineCallback />} />
 
         <Route path="/public/emergency-photo" element={<EmergencyPhoto />} />
         <Route path="/public/call-1669" element={<Call1669 />} />

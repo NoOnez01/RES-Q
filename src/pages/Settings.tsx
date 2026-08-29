@@ -1,15 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserCircle2, ShieldCheck, Trash2, LogOut, Radio, Ambulance, Building2, ShieldAlert, UserCheck, Wrench } from 'lucide-react'
+import {
+  UserCircle2,
+  ShieldCheck,
+  Trash2,
+  LogOut,
+  Radio,
+  Ambulance,
+  Building2,
+  ShieldAlert,
+  UserCheck,
+  Wrench,
+  KeyRound,
+  Mail,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Field'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
+import { GoogleIcon, LineIcon } from '@/components/icons/SocialIcons'
 import { useStore } from '@/lib/store'
 import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
 import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
+import { supabase } from '@/lib/supabase'
 
 const NOTICES = [
   'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย',
@@ -40,6 +56,51 @@ export default function Settings() {
 
   const [resetOpen, setResetOpen] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
+
+  // Which method this account actually authenticates with -- a LINE login
+  // is, under the hood, a magic-link-verified email (see completeLineLogin
+  // in lib/auth.ts), so app_metadata.provider alone reads 'email' for it
+  // too; the 'line' marker we stamped into user_metadata at creation is
+  // what actually tells the two apart.
+  const [authEmail, setAuthEmail] = useState<string | null>(null)
+  const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'line' | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+
+  useEffect(() => {
+    if (!supabase || !currentUser || currentUser.isAnonymous) return
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user
+      if (!u) return
+      setAuthEmail(u.email ?? null)
+      setAuthProvider(u.user_metadata?.provider === 'line' ? 'line' : u.app_metadata?.provider === 'google' ? 'google' : 'email')
+    })
+  }, [currentUser])
+
+  async function handleChangePassword() {
+    setPasswordError('')
+    if (newPassword.length < 6) {
+      setPasswordError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('รหัสผ่านทั้งสองช่องไม่ตรงกัน')
+      return
+    }
+    if (!supabase) return
+    setPasswordLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordLoading(false)
+    if (error) {
+      setPasswordError(error.message)
+      return
+    }
+    setNewPassword('')
+    setConfirmPassword('')
+    toast({ title: 'เปลี่ยนรหัสผ่านแล้ว', tone: 'success' })
+  }
 
   async function handleReset() {
     setResetLoading(true)
@@ -76,12 +137,72 @@ export default function Settings() {
             <p className="text-sm text-muted">{roleLabel(currentUser?.role ?? null)}</p>
           </div>
 
-          {currentUser && currentUser.role !== 'public' && (
+          {currentUser && !currentUser.isAnonymous && (
             <Button variant="outline" size="sm" icon={<LogOut className="size-4" />} onClick={handleLogout}>
               ออกจากระบบ
             </Button>
           )}
         </Card>
+
+        {currentUser && !currentUser.isAnonymous && (
+          <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}>
+            <h3 className="flex items-center gap-2 font-bold text-navy">
+              <ShieldCheck className="size-4 text-primary" /> บัญชีและความปลอดภัย
+            </h3>
+
+            <div className="flex items-center gap-3 rounded-xl bg-skyblue-pale p-4">
+              {authProvider === 'google' ? (
+                <GoogleIcon className="size-6 shrink-0" />
+              ) : authProvider === 'line' ? (
+                <LineIcon className="size-6 shrink-0 rounded-lg" />
+              ) : (
+                <Mail className="size-6 shrink-0 text-primary" />
+              )}
+              <div>
+                <p className="text-sm font-semibold text-navy">
+                  {authProvider === 'google'
+                    ? 'เข้าสู่ระบบด้วย Google'
+                    : authProvider === 'line'
+                      ? 'เข้าสู่ระบบด้วย LINE'
+                      : 'เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน'}
+                </p>
+                {authProvider === 'email' && authEmail && <p className="text-xs text-muted">{authEmail}</p>}
+              </div>
+            </div>
+
+            {authProvider === 'email' && (
+              <div className="flex flex-col gap-3 border-t border-border pt-4">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                  <KeyRound className="size-4 text-primary" /> เปลี่ยนรหัสผ่าน
+                </p>
+                <Input
+                  label="รหัสผ่านใหม่"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                />
+                <Input
+                  label="ยืนยันรหัสผ่านใหม่"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  error={passwordError}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  loading={passwordLoading}
+                  disabled={!newPassword || !confirmPassword}
+                  onClick={handleChangePassword}
+                >
+                  บันทึกรหัสผ่านใหม่
+                </Button>
+              </div>
+            )}
+          </Card>
+        )}
 
         {currentUser?.isAdmin && (
           <Card className="space-y-3 animate-fade-in-up border-primary/30 bg-skyblue-pale">

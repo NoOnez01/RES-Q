@@ -3,6 +3,10 @@
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string
   readonly VITE_SUPABASE_ANON_KEY: string
+  /** LINE Login channel ID -- public (goes in the authorize URL, like an
+   * OAuth client id anywhere else), unlike the channel *secret*, which only
+   * ever lives server-side in the line-login-exchange Edge Function. */
+  readonly VITE_LINE_LOGIN_CHANNEL_ID?: string
 }
 
 interface ImportMeta {

@@ -152,6 +152,123 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
 }
 
+/** Any Google/LINE sign-in lands here whether the person is a returning or
+ * brand-new user -- neither OAuth provider goes through registerAccount, and
+ * the only DB trigger that auto-creates a profiles row is scoped to
+ * anonymous sessions (see supabase-profiles-table.sql), so a first-time
+ * social login needs its own row created client-side. Always role='public',
+ * auto-approved -- the same pairing the "Insert own profile" RLS policy
+ * requires, matching how a public web signup works today. Dispatch/rescue/
+ * hospital accounts still only ever come from the dedicated registration +
+ * approval flow, which a generic "sign in with Google" button can't imply. */
+export async function ensureSocialProfile(
+  userId: string,
+  meta: { name?: string; avatarUrl?: string },
+): Promise<AppUser | null> {
+  if (!supabase) return null
+  const existing = await fetchProfile(userId, false)
+  if (existing) return existing
+  const { error } = await supabase.from('profiles').insert({
+    id: userId,
+    role: 'public',
+    name: meta.name?.trim() || 'ผู้ใช้ ResQ',
+    avatar_url: meta.avatarUrl ?? null,
+    approval_status: 'approved',
+    is_admin: false,
+  })
+  if (error) throw error
+  return fetchProfile(userId, false)
+}
+
+/** Supabase handles the whole Google OAuth round-trip itself (PKCE + its own
+ * /auth/v1/callback) -- this just kicks it off. Lands back on our own
+ * /auth/callback once Google confirms, see src/pages/auth/AuthCallback.tsx. */
+export async function signInWithGoogle(): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}auth/callback` },
+  })
+  if (error) throw error
+}
+
+const LINE_LOGIN_CHANNEL_ID = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID as string | undefined
+const LINE_STATE_KEY = 'resq-line-login-state'
+const LINE_NONCE_KEY = 'resq-line-login-nonce'
+
+function randomToken(): string {
+  return crypto.randomUUID().replace(/-/g, '')
+}
+
+/** Supabase has no built-in LINE provider (unlike Google), so this drives
+ * LINE's own OAuth/OIDC authorize step directly -- the token exchange that
+ * needs the channel secret happens server-side in the line-login-exchange
+ * Edge Function once LINE redirects back to /auth/line-callback with a
+ * code (see AuthCallback pattern in src/pages/auth/LineCallback.tsx). */
+export function signInWithLine(): void {
+  if (!LINE_LOGIN_CHANNEL_ID) throw new Error('LINE Login is not configured (missing VITE_LINE_LOGIN_CHANNEL_ID)')
+  const state = randomToken()
+  const nonce = randomToken()
+  sessionStorage.setItem(LINE_STATE_KEY, state)
+  sessionStorage.setItem(LINE_NONCE_KEY, nonce)
+  const redirectUri = `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: LINE_LOGIN_CHANNEL_ID,
+    redirect_uri: redirectUri,
+    state,
+    scope: 'openid profile',
+    nonce,
+  })
+  window.location.href = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
+}
+
+/** Reads back and clears the state saved just before redirecting to LINE --
+ * a mismatch (or nothing stored, e.g. a replayed/forged callback URL) means
+ * this isn't a callback we actually initiated. */
+export function consumeLineLoginState(): { redirectUri: string } | null {
+  const state = sessionStorage.getItem(LINE_STATE_KEY)
+  sessionStorage.removeItem(LINE_STATE_KEY)
+  sessionStorage.removeItem(LINE_NONCE_KEY)
+  if (!state) return null
+  return { redirectUri: `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback` }
+}
+
+export function getStoredLineState(): string | null {
+  return sessionStorage.getItem(LINE_STATE_KEY)
+}
+
+interface LineExchangeResult {
+  hashedToken: string
+  name?: string
+  avatarUrl?: string
+}
+
+/** Calls the line-login-exchange Edge Function, which trades the LINE
+ * authorization code for an id_token server-side (needs the LINE channel
+ * secret, so this can't happen in the browser) and turns it into a
+ * Supabase magic-link token via the admin API -- see that function's own
+ * comments for the full chain. */
+async function exchangeLineCode(code: string, redirectUri: string): Promise<LineExchangeResult> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { data, error } = await supabase.functions.invoke<LineExchangeResult>('line-login-exchange', {
+    body: { code, redirectUri },
+  })
+  if (error || !data) throw error ?? new Error('LINE login failed')
+  return data
+}
+
+/** Completes a LINE login: exchanges the code, redeems the resulting
+ * Supabase token to establish a real session, then ensures a profiles row
+ * exists exactly like a fresh Google sign-in would. */
+export async function completeLineLogin(code: string, redirectUri: string): Promise<AppUser | null> {
+  if (!supabase) return null
+  const { hashedToken, name, avatarUrl } = await exchangeLineCode(code, redirectUri)
+  const { data, error } = await supabase.auth.verifyOtp({ token_hash: hashedToken, type: 'magiclink' })
+  if (error || !data.user) throw error ?? new Error('LINE login failed')
+  return ensureSocialProfile(data.user.id, { name, avatarUrl })
+}
+
 export function onAuthChange(callback: (user: AppUser | null) => void): () => void {
   if (!supabaseEnabled || !supabase) return () => {}
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
