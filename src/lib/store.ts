@@ -768,7 +768,7 @@ export const useStore = create<ResQState>()(
     }),
     {
       name: 'resq-storage',
-      version: 6,
+      version: 7,
       // currentUser is no longer trustworthy from localStorage alone -- it's
       // derived fresh from the live Supabase session + profile on load (see
       // App.tsx), so persisting the old value here would just be a second,
@@ -804,6 +804,31 @@ export const useStore = create<ResQState>()(
           for (const c of Object.values(persisted.cases) as any[]) {
             if (c && !Array.isArray(c.relativeContacts)) {
               c.relativeContacts = []
+            }
+          }
+        }
+        if (version < 7 && Array.isArray(persisted?.rescueTeams)) {
+          // Branch/vehicle split (see rescueAssignment.ts) made `vehicles`
+          // required on RescueTeam. A team cached before that split has none
+          // at all -- fold its old flat unitCode/vehicle/equipment fields
+          // (if any) into a single vehicle instead of just defaulting to []
+          // so `team.vehicles.some(...)` doesn't crash on stale localStorage.
+          for (const team of persisted.rescueTeams as any[]) {
+            if (team && !Array.isArray(team.vehicles)) {
+              team.vehicles = team.unitCode
+                ? [
+                    {
+                      id: `${team.id}-v1`,
+                      rescueTeamId: team.id,
+                      unitCode: team.unitCode,
+                      members: team.members ?? 1,
+                      vehicle: team.vehicle ?? '',
+                      equipment: team.equipment ?? [],
+                      driverName: team.driverName,
+                      plateNumber: team.plateNumber,
+                    },
+                  ]
+                : []
             }
           }
         }

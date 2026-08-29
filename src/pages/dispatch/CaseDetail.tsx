@@ -285,7 +285,7 @@ export default function DispatchCaseDetail() {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-6 lg:self-start">
           <Card>
             <h2 className="mb-4 text-base font-bold text-navy">การดำเนินการ</h2>
 
