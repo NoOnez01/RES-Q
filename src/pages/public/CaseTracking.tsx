@@ -48,6 +48,12 @@ export default function CaseTracking() {
         if (!error && data) setRemoteCase(data as EmergencyCase)
         setRemoteStatus('done')
       })
+      // A dropped connection rejects this promise instead of resolving with
+      // an `error` field -- without this catch, remoteStatus would stay
+      // 'loading' forever and strand the citizen on the spinner with no way
+      // out. Treat it the same as "not found" below, but the retry button
+      // lets them try again once they're back online.
+      .catch(() => setRemoteStatus('done'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedCase, id])
 

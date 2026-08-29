@@ -149,16 +149,22 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
           </div>
 
           <div className="flex justify-center bg-navy p-3">
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={handleCapture}
-              disabled={status !== 'ready'}
-              icon={<Camera className="size-5" />}
-            >
-              ถ่ายรูป
-            </Button>
+            {status === 'unavailable' ? (
+              <Button variant="secondary" size="lg" fullWidth onClick={onClose}>
+                ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={handleCapture}
+                disabled={status !== 'ready'}
+                icon={<Camera className="size-5" />}
+              >
+                ถ่ายรูป
+              </Button>
+            )}
           </div>
         </div>
       </div>

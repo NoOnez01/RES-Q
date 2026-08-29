@@ -4,9 +4,20 @@ import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { EmptyState } from '@/components/States'
+import { EmptyState, LoadingState } from '@/components/States'
 import { fetchFeedbackStats, type FeedbackStats } from '@/lib/caseFeedback'
 import { formatDateTime } from '@/lib/utils'
+
+// Same 1 (worst) -> 5 (best) color language as the severity levels on the
+// incident assessment form, so a glance at the distribution reads "mostly
+// red = trouble" / "mostly green = good" instead of one flat tone.
+const RATING_BAR_TONE: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: 'bg-emergency',
+  2: 'bg-warning',
+  3: 'bg-moderate',
+  4: 'bg-primary',
+  5: 'bg-success',
+}
 
 function StarRow({ filled }: { filled: number }) {
   return (
@@ -43,7 +54,7 @@ export default function DispatchFeedbackStats() {
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-6">
           {loading ? (
-            <p className="text-sm text-muted">กำลังโหลดข้อมูล...</p>
+            <LoadingState />
           ) : !stats || stats.count === 0 ? (
             <EmptyState
               title="ยังไม่มีข้อมูลความพึงพอใจ"
@@ -67,7 +78,7 @@ export default function DispatchFeedbackStats() {
                       <div key={n} className="flex items-center gap-2 text-xs">
                         <span className="w-3 shrink-0 font-semibold text-navy">{n}</span>
                         <div className="h-2 flex-1 overflow-hidden rounded-full bg-border">
-                          <div className="h-full rounded-full bg-warning" style={{ width: `${pct}%` }} />
+                          <div className={clsx('h-full rounded-full', RATING_BAR_TONE[n])} style={{ width: `${pct}%` }} />
                         </div>
                         <span className="w-8 shrink-0 text-right text-muted">{count}</span>
                       </div>

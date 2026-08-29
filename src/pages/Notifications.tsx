@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { NotificationCenter } from '@/components/NotificationCenter'
@@ -46,7 +47,10 @@ export default function Notifications() {
             <div className="flex items-center gap-2">
               <span
                 key={unreadCount}
-                className="inline-flex min-w-8 items-center justify-center rounded-full bg-emergency/10 px-2.5 py-1 text-sm font-bold text-emergency animate-count-pop"
+                className={clsx(
+                  'inline-flex min-w-8 items-center justify-center rounded-full px-2.5 py-1 text-sm font-bold animate-count-pop',
+                  unreadCount > 0 ? 'bg-emergency/10 text-emergency' : 'bg-skyblue-light text-muted',
+                )}
               >
                 {unreadCount}
               </span>
@@ -55,6 +59,7 @@ export default function Notifications() {
             <Button
               variant="outline"
               size="sm"
+              disabled={unreadCount === 0}
               onClick={() => markAllNotificationsRead(currentUser?.role ?? 'public')}
             >
               ทำเครื่องหมายว่าอ่านแล้วทั้งหมด
