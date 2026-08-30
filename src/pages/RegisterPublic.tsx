@@ -6,8 +6,9 @@ import { Card, Checkbox } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
+import { GoogleIcon, LineIcon } from '@/components/icons/SocialIcons'
 import { useStore } from '@/lib/store'
-import { registerAccount, signIn } from '@/lib/auth'
+import { registerAccount, signIn, signInWithGoogle, signInWithLine } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 
 interface FormState {
@@ -33,6 +34,8 @@ export default function RegisterPublic() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState | 'agree', string>>>({})
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [lineLoading, setLineLoading] = useState(false)
 
   function update<K extends keyof FormState>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -83,6 +86,26 @@ export default function RegisterPublic() {
     }
   }
 
+  async function handleGoogleSignup() {
+    setGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+    } catch {
+      toast({ title: 'สมัครสมาชิกด้วย Google ไม่สำเร็จ', tone: 'error' })
+      setGoogleLoading(false)
+    }
+  }
+
+  function handleLineSignup() {
+    setLineLoading(true)
+    try {
+      signInWithLine()
+    } catch {
+      toast({ title: 'สมัครสมาชิกด้วย LINE ไม่สำเร็จ', message: 'ยังไม่ได้ตั้งค่า LINE Login', tone: 'error' })
+      setLineLoading(false)
+    }
+  }
+
   if (submitted) {
     return (
       <AppShell variant="public" title="สมัครสมาชิกประชาชน">
@@ -99,6 +122,33 @@ export default function RegisterPublic() {
         <AnimatedBackground variant="auth" />
         <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
           <Card className="animate-fade-in-up">
+            <div className="flex flex-col gap-2.5">
+              <Button
+                variant="outline"
+                fullWidth
+                icon={<GoogleIcon />}
+                loading={googleLoading}
+                onClick={handleGoogleSignup}
+              >
+                สมัครสมาชิกด้วย Google
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                icon={<LineIcon />}
+                loading={lineLoading}
+                onClick={handleLineSignup}
+              >
+                สมัครสมาชิกด้วย LINE
+              </Button>
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted">หรือกรอกข้อมูลเอง</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <Input
                 label="ชื่อ-นามสกุล"
