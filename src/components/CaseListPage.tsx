@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import clsx from 'clsx'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Search } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
+import { Input } from '@/components/ui/Field'
 import { useStore } from '@/lib/store'
 import { formatDateTime } from '@/lib/utils'
 import type { EmergencyCase, Role } from '@/lib/types'
@@ -49,6 +50,7 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
   const currentUser = useStore((s) => s.currentUser)
   const viewingRole = useStore((s) => s.viewingRole)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   const effectiveRole = currentUser?.isAdmin && viewingRole ? viewingRole : (currentUser?.role ?? null)
 
@@ -60,16 +62,40 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
     return list.sort((a, b) => b[sortBy] - a[sortBy])
   }, [cases, filter, sortBy, effectiveRole, currentUser?.id])
 
+  // Case-insensitive substring match on the human-facing case number (e.g.
+  // "RQ-2026-003-AB12") -- everything here is already scoped to what this
+  // role is authorized to see, so this is a client-side filter over an
+  // already-small list, not a lookup that could reach into other orgs' cases.
+  const trimmedQuery = query.trim().toLowerCase()
+  const visibleCases = trimmedQuery
+    ? sortedCases.filter((c) => c.caseNumber.toLowerCase().includes(trimmedQuery))
+    : sortedCases
+
   return (
     <AppShell variant="dashboard" title={title}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
-          {sortedCases.length === 0 ? (
-            <EmptyState title={emptyTitle} description={emptyDescription} />
+          {sortedCases.length > 0 && (
+            <div className="relative mb-4">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003"
+                className="pl-11"
+              />
+            </div>
+          )}
+          {visibleCases.length === 0 ? (
+            trimmedQuery ? (
+              <EmptyState title="ไม่พบเคสที่ค้นหา" description={`ไม่พบเคสที่ตรงกับ "${query.trim()}"`} />
+            ) : (
+              <EmptyState title={emptyTitle} description={emptyDescription} />
+            )
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {sortedCases.map((c, i) => {
+              {visibleCases.map((c, i) => {
                 const expanded = expandedId === c.id
                 return (
                   <div
