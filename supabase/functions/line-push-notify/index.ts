@@ -6,21 +6,20 @@
 // in src/lib/auth.ts), in which case their LINE user id lives in
 // auth.users.raw_user_meta_data->>'line_user_id' instead.
 //
-// Triggered by a Supabase **Database Webhook** (Dashboard -> Database ->
-// Webhooks -> Create a new hook), not a hand-rolled pg_net trigger -- that
-// way no URL/secret needs to live in a committed SQL migration, and
-// Supabase attaches its own service-role auth to the request automatically
-// when the webhook's target type is "Supabase Edge Functions", so this
-// function keeps normal JWT verification ON (unlike line-webhook/
+// Triggered by a Postgres trigger on `cases` that calls this function via
+// pg_net -- see supabase-line-push-trigger.sql for the trigger + the
+// one-time `alter database ... set` config it needs. That trigger sends the
+// project's own service_role key as a Bearer token, which satisfies this
+// function's normal JWT verification (kept ON, unlike line-webhook/
 // line-login-exchange, which are called by outside parties with no
-// Supabase session at all).
+// Supabase session at all) -- so deploy this one WITHOUT --no-verify-jwt.
+// The payload shape it expects matches Supabase's Database Webhooks format
+// even though it isn't triggered by one on this project (that dashboard's
+// Triggers UI has no direct "call an Edge Function" action type) --
+// {type, table, record, old_record} -- so it'd also work unchanged if a
+// future project sets it up via a real Database Webhook instead.
 //
-// Dashboard setup (one-time):
-//   Database -> Webhooks -> Create a new hook
-//     Table: cases   Events: Update   Type: Supabase Edge Functions
-//     Edge Function: line-push-notify
 // Deploy: supabase functions deploy line-push-notify
-//   (no --no-verify-jwt this time -- see above)
 // Secrets: reuses LINE_CHANNEL_ACCESS_TOKEN, already set for line-webhook
 // (must be the same Messaging API channel, since push messages only reach
 // users who have added that channel's OA as a friend).
