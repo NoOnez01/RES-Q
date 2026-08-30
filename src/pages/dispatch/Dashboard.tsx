@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
-import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList } from 'lucide-react'
+import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { DashboardCard } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
@@ -123,6 +123,11 @@ export default function DispatchDashboard() {
               <Link to="/dispatch/feedback-stats">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
                   สถิติความพึงพอใจ
+                </Button>
+              </Link>
+              <Link to="/dispatch/unit-search">
+                <Button variant="outline" size="sm" icon={<Building2 className="size-4" />}>
+                  ค้นหาหน่วยปฏิบัติการ (NDEMS)
                 </Button>
               </Link>
               <Link to="/dispatch/incoming-call">

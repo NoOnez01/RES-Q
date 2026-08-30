@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { useTabVisibility } from '@/lib/useReducedMotion'
@@ -12,6 +12,7 @@ import { CallRingtoneBridge } from '@/components/CallRingtoneBridge'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
 import { RequireRole } from '@/components/RequireRole'
 import { AppUpdateBanner } from '@/components/AppUpdateBanner'
+import { LoadingState } from '@/components/States'
 
 import Home from '@/pages/Home'
 import HowItWorks from '@/pages/HowItWorks'
@@ -34,11 +35,16 @@ import CaseTracking from '@/pages/public/CaseTracking'
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
 import DispatchPendingApprovals from '@/pages/dispatch/PendingApprovals'
 import ManageOrgs from '@/pages/dispatch/ManageOrgs'
-import DispatchFeedbackStats from '@/pages/dispatch/FeedbackStats'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
 import DispatchCallScreen from '@/pages/dispatch/CallScreen'
 import DispatchCaseDetail from '@/pages/dispatch/CaseDetail'
 import DispatchEmergencyAssessment from '@/pages/dispatch/EmergencyAssessment'
+
+// Chart-heavy pages pull in recharts (~400kB) -- lazy-loaded so that cost
+// is only paid when one of these is actually visited, not on every route.
+const DispatchFeedbackStats = lazy(() => import('@/pages/dispatch/FeedbackStats'))
+const DispatchUnitSearch = lazy(() => import('@/pages/dispatch/UnitSearch'))
+const PersonalStats = lazy(() => import('@/pages/PersonalStats'))
 
 import RescueDashboard from '@/pages/rescue/Dashboard'
 import RescueCaseDetail from '@/pages/rescue/CaseDetail'
@@ -151,11 +157,30 @@ export default function App() {
         <Route path="/dispatch/pending-approvals" element={<RequireRole role="dispatch"><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/org-approvals" element={<RequireRole role={['rescue', 'hospital']}><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/manage-orgs" element={<RequireRole role="dispatch"><ManageOrgs /></RequireRole>} />
-        <Route path="/dispatch/feedback-stats" element={<RequireRole role="dispatch"><DispatchFeedbackStats /></RequireRole>} />
+        <Route
+          path="/dispatch/feedback-stats"
+          element={
+            <RequireRole role="dispatch">
+              <Suspense fallback={<LoadingState />}>
+                <DispatchFeedbackStats />
+              </Suspense>
+            </RequireRole>
+          }
+        />
         <Route path="/dispatch/incoming-call" element={<RequireRole role="dispatch"><DispatchIncomingCall /></RequireRole>} />
         <Route path="/dispatch/call/:id" element={<RequireRole role="dispatch"><DispatchCallScreen /></RequireRole>} />
         <Route path="/dispatch/case/:id" element={<RequireRole role="dispatch"><DispatchCaseDetail /></RequireRole>} />
         <Route path="/dispatch/emergency-details/:id" element={<RequireRole role="dispatch"><DispatchEmergencyAssessment /></RequireRole>} />
+        <Route
+          path="/dispatch/unit-search"
+          element={
+            <RequireRole role="dispatch">
+              <Suspense fallback={<LoadingState />}>
+                <DispatchUnitSearch />
+              </Suspense>
+            </RequireRole>
+          }
+        />
 
         <Route path="/rescue/dashboard" element={<RequireRole role="rescue"><RescueDashboard /></RequireRole>} />
         <Route path="/rescue/case/:id" element={<RequireRole role="rescue"><RescueCaseDetail /></RequireRole>} />
@@ -169,6 +194,14 @@ export default function App() {
         <Route path="/navigation/:id" element={<NavigationPage />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/personal-stats"
+          element={
+            <Suspense fallback={<LoadingState />}>
+              <PersonalStats />
+            </Suspense>
+          }
+        />
         <Route path="/settings" element={<Settings />} />
         <Route path="/current-cases" element={<CurrentCases />} />
         <Route path="/case-history" element={<CaseHistory />} />

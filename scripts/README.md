@@ -52,9 +52,11 @@ the token in the `Authorization` header instead.
 
 ## Creating the table
 
-The schema lives in `supabase/migrations/20260830171821_create_idem_units.sql`.
-Apply it with the Supabase CLI (requires `supabase login` and `supabase link`
-once per machine — already done for this project):
+The schema lives in `supabase/migrations/20260830171821_create_idem_units.sql`
+and `supabase/migrations/20260830180045_add_idem_units_location.sql` (adds
+`province`/`cc_id`, needed for the distance estimate on the unit-search
+page). Apply them with the Supabase CLI (requires `supabase login` and
+`supabase link` once per machine — already done for this project):
 
 ```
 npx supabase db push
@@ -76,6 +78,8 @@ This creates `public.idem_units`:
 | emt                | numeric     |                                            |
 | emt_b              | numeric     |                                            |
 | emr                | numeric     |                                            |
+| province           | text        | Thai province name, exactly as the source reports it |
+| cc_id              | text        | source call-center id the unit belongs to (e.g. `81-1`) |
 | source_updated_at  | timestamptz | Redash's `retrieved_at` for that row's batch |
 | created_at         | timestamptz | set once, on first insert                 |
 | updated_at         | timestamptz | bumped on every sync that touches the row  |
@@ -156,9 +160,12 @@ anywhere in the repo). To point one at this data:
    vehicle counts per level per unit; `emt_p`/`aemt`/`emt_i`/`emt`/`emt_b`/
    `emr` give staff-certification counts per unit.
 
-For wiring this into ResQ's own rescue-unit search page (filter by vehicle
-level + distance from the incident), the existing `rankRescueTeams`/
-`recommendAssignment` logic in `src/lib/rescueAssignment.ts` and the
-`VehicleLevelBadge` component are the natural place to plug in a query
-against this table — that's a separate follow-up, not part of this sync
-pipeline.
+**In-app search page:** `/dispatch/unit-search` (`src/pages/dispatch/UnitSearch.tsx`)
+already does this — search by name/code/province, filter by BLS/ALS/CLS,
+and sort by distance estimated from a selected case's location using
+`src/lib/idemUnits.ts` + `src/lib/thailandProvinces.ts`'s province-centroid
+table (the source gives no per-unit coordinates, so this is a province-level
+approximation, always labeled as such in the UI — never presented as the
+unit's exact position). This is a read-only reference lookup, separate from
+the app's own rescue-team assignment flow (`src/lib/rescueAssignment.ts`),
+which still only assigns from `rescueTeams` registered directly in ResQ.

@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Star, MessageSquareWarning } from 'lucide-react'
 import clsx from 'clsx'
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmptyState, LoadingState } from '@/components/States'
 import { fetchFeedbackStats, type FeedbackStats } from '@/lib/caseFeedback'
 import { formatDateTime } from '@/lib/utils'
-
-// Same 1 (worst) -> 5 (best) color language as the severity levels on the
-// incident assessment form, so a glance at the distribution reads "mostly
-// red = trouble" / "mostly green = good" instead of one flat tone.
-const RATING_BAR_TONE: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: 'bg-emergency',
-  2: 'bg-warning',
-  3: 'bg-moderate',
-  4: 'bg-primary',
-  5: 'bg-success',
-}
+import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 
 function StarRow({ filled }: { filled: number }) {
   return (
@@ -71,19 +62,36 @@ export default function DispatchFeedbackStats() {
                 </Card>
                 <Card className="flex flex-col gap-2 py-6">
                   <p className="mb-1 text-sm font-medium text-muted">การกระจายคะแนน</p>
-                  {([5, 4, 3, 2, 1] as const).map((n) => {
-                    const count = stats.ratingCounts[n]
-                    const pct = stats.count > 0 ? Math.round((count / stats.count) * 100) : 0
-                    return (
-                      <div key={n} className="flex items-center gap-2 text-xs">
-                        <span className="w-3 shrink-0 font-semibold text-navy">{n}</span>
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-border">
-                          <div className={clsx('h-full rounded-full', RATING_BAR_TONE[n])} style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="w-8 shrink-0 text-right text-muted">{count}</span>
-                      </div>
-                    )
-                  })}
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={([5, 4, 3, 2, 1] as const).map((n) => ({ rating: n, count: stats.ratingCounts[n] }))}
+                        layout="vertical"
+                        margin={{ top: 0, right: 12, bottom: 0, left: 0 }}
+                      >
+                        <XAxis type="number" hide />
+                        <YAxis
+                          type="category"
+                          dataKey="rating"
+                          width={20}
+                          tickLine={false}
+                          axisLine={false}
+                          tick={CHART_TICK_STYLE}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'transparent' }}
+                          contentStyle={CHART_TOOLTIP_STYLE}
+                          formatter={(value) => [`${value} รีวิว`, 'จำนวน']}
+                          labelFormatter={(label) => `คะแนน ${label} ดาว`}
+                        />
+                        <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={18}>
+                          {([5, 4, 3, 2, 1] as const).map((n) => (
+                            <Cell key={n} fill={SEVERITY_CHART_COLORS[n]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </Card>
               </div>
 

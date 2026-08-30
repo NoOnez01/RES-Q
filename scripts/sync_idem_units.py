@@ -57,6 +57,7 @@ TABLE_NAME = "idem_units"
 UPSERT_CHUNK_SIZE = 500
 
 # --- Source column names (Thai, exactly as Redash returns them) -----------
+COL_PROVINCE = "จังหวัด"
 COL_UNIT_CODE = "รหัสหน่วยปฏิบัติการ"
 COL_UNIT_NAME = "ชื่อหน่วยปฏิบัติการ"
 COL_BLS = "รถ (BLS)"
@@ -162,7 +163,7 @@ def safe_numeric(value: Any, field_label: str, unit_code: str, warnings: list[st
     return None
 
 
-def normalize_row(row: dict, retrieved_at: str | None, warnings: list[str]) -> dict | None:
+def normalize_row(row: dict, retrieved_at: str | None, cc_id: str, warnings: list[str]) -> dict | None:
     unit_code = str(row.get(COL_UNIT_CODE) or "").strip()
     if not unit_code:
         warnings.append(f"Skipped row with missing {COL_UNIT_CODE}: {row!r}")
@@ -172,9 +173,13 @@ def normalize_row(row: dict, retrieved_at: str | None, warnings: list[str]) -> d
     if not unit_name:
         warnings.append(f"{unit_code}: missing {COL_UNIT_NAME}")
 
+    province = str(row.get(COL_PROVINCE) or "").strip()
+
     out = {
         "unit_code": unit_code,
         "unit_name": unit_name or None,
+        "province": province or None,
+        "cc_id": cc_id,
         "source_updated_at": retrieved_at,
     }
     for field, source_col in NUMERIC_FIELDS.items():
@@ -191,10 +196,28 @@ def supabase_headers() -> dict:
 
 
 def get_existing_unit_codes() -> set[str]:
-    url = f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=unit_code"
-    resp = requests.get(url, headers=supabase_headers(), timeout=30)
-    resp.raise_for_status()
-    return {row["unit_code"] for row in resp.json()}
+    """PostgREST caps a response at 1000 rows by default -- a plain GET
+    against a table this size silently returns only the first page, which
+    would undercount "already existing" codes and misreport every row past
+    the cap as a fresh insert. Page through with Range until a short page
+    signals the end."""
+    codes: set[str] = set()
+    page_size = 1000
+    offset = 0
+    while True:
+        url = f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=unit_code"
+        resp = requests.get(
+            url,
+            headers={**supabase_headers(), "Range-Unit": "items", "Range": f"{offset}-{offset + page_size - 1}"},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        page = resp.json()
+        codes.update(row["unit_code"] for row in page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+    return codes
 
 
 def upsert_to_supabase(rows: list[dict]) -> tuple[int, int, int]:
@@ -248,7 +271,7 @@ def main() -> int:
     )
     print(f"Found {len(call_centers)} call centers (ศูนย์รับแจ้งเหตุ) to iterate")
 
-    raw_rows: list[tuple[str | None, dict]] = []
+    raw_rows: list[tuple[str | None, str, dict]] = []
     fetch_errors: list[tuple[str, str]] = []
     for i, cc in enumerate(call_centers, 1):
         cc_id = cc["value"]
@@ -260,7 +283,7 @@ def main() -> int:
             continue
         print(f"  [{i}/{len(call_centers)}] cc_id={cc_id} ({cc.get('name')}): {len(rows)} rows")
         for row in rows:
-            raw_rows.append((retrieved_at, row))
+            raw_rows.append((retrieved_at, cc_id, row))
         time.sleep(0.2)  # be polite to the source server
 
     print(f"Fetched: {len(raw_rows)} rows")
@@ -272,8 +295,8 @@ def main() -> int:
     warnings: list[str] = []
     by_code: dict[str, dict] = {}
     duplicate_codes: list[str] = []
-    for retrieved_at, row in raw_rows:
-        normalized = normalize_row(row, retrieved_at, warnings)
+    for retrieved_at, cc_id, row in raw_rows:
+        normalized = normalize_row(row, retrieved_at, cc_id, warnings)
         if normalized is None:
             continue
         code = normalized["unit_code"]

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Camera, Loader2, UserCircle2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BarChart3, Camera, ChevronRight, Loader2, UserCircle2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
@@ -136,6 +136,19 @@ export default function Profile() {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             <p className="text-xs text-muted">แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์</p>
           </Card>
+
+          <Link to="/personal-stats">
+            <Card className="flex animate-fade-in-up items-center gap-3 transition-shadow hover:shadow-card-lg">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary">
+                <BarChart3 className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-navy">สถิติของฉัน</p>
+                <p className="text-xs text-muted">ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ</p>
+              </div>
+              <ChevronRight className="size-5 shrink-0 text-muted" />
+            </Card>
+          </Link>
 
           <Card className="space-y-4 animate-fade-in-up">
             <h3 className="flex items-center gap-2 font-bold text-navy">
