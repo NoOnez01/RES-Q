@@ -6,25 +6,22 @@
 -- type there on this project, so this fires the Edge Function itself via
 -- pg_net's net.http_post from inside a trigger function instead. The
 -- payload shape below matches exactly what line-push-notify already
--- expects (it was written against Supabase's Database Webhooks payload
--- format), so no code changes are needed on that side.
+-- expects, so no code changes are needed on that side.
 --
 -- ---------------------------------------------------------------------
--- REQUIRED one-time setup -- run these two commands FIRST, by themselves,
--- directly in the SQL Editor (NOT saved into this file, since it's
--- committed to git and these two values are secrets/your specific URL):
---
---   alter database postgres set app.settings.line_push_notify_url =
---     'https://<your-project-ref>.functions.supabase.co/line-push-notify';
---
---   alter database postgres set app.settings.service_role_key =
---     '<your project''s service_role key -- Settings > API Keys > Secret keys>';
---
--- Open a NEW SQL Editor query (or wait a moment) after running those two --
--- `alter database ... set` only takes effect for new connections, not the
--- one that ran it. Then run the rest of this file below.
+-- BEFORE running this: replace the two placeholders below --
+--   <YOUR_PROJECT_REF>        e.g. bdcovkvtpkhjtyjpbfta
+--   <YOUR_SERVICE_ROLE_KEY>   Settings > API Keys > Secret keys
+-- (`alter database ... set` -- the usual way to keep secrets out of a
+-- committed file -- isn't available on this project's SQL Editor role, so
+-- they're literals in the function body instead. Fill them in locally,
+-- run it, and avoid pushing your filled-in copy of this file back to a
+-- public repo -- keep the placeholders in the version you commit.)
 -- ---------------------------------------------------------------------
 
+-- If this line also errors with "permission denied", enable pg_net from
+-- the dashboard instead (Database > Extensions > search "pg_net" > enable),
+-- then delete this line and re-run the rest of the file.
 create extension if not exists pg_net with schema extensions;
 
 create or replace function notify_line_on_case_status_change()
@@ -34,15 +31,9 @@ security definer
 set search_path = public, extensions
 as $$
 declare
-  function_url text := current_setting('app.settings.line_push_notify_url', true);
-  service_key text := current_setting('app.settings.service_role_key', true);
+  function_url text := 'https://<YOUR_PROJECT_REF>.functions.supabase.co/line-push-notify';
+  service_key text := '<YOUR_SERVICE_ROLE_KEY>';
 begin
-  if function_url is null or service_key is null then
-    -- Not configured yet (see the setup block above) -- skip silently
-    -- rather than blocking every case update on a config problem.
-    return new;
-  end if;
-
   perform net.http_post(
     url := function_url,
     headers := jsonb_build_object(
