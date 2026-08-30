@@ -5,7 +5,6 @@ import {
   Activity,
   Ambulance,
   ArrowRight,
-  BadgeCheck,
   Building2,
   Camera,
   Clock,
@@ -266,8 +265,8 @@ function HubSatellite({
 
 function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[number]) => void }) {
   return (
-    <div className="hero-grid-hub mt-4 flex flex-col items-center gap-3 lg:mt-10">
-      <div className="relative mx-auto flex size-72 items-center justify-center sm:size-80 lg:size-96">
+    <div className="hero-grid-hub mt-4 flex flex-col items-center gap-3">
+      <div className="relative mx-auto flex size-64 items-center justify-center sm:size-72 lg:size-80">
         <div className="bg-fx-layer" aria-hidden="true">
           <span className="bg-fx absolute inset-12 rounded-full bg-primary/10 blur-2xl" />
           <OrbitRing sizePct={60} rotate={-12} scaleY={0.55} opacity={0.22} spin="animate-orbit-slow" />
@@ -338,10 +337,6 @@ export default function Home() {
         <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
         <div className="hero-grid relative z-10 w-full">
           <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              <ShieldCheck className="size-3.5" />
-              ระบบประสานงานการแพทย์ฉุกเฉิน
-            </span>
             <div>
               <h1 className="text-3xl font-extrabold leading-tight text-navy sm:text-4xl md:text-5xl">
                 ทุกวินาทีมีความหมาย
@@ -433,11 +428,7 @@ export default function Home() {
       <section id="trust" className="bg-skyblue-pale/60 px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <Reveal className="text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              <BadgeCheck className="size-3.5" />
-              ออกแบบเพื่อความน่าเชื่อถือ
-            </span>
-            <h2 className="mt-3 text-xl font-bold text-navy sm:text-2xl">ความปลอดภัยและความน่าเชื่อถือ</h2>
+            <h2 className="text-xl font-bold text-navy sm:text-2xl">ความปลอดภัยและความน่าเชื่อถือ</h2>
           </Reveal>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
