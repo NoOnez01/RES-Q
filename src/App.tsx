@@ -43,6 +43,7 @@ import DispatchEmergencyAssessment from '@/pages/dispatch/EmergencyAssessment'
 import RescueDashboard from '@/pages/rescue/Dashboard'
 import RescueCaseDetail from '@/pages/rescue/CaseDetail'
 import RescuePatientRecord from '@/pages/rescue/PatientRecord'
+import RescueCallReporter from '@/pages/rescue/CallReporter'
 
 import HospitalDashboard from '@/pages/hospital/Dashboard'
 import HospitalCaseDetail from '@/pages/hospital/CaseDetail'
@@ -159,6 +160,7 @@ export default function App() {
         <Route path="/rescue/dashboard" element={<RequireRole role="rescue"><RescueDashboard /></RequireRole>} />
         <Route path="/rescue/case/:id" element={<RequireRole role="rescue"><RescueCaseDetail /></RequireRole>} />
         <Route path="/rescue/patient-record/:id" element={<RequireRole role="rescue"><RescuePatientRecord /></RequireRole>} />
+        <Route path="/rescue/call-reporter/:id" element={<RequireRole role="rescue"><RescueCallReporter /></RequireRole>} />
 
         <Route path="/hospital/dashboard" element={<RequireRole role="hospital"><HospitalDashboard /></RequireRole>} />
         <Route path="/hospital/case/:id" element={<RequireRole role="hospital"><HospitalCaseDetail /></RequireRole>} />

@@ -206,15 +206,24 @@ export default function RescueCaseDetail() {
             </div>
           </div>
           {c.status !== 'completed' && (
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<Phone className="size-4" />}
-              className="mt-3"
-              onClick={() => navigate(`/contact-1669/${c.id}`)}
-            >
-              ติดต่อ 1669
-            </Button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Phone className="size-4" />}
+                onClick={() => navigate(`/contact-1669/${c.id}`)}
+              >
+                ติดต่อ 1669
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Phone className="size-4" />}
+                onClick={() => navigate(`/rescue/call-reporter/${c.id}`)}
+              >
+                โทรหาผู้แจ้งเหตุ
+              </Button>
+            </div>
           )}
         </Card>
 

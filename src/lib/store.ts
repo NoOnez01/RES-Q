@@ -127,6 +127,11 @@ interface ResQState {
   setCallStatus: (caseId: string, status: CallStatus, callerRole?: CallerRole) => void
   tickCallDuration: (caseId: string) => void
   finishCall: (caseId: string) => void
+  // Rescue calling the reporter directly -- separate call relationship from
+  // the citizen/rescue-to-1669 calls above (see EmergencyCase.rescueCallStatus).
+  setRescueCallStatus: (caseId: string, status: CallStatus) => void
+  answerRescueCall: (caseId: string) => void
+  tickRescueCallDuration: (caseId: string) => void
   // Phone is entered on the photo step now, alongside the photos; the
   // report itself finalizes once the call ends. Incident details are
   // 1669's job (see submitDispatcherAssessment), not the caller's.
@@ -383,6 +388,33 @@ export const useStore = create<ResQState>()(
           if (!c) return {}
           return {
             cases: { ...s.cases, [caseId]: { ...c, callDurationSec: c.callDurationSec + 1 } },
+          }
+        }),
+
+      setRescueCallStatus: (caseId, status) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          const updated = { ...c, rescueCallStatus: status, updatedAt: Date.now() }
+          if (status === 'connecting') updated.rescueCallDurationSec = 0
+          return { cases: { ...s.cases, [caseId]: updated } }
+        }),
+
+      // The reporter presses "รับสาย" on a ringing rescue call -- mirrors
+      // answerCall above but for this separate call relationship.
+      answerRescueCall: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c || c.rescueCallStatus !== 'connecting') return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallStatus: 'in-call', updatedAt: Date.now() } } }
+        }),
+
+      tickRescueCallDuration: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c) return {}
+          return {
+            cases: { ...s.cases, [caseId]: { ...c, rescueCallDurationSec: (c.rescueCallDurationSec ?? 0) + 1 } },
           }
         }),
 

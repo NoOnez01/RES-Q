@@ -23,7 +23,14 @@ export function CallRingtoneBridge() {
       shouldRing = Object.values(cases).some((c) => c.callStatus === 'connecting')
     } else if (role === 'public') {
       const activeCase = activeCaseId ? cases[activeCaseId] : null
-      shouldRing = activeCase?.callStatus === 'connecting'
+      // Either an outgoing call to 1669 still ringing, or an incoming call
+      // from rescue -- a citizen can be reached by rescue on any case they
+      // reported, not just whichever one happens to be "active" at the
+      // moment, so this checks every case's rescueCallStatus rather than
+      // only activeCaseId.
+      shouldRing =
+        activeCase?.callStatus === 'connecting' ||
+        Object.values(cases).some((c) => c.rescueCallStatus === 'connecting')
     }
     if (shouldRing) startRingtone()
     else stopRingtone()

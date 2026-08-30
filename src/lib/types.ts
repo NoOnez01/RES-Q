@@ -391,6 +391,14 @@ export interface EmergencyCase {
   callDurationSec: number
   /** Set alongside callStatus 'connecting' -- see CallerRole. */
   activeCallerRole?: CallerRole
+  /** A second, independent call relationship: rescue calling the reporter
+   * directly, separate from the citizen/rescue-to-1669 calls callStatus
+   * tracks above. Needs its own status/duration (not reused from
+   * callStatus) so the two calls can never stomp on each other's state --
+   * rescue may need to call the reporter while a 1669 call history exists
+   * on the same case. Rescue is always the caller, the reporter the callee. */
+  rescueCallStatus?: CallStatus
+  rescueCallDurationSec?: number
   incidentDetails: IncidentDetails | null
   assessment: DispatcherAssessment | null
   patientInfo: PatientInfo | null

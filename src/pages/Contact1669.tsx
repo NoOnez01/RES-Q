@@ -153,9 +153,15 @@ export default function Contact1669() {
                 onToggleMic={() => setMicOn((v) => !v)}
                 onSwitchCamera={switchCamera}
               />
-              <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                วางสาย
-              </Button>
+              {isRescue || c.callStatus === 'connecting' ? (
+                <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
+                  {isRescue ? 'วางสาย' : 'ยกเลิกการโทร'}
+                </Button>
+              ) : (
+                // Once connected, only staff ends the call -- a citizen
+                // calling in doesn't get to hang up on 1669 mid-conversation.
+                <p className="text-center text-xs text-muted">เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา</p>
+              )}
             </>
           )}
 

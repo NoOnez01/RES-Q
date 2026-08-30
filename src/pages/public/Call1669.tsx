@@ -220,9 +220,16 @@ export default function Call1669() {
                 onToggleMic={() => setMicOn((v) => !v)}
                 onSwitchCamera={switchCamera}
               />
-              <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                วางสาย
-              </Button>
+              {activeCase.callStatus === 'connecting' ? (
+                <Button variant="outline" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
+                  ยกเลิกการโทร
+                </Button>
+              ) : (
+                // Once connected, only 1669 ends the call -- staff controls
+                // when the conversation is actually finished, not a citizen
+                // who may still be distressed mid-call.
+                <p className="text-center text-xs text-muted">เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา</p>
+              )}
             </>
           )}
         </div>
