@@ -264,7 +264,11 @@ async function exchangeLineCode(code: string, redirectUri: string): Promise<Line
 export async function completeLineLogin(code: string, redirectUri: string): Promise<AppUser | null> {
   if (!supabase) return null
   const { hashedToken, name, avatarUrl } = await exchangeLineCode(code, redirectUri)
-  const { data, error } = await supabase.auth.verifyOtp({ token_hash: hashedToken, type: 'magiclink' })
+  // GoTrue's /verify endpoint rejects the 'magiclink' type here even though
+  // admin.generateLink's own `type: 'magiclink'` (line-login-exchange) is
+  // still valid -- current servers want 'email' when redeeming the
+  // resulting token_hash ("Verify requires a verification type" otherwise).
+  const { data, error } = await supabase.auth.verifyOtp({ token_hash: hashedToken, type: 'email' })
   if (error || !data.user) throw error ?? new Error('LINE login failed')
   return ensureSocialProfile(data.user.id, { name, avatarUrl })
 }
