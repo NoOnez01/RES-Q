@@ -45,7 +45,6 @@ export function EmergencyContactCircle() {
       <ConfirmationModal
         open={confirmOpen}
         title="ยืนยันการติดต่อเจ้าหน้าที่"
-        message="ระบบจะพาไปถ่ายรูปจุดเกิดเหตุ แล้วเชื่อมต่อสาย 1669 ให้ทันที"
         confirmLabel="ยืนยัน"
         cancelLabel="ยกเลิก"
         tone="danger"

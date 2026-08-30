@@ -260,7 +260,6 @@ export default function Call1669() {
       <ConfirmationModal
         open={confirmOpen}
         title="ยืนยันการโทร 1669"
-        message="คุณกำลังจะติดต่อศูนย์รับแจ้งเหตุการแพทย์ฉุกเฉิน 1669 กรุณาอยู่ในจุดที่ปลอดภัยและแจ้งตำแหน่งให้ชัดเจน"
         confirmLabel="ยืนยันโทร 1669"
         cancelLabel="ยกเลิก"
         onConfirm={handleConfirmCall}

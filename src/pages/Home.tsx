@@ -337,17 +337,9 @@ export default function Home() {
         <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
         <div className="hero-grid relative z-10 w-full">
           <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-            <div>
-              <h1 className="text-3xl font-extrabold leading-tight text-navy sm:text-4xl md:text-5xl">
-                ทุกวินาทีมีความหมาย
-              </h1>
-              <p className="mt-1 text-xl font-bold leading-snug text-primary sm:text-2xl">
-                เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย
-              </p>
-            </div>
-            <p className="max-w-md text-muted">
-              ResQ ช่วยประสานงานระหว่างประชาชน ศูนย์ 1669 หน่วยกู้ชีพ และโรงพยาบาล ตั้งแต่เริ่มแจ้งเหตุจนถึงการส่งต่อผู้ป่วย
-            </p>
+            <h1 className="text-2xl font-extrabold leading-snug text-navy sm:text-3xl">
+              เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย
+            </h1>
           </div>
 
           <div id="emergency-circle" className="hero-grid-circle flex items-center justify-center">

@@ -125,14 +125,33 @@ export const MOCK_HOSPITALS: Hospital[] = [
   },
 ]
 
+// Standard chief-complaint categories (CBD 1-25) per the official reference
+// document -- kept in this exact numbered order since dispatch/EMS staff
+// identify complaints by their CBD number as much as by the Thai label.
 export const INCIDENT_TYPES = [
-  'อุบัติเหตุทางถนน',
-  'หมดสติ / ไม่รู้สึกตัว',
-  'เจ็บหน้าอก / สงสัยหัวใจ',
-  'หายใจลำบาก',
-  'พลัดตกจากที่สูง',
-  'ไฟไหม้ / ถูกความร้อน',
-  'เลือดออกรุนแรง',
-  'ชักเกร็ง',
-  'อื่น ๆ',
+  'CBD 1: ปวดท้อง บริเวณหลัง เชิงกราน และขา',
+  'CBD 2: อาการภูมิแพ้ (Allergy and Anaphylaxis)',
+  'CBD 3: อาการทางเดินหายใจ (หอบเหนื่อย หายใจลำบาก)',
+  'CBD 4: เจ็บแน่นหน้าอก (Chest pain)',
+  'CBD 5: หัวใจหยุดเต้น (Cardiac arrest)',
+  'CBD 6: เลือดออก',
+  'CBD 7: ไข้',
+  'CBD 8: ทางเดินอาหาร (อาเจียน ท้องเสีย)',
+  'CBD 9: โรคเบาหวาน',
+  'CBD 10: ภัยอันตรายจากสิ่งแวดล้อมหรือสัตว์มีพิษกัดต่อย',
+  'CBD 11: อาการทั่วไป / ค่าว่าง (Blank)',
+  'CBD 12: ปวดศีรษะ / ปวดลำคอ',
+  'CBD 13: คลุ้มคลั่ง / วิกฤตสุขภาพจิต / ทางจิตประสาท',
+  'CBD 14: สารพิษ / ได้รับยาเกินขนาด (Poisoning / Overdose)',
+  'CBD 15: การคลอด / ปัญหาทางนรีเวช',
+  'CBD 16: อาการชัก (Seizure)',
+  'CBD 17: อ่อนเพลีย ไม่มีแรง',
+  'CBD 18: แขนขาอ่อนแรง พูดลำบาก ปากเบี้ยว (สัญญาณโรคหลอดเลือดสมอง)',
+  'CBD 19: หมดสติ / วูบ / เป็นลม',
+  'CBD 20: ปัญหาเกี่ยวกับเด็ก / ทารก',
+  'CBD 21: ถูกทำร้าย / บาดเจ็บจากการถูกทำร้ายร่างกาย',
+  'CBD 22: ไฟไหม้ / น้ำร้อนลวก / ไฟช็อต (Burn / Electrical injury)',
+  'CBD 23: ตกน้ำ / จมน้ำ / อุบัติเหตุทางน้ำ (Drowning / Marine injury)',
+  'CBD 24: พลัดตกหกล้ม (Falling)',
+  'CBD 25: อุบัติเหตุจราจร / อุบัติเหตุยานยนต์ (Traffic injury)',
 ]

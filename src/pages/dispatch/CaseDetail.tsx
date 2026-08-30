@@ -464,44 +464,49 @@ export default function DispatchCaseDetail() {
                   </p>
                 )}
                 <div className="flex flex-col gap-3">
-                  {recommendation.ranked.map((r) => (
-                    <RadioCard
-                      key={r.team.id}
-                      selected={selectedTeamId === r.team.id}
-                      onClick={() => r.available && setSelectedTeamId(r.team.id)}
-                      icon={<Truck className="size-5 text-primary" />}
-                      title={r.team.name}
-                      description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
-                      className={clsx(!r.available && 'pointer-events-none opacity-50')}
-                      badge={
-                        selectedLevel || recommendation.requiredEquipment.length > 0 ? (
-                          <span className="flex flex-col items-end gap-1">
-                            {selectedLevel && (
-                              <span
-                                className={clsx(
-                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                  r.hasVehicleAtLevel ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
-                                )}
-                              >
-                                {r.hasVehicleAtLevel ? `มีรถระดับ ${selectedLevel}` : `ไม่มีรถระดับ ${selectedLevel}`}
-                              </span>
-                            )}
-                            {recommendation.requiredEquipment.length > 0 && (
-                              <span
-                                className={clsx(
-                                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                  r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
-                                )}
-                              >
-                                <Wrench className="size-3" />
-                                {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
-                              </span>
-                            )}
-                          </span>
-                        ) : undefined
-                      }
-                    />
-                  ))}
+                  {(() => {
+                    // The ranking already sorts available-first, so the top
+                    // available team is the actual recommendation -- never
+                    // spotlight an unavailable one just because it's first
+                    // in the raw array (only happens if every team is busy).
+                    const topAvailableId = recommendation.ranked.find((r) => r.available)?.team.id
+                    return recommendation.ranked.map((r) => {
+                      const isTop = r.team.id === topAvailableId
+                      return (
+                        <RadioCard
+                          key={r.team.id}
+                          selected={selectedTeamId === r.team.id}
+                          onClick={() => r.available && setSelectedTeamId(r.team.id)}
+                          icon={<Truck className={isTop ? 'size-6 text-primary' : 'size-5 text-primary'} />}
+                          title={r.team.name}
+                          description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
+                          className={clsx(
+                            !r.available && 'pointer-events-none opacity-50',
+                            isTop && 'border-primary/50 bg-skyblue-light/40 p-5 shadow-card-lg sm:p-6',
+                          )}
+                          badge={
+                            <span className="flex flex-col items-end gap-1">
+                              {isTop && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
+                                  แนะนำที่สุด
+                                </span>
+                              )}
+                              {selectedLevel && (
+                                <span
+                                  className={clsx(
+                                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                    r.hasVehicleAtLevel ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                  )}
+                                >
+                                  {r.hasVehicleAtLevel ? `มีรถระดับ ${selectedLevel}` : `ไม่มีรถระดับ ${selectedLevel}`}
+                                </span>
+                              )}
+                            </span>
+                          }
+                        />
+                      )
+                    })
+                  })()}
                 </div>
 
                 {recommendation.needsSupport && recommendation.support && (
@@ -639,17 +644,6 @@ export default function DispatchCaseDetail() {
                           badge={
                             <span className="flex flex-col items-end gap-1">
                               <VehicleLevelBadge level={bestTeamLevel(r.team)} />
-                              {requiredEquipment.length > 0 && (
-                                <span
-                                  className={clsx(
-                                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                    r.hasRequiredEquipment ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
-                                  )}
-                                >
-                                  <Wrench className="size-3" />
-                                  {r.hasRequiredEquipment ? 'มีอุปกรณ์ครบ' : 'อุปกรณ์ไม่ครบ'}
-                                </span>
-                              )}
                             </span>
                           }
                         />

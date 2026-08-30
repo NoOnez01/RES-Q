@@ -9,10 +9,14 @@ import { ConfirmationModal } from './ConfirmationModal'
 export function HospitalSelector({
   hospitals,
   selectedId,
+  recommendedId,
   onSelect,
 }: {
   hospitals: Hospital[]
   selectedId?: string
+  /** The top-ranked hospital (ER available, then nearest) -- rendered as a
+   * bigger, full-width, spotlighted card instead of an equal-size tile. */
+  recommendedId?: string
   onSelect: (h: Hospital) => void
 }) {
   // Some rescuers/reporters already know exactly which hospital they want
@@ -53,13 +57,15 @@ export function HospitalSelector({
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((h) => {
             const selected = h.id === selectedId
+            const isTop = h.id === recommendedId
             return (
               <button
                 key={h.id}
                 onClick={() => handleCardClick(h)}
                 className={clsx(
-                  'relative flex flex-col gap-3 rounded-2xl border-2 bg-white p-4 text-left transition-all hover:shadow-card-lg',
+                  'relative flex flex-col gap-3 rounded-2xl border-2 bg-white text-left transition-all hover:shadow-card-lg',
                   selected ? 'border-primary bg-skyblue-light' : 'border-border hover:border-primary/50',
+                  isTop ? 'p-5 shadow-card-lg sm:col-span-2 sm:p-6' : 'p-4',
                 )}
               >
                 {selected && (
@@ -67,12 +73,22 @@ export function HospitalSelector({
                     <CheckCircle2 className="size-4" />
                   </span>
                 )}
+                {isTop && (
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
+                    แนะนำที่สุด
+                  </span>
+                )}
                 <div className="flex items-start gap-3 pr-8">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Building2 className="size-5" />
+                  <div
+                    className={clsx(
+                      'flex shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary',
+                      isTop ? 'size-12' : 'size-10',
+                    )}
+                  >
+                    <Building2 className={isTop ? 'size-6' : 'size-5'} />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-navy leading-snug">{h.name}</p>
+                    <p className={clsx('font-bold text-navy leading-snug', isTop && 'text-lg')}>{h.name}</p>
                     <p className="text-xs text-muted mt-0.5">{h.location.address}</p>
                   </div>
                 </div>

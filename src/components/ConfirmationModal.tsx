@@ -7,7 +7,9 @@ import { Button } from './ui/Button'
 interface ConfirmationModalProps {
   open: boolean
   title: string
-  message: string
+  /** Omit for a short, title-only confirmation -- not every confirmation
+   * needs an explanatory paragraph underneath. */
+  message?: string
   confirmLabel: string
   cancelLabel?: string
   onConfirm: () => void
@@ -62,7 +64,7 @@ export function ConfirmationModal({
         <h2 id="confirm-modal-title" className="text-lg font-bold text-navy pr-8">
           {title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted">{message}</p>
+        {message && <p className="mt-2 text-sm leading-relaxed text-muted">{message}</p>}
         <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
           <Button variant="outline" fullWidth onClick={onCancel} className="sm:flex-1">
             {cancelLabel}

@@ -42,6 +42,19 @@ export default function HospitalSelectionPage() {
     )
   }, [c?.location, hospitals])
 
+  // "Recommended" mirrors the same philosophy as rescue-team ranking:
+  // available (ER not full) first, then nearest -- surfaced to
+  // HospitalSelector as a sorted list plus which one to spotlight, rather
+  // than leaving hospitals in whatever arbitrary order the store holds them.
+  const rankedHospitals = useMemo(() => {
+    if (!c?.location) return hospitals
+    return [...hospitals].sort((a, b) => {
+      if (a.erAvailable !== b.erAvailable) return a.erAvailable ? -1 : 1
+      return haversineKm(c.location!, a.location) - haversineKm(c.location!, b.location)
+    })
+  }, [c?.location, hospitals])
+  const recommendedHospitalId = rankedHospitals.find((h) => h.erAvailable)?.id ?? rankedHospitals[0]?.id
+
   const isHighSeverity = !!c?.assessment && c.assessment.severity <= 2
   const isDecliningNearest = !!selected && !!nearestHospital && selected.id !== nearestHospital.id && declinedNearest
   const needsSignature = isHighSeverity && (decliningAll || isDecliningNearest)
@@ -106,7 +119,12 @@ export default function HospitalSelectionPage() {
 
           {!decliningAll && (
             <div className="animate-fade-in-up" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
-              <HospitalSelector hospitals={hospitals} selectedId={selected?.id} onSelect={setSelected} />
+              <HospitalSelector
+                hospitals={rankedHospitals}
+                selectedId={selected?.id}
+                recommendedId={recommendedHospitalId}
+                onSelect={setSelected}
+              />
             </div>
           )}
 
