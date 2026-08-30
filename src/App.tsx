@@ -10,6 +10,7 @@ import { ToastViewport } from '@/components/ToastNotification'
 import { NotificationAlertBridge } from '@/components/NotificationAlertBridge'
 import { CallRingtoneBridge } from '@/components/CallRingtoneBridge'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
+import { RequireRole } from '@/components/RequireRole'
 import { AppUpdateBanner } from '@/components/AppUpdateBanner'
 
 import Home from '@/pages/Home'
@@ -59,6 +60,7 @@ import NotFound from '@/pages/NotFound'
 export default function App() {
   const seedDemoData = useStore((s) => s.seedDemoData)
   const setUser = useStore((s) => s.setUser)
+  const setAuthResolved = useStore((s) => s.setAuthResolved)
   const refreshOrgs = useStore((s) => s.refreshOrgs)
   useTabVisibility()
 
@@ -82,17 +84,32 @@ export default function App() {
       initSupabaseCaseSync()
     }
 
+    // RequireRole waits on authResolved before deciding whether to redirect,
+    // so a real dispatch/rescue/hospital user refreshing the page isn't
+    // bounced to /login during the moment before their session loads. The
+    // timeout is a safety net in case neither branch below ever fires (e.g.
+    // Supabase misconfigured) -- better a route guard eventually resolves
+    // than one that hangs forever on a loading state.
+    const timeout = window.setTimeout(() => setAuthResolved(true), 4000)
+
     void ensureAnonymousSession().then((user) => {
+      setAuthResolved(true)
       if (!user) return
       setUser(user)
       syncFor(user.id)
     })
 
-    return onAuthChange((user) => {
+    const unsubscribe = onAuthChange((user) => {
+      setAuthResolved(true)
       setUser(user)
       syncFor(user?.id ?? null)
     })
-  }, [setUser])
+
+    return () => {
+      window.clearTimeout(timeout)
+      unsubscribe()
+    }
+  }, [setUser, setAuthResolved])
 
   useEffect(() => {
     const unlock = () => primeAudio()
@@ -129,23 +146,23 @@ export default function App() {
         <Route path="/contact-1669/:caseId" element={<Contact1669 />} />
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
-        <Route path="/dispatch/dashboard" element={<DispatchDashboard />} />
-        <Route path="/dispatch/pending-approvals" element={<DispatchPendingApprovals />} />
-        <Route path="/org-approvals" element={<DispatchPendingApprovals />} />
-        <Route path="/manage-orgs" element={<ManageOrgs />} />
-        <Route path="/dispatch/feedback-stats" element={<DispatchFeedbackStats />} />
-        <Route path="/dispatch/incoming-call" element={<DispatchIncomingCall />} />
-        <Route path="/dispatch/call/:id" element={<DispatchCallScreen />} />
-        <Route path="/dispatch/case/:id" element={<DispatchCaseDetail />} />
-        <Route path="/dispatch/emergency-details/:id" element={<DispatchEmergencyAssessment />} />
+        <Route path="/dispatch/dashboard" element={<RequireRole role="dispatch"><DispatchDashboard /></RequireRole>} />
+        <Route path="/dispatch/pending-approvals" element={<RequireRole role="dispatch"><DispatchPendingApprovals /></RequireRole>} />
+        <Route path="/org-approvals" element={<RequireRole role={['rescue', 'hospital']}><DispatchPendingApprovals /></RequireRole>} />
+        <Route path="/manage-orgs" element={<RequireRole role="dispatch"><ManageOrgs /></RequireRole>} />
+        <Route path="/dispatch/feedback-stats" element={<RequireRole role="dispatch"><DispatchFeedbackStats /></RequireRole>} />
+        <Route path="/dispatch/incoming-call" element={<RequireRole role="dispatch"><DispatchIncomingCall /></RequireRole>} />
+        <Route path="/dispatch/call/:id" element={<RequireRole role="dispatch"><DispatchCallScreen /></RequireRole>} />
+        <Route path="/dispatch/case/:id" element={<RequireRole role="dispatch"><DispatchCaseDetail /></RequireRole>} />
+        <Route path="/dispatch/emergency-details/:id" element={<RequireRole role="dispatch"><DispatchEmergencyAssessment /></RequireRole>} />
 
-        <Route path="/rescue/dashboard" element={<RescueDashboard />} />
-        <Route path="/rescue/case/:id" element={<RescueCaseDetail />} />
-        <Route path="/rescue/patient-record/:id" element={<RescuePatientRecord />} />
+        <Route path="/rescue/dashboard" element={<RequireRole role="rescue"><RescueDashboard /></RequireRole>} />
+        <Route path="/rescue/case/:id" element={<RequireRole role="rescue"><RescueCaseDetail /></RequireRole>} />
+        <Route path="/rescue/patient-record/:id" element={<RequireRole role="rescue"><RescuePatientRecord /></RequireRole>} />
 
-        <Route path="/hospital/dashboard" element={<HospitalDashboard />} />
-        <Route path="/hospital/case/:id" element={<HospitalCaseDetail />} />
-        <Route path="/hospital-selection" element={<HospitalSelectionPage />} />
+        <Route path="/hospital/dashboard" element={<RequireRole role="hospital"><HospitalDashboard /></RequireRole>} />
+        <Route path="/hospital/case/:id" element={<RequireRole role="hospital"><HospitalCaseDetail /></RequireRole>} />
+        <Route path="/hospital-selection" element={<RequireRole role="rescue"><HospitalSelectionPage /></RequireRole>} />
 
         <Route path="/navigation/:id" element={<NavigationPage />} />
         <Route path="/notifications" element={<Notifications />} />

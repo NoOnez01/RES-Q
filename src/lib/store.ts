@@ -93,6 +93,13 @@ interface ResQState {
   hydratedDemo: boolean
 
   // auth / role
+  /** False until App.tsx's session bootstrap (anonymous session or a real
+   * login) has resolved at least once -- RequireRole waits on this instead
+   * of treating "no currentUser yet" as "not logged in," so a real
+   * dispatch/rescue/hospital user refreshing the page doesn't get bounced
+   * to /login during the moment before their session loads. */
+  authResolved: boolean
+  setAuthResolved: (resolved: boolean) => void
   setUser: (user: AppUser | null) => void
   logout: () => void
   /** Admin-only "view as" override for which role's sidebar/menu to show --
@@ -228,6 +235,8 @@ export const useStore = create<ResQState>()(
   persist(
     (set, get) => ({
       currentUser: null,
+      authResolved: false,
+      setAuthResolved: (resolved) => set({ authResolved: resolved }),
       cases: {},
       activeCaseId: null,
       notifications: [],
@@ -893,7 +902,7 @@ export const useStore = create<ResQState>()(
       // conflicting source of truth (and the pre-auth version had no
       // approvalStatus/isAdmin fields at all).
       partialize: (state) => {
-        const { currentUser: _currentUser, ...rest } = state
+        const { currentUser: _currentUser, authResolved: _authResolved, ...rest } = state
         return rest
       },
       migrate: (persisted: any, version: number) => {
