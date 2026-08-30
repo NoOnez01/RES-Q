@@ -131,20 +131,24 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
         ) : (
           showAuthLinks && (
             <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
-              <Link
-                to="/login"
-                onClick={onClose}
-                className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
-              >
-                <LogIn className="size-4.5" /> เข้าสู่ระบบ
-              </Link>
-              <Link
-                to="/register"
-                onClick={onClose}
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
-              >
-                <UserPlus className="size-4.5" /> สมัครสมาชิก
-              </Link>
+              {location.pathname !== '/login' && (
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
+                >
+                  <LogIn className="size-4.5" /> เข้าสู่ระบบ
+                </Link>
+              )}
+              {!location.pathname.startsWith('/register') && (
+                <Link
+                  to="/register"
+                  onClick={onClose}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
+                >
+                  <UserPlus className="size-4.5" /> สมัครสมาชิก
+                </Link>
+              )}
             </div>
           )
         )}

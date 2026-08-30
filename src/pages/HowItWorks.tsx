@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Check,
@@ -227,6 +227,17 @@ function ConnectionFlow() {
 }
 
 function StepIndicator({ step, onSelect }: { step: number; onSelect: (i: number) => void }): ReactNode {
+  const activeRef = useRef<HTMLButtonElement>(null)
+
+  // On narrow screens this row overflows and scrolls (no-scrollbar hides the
+  // native scrollbar for looks) -- without this, advancing past whichever
+  // steps fit in the initial viewport scrolls the highlighted dot out of
+  // view, so the indicator looks like it lost track of progress even though
+  // the step content below is correct.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [step])
+
   return (
     <div className="overflow-x-auto no-scrollbar">
       <div className="flex min-w-max items-start gap-1 sm:min-w-0">
@@ -234,6 +245,7 @@ function StepIndicator({ step, onSelect }: { step: number; onSelect: (i: number)
           <Fragment key={s.title}>
             <div className="flex w-16 shrink-0 flex-col items-center gap-2 sm:w-auto sm:flex-1">
               <button
+                ref={i === step ? activeRef : undefined}
                 type="button"
                 onClick={() => onSelect(i)}
                 aria-current={i === step ? 'step' : undefined}

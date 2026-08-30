@@ -215,12 +215,16 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
               </div>
             ) : (
               <div className="hidden items-center gap-2 lg:flex">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-                  เข้าสู่ระบบ
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
-                  สมัครสมาชิก
-                </Button>
+                {location.pathname !== '/login' && (
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+                    เข้าสู่ระบบ
+                  </Button>
+                )}
+                {!location.pathname.startsWith('/register') && (
+                  <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
+                    สมัครสมาชิก
+                  </Button>
+                )}
               </div>
             )}
           </>
