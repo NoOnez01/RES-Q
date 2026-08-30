@@ -32,7 +32,7 @@ export default function Call1669() {
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState } = useWebRTCCall(
+  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
     activeCaseId,
     'caller',
     callIsLive,
@@ -218,6 +218,7 @@ export default function Call1669() {
                 onToggleCamera={() => setCameraOn((v) => !v)}
                 micOn={micOn}
                 onToggleMic={() => setMicOn((v) => !v)}
+                onSwitchCamera={switchCamera}
               />
               <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
                 วางสาย

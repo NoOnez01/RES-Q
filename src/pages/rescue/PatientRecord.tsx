@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ScanLine } from 'lucide-react'
 import clsx from 'clsx'
@@ -144,6 +144,46 @@ const PRIMARY_SURVEY_FIELDS: {
   },
 ]
 
+// A rescue crew fills this in on a moving vehicle's phone -- an accidental
+// refresh, a dropped connection reload, or the browser just reclaiming
+// memory on a long call must not silently wipe minutes of recorded vitals
+// and assessment. Drafted to localStorage per case, cleared only once the
+// real submission succeeds.
+interface PatientRecordDraft {
+  name: string
+  age: string
+  gender: string
+  idNumber: string
+  primarySurvey: PrimarySurvey
+  gcs: Partial<GcsScore>
+  vitals: VitalSigns
+  firstAid: string
+  proposedSeverity: Severity | null
+  severityNote: string
+}
+
+function draftKey(caseId: string): string {
+  return `resq-patient-record-draft-${caseId}`
+}
+
+function loadDraft(caseId: string): PatientRecordDraft | null {
+  try {
+    const raw = localStorage.getItem(draftKey(caseId))
+    return raw ? (JSON.parse(raw) as PatientRecordDraft) : null
+  } catch {
+    return null
+  }
+}
+
+function clearDraft(caseId: string): void {
+  try {
+    localStorage.removeItem(draftKey(caseId))
+  } catch {
+    // Private-mode/storage-disabled browsers throw on access -- nothing to
+    // clean up in that case anyway, since a draft was never written either.
+  }
+}
+
 export default function RescuePatientRecord() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -151,19 +191,48 @@ export default function RescuePatientRecord() {
   const submitPatientInfo = useStore((s) => s.submitPatientInfo)
   const addAudioRecording = useStore((s) => s.addAudioRecording)
 
-  const [name, setName] = useState('')
-  const [age, setAge] = useState('')
-  const [gender, setGender] = useState('')
-  const [idNumber, setIdNumber] = useState('')
+  const draft = useMemo(() => (id ? loadDraft(id) : null), [id])
+
+  const [name, setName] = useState(draft?.name ?? '')
+  const [age, setAge] = useState(draft?.age ?? '')
+  const [gender, setGender] = useState(draft?.gender ?? '')
+  const [idNumber, setIdNumber] = useState(draft?.idNumber ?? '')
   const [scannerOpen, setScannerOpen] = useState(false)
-  const [primarySurvey, setPrimarySurvey] = useState<PrimarySurvey>(emptyPrimarySurvey)
-  const [gcs, setGcs] = useState<Partial<GcsScore>>({})
-  const [vitals, setVitals] = useState<VitalSigns>(emptyVitals)
-  const [firstAid, setFirstAid] = useState('')
+  const [primarySurvey, setPrimarySurvey] = useState<PrimarySurvey>(draft?.primarySurvey ?? emptyPrimarySurvey)
+  const [gcs, setGcs] = useState<Partial<GcsScore>>(draft?.gcs ?? {})
+  const [vitals, setVitals] = useState<VitalSigns>(draft?.vitals ?? emptyVitals)
+  const [firstAid, setFirstAid] = useState(draft?.firstAid ?? '')
   const [firstAidError, setFirstAidError] = useState('')
-  const [proposedSeverity, setProposedSeverity] = useState<Severity | null>(null)
-  const [severityNote, setSeverityNote] = useState('')
+  const [proposedSeverity, setProposedSeverity] = useState<Severity | null>(draft?.proposedSeverity ?? null)
+  const [severityNote, setSeverityNote] = useState(draft?.severityNote ?? '')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (draft) toast({ title: 'กู้คืนข้อมูลที่กรอกไว้ล่าสุดแล้ว', tone: 'info' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!id) return
+    const data: PatientRecordDraft = {
+      name,
+      age,
+      gender,
+      idNumber,
+      primarySurvey,
+      gcs,
+      vitals,
+      firstAid,
+      proposedSeverity,
+      severityNote,
+    }
+    try {
+      localStorage.setItem(draftKey(id), JSON.stringify(data))
+    } catch {
+      // Private-mode/storage-disabled browsers throw on write -- the form
+      // still works for this session, it just can't survive a refresh.
+    }
+  }, [id, name, age, gender, idNumber, primarySurvey, gcs, vitals, firstAid, proposedSeverity, severityNote])
 
   if (!id || !c) {
     return (
@@ -231,6 +300,7 @@ export default function RescuePatientRecord() {
     setLoading(true)
     setTimeout(() => {
       submitPatientInfo(c!.id, info, severityProposal)
+      clearDraft(c!.id)
       setLoading(false)
       toast({ title: 'บันทึกข้อมูลผู้ป่วยแล้ว', message: `เคส ${c!.caseNumber} พร้อมสำหรับขั้นตอนต่อไป`, tone: 'success' })
       navigate(`/rescue/case/${c!.id}`)

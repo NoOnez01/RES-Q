@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Building2, BedDouble, Navigation, PhoneCall, CheckCircle2, Search } from 'lucide-react'
+import { Building2, BedDouble, Navigation, PhoneCall, CheckCircle2, Search, AlertTriangle } from 'lucide-react'
 import type { Hospital } from '@/lib/types'
 import { Input } from './ui/Field'
 import { EmptyState } from './States'
+import { ConfirmationModal } from './ConfirmationModal'
 
 export function HospitalSelector({
   hospitals,
@@ -23,6 +24,20 @@ export function HospitalSelector({
     ? hospitals.filter((h) => h.name.toLowerCase().includes(query.trim().toLowerCase()))
     : hospitals
 
+  // A full ER is sometimes still the right call (nearest/only option in a
+  // genuine emergency), so this warns rather than blocks -- but selecting
+  // one was previously a single accidental tap away from an available
+  // hospital's card, with nothing to confirm the choice was intentional.
+  const [pendingFullErHospital, setPendingFullErHospital] = useState<Hospital | null>(null)
+
+  function handleCardClick(h: Hospital) {
+    if (!h.erAvailable) {
+      setPendingFullErHospital(h)
+      return
+    }
+    onSelect(h)
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <Input
@@ -41,7 +56,7 @@ export function HospitalSelector({
             return (
               <button
                 key={h.id}
-                onClick={() => onSelect(h)}
+                onClick={() => handleCardClick(h)}
                 className={clsx(
                   'relative flex flex-col gap-3 rounded-2xl border-2 bg-white p-4 text-left transition-all hover:shadow-card-lg',
                   selected ? 'border-primary bg-skyblue-light' : 'border-border hover:border-primary/50',
@@ -95,6 +110,21 @@ export function HospitalSelector({
           })}
         </div>
       )}
+
+      <ConfirmationModal
+        open={!!pendingFullErHospital}
+        title="ห้องฉุกเฉินเต็ม"
+        message={`ห้องฉุกเฉินของ${pendingFullErHospital?.name ?? 'โรงพยาบาลนี้'}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?`}
+        confirmLabel="ยืนยันเลือกโรงพยาบาลนี้"
+        cancelLabel="เลือกที่อื่นแทน"
+        tone="danger"
+        icon={<AlertTriangle className="size-5" />}
+        onConfirm={() => {
+          if (pendingFullErHospital) onSelect(pendingFullErHospital)
+          setPendingFullErHospital(null)
+        }}
+        onCancel={() => setPendingFullErHospital(null)}
+      />
     </div>
   )
 }

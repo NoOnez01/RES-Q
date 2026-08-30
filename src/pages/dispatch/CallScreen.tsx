@@ -20,7 +20,7 @@ export default function DispatchCallScreen() {
   const hasNavigatedAway = useRef(false)
 
   const isActive = emergencyCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState } = useWebRTCCall(
+  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
     id ?? null,
     'callee',
     isActive,
@@ -99,6 +99,7 @@ export default function DispatchCallScreen() {
             onToggleCamera={() => setCameraOn((v) => !v)}
             micOn={micOn}
             onToggleMic={() => setMicOn((v) => !v)}
+            onSwitchCamera={switchCamera}
           />
 
           <Button

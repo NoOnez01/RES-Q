@@ -36,9 +36,11 @@ export default function Contact1669() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
+  const hasProceededRef = useRef(false)
+  const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const callIsLive = c?.callStatus === 'connecting' || c?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState } = useWebRTCCall(
+  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
     caseId ?? null,
     'caller',
     !!callIsLive,
@@ -65,6 +67,21 @@ export default function Contact1669() {
     toast({ title: 'การโทรสิ้นสุดแล้ว', tone: 'info' })
   }, [c?.callStatus])
 
+  // Once the call ends -- from either side -- return to the case's own
+  // Timeline/detail page automatically, same as the initial-report call
+  // flow (public/Call1669.tsx) already does. Without this, hanging up left
+  // whoever called stuck on this screen with nothing but a "call again"
+  // button and no way onward except the header's back arrow.
+  useEffect(() => {
+    if (c?.callStatus !== 'ended' || hasProceededRef.current) return
+    hasProceededRef.current = true
+    proceedTimerRef.current = setTimeout(() => navigate(backTo), 1200)
+    return () => {
+      if (proceedTimerRef.current) clearTimeout(proceedTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c?.callStatus])
+
   if (!caseId || !c) {
     return (
       <AppShell variant="flow" title="ติดต่อศูนย์ 1669" showBack>
@@ -75,6 +92,11 @@ export default function Contact1669() {
 
   function handleCall() {
     hasShownEndedRef.current = false
+    hasProceededRef.current = false
+    if (proceedTimerRef.current) {
+      clearTimeout(proceedTimerRef.current)
+      proceedTimerRef.current = null
+    }
     setCallStatus(caseId!, 'connecting', isRescue ? 'rescue' : 'public')
   }
 
@@ -129,6 +151,7 @@ export default function Contact1669() {
                 onToggleCamera={() => setCameraOn((v) => !v)}
                 micOn={micOn}
                 onToggleMic={() => setMicOn((v) => !v)}
+                onSwitchCamera={switchCamera}
               />
               <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
                 วางสาย

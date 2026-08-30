@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, supabaseEnabled } from './supabase'
 
 type SignalPayload =
@@ -58,6 +58,13 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
 
   const localStreamRef = useRef<MediaStream | null>(null)
+  // Populated once the video transceiver exists (both caller and callee
+  // paths, see below) so switchCamera can reach it from outside the effect
+  // -- pcRef/videoTransceiver inside the effect are re-created every run and
+  // aren't reachable from a callback returned to the consumer.
+  const pcExternalRef = useRef<RTCPeerConnection | null>(null)
+  const videoTransceiverExternalRef = useRef<RTCRtpTransceiver | null>(null)
+  const facingModeRef = useRef<'user' | 'environment'>('user')
 
   useEffect(() => {
     if (!active || !caseId || !supabaseEnabled || !supabase) return
@@ -122,6 +129,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
 
       const pc = new RTCPeerConnection({ iceServers })
       pcRef = pc
+      pcExternalRef.current = pc
 
       // The offering side (caller) pre-creates its own sendrecv transceivers so
       // the initial offer always declares both directions. The answering side
@@ -156,6 +164,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       if (role === 'caller') {
         videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv', streams: [outboundStream] })
         audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv', streams: [outboundStream] })
+        videoTransceiverExternalRef.current = videoTransceiver
       }
 
       // iceConnectionState doesn't reliably reach 'failed' in a timely way (or
@@ -222,6 +231,7 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
           // this side had no track when they were created.
           videoTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'video') ?? null
           audioTransceiver = pc.getTransceivers().find((t) => t.receiver.track?.kind === 'audio') ?? null
+          videoTransceiverExternalRef.current = videoTransceiver
           // These transceivers were never given `streams` at creation (unlike
           // the caller's, passed via addTransceiver's init) -- without this,
           // the answer's msid has no stream grouping and the caller's ontrack
@@ -295,6 +305,9 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
       pcRef?.close()
       localStreamRef.current?.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
+      pcExternalRef.current = null
+      videoTransceiverExternalRef.current = null
+      facingModeRef.current = 'user'
       setLocalStream(null)
       setRemoteStream(null)
       setCameraState('idle')
@@ -303,7 +316,35 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     }
   }, [active, caseId, role])
 
-  return { localStream, remoteStream, cameraState, remoteJoined, connectionState }
+  // Swaps the outgoing video track for one from the other-facing camera --
+  // the citizen filming a scene needs to flip from the front (selfie) camera
+  // to the rear one to actually show 1669/rescue the surroundings. Replaces
+  // the track on the live transceiver (so the remote side sees the switch
+  // too) and on the local preview stream in place, rather than tearing down
+  // and re-negotiating the whole call.
+  const switchCamera = useCallback(async () => {
+    const videoTransceiver = videoTransceiverExternalRef.current
+    const stream = localStreamRef.current
+    if (!videoTransceiver || !stream) return
+    const nextFacing = facingModeRef.current === 'user' ? 'environment' : 'user'
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: nextFacing } })
+      const newTrack = newStream.getVideoTracks()[0]
+      if (!newTrack) return
+      await videoTransceiver.sender.replaceTrack(newTrack)
+      const oldTrack = stream.getVideoTracks()[0]
+      if (oldTrack) {
+        stream.removeTrack(oldTrack)
+        oldTrack.stop()
+      }
+      stream.addTrack(newTrack)
+      facingModeRef.current = nextFacing
+    } catch (err) {
+      console.error('switchCamera failed:', err)
+    }
+  }, [])
+
+  return { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera }
 }
 
 /** Local mute/camera-off toggles — just flips `.enabled` on the existing tracks. */

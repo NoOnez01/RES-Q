@@ -34,6 +34,14 @@ function extractFields(rawText: string): ExtractedFields {
 
 type Mode = 'camera' | 'processing' | 'review'
 
+const OCR_STATUS_LABEL: Record<string, string> = {
+  'loading tesseract core': 'กำลังดาวน์โหลดโมดูลอ่านข้อความ...',
+  'initializing tesseract': 'กำลังเตรียมระบบอ่านข้อความ...',
+  'loading language traineddata': 'กำลังดาวน์โหลดข้อมูลภาษา...',
+  'initializing api': 'กำลังเตรียมระบบอ่านข้อความ...',
+  'recognizing text': 'กำลังอ่านข้อความจากบัตร...',
+}
+
 export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -46,6 +54,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
   const [extracted, setExtracted] = useState<ExtractedFields | null>(null)
   const [editName, setEditName] = useState('')
   const [editIdNumber, setEditIdNumber] = useState('')
+  const [ocrProgress, setOcrProgress] = useState<{ status: string; progress: number } | null>(null)
 
   useEffect(() => {
     if (!open || mode !== 'camera') return
@@ -110,13 +119,26 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
     setCapturedImage(imageSource)
     setMode('processing')
     setOcrError(false)
+    setOcrProgress({ status: 'กำลังเริ่มต้น...', progress: 0 })
     try {
       const { createWorker } = await import('tesseract.js')
-      const worker = await createWorker('tha+eng')
+      // First run downloads the WASM engine + Thai/English language data from
+      // a CDN (several MB) -- on a rescue vehicle's mobile connection this can
+      // be slow or, with no signal at all, hang indefinitely. Without a
+      // timeout and progress feedback, that reads as "the scanner is broken"
+      // rather than "still downloading" or "no signal right now."
+      const worker = await createWorker('tha+eng', undefined, {
+        logger: (m: { status: string; progress: number }) => {
+          setOcrProgress({ status: OCR_STATUS_LABEL[m.status] ?? m.status, progress: m.progress })
+        },
+      })
+      const recognize = worker.recognize(imageSource).finally(() => void worker.terminate())
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('ocr-timeout')), 25000)
+      })
       const {
         data: { text },
-      } = await worker.recognize(imageSource)
-      await worker.terminate()
+      } = await Promise.race([recognize, timeout])
       const fields = extractFields(text)
       setExtracted(fields)
       setEditName(fields.name)
@@ -125,6 +147,8 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
     } catch {
       setOcrError(true)
       setMode('review')
+    } finally {
+      setOcrProgress(null)
     }
   }
 
@@ -211,9 +235,18 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
           {mode === 'processing' && capturedImage && (
             <div className="relative aspect-[4/3] w-full">
               <img src={capturedImage} alt="" className="size-full object-cover opacity-40" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-white">
                 <ScanLine className="size-10 animate-pulse" />
-                <p className="text-sm font-medium">กำลังอ่านข้อมูลจากบัตร...</p>
+                <p className="text-sm font-medium">{ocrProgress?.status ?? 'กำลังอ่านข้อมูลจากบัตร...'}</p>
+                <div className="h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-primary-bright transition-[width] duration-300"
+                    style={{ width: `${Math.round((ocrProgress?.progress ?? 0) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-center text-xs text-white/50">
+                  ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า
+                </p>
               </div>
             </div>
           )}

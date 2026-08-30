@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Video, VideoOff, Mic, MicOff, UserRound, AlertTriangle } from 'lucide-react'
+import { Video, VideoOff, Mic, MicOff, UserRound, AlertTriangle, SwitchCamera } from 'lucide-react'
 import clsx from 'clsx'
 import type { CameraState, ConnectionState } from '@/lib/useWebRTCCall'
 
@@ -47,6 +47,7 @@ export function VideoCallPanel({
   onToggleCamera,
   micOn,
   onToggleMic,
+  onSwitchCamera,
 }: {
   localStream: MediaStream | null
   remoteStream: MediaStream | null
@@ -58,6 +59,8 @@ export function VideoCallPanel({
   onToggleCamera: () => void
   micOn: boolean
   onToggleMic: () => void
+  /** Omitted entirely on a device with no camera to switch to (desktop). */
+  onSwitchCamera?: () => void
 }) {
   const errorLabel = CAMERA_STATE_LABEL[cameraState]
   const connectionFailed = connectionState === 'failed' || connectionState === 'disconnected'
@@ -112,6 +115,16 @@ export function VideoCallPanel({
             <div className="absolute inset-0 flex items-center justify-center text-white/60">
               <VideoOff className="size-5" />
             </div>
+          )}
+          {onSwitchCamera && cameraOn && localStream && (
+            <button
+              type="button"
+              onClick={onSwitchCamera}
+              aria-label="สลับกล้องหน้า/หลัง"
+              className="absolute bottom-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <SwitchCamera className="size-3.5" />
+            </button>
           )}
         </div>
       </div>
