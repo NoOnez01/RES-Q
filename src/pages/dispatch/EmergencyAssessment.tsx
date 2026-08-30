@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input, Select, Textarea } from '@/components/ui/Field'
+import { Input, Select, SearchableSelect, Textarea } from '@/components/ui/Field'
 import { RadioCard } from '@/components/ui/RadioCard'
 import { MapPanel } from '@/components/MapPanel'
 import { ErrorState } from '@/components/States'
@@ -162,21 +162,17 @@ export default function DispatchEmergencyAssessment() {
             )}
           </Card>
 
-          <Select
+          <SearchableSelect
             label="เหตุการณ์ที่เกิดขึ้น (Incident Type)"
             required
             value={incidentType}
             error={errors.incidentType}
-            onChange={(e) => setIncidentType(e.target.value)}
+            onChange={setIncidentType}
+            options={INCIDENT_TYPES}
+            placeholder="พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์"
+            emptyLabel="ไม่พบประเภทเหตุการณ์ที่ค้นหา"
             className={clsx(highlight && errors.incidentType && 'animate-pulse')}
-          >
-            <option value="">เลือกประเภทเหตุการณ์ (Select incident type)</option>
-            {INCIDENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Select>
+          />
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-xs text-muted">
