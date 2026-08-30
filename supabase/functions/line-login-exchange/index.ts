@@ -152,10 +152,12 @@ Deno.serve(async (req) => {
         .eq('id', callerData.user.id)
       if (updateError) {
         const isConflict = updateError.code === '23505' // unique_violation on line_user_id
-        console.error('link line_user_id failed:', updateError.message)
+        console.error('link line_user_id failed:', updateError.code, updateError.message)
         return new Response(
           JSON.stringify({
-            error: isConflict ? 'บัญชี LINE นี้เชื่อมต่อกับผู้ใช้อื่นอยู่แล้ว' : 'เชื่อมต่อ LINE ไม่สำเร็จ',
+            error: isConflict
+              ? 'บัญชี LINE นี้เชื่อมต่อกับผู้ใช้อื่นอยู่แล้ว'
+              : `เชื่อมต่อ LINE ไม่สำเร็จ: ${updateError.message}`,
           }),
           { status: isConflict ? 409 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
