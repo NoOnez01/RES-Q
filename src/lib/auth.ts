@@ -1,4 +1,3 @@
-import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase, supabaseEnabled } from './supabase'
 import type { AppUser, ApprovalStatus, Role } from './types'
 
@@ -273,18 +272,17 @@ async function exchangeLineCode(code: string, redirectUri: string, mode: LineAut
     body: { code, redirectUri, mode },
   })
   if (error) {
-    // FunctionsHttpError's own .message is just the generic "Edge Function
-    // returned a non-2xx status code" -- the actual reason (e.g. "already
-    // linked to another user") is in the JSON body the function returned,
-    // reachable only via .context (the raw Response), not `data`.
-    if (error instanceof FunctionsHttpError) {
-      const body = await error.context
-        .clone()
-        .json()
-        .catch(() => null)
-      throw new Error(body?.error || error.message)
-    }
-    throw error
+    // The SDK's own error.message is just the generic "Edge Function
+    // returned a non-2xx status code" wrapper -- the actual reason (e.g.
+    // "already linked to another user") is in the JSON body the function
+    // returned, reachable only via error.context (the raw Response), not
+    // `data`. Duck-typed rather than `instanceof FunctionsHttpError`, which
+    // isn't reliable if the SDK's own classes end up loaded from two
+    // different module instances.
+    const context = (error as { context?: unknown }).context as Response | undefined
+    const body =
+      context && typeof context.json === 'function' ? await context.clone().json().catch(() => null) : null
+    throw new Error(body?.error || (error instanceof Error ? error.message : 'LINE login failed'))
   }
   if (!data) throw new Error('LINE login failed')
   if (data.error) throw new Error(data.error)

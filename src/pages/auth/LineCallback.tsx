@@ -71,7 +71,9 @@ export default function LineCallback() {
         toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
         navigate(ROLE_PATH[profile.role], { replace: true })
       } catch (err) {
-        if (consumed.mode === 'link') setErrorMessage(err instanceof Error ? err.message : null)
+        if (consumed.mode === 'link') {
+          setErrorMessage(err instanceof Error ? err.message : typeof err === 'string' ? err : null)
+        }
         setFailed(true)
       }
     }
