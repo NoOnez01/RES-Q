@@ -60,23 +60,22 @@ export function calculateAge(birthdate: string): number {
 
 export type Severity = 1 | 2 | 3 | 4 | 5
 
-// "เร่งด่วน" vs "ฉุกเฉิน" used to be mixed across levels (level 4 was the
-// only one saying "เร่งด่วนต่ำ") -- standardized on "ฉุกเฉิน" throughout to
-// match levels 2/3/5, so the wording reads as one consistent scale.
+// Uses the standard ESI (Emergency Severity Index) English terms directly,
+// since those are what Thai EMS/hospital staff are trained on.
 export const SEVERITY_LABEL: Record<Severity, string> = {
-  1: 'ระดับ 1: วิกฤต',
-  2: 'ระดับ 2: ฉุกเฉินสูง',
-  3: 'ระดับ 3: ฉุกเฉินปานกลาง',
-  4: 'ระดับ 4: ฉุกเฉินต่ำ',
-  5: 'ระดับ 5: ไม่ฉุกเฉิน',
+  1: 'ระดับ 1: Resuscitation',
+  2: 'ระดับ 2: Emergency',
+  3: 'ระดับ 3: Urgent',
+  4: 'ระดับ 4: Less-Urgent',
+  5: 'ระดับ 5: Non-Urgent',
 }
 
 export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
-  1: 'วิกฤต',
-  2: 'ฉุกเฉินสูง',
-  3: 'ฉุกเฉินปานกลาง',
-  4: 'ฉุกเฉินต่ำ',
-  5: 'ไม่ฉุกเฉิน',
+  1: 'Resuscitation',
+  2: 'Emergency',
+  3: 'Urgent',
+  4: 'Less-Urgent',
+  5: 'Non-Urgent',
 }
 
 export type CallStatus = 'idle' | 'connecting' | 'in-call' | 'ended'
