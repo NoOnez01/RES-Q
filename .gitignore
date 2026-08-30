@@ -28,3 +28,9 @@ release/
 # Supabase CLI's local cache (project ref, pooler URL, etc.) -- machine-
 # specific state from `supabase link`/`functions deploy`, not app code.
 supabase/.temp/
+
+# Real credentials for scripts/sync_idem_units.py (service-role key) --
+# scripts/.env.example documents the shape, this file holds the real values.
+scripts/.env
+__pycache__/
+*.pyc
