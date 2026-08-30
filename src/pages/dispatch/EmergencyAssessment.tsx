@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Input, Select, SearchableSelect, Textarea } from '@/components/ui/Field'
 import { RadioCard } from '@/components/ui/RadioCard'
 import { MapPanel } from '@/components/MapPanel'
+import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
@@ -226,12 +227,11 @@ export default function DispatchEmergencyAssessment() {
             <option value="unknown">{CONSCIOUS_LABEL.unknown}</option>
           </Select>
 
-          <Textarea
-            label="หมายเหตุเพิ่มเติม (Additional Notes)"
-            hint="ไม่บังคับ (Optional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-navy">หมายเหตุเพิ่มเติม (Additional Notes)</label>
+            <SpeechToTextPanel value={notes} onChange={setNotes} label="พิมพ์หรือพูดเพื่อบันทึก" />
+            <p className="text-xs text-muted">ไม่บังคับ (Optional)</p>
+          </div>
 
           <Card
             className={clsx('flex flex-col gap-2 transition-all', highlight && errors.severity && 'animate-pulse')}
@@ -265,12 +265,12 @@ export default function DispatchEmergencyAssessment() {
                 ลักษณะการบาดเจ็บ (Injury Description)<span className="ml-0.5 text-emergency">*</span>
               </label>
             </div>
-            <Textarea
-              required
+            <SpeechToTextPanel
               value={injuryDescription}
+              onChange={setInjuryDescription}
+              label="พิมพ์หรือพูดเพื่อบันทึก"
               error={errors.injuryDescription}
-              onChange={(e) => setInjuryDescription(e.target.value)}
-              className={clsx(highlight && errors.injuryDescription && 'animate-pulse')}
+              textareaClassName={clsx(highlight && errors.injuryDescription && 'animate-pulse')}
             />
             <p className="self-end text-xs text-muted">
               {injuryDescription.length}/{INJURY_SOFT_LIMIT} ตัวอักษร (characters)

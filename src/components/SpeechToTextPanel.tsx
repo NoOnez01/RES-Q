@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Mic, MicOff, AlertTriangle } from 'lucide-react'
+import { Mic, MicOff, AlertTriangle, AlertCircle } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Textarea } from './ui/Field'
 
@@ -7,6 +7,10 @@ interface SpeechToTextPanelProps {
   value: string
   onChange: (v: string) => void
   label?: string
+  /** Form-validation error (e.g. "required") -- distinct from errorLabel
+   * below, which is the speech-recognition service's own failure state. */
+  error?: string
+  textareaClassName?: string
 }
 
 // Chrome's implementation of this API isn't on-device -- it streams audio to
@@ -20,7 +24,13 @@ const ERROR_LABEL: Record<string, string> = {
   'audio-capture': 'ไม่พบไมโครโฟนบนอุปกรณ์นี้',
 }
 
-export function SpeechToTextPanel({ value, onChange, label = 'พูดเพื่อบันทึกข้อความ' }: SpeechToTextPanelProps) {
+export function SpeechToTextPanel({
+  value,
+  onChange,
+  label = 'พูดเพื่อบันทึกข้อความ',
+  error,
+  textareaClassName,
+}: SpeechToTextPanelProps) {
   const [listening, setListening] = useState(false)
   const [supported, setSupported] = useState(false)
   const [errorLabel, setErrorLabel] = useState<string | null>(null)
@@ -99,7 +109,17 @@ export function SpeechToTextPanel({ value, onChange, label = 'พูดเพื
           <AlertTriangle className="size-3.5 shrink-0" /> {errorLabel}
         </p>
       )}
-      <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder="พิมพ์หรือพูดเพื่อบันทึกข้อความ..." />
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="พิมพ์หรือพูดเพื่อบันทึกข้อความ..."
+        className={textareaClassName}
+      />
+      {error && (
+        <p className="flex items-center gap-1 text-xs font-medium text-emergency">
+          <AlertCircle className="size-3.5" /> {error}
+        </p>
+      )}
     </div>
   )
 }
