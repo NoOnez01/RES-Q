@@ -1,9 +1,17 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Video, VideoOff, Mic, MicOff, UserRound, AlertTriangle } from 'lucide-react'
 import clsx from 'clsx'
 import type { CameraState, ConnectionState } from '@/lib/useWebRTCCall'
 
-function VideoTag({ stream, muted }: { stream: MediaStream | null; muted: boolean }) {
+function VideoTag({
+  stream,
+  muted,
+  onPlaying,
+}: {
+  stream: MediaStream | null
+  muted: boolean
+  onPlaying?: () => void
+}) {
   const ref = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     if (ref.current) ref.current.srcObject = stream
@@ -14,6 +22,7 @@ function VideoTag({ stream, muted }: { stream: MediaStream | null; muted: boolea
       autoPlay
       playsInline
       muted={muted}
+      onPlaying={onPlaying}
       className={clsx('h-full w-full object-cover', !stream && 'hidden')}
     />
   )
@@ -53,16 +62,28 @@ export function VideoCallPanel({
   const errorLabel = CAMERA_STATE_LABEL[cameraState]
   const connectionFailed = connectionState === 'failed' || connectionState === 'disconnected'
   // ontrack (and so remoteStream) fires as soon as the SDP negotiates a
-  // receiver -- well before ICE has actually finished connecting. Hiding the
-  // waiting/failed overlay on remoteStream alone made a real NAT/TURN
-  // failure look like a plain black video square instead of surfacing the
-  // "connection failed" messaging it's supposed to.
-  const videoReady = !!remoteStream && connectionState === 'connected'
+  // receiver -- well before ICE has actually finished connecting, so relying
+  // on remoteStream alone made a real NAT/TURN failure look like a plain
+  // black video square instead of surfacing the "connection failed"
+  // messaging it's supposed to. But iceConnectionState is computed
+  // independently on each peer and is a known WebRTC quirk to settle to
+  // 'connected' on one side well before (or without ever cleanly reaching)
+  // 'connected' on the other, even once media is genuinely flowing both
+  // ways -- gating on it alone caused exactly that: one side's video panel
+  // staying on the waiting placeholder forever while the other side saw
+  // them fine. remoteVideoPlaying (the <video> element's own onPlaying
+  // event, set below) is the authoritative "frames are actually arriving"
+  // signal, independent of which way this peer's ICE state happens to lag.
+  const [remoteVideoPlaying, setRemoteVideoPlaying] = useState(false)
+  useEffect(() => {
+    setRemoteVideoPlaying(false)
+  }, [remoteStream])
+  const videoReady = !!remoteStream && (connectionState === 'connected' || remoteVideoPlaying)
 
   return (
     <div className="flex flex-col gap-2">
       <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-navy shadow-card">
-        <VideoTag stream={videoReady ? remoteStream : null} muted={false} />
+        <VideoTag stream={remoteStream} muted={false} onPlaying={() => setRemoteVideoPlaying(true)} />
         {!videoReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/70">
             {connectionFailed ? (
