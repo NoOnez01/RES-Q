@@ -38,6 +38,12 @@ export interface AppUser {
   bloodType?: string
   allergies?: string
   chronicConditions?: string
+
+  /** LINE user id (`sub`) this account is linked to, if any -- separate from
+   * how the account originally signed up. Lets a LINE-first account and an
+   * email/Google-first account converge on one identity via account linking
+   * (see linkLineIdentity/unlinkLineIdentity in lib/auth.ts). */
+  lineUserId?: string
 }
 
 /** Whole years between a 'YYYY-MM-DD' birthdate and today. */

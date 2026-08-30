@@ -2,9 +2,11 @@
 // changes, for whichever reporter can actually be reached on LINE --
 // either they reported through the LINE OA bot directly (reporter_line_
 // user_id is already set on the row by line-webhook), or they're logged
-// into the web app via LINE Login (see completeLineLogin/ensureSocialProfile
-// in src/lib/auth.ts), in which case their LINE user id lives in
-// auth.users.raw_user_meta_data->>'line_user_id' instead.
+// into the web app via LINE Login / have linked LINE from Settings (see
+// completeLineLogin/linkLineIdentity in src/lib/auth.ts), in which case
+// their LINE user id lives in profiles.line_user_id instead -- the same
+// column both paths write to, so this is a single lookup regardless of how
+// the identity got linked.
 //
 // Triggered by a Postgres trigger on `cases` that calls this function via
 // pg_net -- see supabase-line-push-trigger.sql for the trigger + the
@@ -77,10 +79,8 @@ async function pushMessages(to: string, messages: unknown[]) {
 async function resolveLineUserId(row: CaseRow): Promise<string | null> {
   if (row.reporter_line_user_id) return row.reporter_line_user_id
   if (!row.reporter_user_id) return null
-  const { data, error } = await supabase.auth.admin.getUserById(row.reporter_user_id)
-  if (error || !data.user) return null
-  const lineId = data.user.user_metadata?.line_user_id
-  return typeof lineId === 'string' ? lineId : null
+  const { data } = await supabase.from('profiles').select('line_user_id').eq('id', row.reporter_user_id).maybeSingle()
+  return data?.line_user_id ?? null
 }
 
 Deno.serve(async (req) => {

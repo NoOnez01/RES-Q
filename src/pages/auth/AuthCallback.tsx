@@ -38,6 +38,11 @@ export default function AuthCallback() {
     async function finish(userId: string, meta: Record<string, unknown>) {
       if (settledRef.current) return
       settledRef.current = true
+      // Set by Settings just before calling supabase.auth.linkIdentity --
+      // that round-trips through Google the same way a fresh sign-in does,
+      // so this is what tells the two apart once we land back here.
+      const isLinking = sessionStorage.getItem('resq-google-link-mode') === '1'
+      sessionStorage.removeItem('resq-google-link-mode')
       try {
         const name = (meta.full_name as string) || (meta.name as string) || undefined
         const avatarUrl = (meta.avatar_url as string) || (meta.picture as string) || undefined
@@ -47,8 +52,13 @@ export default function AuthCallback() {
           return
         }
         setUser(profile)
-        toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
-        navigate(ROLE_PATH[profile.role], { replace: true })
+        if (isLinking) {
+          toast({ title: 'เชื่อมต่อ Google สำเร็จ', tone: 'success' })
+          navigate('/settings', { replace: true })
+        } else {
+          toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
+          navigate(ROLE_PATH[profile.role], { replace: true })
+        }
       } catch {
         setFailed(true)
       }

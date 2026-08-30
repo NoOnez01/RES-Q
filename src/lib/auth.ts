@@ -17,6 +17,7 @@ interface ProfileRow {
   blood_type: string | null
   allergies: string | null
   chronic_conditions: string | null
+  line_user_id: string | null
 }
 
 function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
@@ -37,6 +38,7 @@ function toAppUser(row: ProfileRow, isAnonymous: boolean): AppUser {
     bloodType: row.blood_type ?? undefined,
     allergies: row.allergies ?? undefined,
     chronicConditions: row.chronic_conditions ?? undefined,
+    lineUserId: row.line_user_id ?? undefined,
   }
 }
 
@@ -163,7 +165,7 @@ export async function signOut(): Promise<void> {
  * approval flow, which a generic "sign in with Google" button can't imply. */
 export async function ensureSocialProfile(
   userId: string,
-  meta: { name?: string; avatarUrl?: string },
+  meta: { name?: string; avatarUrl?: string; lineUserId?: string },
 ): Promise<AppUser | null> {
   if (!supabase) return null
   const existing = await fetchProfile(userId, false)
@@ -175,6 +177,7 @@ export async function ensureSocialProfile(
     avatar_url: meta.avatarUrl ?? null,
     approval_status: 'approved',
     is_admin: false,
+    line_user_id: meta.lineUserId ?? null,
   })
   if (error) throw error
   return fetchProfile(userId, false)
@@ -195,6 +198,9 @@ export async function signInWithGoogle(): Promise<void> {
 const LINE_LOGIN_CHANNEL_ID = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID as string | undefined
 const LINE_STATE_KEY = 'resq-line-login-state'
 const LINE_NONCE_KEY = 'resq-line-login-nonce'
+const LINE_MODE_KEY = 'resq-line-login-mode'
+
+export type LineAuthMode = 'login' | 'link'
 
 function randomToken(): string {
   return crypto.randomUUID().replace(/-/g, '')
@@ -204,13 +210,19 @@ function randomToken(): string {
  * LINE's own OAuth/OIDC authorize step directly -- the token exchange that
  * needs the channel secret happens server-side in the line-login-exchange
  * Edge Function once LINE redirects back to /auth/line-callback with a
- * code (see AuthCallback pattern in src/pages/auth/LineCallback.tsx). */
-export function signInWithLine(): void {
+ * code (see AuthCallback pattern in src/pages/auth/LineCallback.tsx).
+ *
+ * `mode: 'link'` is for an already-logged-in user attaching LINE to their
+ * existing account from Settings, instead of signing in fresh -- the stored
+ * mode is what tells /auth/line-callback which of those two to do once LINE
+ * redirects back (see consumeLineLoginState/linkLineIdentity below). */
+export function signInWithLine(mode: LineAuthMode = 'login'): void {
   if (!LINE_LOGIN_CHANNEL_ID) throw new Error('LINE Login is not configured (missing VITE_LINE_LOGIN_CHANNEL_ID)')
   const state = randomToken()
   const nonce = randomToken()
   sessionStorage.setItem(LINE_STATE_KEY, state)
   sessionStorage.setItem(LINE_NONCE_KEY, nonce)
+  sessionStorage.setItem(LINE_MODE_KEY, mode)
   const redirectUri = `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
   const params = new URLSearchParams({
     response_type: 'code',
@@ -226,12 +238,14 @@ export function signInWithLine(): void {
 /** Reads back and clears the state saved just before redirecting to LINE --
  * a mismatch (or nothing stored, e.g. a replayed/forged callback URL) means
  * this isn't a callback we actually initiated. */
-export function consumeLineLoginState(): { redirectUri: string } | null {
+export function consumeLineLoginState(): { redirectUri: string; mode: LineAuthMode } | null {
   const state = sessionStorage.getItem(LINE_STATE_KEY)
+  const mode: LineAuthMode = sessionStorage.getItem(LINE_MODE_KEY) === 'link' ? 'link' : 'login'
   sessionStorage.removeItem(LINE_STATE_KEY)
   sessionStorage.removeItem(LINE_NONCE_KEY)
+  sessionStorage.removeItem(LINE_MODE_KEY)
   if (!state) return null
-  return { redirectUri: `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback` }
+  return { redirectUri: `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`, mode }
 }
 
 export function getStoredLineState(): string | null {
@@ -239,38 +253,67 @@ export function getStoredLineState(): string | null {
 }
 
 interface LineExchangeResult {
-  hashedToken: string
+  hashedToken?: string
   name?: string
   avatarUrl?: string
+  lineUserId?: string
+  error?: string
 }
 
 /** Calls the line-login-exchange Edge Function, which trades the LINE
  * authorization code for an id_token server-side (needs the LINE channel
- * secret, so this can't happen in the browser) and turns it into a
- * Supabase magic-link token via the admin API -- see that function's own
- * comments for the full chain. */
-async function exchangeLineCode(code: string, redirectUri: string): Promise<LineExchangeResult> {
+ * secret, so this can't happen in the browser). In 'login' mode it turns
+ * that into a Supabase magic-link token via the admin API; in 'link' mode
+ * it instead stamps the LINE identity straight onto the caller's own
+ * profiles row (see that function's own comments for the full chain). */
+async function exchangeLineCode(code: string, redirectUri: string, mode: LineAuthMode): Promise<LineExchangeResult> {
   if (!supabase) throw new Error('Supabase not configured')
   const { data, error } = await supabase.functions.invoke<LineExchangeResult>('line-login-exchange', {
-    body: { code, redirectUri },
+    body: { code, redirectUri, mode },
   })
   if (error || !data) throw error ?? new Error('LINE login failed')
+  if (data.error) throw new Error(data.error)
   return data
 }
 
 /** Completes a LINE login: exchanges the code, redeems the resulting
  * Supabase token to establish a real session, then ensures a profiles row
- * exists exactly like a fresh Google sign-in would. */
+ * exists exactly like a fresh Google sign-in would. If this LINE identity
+ * was already linked to an existing account (see linkLineIdentity), the
+ * Edge Function issues the magic link for that account's real email
+ * instead of a fresh synthetic one, so the user lands back in the same
+ * account they linked from -- not a second, disconnected one. */
 export async function completeLineLogin(code: string, redirectUri: string): Promise<AppUser | null> {
   if (!supabase) return null
-  const { hashedToken, name, avatarUrl } = await exchangeLineCode(code, redirectUri)
+  const { hashedToken, name, avatarUrl, lineUserId } = await exchangeLineCode(code, redirectUri, 'login')
+  if (!hashedToken) throw new Error('LINE login failed')
   // GoTrue's /verify endpoint rejects the 'magiclink' type here even though
   // admin.generateLink's own `type: 'magiclink'` (line-login-exchange) is
   // still valid -- current servers want 'email' when redeeming the
   // resulting token_hash ("Verify requires a verification type" otherwise).
   const { data, error } = await supabase.auth.verifyOtp({ token_hash: hashedToken, type: 'email' })
   if (error || !data.user) throw error ?? new Error('LINE login failed')
-  return ensureSocialProfile(data.user.id, { name, avatarUrl })
+  return ensureSocialProfile(data.user.id, { name, avatarUrl, lineUserId })
+}
+
+/** Attaches a LINE identity to the CURRENTLY signed-in account (called from
+ * Settings, not the login page) -- lets someone who already registered with
+ * email/Google also use "Sign in with LINE" for the same account, and lets
+ * line-push-notify reach them by LINE. Fails with a clear error if that
+ * LINE account is already linked to someone else (profiles.line_user_id is
+ * unique -- see supabase-profile-line-link.sql). */
+export async function linkLineIdentity(code: string, redirectUri: string): Promise<void> {
+  await exchangeLineCode(code, redirectUri, 'link')
+}
+
+/** Detaches LINE from the current account -- afterwards "Sign in with LINE"
+ * for that same LINE account creates a fresh, separate account again. Only
+ * touches our own scoped `line_user_id` column, never the auth session, so
+ * this can't lock anyone out of the account they're currently using it from. */
+export async function unlinkLineIdentity(userId: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('profiles').update({ line_user_id: null }).eq('id', userId)
+  if (error) throw error
 }
 
 export function onAuthChange(callback: (user: AppUser | null) => void): () => void {

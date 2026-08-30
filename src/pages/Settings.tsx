@@ -26,6 +26,7 @@ import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
 import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
 import { supabase } from '@/lib/supabase'
+import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
 
 const NOTICES = [
   'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย',
@@ -44,6 +45,7 @@ export default function Settings() {
   const logout = useStore((s) => s.logout)
   const resetAll = useStore((s) => s.resetAll)
   const setViewingRole = useStore((s) => s.setViewingRole)
+  const setUser = useStore((s) => s.setUser)
   const navigate = useNavigate()
 
   function enterAdminView(view: (typeof ADMIN_VIEWS)[number]) {
@@ -64,10 +66,13 @@ export default function Settings() {
   // what actually tells the two apart.
   const [authEmail, setAuthEmail] = useState<string | null>(null)
   const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'line' | null>(null)
+  const [linkedProviders, setLinkedProviders] = useState<Set<string>>(new Set())
+  const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [unlinkLineLoading, setUnlinkLineLoading] = useState(false)
 
   useEffect(() => {
     if (!supabase || !currentUser || currentUser.isAnonymous) return
@@ -76,11 +81,24 @@ export default function Settings() {
       if (!u) return
       setAuthEmail(u.email ?? null)
       setAuthProvider(u.user_metadata?.provider === 'line' ? 'line' : u.app_metadata?.provider === 'google' ? 'google' : 'email')
+      setLinkedProviders(new Set((u.identities ?? []).map((i) => i.provider)))
     })
   }, [currentUser])
 
-  async function handleChangePassword() {
+  // A synthetic LINE-login email (line-<sub>@line.resq.internal) isn't a
+  // real inbox -- treat it the same as "no real email yet" so the form
+  // below asks for one instead of pretending there's already a usable
+  // email/password login method.
+  const hasRealEmail = authProvider === 'email' && !!authEmail && !authEmail.endsWith('@line.resq.internal')
+  const googleLinked = linkedProviders.has('google')
+  const lineLinked = !!currentUser?.lineUserId
+
+  async function handleSaveEmailPassword() {
     setPasswordError('')
+    if (!hasRealEmail && !/^\S+@\S+\.\S+$/.test(newEmail)) {
+      setPasswordError('กรุณากรอกอีเมลให้ถูกต้อง')
+      return
+    }
     if (newPassword.length < 6) {
       setPasswordError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
       return
@@ -91,15 +109,58 @@ export default function Settings() {
     }
     if (!supabase) return
     setPasswordLoading(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    const { error } = await supabase.auth.updateUser(
+      hasRealEmail ? { password: newPassword } : { email: newEmail, password: newPassword },
+    )
     setPasswordLoading(false)
     if (error) {
       setPasswordError(error.message)
       return
     }
+    setNewEmail('')
     setNewPassword('')
     setConfirmPassword('')
-    toast({ title: 'เปลี่ยนรหัสผ่านแล้ว', tone: 'success' })
+    toast({
+      title: hasRealEmail ? 'เปลี่ยนรหัสผ่านแล้ว' : 'บันทึกอีเมลแล้ว',
+      message: hasRealEmail ? undefined : 'กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยัน',
+      tone: 'success',
+    })
+  }
+
+  function handleLinkGoogle() {
+    if (!supabase) return
+    sessionStorage.setItem('resq-google-link-mode', '1')
+    void supabase.auth
+      .linkIdentity({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}auth/callback` },
+      })
+      .then(({ error }) => {
+        if (error) toast({ title: 'เชื่อมต่อ Google ไม่สำเร็จ', message: error.message, tone: 'error' })
+      })
+  }
+
+  function handleLinkLine() {
+    try {
+      signInWithLine('link')
+    } catch (err) {
+      toast({ title: 'เชื่อมต่อ LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+    }
+  }
+
+  async function handleUnlinkLine() {
+    if (!currentUser) return
+    setUnlinkLineLoading(true)
+    try {
+      await unlinkLineIdentity(currentUser.id)
+      const refreshed = await fetchProfile(currentUser.id, false)
+      if (refreshed) setUser(refreshed)
+      toast({ title: 'ยกเลิกการเชื่อมต่อ LINE แล้ว', tone: 'info' })
+    } catch (err) {
+      toast({ title: 'ยกเลิกการเชื่อมต่อไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+    } finally {
+      setUnlinkLineLoading(false)
+    }
   }
 
   async function handleReset() {
@@ -166,41 +227,86 @@ export default function Settings() {
                       ? 'เข้าสู่ระบบด้วย LINE'
                       : 'เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน'}
                 </p>
-                {authProvider === 'email' && authEmail && <p className="text-xs text-muted">{authEmail}</p>}
+                {hasRealEmail && authEmail && <p className="text-xs text-muted">{authEmail}</p>}
               </div>
             </div>
 
-            {authProvider === 'email' && (
-              <div className="flex flex-col gap-3 border-t border-border pt-4">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
-                  <KeyRound className="size-4 text-primary" /> เปลี่ยนรหัสผ่าน
-                </p>
-                <Input
-                  label="รหัสผ่านใหม่"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="อย่างน้อย 6 ตัวอักษร"
-                />
-                <Input
-                  label="ยืนยันรหัสผ่านใหม่"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  error={passwordError}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="self-start"
-                  loading={passwordLoading}
-                  disabled={!newPassword || !confirmPassword}
-                  onClick={handleChangePassword}
-                >
-                  บันทึกรหัสผ่านใหม่
-                </Button>
+            <div className="flex flex-col gap-3 border-t border-border pt-4">
+              <p className="text-sm font-semibold text-navy">บัญชีที่เชื่อมต่อ</p>
+              <p className="text-xs text-muted">
+                เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE
+              </p>
+              <div className="flex items-center justify-between rounded-xl border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <GoogleIcon className="size-5 shrink-0" />
+                  <span className="text-sm text-navy">Google</span>
+                </div>
+                {googleLinked ? (
+                  <span className="text-xs font-medium text-success">เชื่อมต่อแล้ว</span>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleLinkGoogle}>
+                    เชื่อมต่อ
+                  </Button>
+                )}
               </div>
-            )}
+              <div className="flex items-center justify-between rounded-xl border border-border p-3">
+                <div className="flex items-center gap-2">
+                  <LineIcon className="size-5 shrink-0 rounded-md" />
+                  <span className="text-sm text-navy">LINE</span>
+                </div>
+                {lineLinked ? (
+                  <Button variant="outline" size="sm" loading={unlinkLineLoading} onClick={handleUnlinkLine}>
+                    ยกเลิกการเชื่อมต่อ
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleLinkLine}>
+                    เชื่อมต่อ
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-border pt-4">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? 'เปลี่ยนรหัสผ่าน' : 'ตั้งอีเมลและรหัสผ่าน'}
+              </p>
+              {!hasRealEmail && (
+                <p className="text-xs text-muted">ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE</p>
+              )}
+              {!hasRealEmail && (
+                <Input
+                  label="อีเมล"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              )}
+              <Input
+                label="รหัสผ่านใหม่"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="อย่างน้อย 6 ตัวอักษร"
+              />
+              <Input
+                label="ยืนยันรหัสผ่านใหม่"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={passwordError}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                loading={passwordLoading}
+                disabled={!newPassword || !confirmPassword || (!hasRealEmail && !newEmail)}
+                onClick={handleSaveEmailPassword}
+              >
+                {hasRealEmail ? 'บันทึกรหัสผ่านใหม่' : 'บันทึก'}
+              </Button>
+            </div>
           </Card>
         )}
 
