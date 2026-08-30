@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase, supabaseEnabled } from './supabase'
 import type { AppUser, ApprovalStatus, Role } from './types'
 
@@ -271,7 +272,21 @@ async function exchangeLineCode(code: string, redirectUri: string, mode: LineAut
   const { data, error } = await supabase.functions.invoke<LineExchangeResult>('line-login-exchange', {
     body: { code, redirectUri, mode },
   })
-  if (error || !data) throw error ?? new Error('LINE login failed')
+  if (error) {
+    // FunctionsHttpError's own .message is just the generic "Edge Function
+    // returned a non-2xx status code" -- the actual reason (e.g. "already
+    // linked to another user") is in the JSON body the function returned,
+    // reachable only via .context (the raw Response), not `data`.
+    if (error instanceof FunctionsHttpError) {
+      const body = await error.context
+        .clone()
+        .json()
+        .catch(() => null)
+      throw new Error(body?.error || error.message)
+    }
+    throw error
+  }
+  if (!data) throw new Error('LINE login failed')
   if (data.error) throw new Error(data.error)
   return data
 }
