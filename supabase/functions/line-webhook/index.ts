@@ -13,6 +13,14 @@
 //   https://<project-ref>.supabase.co/functions/v1/line-webhook
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { buildFlexCard, flexMessage } from '../_shared/lineFlex.ts'
+import { STATUS_META } from '../_shared/caseStatus.ts'
+import type { CaseStatus } from '../_shared/caseStatus.ts'
+
+// Matches the web app's own Tailwind palette (see tailwind.config.js) so a
+// LINE card and the web UI read as the same product.
+const BRAND_BLUE = '#0B6EBD'
+const BRAND_SUCCESS = '#12B76A'
 
 const LINE_CHANNEL_SECRET = Deno.env.get('LINE_CHANNEL_SECRET') ?? ''
 const LINE_CHANNEL_ACCESS_TOKEN = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') ?? ''
@@ -33,36 +41,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 // case row, so keep it in sync if that shape changes.
 // ---------------------------------------------------------------------
 
-type CaseStatus =
-  | 'contacted'
-  | 'photos-taken'
-  | 'called-1669'
-  | 'received'
-  | 'finding-rescue'
-  | 'rescue-assigned'
-  | 'rescue-en-route'
-  | 'rescue-arrived'
-  | 'assisted'
-  | 'transporting'
-  | 'hospital-arrived'
-  | 'hospital-received'
-  | 'completed'
-
-const STATUS_META: Record<CaseStatus, { label: string; org: string }> = {
-  contacted: { label: 'ติดต่อเจ้าหน้าที่แล้ว', org: 'ประชาชน' },
-  'photos-taken': { label: 'ถ่ายรูปจุดเกิดเหตุแล้ว', org: 'ประชาชน' },
-  'called-1669': { label: 'ติดต่อ 1669 แล้ว', org: 'ประชาชน' },
-  received: { label: 'รับแจ้งเหตุแล้ว', org: 'ศูนย์ 1669' },
-  'finding-rescue': { label: 'กำลังค้นหาหน่วยกู้ชีพ', org: 'ศูนย์ 1669' },
-  'rescue-assigned': { label: 'มอบหมายหน่วยกู้ชีพแล้ว', org: 'ศูนย์ 1669' },
-  'rescue-en-route': { label: 'หน่วยกู้ชีพกำลังเดินทาง', org: 'หน่วยกู้ชีพ' },
-  'rescue-arrived': { label: 'ถึงจุดเกิดเหตุแล้ว', org: 'หน่วยกู้ชีพ' },
-  assisted: { label: 'เข้าช่วยเหลือแล้ว', org: 'หน่วยกู้ชีพ' },
-  transporting: { label: 'กำลังนำส่งโรงพยาบาล', org: 'หน่วยกู้ชีพ' },
-  'hospital-arrived': { label: 'ถึงโรงพยาบาลแล้ว', org: 'หน่วยกู้ชีพ' },
-  'hospital-received': { label: 'โรงพยาบาลรับผู้ป่วยแล้ว', org: 'โรงพยาบาล' },
-  completed: { label: 'เสร็จสิ้น', org: 'ระบบ' },
-}
+// CaseStatus/STATUS_META now live in ../_shared/caseStatus.ts (shared with
+// line-push-notify).
 
 // deno-lint-ignore no-explicit-any
 type EmergencyCase = Record<string, any>
@@ -205,16 +185,21 @@ async function verifySignature(rawBody: string, signature: string | null): Promi
   return expected === signature
 }
 
-async function replyMessage(replyToken: string, text: string) {
+// deno-lint-ignore no-explicit-any
+async function replyMessages(replyToken: string, messages: Record<string, any>[]) {
   const res = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` },
-    body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
+    body: JSON.stringify({ replyToken, messages }),
   })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     console.error(`LINE reply API rejected the message: ${res.status} ${body}`)
   }
+}
+
+async function replyMessage(replyToken: string, text: string) {
+  await replyMessages(replyToken, [{ type: 'text', text }])
 }
 
 async function downloadLineContent(messageId: string): Promise<Blob> {
@@ -247,10 +232,22 @@ const DONE_WORDS = ['เสร็จ', 'done', 'ต่อไป']
 // user has to explicitly say which they want.
 const WAKE_PROMPT =
   'พิมพ์ "แจ้งเหตุ" เพื่อแจ้งเหตุฉุกเฉิน หรือ "ข้อมูล" เพื่อดูข้อมูลเกี่ยวกับแอป ResQ'
-const INFO_MESSAGE =
-  'ResQ คือระบบประสานงานการแพทย์ฉุกเฉิน เชื่อมต่อประชาชน ศูนย์ 1669 หน่วยกู้ชีพ และโรงพยาบาล ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล\n\n' +
-  'พิมพ์ "แจ้งเหตุ" เพื่อเริ่มแจ้งเหตุฉุกเฉินผ่านแชทนี้ได้ทันที ระบบจะพาทำทีละขั้นตอน (ถ่ายรูป ตำแหน่ง เบอร์ติดต่อกลับ)\n\n' +
-  `ดูรายละเอียดเพิ่มเติมได้ที่: ${WEB_APP_BASE_URL}/how-it-works`
+function infoCardMessage() {
+  const bubble = buildFlexCard({
+    headerText: 'ResQ',
+    headerColor: BRAND_BLUE,
+    title: 'ระบบประสานงานการแพทย์ฉุกเฉิน',
+    bodyLines: [
+      'เชื่อมต่อประชาชน ศูนย์ 1669 หน่วยกู้ชีพ และโรงพยาบาล ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล',
+      'กดปุ่มด้านล่างเพื่อเริ่มแจ้งเหตุฉุกเฉินผ่านแชทนี้ได้ทันที ระบบจะพาทำทีละขั้นตอน (ถ่ายรูป ตำแหน่ง เบอร์ติดต่อกลับ)',
+    ],
+    buttons: [
+      { label: 'แจ้งเหตุฉุกเฉิน', text: 'แจ้งเหตุ' },
+      { label: 'ดูรายละเอียดเว็บไซต์', uri: `${WEB_APP_BASE_URL}/how-it-works` },
+    ],
+  })
+  return flexMessage('ResQ: ระบบประสานงานการแพทย์ฉุกเฉิน', bubble)
+}
 
 function wantsReport(text: string): boolean {
   return text.includes('แจ้งเหตุ')
@@ -299,7 +296,7 @@ async function handleEvent(event: LineEvent) {
   // turn a stray "hi" into a real case that paged dispatch).
   if (!session) {
     if (wantsInfo(text)) {
-      await replyMessage(event.replyToken, INFO_MESSAGE)
+      await replyMessages(event.replyToken, [infoCardMessage()])
       return
     }
     if (!wantsReport(text)) {
@@ -401,10 +398,17 @@ async function handleEvent(event: LineEvent) {
     await saveCase(finalCase, lineUserId)
     await clearSession(lineUserId)
     const trackingUrl = `${WEB_APP_BASE_URL}/public/case/${finalCase.id}`
-    await replyMessage(
-      event.replyToken,
-      `แจ้งเหตุสำเร็จ! หมายเลขเคส: ${finalCase.caseNumber}\n\nเจ้าหน้าที่ศูนย์ 1669 จะติดต่อกลับที่เบอร์ที่ท่านแจ้งไว้โดยเร็วที่สุด\n\nติดตามสถานะเคสได้ที่:\n${trackingUrl}`,
-    )
+    const bubble = buildFlexCard({
+      headerText: 'แจ้งเหตุสำเร็จ',
+      headerColor: BRAND_SUCCESS,
+      title: `หมายเลขเคส ${finalCase.caseNumber}`,
+      bodyLines: [
+        'เจ้าหน้าที่ศูนย์ 1669 จะติดต่อกลับที่เบอร์ที่ท่านแจ้งไว้โดยเร็วที่สุด',
+        'กดปุ่มด้านล่างเพื่อติดตามสถานะเคสนี้แบบเรียลไทม์ ระบบจะแจ้งความคืบหน้าที่นี่ให้ด้วยทุกครั้งที่มีการอัปเดต',
+      ],
+      buttons: [{ label: 'ติดตามสถานะเคส', uri: trackingUrl }],
+    })
+    await replyMessages(event.replyToken, [flexMessage(`แจ้งเหตุสำเร็จ หมายเลขเคส ${finalCase.caseNumber}`, bubble)])
   }
 }
 
