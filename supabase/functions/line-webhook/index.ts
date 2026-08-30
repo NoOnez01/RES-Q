@@ -167,6 +167,23 @@ async function clearSession(lineUserId: string) {
   await supabase.from('line_bot_sessions').delete().eq('line_user_id', lineUserId)
 }
 
+/** LINE's webhook delivery is at-least-once -- the same message can arrive
+ * more than once (a slow response triggering LINE's own retry, or
+ * near-simultaneous duplicate delivery). The insert is the idempotency
+ * check itself: a unique-constraint violation means this exact message id
+ * was already handled, so the caller should skip it. Atomic even under
+ * truly concurrent requests, unlike a read-then-write check -- see
+ * supabase-line-message-dedup.sql. */
+async function alreadyProcessed(messageId: string): Promise<boolean> {
+  const { error } = await supabase.from('line_processed_messages').insert({ message_id: messageId })
+  if (!error) return false
+  if (error.code === '23505') return true // unique_violation -- genuine duplicate delivery
+  // Any other error (e.g. the table/grant hasn't been set up yet) shouldn't
+  // block real users from reporting an emergency -- fail open.
+  console.error('line_processed_messages insert failed:', error.message)
+  return false
+}
+
 // ---------------------------------------------------------------------
 // LINE Messaging API
 // ---------------------------------------------------------------------
@@ -281,6 +298,7 @@ async function handleEvent(event: LineEvent) {
   const lineUserId = event.source.userId
   const message = event.message
   if (!message) return
+  if (message.id && (await alreadyProcessed(message.id))) return
 
   const text = message.text?.trim() ?? ''
   if (CANCEL_WORDS.includes(text.toLowerCase())) {
