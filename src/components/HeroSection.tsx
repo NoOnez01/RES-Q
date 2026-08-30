@@ -34,7 +34,7 @@ export function HeroSection({
       <div
         className={clsx(
           'relative mx-auto flex flex-col items-center gap-8',
-          wide ? 'w-full text-center lg:text-left' : 'max-w-3xl text-center',
+          wide ? 'w-full max-w-7xl text-center lg:text-left' : 'max-w-3xl text-center',
         )}
       >
         {children}
