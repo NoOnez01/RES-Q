@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { Search, MapPin, Users, Building2, Navigation as NavigationIcon } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
-import { Input, Select } from '@/components/ui/Field'
+import { Input, Select, SearchableSelect } from '@/components/ui/Field'
 import { LoadingState, EmptyState, ErrorState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
@@ -76,6 +76,7 @@ export default function DispatchUnitSearch() {
 
   const [query, setQuery] = useState('')
   const [levelFilters, setLevelFilters] = useState<Set<VehicleLevel>>(new Set())
+  const [provinceFilter, setProvinceFilter] = useState('')
   const [referenceCaseId, setReferenceCaseId] = useState(searchParams.get('caseId') ?? '')
 
   useEffect(() => {
@@ -96,6 +97,12 @@ export default function DispatchUnitSearch() {
       cancelled = true
     }
   }, [])
+
+  const provinceOptions = useMemo(() => {
+    if (!units) return []
+    const distinct = [...new Set(units.map((u) => u.province).filter((p): p is string => !!p))]
+    return distinct.sort((a, b) => a.localeCompare(b, 'th'))
+  }, [units])
 
   const casesWithLocation = useMemo(
     () =>
@@ -120,6 +127,7 @@ export default function DispatchUnitSearch() {
     if (!units) return []
     const trimmedQuery = query.trim().toLowerCase()
     let list = units.filter((u) => {
+      if (provinceFilter && u.province !== provinceFilter) return false
       if (levelFilters.size > 0 && ![...levelFilters].some((lvl) => unitHasLevel(u, lvl))) return false
       if (!trimmedQuery) return true
       return (
@@ -142,7 +150,7 @@ export default function DispatchUnitSearch() {
 
     list = [...list].sort((a, b) => (a.unitName ?? a.unitCode).localeCompare(b.unitName ?? b.unitCode, 'th'))
     return list.map((u) => ({ unit: u, distanceKm: null as number | null }))
-  }, [units, query, levelFilters, referenceLocation])
+  }, [units, query, levelFilters, provinceFilter, referenceLocation])
 
   const visibleResults = results.slice(0, RESULT_LIMIT)
 
@@ -154,7 +162,7 @@ export default function DispatchUnitSearch() {
           <div>
             <h1 className="text-xl font-bold text-navy">ค้นหาหน่วยปฏิบัติการทั่วประเทศ</h1>
             <p className="mt-1.5 text-sm text-muted">
-              ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อ รหัส หรือจังหวัด กรองตามระดับรถ
+              ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ
               และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก
             </p>
           </div>
@@ -190,6 +198,15 @@ export default function DispatchUnitSearch() {
                 ))}
               </div>
             </div>
+
+            <SearchableSelect
+              label="กรองตามจังหวัด (ไม่บังคับ)"
+              value={provinceFilter}
+              onChange={setProvinceFilter}
+              placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
+              emptyLabel="ไม่พบจังหวัดที่ค้นหา"
+              options={[{ value: '', label: 'ทุกจังหวัด' }, ...provinceOptions.map((p) => ({ value: p, label: p }))]}
+            />
 
             <Select
               label="คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)"
