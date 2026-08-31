@@ -24,6 +24,7 @@ import { HeroSection } from '@/components/HeroSection'
 import { EmergencyContactCircle } from '@/components/EmergencyContactCircle'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 import { InfoModal } from '@/components/ui/InfoModal'
 import { useInView } from '@/lib/useInView'
 import { useCountUp } from '@/lib/useCountUp'
@@ -149,13 +150,22 @@ function Reveal({
   )
 }
 
-function InteractiveFeatureCard({
+/** One step in the case journey (contact -> photo -> 1669 -> rescue ->
+ * patient record -> tracking) -- rendered as a row along a connecting
+ * spine rather than an identical icon-card, since the six items aren't
+ * independent options, they're a sequence, and the layout should say so.
+ * The detail text used to only reveal on :hover, which never fires on a
+ * touch device -- it's always visible now so phone users get the same
+ * information as desktop. */
+function FlowStep({
+  index,
   icon,
   title,
   description,
   extra,
   onClick,
 }: {
+  index: number
   icon: ReactNode
   title: string
   description: string
@@ -166,25 +176,23 @@ function InteractiveFeatureCard({
     <button
       type="button"
       onClick={onClick}
-      className="
-        group relative flex w-full flex-col items-start gap-3 rounded-2xl border border-border
-        bg-white p-6 text-left shadow-card transition-all duration-200
-        hover:-translate-y-0.5 hover:shadow-card-lg hover:shadow-[0_0_0_4px_rgba(11,110,189,0.12)]
-        focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20
-      "
+      className="group relative z-10 flex w-full items-start gap-4 rounded-2xl p-3 text-left transition-colors duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:gap-5 sm:p-4"
     >
+      <span className="relative flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-primary/25 bg-white text-primary shadow-card transition-colors duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-white sm:size-16">
+        {icon}
+        <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-navy text-[10px] font-extrabold text-white shadow-card">
+          {index}
+        </span>
+      </span>
+      <span className="flex flex-1 flex-col gap-1 pt-1.5 sm:pt-2.5">
+        <span className="font-bold text-navy">{title}</span>
+        <span className="text-sm leading-relaxed text-muted">{description}</span>
+        <span className="text-xs font-medium leading-relaxed text-primary/80">{extra}</span>
+      </span>
       <ArrowRight
         aria-hidden="true"
-        className="absolute right-5 top-5 size-4 -translate-x-1 text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+        className="mt-4 size-4 shrink-0 -translate-x-1 text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 sm:mt-5"
       />
-      <div className="flex size-11 items-center justify-center rounded-xl bg-skyblue-light text-primary transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-110">
-        {icon}
-      </div>
-      <p className="font-bold text-navy">{title}</p>
-      <p className="text-sm leading-relaxed text-muted">{description}</p>
-      <p className="max-h-0 overflow-hidden text-xs font-medium leading-relaxed text-primary/80 transition-all duration-300 group-hover:max-h-16 group-hover:pt-0.5">
-        {extra}
-      </p>
     </button>
   )
 }
@@ -337,7 +345,7 @@ export default function Home() {
         <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
         <div className="hero-grid relative z-10 w-full">
           <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-            <h1 className="text-2xl font-extrabold leading-snug text-navy sm:text-3xl">
+            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-navy sm:text-4xl lg:text-5xl">
               เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย
             </h1>
           </div>
@@ -379,62 +387,61 @@ export default function Home() {
         </div>
       </HeroSection>
 
-      <section id="features" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <section id="features" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <Reveal className="text-center">
-          <h2 className="text-xl font-bold text-navy sm:text-2xl">ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน</h2>
-          <p className="mt-2 text-sm text-muted">ตั้งแต่แจ้งเหตุจนถึงการส่งต่อผู้ป่วย ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน</p>
+          <h2 className="text-2xl font-bold text-navy sm:text-3xl">ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน</h2>
+          <p className="mt-2 text-sm text-muted">6 ขั้นตอน ตั้งแต่แจ้งเหตุจนถึงการส่งต่อผู้ป่วย ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน</p>
         </Reveal>
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.id} delayMs={i * 60}>
-              <InteractiveFeatureCard
-                icon={f.icon}
-                title={f.title}
-                description={f.description}
-                extra={f.extra}
-                onClick={() => handleFeatureClick(f.id)}
-              />
-            </Reveal>
-          ))}
-        </div>
-      </section>
 
-      <section className="px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-5xl text-center">
-          <Reveal>
-            <h2 className="text-xl font-bold text-navy sm:text-2xl">วิธีการใช้งาน</h2>
-            <p className="mt-2 text-sm text-muted">6 ขั้นตอน ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล</p>
-          </Reveal>
-
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button onClick={openHeroCta} iconRight={<ArrowRight className="size-4" />}>
-              เริ่มต้นใช้งานทันที
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/how-it-works')}>
-              ดูรายละเอียดทั้งหมด
-            </Button>
+        <div className="relative mt-12">
+          <div
+            aria-hidden="true"
+            className="absolute bottom-8 left-10 top-8 w-px bg-gradient-to-b from-primary/30 via-primary/15 to-transparent sm:left-12"
+          />
+          <div className="flex flex-col gap-1">
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.id} delayMs={i * 80}>
+                <FlowStep
+                  index={i + 1}
+                  icon={f.icon}
+                  title={f.title}
+                  description={f.description}
+                  extra={f.extra}
+                  onClick={() => handleFeatureClick(f.id)}
+                />
+              </Reveal>
+            ))}
           </div>
         </div>
+
+        <Reveal delayMs={FEATURES.length * 80} className="mt-8 flex flex-wrap justify-center gap-3">
+          <Button onClick={openHeroCta} iconRight={<ArrowRight className="size-4" />}>
+            เริ่มต้นใช้งานทันที
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/how-it-works')}>
+            ดูรายละเอียดทั้งหมด
+          </Button>
+        </Reveal>
       </section>
 
       <section id="trust" className="bg-skyblue-pale/60 px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <Reveal className="text-center">
-            <h2 className="text-xl font-bold text-navy sm:text-2xl">ความปลอดภัยและความน่าเชื่อถือ</h2>
+            <h2 className="text-2xl font-bold text-navy sm:text-3xl">ความปลอดภัยและความน่าเชื่อถือ</h2>
           </Reveal>
 
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {TRUST_POINTS.map((t, i) => (
-              <Reveal key={t.text} delayMs={i * 60}>
-                <div className="flex h-full flex-col items-center gap-3 rounded-2xl border border-border bg-white p-5 text-center shadow-card">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-skyblue-light text-primary">
+          <Reveal delayMs={80}>
+            <Card className="mt-8 flex flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
+              {TRUST_POINTS.map((t) => (
+                <div key={t.text} className="flex flex-1 items-center gap-3 px-2 py-4 text-left sm:flex-col sm:gap-2.5 sm:px-4 sm:text-center">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary">
                     {t.icon}
                   </span>
-                  <p className="text-sm font-medium leading-relaxed text-navy">{t.text}</p>
+                  <p className="text-sm font-medium leading-snug text-navy">{t.text}</p>
                 </div>
-              </Reveal>
-            ))}
-          </div>
+              ))}
+            </Card>
+          </Reveal>
 
           <p className="mx-auto mt-8 max-w-xl text-center text-xs leading-relaxed text-muted">
             ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์
