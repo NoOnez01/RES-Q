@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
-import { Input, Select } from '@/components/ui/Field'
+import { Input, SearchableSelect } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SuccessState } from '@/components/States'
 import { useStore } from '@/lib/store'
@@ -140,21 +140,19 @@ export default function RegisterRescue() {
                 onChange={(e) => update('phone', e.target.value)}
                 error={errors.phone}
               />
-              <Select
+              <SearchableSelect
                 label="หน่วยกู้ชีพ"
                 required
                 value={form.rescueTeamId}
-                onChange={(e) => update('rescueTeamId', e.target.value)}
+                onChange={(v) => update('rescueTeamId', v)}
                 error={errors.rescueTeamId}
-              >
-                <option value="">เลือกหน่วยกู้ชีพ</option>
-                {rescueTeams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-                <option value={NEW_TEAM_VALUE}>+ หน่วยของฉันไม่มีในรายการ</option>
-              </Select>
+                placeholder="พิมพ์ชื่อหน่วยกู้ชีพเพื่อค้นหา"
+                emptyLabel="ไม่พบหน่วยกู้ชีพที่ค้นหา"
+                options={[
+                  ...[...rescueTeams].sort((a, b) => a.name.localeCompare(b.name, 'th')).map((t) => ({ value: t.id, label: t.name })),
+                  { value: NEW_TEAM_VALUE, label: '+ หน่วยของฉันไม่มีในรายการ' },
+                ]}
+              />
               {creatingNew && (
                 <div className="flex flex-col gap-4 rounded-xl border border-border bg-bg p-3.5">
                   <Input

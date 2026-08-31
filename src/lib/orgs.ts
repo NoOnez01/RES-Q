@@ -77,29 +77,60 @@ function rowToHospital(row: HospitalRow): Hospital {
   }
 }
 
+const FETCH_PAGE_SIZE = 1000
+
+/** PostgREST caps a single response at 1000 rows regardless of an
+ * unbounded .select() -- harmless while every table here had a handful of
+ * seed rows, but silently wrong once rescue_teams/rescue_vehicles hold
+ * thousands (see the NDEMS import) -- a plain select would return an
+ * arbitrary 1000-row slice and most teams would appear to have zero
+ * vehicles. Pages through with .range() until a short page ends it. */
+async function fetchAllRows<T>(table: string): Promise<T[]> {
+  if (!supabase) return []
+  const all: T[] = []
+  let from = 0
+  for (;;) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .range(from, from + FETCH_PAGE_SIZE - 1)
+    if (error) throw error
+    const rows = (data ?? []) as T[]
+    all.push(...rows)
+    if (rows.length < FETCH_PAGE_SIZE) break
+    from += FETCH_PAGE_SIZE
+  }
+  return all
+}
+
 /** Falls back to whatever the caller already has (the static seed data) if
  * Supabase isn't reachable -- a self-registered new team/hospital just
  * won't show up anywhere until connectivity's back, not a hard failure. */
 export async function fetchOrgs(): Promise<{ rescueTeams: RescueTeam[]; hospitals: Hospital[] } | null> {
   if (!supabaseEnabled || !supabase) return null
-  const [teamsRes, vehiclesRes, hospitalsRes] = await Promise.all([
-    supabase.from('rescue_teams').select('*'),
-    supabase.from('rescue_vehicles').select('*'),
-    supabase.from('hospitals').select('*'),
-  ])
-  if (teamsRes.error || vehiclesRes.error || hospitalsRes.error || !teamsRes.data?.length || !hospitalsRes.data?.length) {
+  let teamRows: RescueTeamRow[]
+  let vehicleRows: RescueVehicleRow[]
+  let hospitalRows: HospitalRow[]
+  try {
+    ;[teamRows, vehicleRows, hospitalRows] = await Promise.all([
+      fetchAllRows<RescueTeamRow>('rescue_teams'),
+      fetchAllRows<RescueVehicleRow>('rescue_vehicles'),
+      fetchAllRows<HospitalRow>('hospitals'),
+    ])
+  } catch {
     return null
   }
+  if (!teamRows.length || !hospitalRows.length) return null
   const vehiclesByTeam = new Map<string, RescueVehicle[]>()
-  for (const row of vehiclesRes.data as RescueVehicleRow[]) {
+  for (const row of vehicleRows) {
     const vehicle = rowToRescueVehicle(row)
     const list = vehiclesByTeam.get(vehicle.rescueTeamId) ?? []
     list.push(vehicle)
     vehiclesByTeam.set(vehicle.rescueTeamId, list)
   }
   return {
-    rescueTeams: (teamsRes.data as RescueTeamRow[]).map((row) => rowToRescueTeam(row, vehiclesByTeam.get(row.id) ?? [])),
-    hospitals: hospitalsRes.data.map(rowToHospital),
+    rescueTeams: teamRows.map((row) => rowToRescueTeam(row, vehiclesByTeam.get(row.id) ?? [])),
+    hospitals: hospitalRows.map(rowToHospital),
   }
 }
 
@@ -109,7 +140,11 @@ export async function fetchOrgs(): Promise<{ rescueTeams: RescueTeam[]; hospital
  * elsewhere in the app for things nobody needs to read out loud. */
 async function nextOrgId(table: 'rescue_teams' | 'hospitals', prefix: string): Promise<string> {
   if (!supabase) throw new Error('Supabase not configured')
-  const { data, error } = await supabase.from(table).select('id')
+  // Narrowed server-side to this prefix's own rows (there will only ever be
+  // a handful of these, unlike the table as a whole -- rescue_teams alone
+  // holds thousands of imported NDEMS rows that don't match this pattern
+  // and would otherwise risk tripping PostgREST's 1000-row response cap).
+  const { data, error } = await supabase.from(table).select('id').like('id', `${prefix}-%`)
   if (error) throw error
   const pattern = new RegExp(`^${prefix}-(\\d+)$`)
   const highest = (data ?? [])
@@ -178,6 +213,13 @@ export async function createRescueTeam(input: NewRescueTeamInput): Promise<strin
   const { error } = await supabase.from('rescue_teams').insert({
     id,
     name: input.name,
+    // Vestigial flat columns from before rescue_vehicles existed (see
+    // supabase-rescue-vehicles.sql) -- still NOT NULL on the table, no
+    // longer read by rowToRescueTeam, so any non-null placeholder is fine
+    // when the real per-vehicle data lives in rescue_vehicles instead.
+    unit_code: input.initialVehicle?.unitCode ?? id,
+    members: input.initialVehicle?.members ?? 1,
+    vehicle: '',
     phone: input.phone,
     base_lat: input.baseLat ?? 18.7883,
     base_lng: input.baseLng ?? 98.9853,

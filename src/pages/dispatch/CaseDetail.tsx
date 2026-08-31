@@ -470,7 +470,17 @@ export default function DispatchCaseDetail() {
                     // spotlight an unavailable one just because it's first
                     // in the raw array (only happens if every team is busy).
                     const topAvailableId = recommendation.ranked.find((r) => r.available)?.team.id
-                    return recommendation.ranked.map((r) => {
+                    // Rendering every ranked team is fine for a handful of
+                    // local branches but not for the full NDEMS import
+                    // (thousands nationwide) -- available-first sorting
+                    // already means the nearest usable options survive the
+                    // cap; anything further down is either far away or busy.
+                    const RENDER_LIMIT = 20
+                    const visibleRanked = recommendation.ranked.slice(0, RENDER_LIMIT)
+                    const overflowCount = recommendation.ranked.length - visibleRanked.length
+                    return (
+                      <>
+                        {visibleRanked.map((r) => {
                       const isTop = r.team.id === topAvailableId
                       return (
                         <RadioCard
@@ -504,8 +514,16 @@ export default function DispatchCaseDetail() {
                             </span>
                           }
                         />
-                      )
-                    })
+                          )
+                        })}
+                        {overflowCount > 0 && (
+                          <p className="text-center text-xs text-muted">
+                            แสดง {RENDER_LIMIT} หน่วยที่ใกล้ที่สุด จากทั้งหมด{' '}
+                            {recommendation.ranked.length.toLocaleString('th-TH')} หน่วย
+                          </p>
+                        )}
+                      </>
+                    )
                   })()}
                 </div>
 
@@ -633,7 +651,7 @@ export default function DispatchCaseDetail() {
                       </p>
                     )}
                     <div className="flex flex-col gap-2">
-                      {supportCandidates.map((r) => (
+                      {supportCandidates.slice(0, 20).map((r) => (
                         <RadioCard
                           key={r.team.id}
                           selected={addSupportTeamId === r.team.id}
@@ -648,6 +666,11 @@ export default function DispatchCaseDetail() {
                           }
                         />
                       ))}
+                      {supportCandidates.length > 20 && (
+                        <p className="text-center text-xs text-muted">
+                          แสดง 20 หน่วยที่ใกล้ที่สุด จากทั้งหมด {supportCandidates.length.toLocaleString('th-TH')} หน่วย
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>

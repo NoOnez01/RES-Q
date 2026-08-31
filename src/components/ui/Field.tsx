@@ -116,6 +116,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   )
 })
 
+interface SearchableSelectOption {
+  value: string
+  label: string
+}
+
 interface SearchableSelectProps {
   label?: string
   hint?: string
@@ -123,7 +128,11 @@ interface SearchableSelectProps {
   required?: boolean
   value: string
   onChange: (value: string) => void
-  options: string[]
+  /** A plain string list where the value and displayed label are the same
+   * (e.g. INCIDENT_TYPES), or explicit {value, label} pairs for when the
+   * stored value is an id distinct from what's shown (e.g. a team's
+   * database id vs. its human-readable name). */
+  options: string[] | SearchableSelectOption[]
   placeholder?: string
   /** Shown in the empty-results state -- defaults to a generic message. */
   emptyLabel?: string
@@ -149,35 +158,46 @@ export function SearchableSelect({
   emptyLabel = 'ไม่พบตัวเลือกที่ค้นหา',
   className,
 }: SearchableSelectProps) {
-  const [query, setQuery] = useState(value)
+  const normalized: SearchableSelectOption[] = options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o))
+  const labelForValue = (v: string) => normalized.find((o) => o.value === v)?.label ?? v
+
+  const [query, setQuery] = useState(labelForValue(value))
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Keep the displayed text in sync when the value changes from outside
   // (e.g. a parent resetting the form) without the dropdown being open.
   useEffect(() => {
-    if (!open) setQuery(value)
-  }, [value, open])
+    if (!open) setQuery(labelForValue(value))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, open, options])
 
   useEffect(() => {
     if (!open) return
     function handleClickOutside(e: MouseEvent) {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
         setOpen(false)
-        setQuery(value)
+        setQuery(labelForValue(value))
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, value])
 
   const filtered = query.trim()
-    ? options.filter((o) => o.toLowerCase().includes(query.trim().toLowerCase()))
-    : options
+    ? normalized.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
+    : normalized
+  // Rendering every option at once is fine for a few dozen (INCIDENT_TYPES)
+  // but not for lists in the thousands (e.g. every registered rescue team)
+  // -- cap what actually mounts and prompt narrowing further instead.
+  const RENDER_LIMIT = 50
+  const overflowCount = filtered.length - RENDER_LIMIT
+  const visible = filtered.slice(0, RENDER_LIMIT)
 
-  function selectOption(opt: string) {
-    onChange(opt)
-    setQuery(opt)
+  function selectOption(opt: SearchableSelectOption) {
+    onChange(opt.value)
+    setQuery(opt.label)
     setOpen(false)
   }
 
@@ -221,21 +241,28 @@ export function SearchableSelect({
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-muted">{emptyLabel}</p>
             ) : (
-              filtered.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  role="option"
-                  aria-selected={opt === value}
-                  onClick={() => selectOption(opt)}
-                  className={clsx(
-                    'block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-skyblue-light',
-                    opt === value ? 'bg-skyblue-pale font-semibold text-primary' : 'text-navy',
-                  )}
-                >
-                  {opt}
-                </button>
-              ))
+              <>
+                {visible.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={opt.value === value}
+                    onClick={() => selectOption(opt)}
+                    className={clsx(
+                      'block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-skyblue-light',
+                      opt.value === value ? 'bg-skyblue-pale font-semibold text-primary' : 'text-navy',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                {overflowCount > 0 && (
+                  <p className="px-4 py-2.5 text-xs text-muted">
+                    และอีก {overflowCount.toLocaleString('th-TH')} รายการ — พิมพ์เพื่อค้นหาให้แคบลง
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}

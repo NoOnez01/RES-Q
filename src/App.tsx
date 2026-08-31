@@ -104,19 +104,27 @@ export default function App() {
       if (!user) return
       setUser(user)
       syncFor(user.id)
+      // The mount-time refreshOrgs() above fires before this session exists,
+      // so on a fresh browser (no cached Supabase token) it hits rescue_
+      // vehicles/hospitals as the anon role -- which only rescue_teams
+      // grants -- and silently falls back to the 3 seed teams for the rest
+      // of the session, no retry. Re-running now that a real session
+      // exists is what actually lets a first-time visitor see real orgs.
+      void refreshOrgs()
     })
 
     const unsubscribe = onAuthChange((user) => {
       setAuthResolved(true)
       setUser(user)
       syncFor(user?.id ?? null)
+      void refreshOrgs()
     })
 
     return () => {
       window.clearTimeout(timeout)
       unsubscribe()
     }
-  }, [setUser, setAuthResolved])
+  }, [setUser, setAuthResolved, refreshOrgs])
 
   useEffect(() => {
     const unlock = () => primeAudio()

@@ -381,7 +381,12 @@ function TeamVehicles({
 
 export default function ManageOrgs() {
   const currentUser = useStore((s) => s.currentUser)
-  const rescueTeams = useStore((s) => s.rescueTeams)
+  // Excludes the bulk-imported NDEMS unit directory (id prefix "ndems-",
+  // see scripts/import_ndems_org_shells.py) -- thousands of org shells with
+  // no user attached yet, meant to be claimed via /register/rescue rather
+  // than hand-edited one at a time here. Rendering all of them as cards
+  // would also make this screen unusably heavy.
+  const rescueTeams = useStore((s) => s.rescueTeams).filter((t) => !t.id.startsWith('ndems-'))
   const hospitals = useStore((s) => s.hospitals)
   const refreshOrgs = useStore((s) => s.refreshOrgs)
 
