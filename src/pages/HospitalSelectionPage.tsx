@@ -55,9 +55,12 @@ export default function HospitalSelectionPage() {
   }, [c?.location, hospitals])
   const recommendedHospitalId = rankedHospitals.find((h) => h.erAvailable)?.id ?? rankedHospitals[0]?.id
 
-  const isHighSeverity = !!c?.assessment && c.assessment.severity <= 2
   const isDecliningNearest = !!selected && !!nearestHospital && selected.id !== nearestHospital.id && declinedNearest
-  const needsSignature = isHighSeverity && (decliningAll || isDecliningNearest)
+  // Signature is required for any refusal of recommended care -- declining
+  // transport entirely or declining the nearest hospital in favor of one
+  // the family picked themselves -- regardless of severity, since it's a
+  // consent record, not just a high-acuity safeguard.
+  const needsSignature = decliningAll || isDecliningNearest
 
   async function handleConfirm() {
     if (!caseId) return
@@ -175,10 +178,7 @@ export default function HospitalSelectionPage() {
                 value={decidedByName}
                 onChange={(e) => setDecidedByName(e.target.value)}
               />
-              <SignaturePad
-                label="ลงชื่อรับทราบการปฏิเสธ (จำเป็นสำหรับเคสความรุนแรงสูง)"
-                onChange={setSignatureDataUrl}
-              />
+              <SignaturePad label="ลงชื่อรับทราบการปฏิเสธ (จำเป็น)" onChange={setSignatureDataUrl} />
             </div>
           )}
 
