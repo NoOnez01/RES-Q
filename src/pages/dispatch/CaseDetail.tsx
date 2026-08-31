@@ -17,6 +17,7 @@ import {
   IdCard,
   XCircle,
   ArrowUpCircle,
+  Search,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
@@ -41,12 +42,30 @@ import { toast } from '@/lib/toast'
 import { VEHICLE_LEVEL_RANK } from '@/lib/types'
 import type { VehicleLevel, RescueTeam } from '@/lib/types'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
-import { Textarea } from '@/components/ui/Field'
+import { Textarea, Input, SearchableSelect } from '@/components/ui/Field'
+import { THAILAND_PROVINCE_COORDS } from '@/lib/thailandProvinces'
 
 const CONSCIOUS_LABEL: Record<string, string> = {
   conscious: 'รู้สึกตัวดี',
   unconscious: 'หมดสติ',
   unknown: 'ไม่ทราบ',
+}
+
+const PROVINCE_OPTIONS = [
+  { value: '', label: 'ทุกจังหวัด' },
+  ...Object.keys(THAILAND_PROVINCE_COORDS)
+    .sort((a, b) => a.localeCompare(b, 'th'))
+    .map((p) => ({ value: p, label: p })),
+]
+
+/** The imported NDEMS org shells put their province in base_address (e.g.
+ * "จังหวัดเชียงใหม่ (ตำแหน่งโดยประมาณระดับจังหวัด)"); the original seed
+ * teams don't say "จังหวัด..." explicitly but do name the district/province
+ * in plain text (e.g. "...อำเภอเมืองเชียงใหม่") -- a substring match on the
+ * province name covers both without needing a dedicated column. */
+function teamMatchesProvince(team: RescueTeam, province: string): boolean {
+  if (!province) return true
+  return team.base.address.includes(province)
 }
 
 export default function DispatchCaseDetail() {
@@ -71,6 +90,10 @@ export default function DispatchCaseDetail() {
   const [addSupportTeamId, setAddSupportTeamId] = useState<string | null>(null)
   const [addSupportLoading, setAddSupportLoading] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState<VehicleLevel | null>(null)
+  const [teamQuery, setTeamQuery] = useState('')
+  const [teamProvinceFilter, setTeamProvinceFilter] = useState('')
+  const [supportTeamQuery, setSupportTeamQuery] = useState('')
+  const [supportProvinceFilter, setSupportProvinceFilter] = useState('')
   const [showCloseAdvice, setShowCloseAdvice] = useState(false)
   const [closeAdviceNote, setCloseAdviceNote] = useState('')
   const [closeAdviceLoading, setCloseAdviceLoading] = useState(false)
@@ -437,6 +460,23 @@ export default function DispatchCaseDetail() {
                 <p className="text-sm text-muted">
                   เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
                 </p>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                  <Input
+                    value={teamQuery}
+                    onChange={(e) => setTeamQuery(e.target.value)}
+                    placeholder="ค้นหาชื่อหน่วยกู้ชีพ"
+                    className="pl-11"
+                  />
+                </div>
+                <SearchableSelect
+                  label="กรองตามจังหวัด (ไม่บังคับ)"
+                  value={teamProvinceFilter}
+                  onChange={setTeamProvinceFilter}
+                  placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
+                  emptyLabel="ไม่พบจังหวัดที่ค้นหา"
+                  options={PROVINCE_OPTIONS}
+                />
                 <div className="flex flex-col gap-1.5">
                   <p className="text-xs font-semibold text-navy">กรองตามระดับรถ (ไม่บังคับ)</p>
                   <div className="flex gap-2">
@@ -469,15 +509,22 @@ export default function DispatchCaseDetail() {
                     // available team is the actual recommendation -- never
                     // spotlight an unavailable one just because it's first
                     // in the raw array (only happens if every team is busy).
-                    const topAvailableId = recommendation.ranked.find((r) => r.available)?.team.id
+                    const filtered = recommendation.ranked.filter((r) => {
+                      if (teamQuery.trim() && !r.team.name.toLowerCase().includes(teamQuery.trim().toLowerCase())) return false
+                      return teamMatchesProvince(r.team, teamProvinceFilter)
+                    })
+                    const topAvailableId = filtered.find((r) => r.available)?.team.id
                     // Rendering every ranked team is fine for a handful of
                     // local branches but not for the full NDEMS import
                     // (thousands nationwide) -- available-first sorting
                     // already means the nearest usable options survive the
                     // cap; anything further down is either far away or busy.
                     const RENDER_LIMIT = 20
-                    const visibleRanked = recommendation.ranked.slice(0, RENDER_LIMIT)
-                    const overflowCount = recommendation.ranked.length - visibleRanked.length
+                    const visibleRanked = filtered.slice(0, RENDER_LIMIT)
+                    const overflowCount = filtered.length - visibleRanked.length
+                    if (filtered.length === 0) {
+                      return <p className="py-4 text-center text-sm text-muted">ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก</p>
+                    }
                     return (
                       <>
                         {visibleRanked.map((r) => {
@@ -519,7 +566,7 @@ export default function DispatchCaseDetail() {
                         {overflowCount > 0 && (
                           <p className="text-center text-xs text-muted">
                             แสดง {RENDER_LIMIT} หน่วยที่ใกล้ที่สุด จากทั้งหมด{' '}
-                            {recommendation.ranked.length.toLocaleString('th-TH')} หน่วย
+                            {filtered.length.toLocaleString('th-TH')} หน่วย
                           </p>
                         )}
                       </>
@@ -645,32 +692,63 @@ export default function DispatchCaseDetail() {
                       {escalating ? `เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)` : 'เลือกหน่วยสนับสนุน'}
                     </p>
                     {requiredEquipment.length > 0 && (
-                      <p className="flex items-center gap-1.5 text-xs text-muted">
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
                         <Wrench className="size-3.5 text-primary" />
                         ต้องการอุปกรณ์: {requiredEquipment.join(', ')}
                       </p>
                     )}
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                      <Input
+                        value={supportTeamQuery}
+                        onChange={(e) => setSupportTeamQuery(e.target.value)}
+                        placeholder="ค้นหาชื่อหน่วยกู้ชีพ"
+                        className="pl-11"
+                      />
+                    </div>
+                    <SearchableSelect
+                      label="กรองตามจังหวัด (ไม่บังคับ)"
+                      value={supportProvinceFilter}
+                      onChange={setSupportProvinceFilter}
+                      placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
+                      emptyLabel="ไม่พบจังหวัดที่ค้นหา"
+                      options={PROVINCE_OPTIONS}
+                    />
                     <div className="flex flex-col gap-2">
-                      {supportCandidates.slice(0, 20).map((r) => (
-                        <RadioCard
-                          key={r.team.id}
-                          selected={addSupportTeamId === r.team.id}
-                          onClick={() => r.available && setAddSupportTeamId(r.team.id)}
-                          title={r.team.name}
-                          description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
-                          className={clsx(!r.available && 'pointer-events-none opacity-50')}
-                          badge={
-                            <span className="flex flex-col items-end gap-1">
-                              <VehicleLevelBadge level={bestTeamLevel(r.team)} />
-                            </span>
-                          }
-                        />
-                      ))}
-                      {supportCandidates.length > 20 && (
-                        <p className="text-center text-xs text-muted">
-                          แสดง 20 หน่วยที่ใกล้ที่สุด จากทั้งหมด {supportCandidates.length.toLocaleString('th-TH')} หน่วย
-                        </p>
-                      )}
+                      {(() => {
+                        const filteredSupport = supportCandidates.filter((r) => {
+                          if (supportTeamQuery.trim() && !r.team.name.toLowerCase().includes(supportTeamQuery.trim().toLowerCase()))
+                            return false
+                          return teamMatchesProvince(r.team, supportProvinceFilter)
+                        })
+                        if (filteredSupport.length === 0) {
+                          return <p className="py-2 text-center text-sm text-muted">ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก</p>
+                        }
+                        return (
+                          <>
+                            {filteredSupport.slice(0, 20).map((r) => (
+                              <RadioCard
+                                key={r.team.id}
+                                selected={addSupportTeamId === r.team.id}
+                                onClick={() => r.available && setAddSupportTeamId(r.team.id)}
+                                title={r.team.name}
+                                description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
+                                className={clsx(!r.available && 'pointer-events-none opacity-50')}
+                                badge={
+                                  <span className="flex flex-col items-end gap-1">
+                                    <VehicleLevelBadge level={bestTeamLevel(r.team)} />
+                                  </span>
+                                }
+                              />
+                            ))}
+                            {filteredSupport.length > 20 && (
+                              <p className="text-center text-xs text-muted">
+                                แสดง 20 หน่วยที่ใกล้ที่สุด จากทั้งหมด {filteredSupport.length.toLocaleString('th-TH')} หน่วย
+                              </p>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                     <div className="flex gap-2">
                       <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>
