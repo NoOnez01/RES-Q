@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { ClipboardList, Loader2, CheckCircle2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { DashboardCard } from '@/components/DashboardCard'
+import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
@@ -62,8 +62,8 @@ export default function RescueDashboard() {
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <DashboardCard
+          <StatBar>
+            <StatItem
               label="เคสใหม่"
               value={
                 <span key={newCases.length} className="inline-block animate-count-pop">
@@ -73,7 +73,7 @@ export default function RescueDashboard() {
               icon={<ClipboardList className="size-4.5" />}
               tone="warning"
             />
-            <DashboardCard
+            <StatItem
               label="กำลังดำเนินการ"
               value={
                 <span key={inProgressCases.length} className="inline-block animate-count-pop">
@@ -83,7 +83,7 @@ export default function RescueDashboard() {
               icon={<Loader2 className="size-4.5" />}
               tone="primary"
             />
-            <DashboardCard
+            <StatItem
               label="เสร็จสิ้นวันนี้"
               value={
                 <span key={doneCases.length} className="inline-block animate-count-pop">
@@ -93,7 +93,7 @@ export default function RescueDashboard() {
               icon={<CheckCircle2 className="size-4.5" />}
               tone="success"
             />
-          </div>
+          </StatBar>
 
           <section className="mt-8">
             <h2 className="mb-3 text-lg font-bold text-navy">เคสใหม่ที่ได้รับมอบหมาย</h2>
@@ -104,13 +104,9 @@ export default function RescueDashboard() {
                 {newCases.map((c, i) => (
                   <div
                     key={c.id}
-                    className="relative animate-fade-in-up pl-3"
+                    className="animate-fade-in-up"
                     style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'backwards' }}
                   >
-                    <span
-                      className="absolute inset-y-2 left-0 w-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(11,110,189,0.5)]"
-                      aria-hidden="true"
-                    />
                     <EmergencyCaseCard
                       emergencyCase={c}
                       to={`/rescue/case/${c.id}`}

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Truck, Clock, CheckCircle2, Building2, Stethoscope, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
+import { Truck, Clock, CheckCircle2, Building2, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { Card } from '@/components/ui/Card'
-import { DashboardCard } from '@/components/DashboardCard'
+import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
@@ -78,54 +78,34 @@ export default function HospitalDashboard() {
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10">
-          <Card
-            className={clsx(
-              'mb-5 flex flex-wrap items-center justify-between gap-3 animate-fade-in-up',
-              hospitalAcceptingCases ? 'border-success/30 bg-success/5' : 'border-emergency/30 bg-emergency/5',
-            )}
-          >
-            <div className="flex items-center gap-2.5">
-              {hospitalAcceptingCases ? (
-                <DoorOpen className="size-5 shrink-0 text-success" />
-              ) : (
-                <DoorClosed className="size-5 shrink-0 text-emergency" />
-              )}
-              <div>
-                <p className="text-sm font-bold text-navy">
-                  {hospitalAcceptingCases ? 'เปิดรับเคส' : 'ปิดรับเคสชั่วคราว'}
-                </p>
-                <p className="text-xs text-muted">
-                  {hospitalAcceptingCases
-                    ? 'หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้'
-                    : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'}
-                </p>
+          <Card className="mb-5 animate-fade-in-up divide-y divide-border p-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+              <div className="flex items-center gap-2.5">
+                {hospitalAcceptingCases ? (
+                  <DoorOpen className="size-5 shrink-0 text-success" />
+                ) : (
+                  <DoorClosed className="size-5 shrink-0 text-emergency" />
+                )}
+                <div>
+                  <p className="text-sm font-bold text-navy">
+                    {hospitalAcceptingCases ? 'เปิดรับเคส' : 'ปิดรับเคสชั่วคราว'}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {hospitalAcceptingCases
+                      ? 'หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้'
+                      : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'}
+                  </p>
+                </div>
               </div>
+              <Button size="sm" variant={hospitalAcceptingCases ? 'danger' : 'success'} onClick={handleToggleAccepting}>
+                {hospitalAcceptingCases ? 'ปิดรับเคส' : 'เปิดรับเคส'}
+              </Button>
             </div>
-            <Button
-              size="sm"
-              variant={hospitalAcceptingCases ? 'danger' : 'success'}
-              onClick={handleToggleAccepting}
-            >
-              {hospitalAcceptingCases ? 'ปิดรับเคส' : 'เปิดรับเคส'}
-            </Button>
-          </Card>
 
-          <Card className="mb-5 animate-fade-in-up">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-navy">
-              <Stethoscope className="size-4 text-primary" /> ความพร้อมของโรงพยาบาล
-            </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <ReadinessChip
-                icon={<Building2 className="size-4" />}
-                label="ห้องฉุกเฉิน"
-                ready={erReady}
-              />
-              <ReadinessChip
-                icon={<Users className="size-4" />}
-                label="ทีมแพทย์"
-                ready={teamReady}
-              />
-              <div className="rounded-xl border border-border bg-bg p-3">
+            <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6">
+              <ReadinessChip icon={<Building2 className="size-4" />} label="ห้องฉุกเฉิน" ready={erReady} />
+              <ReadinessChip icon={<Users className="size-4" />} label="ทีมแพทย์" ready={teamReady} />
+              <div className="flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-navy">
                     <BedDouble className="size-4 text-primary" /> เตียงว่าง
@@ -144,8 +124,8 @@ export default function HospitalDashboard() {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <DashboardCard
+          <StatBar>
+            <StatItem
               label="กำลังนำส่ง"
               value={
                 <span key={transportingCases.length} className="inline-block animate-count-pop">
@@ -155,7 +135,7 @@ export default function HospitalDashboard() {
               icon={<Truck className="size-5" />}
               tone="primary"
             />
-            <DashboardCard
+            <StatItem
               label="รอยืนยันรับผู้ป่วย"
               value={
                 <span key={arrivedCases.length} className="inline-block animate-count-pop">
@@ -165,7 +145,7 @@ export default function HospitalDashboard() {
               icon={<Clock className="size-5" />}
               tone="warning"
             />
-            <DashboardCard
+            <StatItem
               label="เสร็จสิ้นแล้ว"
               value={
                 <span key={doneCases.length} className="inline-block animate-count-pop">
@@ -175,7 +155,7 @@ export default function HospitalDashboard() {
               icon={<CheckCircle2 className="size-5" />}
               tone="success"
             />
-          </div>
+          </StatBar>
 
           {hospitalCases.length === 0 ? (
             <div className="mt-8">
@@ -317,21 +297,11 @@ export default function HospitalDashboard() {
 
 function ReadinessChip({ icon, label, ready }: { icon: React.ReactNode; label: string; ready: boolean }) {
   return (
-    <div
-      className={clsx(
-        'flex items-center justify-between gap-2 rounded-xl border p-3',
-        ready ? 'border-success/20 bg-success/5' : 'border-warning/20 bg-warning/5',
-      )}
-    >
+    <div className="flex flex-1 items-center justify-between gap-2">
       <span className="flex items-center gap-1.5 text-sm font-semibold text-navy">
         {icon} {label}
       </span>
-      <span
-        className={clsx(
-          'flex items-center gap-1.5 text-xs font-bold',
-          ready ? 'text-success' : 'text-warning',
-        )}
-      >
+      <span className={clsx('flex items-center gap-1.5 text-xs font-bold', ready ? 'text-success' : 'text-warning')}>
         {ready && <PulseRing tone="success" size="sm" />}
         {ready ? 'พร้อม' : 'ตึงมือ'}
       </span>

@@ -150,6 +150,17 @@ Rounded throughout, scaling with the element's importance: buttons and small con
 - **Border:** 1px Hairline Border, always present even with a shadow — the two work together rather than the border substituting for depth.
 - **Internal Padding:** `1.25rem`–`1.5rem` (`p-5`/`p-6`).
 
+#### Named Rules
+**No Nested Cards.** A card's interior never contains another bordered/shadowed box. Two or more related facts inside one card are separated by a `divide-y`/`divide-x` hairline or plain spacing, not by wrapping each in its own mini-card. If a screen wants to show a status toggle and a readiness readout together, that's one card with an internal divider (see hospital/Dashboard.tsx), not two stacked cards.
+
+**One Card Per Distinct Concern, Not One Per Fact.** Before adding another `<Card>`, check whether it's a genuinely separate concern from the card above it or just another fact about the same thing — if the latter, it's a section inside the existing card.
+
+### Stat Bars
+Dashboard KPIs (case counts, today's totals) render as one `StatBar` — a single bordered/shadowed row with `divide-x`/`divide-y` hairlines between figures — never as N separate `shadow-card` tiles side by side. A wall of identical boxed numbers reads as a generic admin-panel template; one bar reads as a single "here's where things stand" statement. See `src/components/DashboardCard.tsx` (`StatBar`/`StatItem`).
+
+### Case/List Item Cards
+`EmergencyCaseCard` (and anything like it) carries at most **two** semantic badges at once (typically severity + status) plus one small non-text indicator (e.g. the rescue-response icon dot) — never a third or fourth pill stacked on for a state the other two already imply. If a new state needs signaling, prefer changing the card's own background tint/ring (already used for "completed" and "new, unassessed") over adding another pill.
+
 ### Inputs / Fields
 - **Style:** white background, Hairline Border stroke, `rounded-xl` corners, label above the field in navy semibold.
 - **Focus:** border shifts to Command Blue plus a `ring-4` Command-Blue-at-15% halo.
@@ -160,6 +171,16 @@ Rounded throughout, scaling with the element's importance: buttons and small con
 
 ### Badges / Status Pills
 - Fully rounded, small, colored by semantic status (severity/case-status), never by decoration. A badge's color is always meaningful (maps to a real severity/status value) — never chosen for visual variety.
+- **Restraint:** a single element (a case card, a list row) shows at most two badges. If a third piece of state needs surfacing, it becomes plain text, a background tint, or is folded into an existing badge's label — never a third pill. Badge overload (a row of 3+ colored pills) is exactly the "generic AI dashboard" look this system avoids.
+
+### Page Composition
+Not every screen is a card grid. Before building a page, name its primary task (triage a queue, review one case in depth, fill out a form, confirm a status) and let that task's own shape drive the layout:
+- **A queue/list screen** (dispatch's case list, a search results page) is optimized for scanning many items fast — compact rows over full-detail cards once the list gets long, one clear per-row action.
+- **A single-focus screen** (rescue's dashboard, which usually holds one active case) doesn't need the same stat-wall + multi-section treatment as dispatch's high-volume queue — lead with the one thing that needs action.
+- **A detail/record screen** (a case's full detail, a patient record form) is read top-to-bottom in sections separated by headings and spacing, not by wrapping every field group in its own card.
+- **A form** is a single column, one clear primary action, inline validation — never split across cards per field group.
+
+Two role dashboards showing the same underlying data (case counts, a list) can still look different if their actual operating context differs — a 1669 operator watching dozens of concurrent cases and a rescue crew handling one case at a time are not the same task, and don't need the same layout just because they share a component library.
 
 ### Signature Component: Animated Backgrounds
 Full-bleed decorative SVG/CSS backgrounds (heartbeat line, drifting particles, orbiting rings, mesh gradients) sit behind hero and dashboard content at low opacity, `pointer-events-none`, and respect `prefers-reduced-motion` by freezing in place. They exist to keep the "calm but alive" feeling ambient — never to compete with foreground content for attention.
@@ -171,9 +192,14 @@ Full-bleed decorative SVG/CSS backgrounds (heartbeat line, drifting particles, o
 - **Do** use the two-layer neutral `card`/`card-lg` shadow system for all elevation; reach for a colored glow only on the one or two elements per screen that are actually the emergency focal point.
 - **Do** cap content width (`max-w-5xl`–`max-w-7xl`) at every viewport, including ultrawide desktop — never let a section stretch edge-to-edge.
 - **Do** keep every role's dashboard scoped to only the information/actions that role needs; cross-role data never leaks into a view that doesn't need it.
+- **Do** let typography and spacing carry hierarchy first — a bigger/bolder heading and more room around it beats a border, a shadow, or a tinted background when the goal is just "this matters more."
+- **Do** design each page around its own primary task before reaching for a shared template; a list, a single-case view, a detail record, and a form are different shapes.
 
 ### Don't:
 - **Don't** place a small labeled pill/eyebrow above a heading. Let the heading carry its own weight.
 - **Don't** introduce a second "loud" accent color alongside Alert Red — every other status stays in the calm blue/green/amber register.
 - **Don't** use sharp corners or hard-offset (`box-shadow: Npx Npx 0`) neobrutalist shadows anywhere — the system is deliberately soft throughout.
 - **Don't** add motion for its own sake; every animation should be either an ambient "alive" signal (background decoration) or direct feedback for a real state change.
+- **Don't** nest a bordered/shadowed box inside another card, or stack N single-stat cards where one divided `StatBar` would say the same thing more calmly.
+- **Don't** stack three or more badges/pills on one element — fold the extra state into text, a tint, or an existing badge instead.
+- **Don't** default every page to the same card-grid template just because the components already exist; a queue, a single-focus screen, a detail record, and a form each earn their own composition.

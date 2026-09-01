@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Users, Clock, ChevronRight, Siren, Ambulance } from 'lucide-react'
+import { MapPin, Users, Clock, ChevronRight, Ambulance } from 'lucide-react'
 import clsx from 'clsx'
 import type { EmergencyCase } from '@/lib/types'
 import { statusMeta } from '@/lib/types'
@@ -61,12 +61,6 @@ export function EmergencyCaseCard({
           <p className="mt-1 font-semibold text-navy">{c.incidentDetails?.incidentType ?? 'รอรายละเอียดเหตุการณ์'}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {isNew && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emergency/30 bg-emergency text-white px-3 py-1 text-xs font-bold whitespace-nowrap animate-pulse">
-              <Siren className="size-3.5" />
-              เคสใหม่
-            </span>
-          )}
           {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
           {rescueColor && (
             <span

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { DashboardCard } from '@/components/DashboardCard'
+import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
@@ -69,8 +69,8 @@ export default function DispatchDashboard() {
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <DashboardCard
+          <StatBar>
+            <StatItem
               label="เคสใหม่รอดำเนินการ"
               value={
                 <span key={newCount} className="inline-block animate-count-pop">
@@ -80,7 +80,7 @@ export default function DispatchDashboard() {
               icon={<AlertTriangle className="size-5" />}
               tone="emergency"
             />
-            <DashboardCard
+            <StatItem
               label="กำลังค้นหาหน่วยกู้ชีพ"
               value={
                 <span key={findingCount} className="inline-block animate-count-pop">
@@ -90,7 +90,7 @@ export default function DispatchDashboard() {
               icon={<Search className="size-5" />}
               tone="warning"
             />
-            <DashboardCard
+            <StatItem
               label="หน่วยกู้ชีพกำลังปฏิบัติงาน"
               value={
                 <span key={inProgressCount} className="inline-block animate-count-pop">
@@ -100,7 +100,7 @@ export default function DispatchDashboard() {
               icon={<Ambulance className="size-5" />}
               tone="primary"
             />
-            <DashboardCard
+            <StatItem
               label="เสร็จสิ้นวันนี้"
               value={
                 <span key={completedCount} className="inline-block animate-count-pop">
@@ -110,7 +110,7 @@ export default function DispatchDashboard() {
               icon={<CheckCircle2 className="size-5" />}
               tone="success"
             />
-          </div>
+          </StatBar>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-navy">เคสทั้งหมด</h2>
@@ -144,7 +144,6 @@ export default function DispatchDashboard() {
             ) : (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {activeCases.map((c, index) => {
-                  const isCritical = c.assessment?.severity === 1
                   const isJustArrived = Date.now() - c.createdAt < 5000
                   return (
                     <div key={c.id} className="relative">
@@ -155,10 +154,7 @@ export default function DispatchDashboard() {
                         />
                       )}
                       <div
-                        className={clsx(
-                          'relative animate-fade-in-up rounded-2xl',
-                          isCritical && 'border-l-4 border-l-emergency',
-                        )}
+                        className="relative animate-fade-in-up rounded-2xl"
                         style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'both' }}
                       >
                         <EmergencyCaseCard

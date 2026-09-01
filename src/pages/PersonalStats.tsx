@@ -4,7 +4,7 @@ import { Activity, Ambulance, CheckCircle2, ClipboardList } from 'lucide-react'
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
-import { DashboardCard } from '@/components/DashboardCard'
+import { StatBar, StatItem } from '@/components/DashboardCard'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmptyState, ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
@@ -109,11 +109,11 @@ export default function PersonalStats() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <DashboardCard label="เคสทั้งหมด" value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
-                <DashboardCard label="กำลังดำเนินการ" value={inProgressCount} icon={<Ambulance className="size-5" />} tone="warning" />
-                <DashboardCard label="เสร็จสิ้นแล้ว" value={completedCount} icon={<CheckCircle2 className="size-5" />} tone="success" />
-              </div>
+              <StatBar>
+                <StatItem label="เคสทั้งหมด" value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
+                <StatItem label="กำลังดำเนินการ" value={inProgressCount} icon={<Ambulance className="size-5" />} tone="warning" />
+                <StatItem label="เสร็จสิ้นแล้ว" value={completedCount} icon={<CheckCircle2 className="size-5" />} tone="success" />
+              </StatBar>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card className="flex flex-col gap-3">
