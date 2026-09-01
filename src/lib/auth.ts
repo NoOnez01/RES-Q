@@ -3,20 +3,51 @@ import { supabase, supabaseEnabled } from './supabase'
 import { isNativeApp } from './nativeNotify'
 import type { AppUser, ApprovalStatus, Role } from './types'
 
-/** https://localhost/... (the app's own origin inside the Android WebView)
- * only ever resolves from inside that exact WebView -- an OAuth provider's
- * final redirect isn't guaranteed to land back there (it can hand off
- * through the system browser or its own app), so it fails with
- * ERR_CONNECTION_REFUSED. A custom scheme is routed back to this app by
- * Android's Intent system regardless of which app/browser is showing the
- * page when the redirect fires (see the resq:// intent-filter in
- * AndroidManifest.xml and the appUrlOpen listener in App.tsx). Only used for
- * the native app -- the web build keeps its real https redirect. */
-const LINE_NATIVE_REDIRECT_URI = 'resq://auth/line-callback'
+/** LINE's plain OAuth authorize endpoint (unlike its "mobile app" package/
+ * signature registration, which only applies to their native SDK) only
+ * accepts a pre-registered https:// redirect_uri -- a custom resq:// scheme
+ * is rejected outright ("Invalid redirect custom scheme"), and
+ * https://localhost/... (the app's own origin inside the WebView) isn't
+ * reliably reachable once the login hands off through the system browser.
+ * So native login reuses the real, already-approved production callback URL
+ * -- LineCallback.tsx detects it's running for a native-initiated flow (via
+ * the `native` flag encoded in `state`, see encodeLineState) and relays the
+ * result to the app over the resq:// deep link instead of completing the
+ * exchange on the web page itself, which would establish the session under
+ * the wrong origin. */
+const LINE_PRODUCTION_CALLBACK_URL = 'https://noonez01.github.io/RES-Q/auth/line-callback'
 
-function lineRedirectUri(): string {
-  if (isNativeApp()) return LINE_NATIVE_REDIRECT_URI
+export function lineRedirectUri(): string {
+  if (isNativeApp()) return LINE_PRODUCTION_CALLBACK_URL
   return `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
+}
+
+interface LineStatePayload {
+  mode: LineAuthMode
+  native: boolean
+}
+
+function encodeLineState(mode: LineAuthMode): string {
+  const payload: LineStatePayload = { mode, native: isNativeApp() }
+  return `${btoa(JSON.stringify(payload))}.${randomToken()}`
+}
+
+/** `state` is LINE's only channel that survives a redirect to a completely
+ * different origin/tab (the login might start in the app's WebView and land
+ * on the production web page in an external browser) -- so unlike a typical
+ * OAuth client, this doesn't also compare against a separately-stored
+ * expected value. That's an acceptable tradeoff here: the actual token
+ * exchange still requires our server-side LINE channel secret and a fresh,
+ * single-use code from LINE, so a forged state alone can't complete a
+ * login. */
+export function parseLineState(state: string): LineStatePayload | null {
+  try {
+    const [encoded] = state.split('.')
+    const payload = JSON.parse(atob(encoded)) as Partial<LineStatePayload>
+    return { mode: payload.mode === 'link' ? 'link' : 'login', native: !!payload.native }
+  } catch {
+    return null
+  }
 }
 
 interface ProfileRow {
@@ -214,9 +245,6 @@ export async function signInWithGoogle(): Promise<void> {
 }
 
 const LINE_LOGIN_CHANNEL_ID = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID as string | undefined
-const LINE_STATE_KEY = 'resq-line-login-state'
-const LINE_NONCE_KEY = 'resq-line-login-nonce'
-const LINE_MODE_KEY = 'resq-line-login-mode'
 
 export type LineAuthMode = 'login' | 'link'
 
@@ -231,51 +259,30 @@ function randomToken(): string {
  * code (see AuthCallback pattern in src/pages/auth/LineCallback.tsx).
  *
  * `mode: 'link'` is for an already-logged-in user attaching LINE to their
- * existing account from Settings, instead of signing in fresh -- the stored
- * mode is what tells /auth/line-callback which of those two to do once LINE
- * redirects back (see consumeLineLoginState/linkLineIdentity below). */
+ * existing account from Settings, instead of signing in fresh -- encoded
+ * into `state` (see encodeLineState) rather than sessionStorage, since a
+ * native login's callback can land on a completely different origin/tab
+ * (see lineRedirectUri) where sessionStorage set here wouldn't be visible. */
 export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<void> {
   if (!LINE_LOGIN_CHANNEL_ID) throw new Error('LINE Login is not configured (missing VITE_LINE_LOGIN_CHANNEL_ID)')
-  const state = randomToken()
-  const nonce = randomToken()
-  sessionStorage.setItem(LINE_STATE_KEY, state)
-  sessionStorage.setItem(LINE_NONCE_KEY, nonce)
-  sessionStorage.setItem(LINE_MODE_KEY, mode)
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: LINE_LOGIN_CHANNEL_ID,
     redirect_uri: lineRedirectUri(),
-    state,
+    state: encodeLineState(mode),
     scope: 'openid profile',
-    nonce,
+    nonce: randomToken(),
   })
   const authorizeUrl = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
   if (isNativeApp()) {
-    // Opened in a system Custom Tab, NOT this app's own WebView -- our SPA's
-    // JS (and the sessionStorage state/nonce just written above) has to stay
-    // alive to receive the resq:// deep link back, which a same-WebView
-    // navigation away to LINE's page would tear down.
+    // A system Custom Tab, not this app's own WebView -- LINE's redirect
+    // will land on the production web page (see lineRedirectUri), which
+    // relays back to the app over a resq:// deep link (see
+    // LineCallback.tsx and the appUrlOpen listener in App.tsx).
     await Browser.open({ url: authorizeUrl })
     return
   }
   window.location.href = authorizeUrl
-}
-
-/** Reads back and clears the state saved just before redirecting to LINE --
- * a mismatch (or nothing stored, e.g. a replayed/forged callback URL) means
- * this isn't a callback we actually initiated. */
-export function consumeLineLoginState(): { redirectUri: string; mode: LineAuthMode } | null {
-  const state = sessionStorage.getItem(LINE_STATE_KEY)
-  const mode: LineAuthMode = sessionStorage.getItem(LINE_MODE_KEY) === 'link' ? 'link' : 'login'
-  sessionStorage.removeItem(LINE_STATE_KEY)
-  sessionStorage.removeItem(LINE_NONCE_KEY)
-  sessionStorage.removeItem(LINE_MODE_KEY)
-  if (!state) return null
-  return { redirectUri: lineRedirectUri(), mode }
-}
-
-export function getStoredLineState(): string | null {
-  return sessionStorage.getItem(LINE_STATE_KEY)
 }
 
 interface LineExchangeResult {

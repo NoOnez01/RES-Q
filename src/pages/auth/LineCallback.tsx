@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoadingState, ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
-import { completeLineLogin, consumeLineLoginState, getStoredLineState, linkLineIdentity } from '@/lib/auth'
+import { completeLineLogin, linkLineIdentity, lineRedirectUri, parseLineState } from '@/lib/auth'
+import { isNativeApp } from '@/lib/nativeNotify'
 import { toast } from '@/lib/toast'
 import type { LineAuthMode } from '@/lib/auth'
 import type { Role } from '@/lib/types'
@@ -43,26 +44,35 @@ export default function LineCallback() {
         setFailed(true)
         return
       }
-      const expectedState = getStoredLineState()
-      const consumed = consumeLineLoginState()
-      if (!consumed || state !== expectedState) {
-        // Doesn't match what we stored right before redirecting to LINE --
-        // either a stale/replayed callback or a forged one. Refuse rather
-        // than trying to log anyone in.
+      const parsed = parseLineState(state)
+      if (!parsed) {
         setFailed(true)
         return
       }
-      setMode(consumed.mode)
+      setMode(parsed.mode)
+
+      // A native-initiated login always redirects to the production web
+      // URL (see lineRedirectUri in lib/auth.ts), since LINE's plain OAuth
+      // flow only accepts a pre-registered https:// callback. If this page
+      // is running as that web page (not inside the native app itself),
+      // completing the exchange here would establish the session under
+      // this page's own origin instead of the app's -- so hand the code off
+      // to the app over its resq:// deep link and let it finish there.
+      if (parsed.native && !isNativeApp()) {
+        window.location.href = `resq://auth/line-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+        return
+      }
+
       try {
-        if (consumed.mode === 'link') {
+        if (parsed.mode === 'link') {
           // Attaching LINE to the account the user is already signed into
           // from Settings -- no new session to establish, just route back.
-          await linkLineIdentity(code, consumed.redirectUri)
+          await linkLineIdentity(code, lineRedirectUri())
           toast({ title: 'เชื่อมต่อ LINE สำเร็จ', tone: 'success' })
           navigate('/settings', { replace: true })
           return
         }
-        const profile = await completeLineLogin(code, consumed.redirectUri)
+        const profile = await completeLineLogin(code, lineRedirectUri())
         if (!profile) {
           setFailed(true)
           return
@@ -71,7 +81,7 @@ export default function LineCallback() {
         toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
         navigate(ROLE_PATH[profile.role], { replace: true })
       } catch (err) {
-        if (consumed.mode === 'link') {
+        if (parsed.mode === 'link') {
           setErrorMessage(err instanceof Error ? err.message : typeof err === 'string' ? err : null)
         }
         setFailed(true)
