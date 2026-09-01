@@ -81,10 +81,10 @@ export default function Login() {
     }
   }
 
-  function handleLineLogin() {
+  async function handleLineLogin() {
     setLineLoading(true)
     try {
-      signInWithLine()
+      await signInWithLine()
     } catch {
       toast({ title: 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ', message: 'ยังไม่ได้ตั้งค่า LINE Login', tone: 'error' })
       setLineLoading(false)

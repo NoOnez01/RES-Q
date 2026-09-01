@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useNavigate } from 'react-router-dom'
+import { App as CapacitorApp } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
 import { useStore } from '@/lib/store'
 import { useTabVisibility } from '@/lib/useReducedMotion'
 import { initSupabaseCaseSync } from '@/lib/supabaseCaseSync'
@@ -69,6 +71,7 @@ export default function App() {
   const setUser = useStore((s) => s.setUser)
   const setAuthResolved = useStore((s) => s.setAuthResolved)
   const refreshOrgs = useStore((s) => s.refreshOrgs)
+  const navigate = useNavigate()
   useTabVisibility()
 
   useEffect(() => {
@@ -76,6 +79,25 @@ export default function App() {
     void initNativeNotifications()
     void refreshOrgs()
   }, [seedDemoData, refreshOrgs])
+
+  // LINE login on native opens the system browser (see signInWithLine in
+  // lib/auth.ts) instead of navigating this app's own WebView, so its
+  // resq://auth/line-callback redirect can't land on a route the normal way
+  // -- Android delivers it here as a deep-link event instead (see the
+  // resq:// intent-filter in AndroidManifest.xml). Re-routes it to the exact
+  // same /auth/line-callback path+query the web build uses, so
+  // LineCallback.tsx's own logic runs unchanged either way.
+  useEffect(() => {
+    const handle = CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+      if (!url.startsWith('resq://auth/line-callback')) return
+      void Browser.close().catch(() => {})
+      const query = url.split('?')[1] ?? ''
+      navigate(`/auth/line-callback?${query}`, { replace: true })
+    })
+    return () => {
+      void handle.then((h) => h.remove())
+    }
+  }, [navigate])
 
   // Case sync is RLS-scoped per signed-in identity (see supabaseCaseSync.ts),
   // so it can't start until a session exists -- citizens get one

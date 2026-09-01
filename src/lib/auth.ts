@@ -1,5 +1,23 @@
+import { Browser } from '@capacitor/browser'
 import { supabase, supabaseEnabled } from './supabase'
+import { isNativeApp } from './nativeNotify'
 import type { AppUser, ApprovalStatus, Role } from './types'
+
+/** https://localhost/... (the app's own origin inside the Android WebView)
+ * only ever resolves from inside that exact WebView -- an OAuth provider's
+ * final redirect isn't guaranteed to land back there (it can hand off
+ * through the system browser or its own app), so it fails with
+ * ERR_CONNECTION_REFUSED. A custom scheme is routed back to this app by
+ * Android's Intent system regardless of which app/browser is showing the
+ * page when the redirect fires (see the resq:// intent-filter in
+ * AndroidManifest.xml and the appUrlOpen listener in App.tsx). Only used for
+ * the native app -- the web build keeps its real https redirect. */
+const LINE_NATIVE_REDIRECT_URI = 'resq://auth/line-callback'
+
+function lineRedirectUri(): string {
+  if (isNativeApp()) return LINE_NATIVE_REDIRECT_URI
+  return `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
+}
 
 interface ProfileRow {
   id: string
@@ -216,23 +234,31 @@ function randomToken(): string {
  * existing account from Settings, instead of signing in fresh -- the stored
  * mode is what tells /auth/line-callback which of those two to do once LINE
  * redirects back (see consumeLineLoginState/linkLineIdentity below). */
-export function signInWithLine(mode: LineAuthMode = 'login'): void {
+export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<void> {
   if (!LINE_LOGIN_CHANNEL_ID) throw new Error('LINE Login is not configured (missing VITE_LINE_LOGIN_CHANNEL_ID)')
   const state = randomToken()
   const nonce = randomToken()
   sessionStorage.setItem(LINE_STATE_KEY, state)
   sessionStorage.setItem(LINE_NONCE_KEY, nonce)
   sessionStorage.setItem(LINE_MODE_KEY, mode)
-  const redirectUri = `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: LINE_LOGIN_CHANNEL_ID,
-    redirect_uri: redirectUri,
+    redirect_uri: lineRedirectUri(),
     state,
     scope: 'openid profile',
     nonce,
   })
-  window.location.href = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
+  const authorizeUrl = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
+  if (isNativeApp()) {
+    // Opened in a system Custom Tab, NOT this app's own WebView -- our SPA's
+    // JS (and the sessionStorage state/nonce just written above) has to stay
+    // alive to receive the resq:// deep link back, which a same-WebView
+    // navigation away to LINE's page would tear down.
+    await Browser.open({ url: authorizeUrl })
+    return
+  }
+  window.location.href = authorizeUrl
 }
 
 /** Reads back and clears the state saved just before redirecting to LINE --
@@ -245,7 +271,7 @@ export function consumeLineLoginState(): { redirectUri: string; mode: LineAuthMo
   sessionStorage.removeItem(LINE_NONCE_KEY)
   sessionStorage.removeItem(LINE_MODE_KEY)
   if (!state) return null
-  return { redirectUri: `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`, mode }
+  return { redirectUri: lineRedirectUri(), mode }
 }
 
 export function getStoredLineState(): string | null {

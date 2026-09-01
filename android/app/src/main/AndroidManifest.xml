@@ -18,6 +18,23 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Custom-scheme deep link for OAuth callbacks (LINE, and Google
+                 if it hits the same wall). https://localhost/... only ever
+                 resolves inside this exact app's own WebView, and an OAuth
+                 redirect isn't guaranteed to land back in that exact context
+                 (the provider can hand off through the system browser or its
+                 own app), so a custom scheme is used instead: it is routed
+                 back to this app by Android's Intent system regardless of
+                 which app/browser is showing the page when the redirect
+                 fires. Caught in src/App.tsx via @capacitor/app's
+                 appUrlOpen listener. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="resq" />
+            </intent-filter>
         </activity>
 
         <provider

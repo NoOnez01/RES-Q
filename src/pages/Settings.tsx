@@ -140,9 +140,9 @@ export default function Settings() {
       })
   }
 
-  function handleLinkLine() {
+  async function handleLinkLine() {
     try {
-      signInWithLine('link')
+      await signInWithLine('link')
     } catch (err) {
       toast({ title: 'เชื่อมต่อ LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     }
