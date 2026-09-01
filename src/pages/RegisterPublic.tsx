@@ -99,9 +99,18 @@ export default function RegisterPublic() {
   async function handleLineSignup() {
     setLineLoading(true)
     try {
-      await signInWithLine()
-    } catch {
-      toast({ title: 'สมัครสมาชิกด้วย LINE ไม่สำเร็จ', message: 'ยังไม่ได้ตั้งค่า LINE Login', tone: 'error' })
+      // Native resolves with the profile immediately (app-to-app login, no
+      // redirect to land on); web returns null right away since the page
+      // navigates away to LINE and the real completion happens on
+      // /auth/line-callback instead.
+      const profile = await signInWithLine()
+      if (profile) {
+        setUser(profile)
+        toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
+        navigate('/')
+      }
+    } catch (err) {
+      toast({ title: 'สมัครสมาชิกด้วย LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
       setLineLoading(false)
     }
   }

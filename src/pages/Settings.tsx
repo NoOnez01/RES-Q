@@ -27,6 +27,7 @@ import { toast } from '@/lib/toast'
 import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
 import { supabase } from '@/lib/supabase'
 import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
+import { isNativeApp } from '@/lib/nativeNotify'
 
 const NOTICES = [
   'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย',
@@ -143,6 +144,15 @@ export default function Settings() {
   async function handleLinkLine() {
     try {
       await signInWithLine('link')
+      // Native completes the link synchronously (app-to-app login, no
+      // redirect to land on) -- refresh the profile to pick up the new
+      // line_user_id and confirm success here. Web instead navigates away
+      // to LINE and shows its own toast once /auth/line-callback finishes.
+      if (isNativeApp() && currentUser) {
+        const refreshed = await fetchProfile(currentUser.id, false)
+        if (refreshed) setUser(refreshed)
+        toast({ title: 'เชื่อมต่อ LINE สำเร็จ', tone: 'success' })
+      }
     } catch (err) {
       toast({ title: 'เชื่อมต่อ LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     }

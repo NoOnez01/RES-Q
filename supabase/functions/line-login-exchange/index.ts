@@ -1,11 +1,21 @@
 // Supabase Edge Function: server-side half of "Sign in with LINE" AND
-// "Connect LINE" account linking -- both drive the same LINE OAuth/OIDC
-// authorize step from the browser (see signInWithLine in src/lib/auth.ts)
-// and land here for the one step that requires a secret: exchanging the
-// authorization code LINE hands back for tokens. That exchange needs the
-// LINE Login channel's client secret, which must never reach the browser --
-// so it happens here, not in src/lib/auth.ts. The request body's `mode`
-// field picks which of the two this call is for:
+// "Connect LINE" account linking -- both drive LINE's own login step from
+// the client (see signInWithLine in src/lib/auth.ts) and land here for the
+// part that needs a secret or server-side trust:
+//
+// - Web (and any non-native caller): a plain browser OAuth redirect, which
+//   lands here with a `code` that gets exchanged for tokens using the LINE
+//   Login channel's client secret -- that secret must never reach the
+//   browser, hence this happens server-side.
+// - Native (Android): the LINE SDK's app-to-app login (LineLoginPlugin.java)
+//   hands off directly to the LINE app itself instead of a browser redirect,
+//   and already returns a signed ID token JWT -- no code/secret exchange
+//   needed, but that token came from the client, so it's verified here
+//   against LINE's own /oauth2/v2.1/verify endpoint before any of its claims
+//   are trusted, rather than just decoding it client-side.
+//
+// Either path ends up with the same trusted {sub, name, picture}, which the
+// request body's `mode` field then routes the same way:
 //
 // - mode: 'login' (default) -- mints a Supabase magic-link token via the
 //   Admin API and hands the hashed token back to the browser, which redeems
@@ -95,40 +105,64 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { code, redirectUri, mode } = (await req.json()) as {
+    const { code, redirectUri, idToken, mode } = (await req.json()) as {
       code?: string
       redirectUri?: string
+      idToken?: string
       mode?: 'login' | 'link'
     }
     const effectiveMode: 'login' | 'link' = mode === 'link' ? 'link' : 'login'
-    if (!code || !redirectUri) {
-      return new Response(JSON.stringify({ error: 'Missing code or redirectUri' }), {
+
+    let payload: LineIdTokenPayload
+    if (idToken) {
+      // Native app-to-app login (LineLoginPlugin.java) -- the ID token came
+      // from the client, so its claims are only trusted once LINE's own
+      // verify endpoint confirms the signature, audience, and expiry, not
+      // just decoded as-is.
+      const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_token: idToken, client_id: LINE_LOGIN_CHANNEL_ID }),
+      })
+      if (!verifyRes.ok) {
+        const body = await verifyRes.text().catch(() => '')
+        console.error(`LINE id_token verify failed: ${verifyRes.status} ${body}`)
+        return new Response(JSON.stringify({ error: 'LINE id_token verify failed' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      payload = (await verifyRes.json()) as LineIdTokenPayload
+    } else if (code && redirectUri) {
+      // Web browser OAuth redirect -- exchange the code server-side using
+      // the channel secret, which must never reach the browser.
+      const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+          client_id: LINE_LOGIN_CHANNEL_ID,
+          client_secret: LINE_LOGIN_CHANNEL_SECRET,
+        }),
+      })
+      if (!tokenRes.ok) {
+        const body = await tokenRes.text().catch(() => '')
+        console.error(`LINE token exchange failed: ${tokenRes.status} ${body}`)
+        return new Response(JSON.stringify({ error: 'LINE token exchange failed' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const tokens = (await tokenRes.json()) as LineTokenResponse
+      payload = decodeIdTokenPayload(tokens.id_token)
+    } else {
+      return new Response(JSON.stringify({ error: 'Missing idToken, or code and redirectUri' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-
-    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: LINE_LOGIN_CHANNEL_ID,
-        client_secret: LINE_LOGIN_CHANNEL_SECRET,
-      }),
-    })
-    if (!tokenRes.ok) {
-      const body = await tokenRes.text().catch(() => '')
-      console.error(`LINE token exchange failed: ${tokenRes.status} ${body}`)
-      return new Response(JSON.stringify({ error: 'LINE token exchange failed' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    const tokens = (await tokenRes.json()) as LineTokenResponse
-    const payload = decodeIdTokenPayload(tokens.id_token)
     if (!payload.sub) throw new Error('id_token missing sub')
 
     if (effectiveMode === 'link') {

@@ -36,6 +36,11 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // LINE Login native SDK -- lets LineLoginPlugin.java hand off directly
+    // to the LINE app itself (already signed in on the device) instead of
+    // a browser-based OAuth redirect, which always shows a fresh login
+    // form since it has no access to the LINE app's own session.
+    implementation 'com.linecorp.linesdk:linesdk:5.13.0'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

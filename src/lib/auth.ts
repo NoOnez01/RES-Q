@@ -1,54 +1,7 @@
-import { Browser } from '@capacitor/browser'
 import { supabase, supabaseEnabled } from './supabase'
 import { isNativeApp } from './nativeNotify'
+import { LineLoginNative } from './lineLoginNative'
 import type { AppUser, ApprovalStatus, Role } from './types'
-
-/** LINE's plain OAuth authorize endpoint (unlike its "mobile app" package/
- * signature registration, which only applies to their native SDK) only
- * accepts a pre-registered https:// redirect_uri -- a custom resq:// scheme
- * is rejected outright ("Invalid redirect custom scheme"), and
- * https://localhost/... (the app's own origin inside the WebView) isn't
- * reliably reachable once the login hands off through the system browser.
- * So native login reuses the real, already-approved production callback URL
- * -- LineCallback.tsx detects it's running for a native-initiated flow (via
- * the `native` flag encoded in `state`, see encodeLineState) and relays the
- * result to the app over the resq:// deep link instead of completing the
- * exchange on the web page itself, which would establish the session under
- * the wrong origin. */
-const LINE_PRODUCTION_CALLBACK_URL = 'https://noonez01.github.io/RES-Q/auth/line-callback'
-
-export function lineRedirectUri(): string {
-  if (isNativeApp()) return LINE_PRODUCTION_CALLBACK_URL
-  return `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
-}
-
-interface LineStatePayload {
-  mode: LineAuthMode
-  native: boolean
-}
-
-function encodeLineState(mode: LineAuthMode): string {
-  const payload: LineStatePayload = { mode, native: isNativeApp() }
-  return `${btoa(JSON.stringify(payload))}.${randomToken()}`
-}
-
-/** `state` is LINE's only channel that survives a redirect to a completely
- * different origin/tab (the login might start in the app's WebView and land
- * on the production web page in an external browser) -- so unlike a typical
- * OAuth client, this doesn't also compare against a separately-stored
- * expected value. That's an acceptable tradeoff here: the actual token
- * exchange still requires our server-side LINE channel secret and a fresh,
- * single-use code from LINE, so a forged state alone can't complete a
- * login. */
-export function parseLineState(state: string): LineStatePayload | null {
-  try {
-    const [encoded] = state.split('.')
-    const payload = JSON.parse(atob(encoded)) as Partial<LineStatePayload>
-    return { mode: payload.mode === 'link' ? 'link' : 'login', native: !!payload.native }
-  } catch {
-    return null
-  }
-}
 
 interface ProfileRow {
   id: string
@@ -245,6 +198,8 @@ export async function signInWithGoogle(): Promise<void> {
 }
 
 const LINE_LOGIN_CHANNEL_ID = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID as string | undefined
+const LINE_STATE_KEY = 'resq-line-login-state'
+const LINE_MODE_KEY = 'resq-line-login-mode'
 
 export type LineAuthMode = 'login' | 'link'
 
@@ -252,37 +207,68 @@ function randomToken(): string {
   return crypto.randomUUID().replace(/-/g, '')
 }
 
-/** Supabase has no built-in LINE provider (unlike Google), so this drives
- * LINE's own OAuth/OIDC authorize step directly -- the token exchange that
- * needs the channel secret happens server-side in the line-login-exchange
- * Edge Function once LINE redirects back to /auth/line-callback with a
- * code (see AuthCallback pattern in src/pages/auth/LineCallback.tsx).
+function lineRedirectUri(): string {
+  return `${window.location.origin}${import.meta.env.BASE_URL}auth/line-callback`
+}
+
+/** Native: hands off to the LINE app itself via LineLoginPlugin.java's
+ * app-to-app login -- the user is presumably already signed into the LINE
+ * app, so this needs no credentials typed in and no browser round-trip.
+ * Resolves with the signed-in profile directly (or null once a 'link' call
+ * finishes) instead of navigating anywhere, since there's no redirect to
+ * land on.
  *
- * `mode: 'link'` is for an already-logged-in user attaching LINE to their
- * existing account from Settings, instead of signing in fresh -- encoded
- * into `state` (see encodeLineState) rather than sessionStorage, since a
- * native login's callback can land on a completely different origin/tab
- * (see lineRedirectUri) where sessionStorage set here wouldn't be visible. */
-export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<void> {
+ * Web: Supabase has no built-in LINE provider (unlike Google), so this
+ * drives LINE's own OAuth/OIDC authorize step directly -- the code exchange
+ * (needs the channel secret) happens server-side in the line-login-exchange
+ * Edge Function once LINE redirects back to /auth/line-callback (see
+ * LineCallback.tsx). Resolves with null immediately since the page
+ * navigates away; `mode: 'link'` is for an already-logged-in user attaching
+ * LINE to their existing account from Settings, instead of signing in
+ * fresh -- the stored mode is what tells /auth/line-callback which of those
+ * two to do once LINE redirects back. */
+export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<AppUser | null> {
   if (!LINE_LOGIN_CHANNEL_ID) throw new Error('LINE Login is not configured (missing VITE_LINE_LOGIN_CHANNEL_ID)')
+
+  if (isNativeApp()) {
+    const { idToken } = await LineLoginNative.login({ channelId: LINE_LOGIN_CHANNEL_ID })
+    if (mode === 'link') {
+      await exchangeLineIdentity({ idToken, mode: 'link' })
+      return null
+    }
+    return completeLineSession(await exchangeLineIdentity({ idToken, mode: 'login' }))
+  }
+
+  const state = randomToken()
+  sessionStorage.setItem(LINE_STATE_KEY, state)
+  sessionStorage.setItem(LINE_MODE_KEY, mode)
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: LINE_LOGIN_CHANNEL_ID,
     redirect_uri: lineRedirectUri(),
-    state: encodeLineState(mode),
+    state,
     scope: 'openid profile',
     nonce: randomToken(),
   })
-  const authorizeUrl = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
-  if (isNativeApp()) {
-    // A system Custom Tab, not this app's own WebView -- LINE's redirect
-    // will land on the production web page (see lineRedirectUri), which
-    // relays back to the app over a resq:// deep link (see
-    // LineCallback.tsx and the appUrlOpen listener in App.tsx).
-    await Browser.open({ url: authorizeUrl })
-    return
-  }
-  window.location.href = authorizeUrl
+  window.location.href = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
+  return null
+}
+
+/** Reads back and clears the state saved just before redirecting to LINE --
+ * a mismatch (or nothing stored, e.g. a replayed/forged callback URL) means
+ * this isn't a callback we actually initiated. Web-only: native never
+ * redirects anywhere, see signInWithLine. */
+export function consumeLineLoginState(): { redirectUri: string; mode: LineAuthMode } | null {
+  const state = sessionStorage.getItem(LINE_STATE_KEY)
+  const mode: LineAuthMode = sessionStorage.getItem(LINE_MODE_KEY) === 'link' ? 'link' : 'login'
+  sessionStorage.removeItem(LINE_STATE_KEY)
+  sessionStorage.removeItem(LINE_MODE_KEY)
+  if (!state) return null
+  return { redirectUri: lineRedirectUri(), mode }
+}
+
+export function getStoredLineState(): string | null {
+  return sessionStorage.getItem(LINE_STATE_KEY)
 }
 
 interface LineExchangeResult {
@@ -293,16 +279,22 @@ interface LineExchangeResult {
   error?: string
 }
 
-/** Calls the line-login-exchange Edge Function, which trades the LINE
- * authorization code for an id_token server-side (needs the LINE channel
- * secret, so this can't happen in the browser). In 'login' mode it turns
- * that into a Supabase magic-link token via the admin API; in 'link' mode
- * it instead stamps the LINE identity straight onto the caller's own
- * profiles row (see that function's own comments for the full chain). */
-async function exchangeLineCode(code: string, redirectUri: string, mode: LineAuthMode): Promise<LineExchangeResult> {
+type LineExchangeInput =
+  | { code: string; redirectUri: string; mode: LineAuthMode }
+  | { idToken: string; mode: LineAuthMode }
+
+/** Calls the line-login-exchange Edge Function. Given a web `code`, it
+ * exchanges it for tokens using the LINE channel secret (never exposed to
+ * the browser); given a native `idToken`, it verifies that token against
+ * LINE's own /oauth2/v2.1/verify endpoint instead, since a client-supplied
+ * token can't otherwise be trusted. In 'login' mode it turns the result into
+ * a Supabase magic-link token via the admin API; in 'link' mode it instead
+ * stamps the LINE identity straight onto the caller's own profiles row (see
+ * that function's own comments for the full chain). */
+async function exchangeLineIdentity(input: LineExchangeInput): Promise<LineExchangeResult> {
   if (!supabase) throw new Error('Supabase not configured')
   const { data, error } = await supabase.functions.invoke<LineExchangeResult>('line-login-exchange', {
-    body: { code, redirectUri, mode },
+    body: input,
   })
   if (error) {
     // The SDK's own error.message is just the generic "Edge Function
@@ -322,16 +314,16 @@ async function exchangeLineCode(code: string, redirectUri: string, mode: LineAut
   return data
 }
 
-/** Completes a LINE login: exchanges the code, redeems the resulting
- * Supabase token to establish a real session, then ensures a profiles row
- * exists exactly like a fresh Google sign-in would. If this LINE identity
- * was already linked to an existing account (see linkLineIdentity), the
- * Edge Function issues the magic link for that account's real email
- * instead of a fresh synthetic one, so the user lands back in the same
- * account they linked from -- not a second, disconnected one. */
-export async function completeLineLogin(code: string, redirectUri: string): Promise<AppUser | null> {
+/** Redeems the magic-link token the Edge Function minted to establish a
+ * real session, then ensures a profiles row exists exactly like a fresh
+ * Google sign-in would. If this LINE identity was already linked to an
+ * existing account (see below), the Edge Function issues the magic link for
+ * that account's real email instead of a fresh synthetic one, so the user
+ * lands back in the same account they linked from -- not a second,
+ * disconnected one. */
+async function completeLineSession(result: LineExchangeResult): Promise<AppUser | null> {
   if (!supabase) return null
-  const { hashedToken, name, avatarUrl, lineUserId } = await exchangeLineCode(code, redirectUri, 'login')
+  const { hashedToken, name, avatarUrl, lineUserId } = result
   if (!hashedToken) throw new Error('LINE login failed')
   // GoTrue's /verify endpoint rejects the 'magiclink' type here even though
   // admin.generateLink's own `type: 'magiclink'` (line-login-exchange) is
@@ -342,6 +334,13 @@ export async function completeLineLogin(code: string, redirectUri: string): Prom
   return ensureSocialProfile(data.user.id, { name, avatarUrl, lineUserId })
 }
 
+/** Completes a WEB LINE login callback -- see completeLineSession for the
+ * native equivalent, driven directly from signInWithLine instead of a
+ * redirect landing on LineCallback.tsx. */
+export async function completeLineLogin(code: string, redirectUri: string): Promise<AppUser | null> {
+  return completeLineSession(await exchangeLineIdentity({ code, redirectUri, mode: 'login' }))
+}
+
 /** Attaches a LINE identity to the CURRENTLY signed-in account (called from
  * Settings, not the login page) -- lets someone who already registered with
  * email/Google also use "Sign in with LINE" for the same account, and lets
@@ -349,7 +348,7 @@ export async function completeLineLogin(code: string, redirectUri: string): Prom
  * LINE account is already linked to someone else (profiles.line_user_id is
  * unique -- see supabase-profile-line-link.sql). */
 export async function linkLineIdentity(code: string, redirectUri: string): Promise<void> {
-  await exchangeLineCode(code, redirectUri, 'link')
+  await exchangeLineIdentity({ code, redirectUri, mode: 'link' })
 }
 
 /** Detaches LINE from the current account -- afterwards "Sign in with LINE"
