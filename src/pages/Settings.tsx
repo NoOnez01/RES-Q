@@ -211,7 +211,7 @@ export default function Settings() {
               <ShieldCheck className="size-4 text-primary" /> บัญชีและความปลอดภัย
             </h3>
 
-            <div className="flex items-center gap-3 rounded-xl bg-skyblue-pale p-4">
+            <div className="flex items-center gap-3">
               {authProvider === 'google' ? (
                 <GoogleIcon className="size-6 shrink-0" />
               ) : authProvider === 'line' ? (
@@ -236,33 +236,35 @@ export default function Settings() {
               <p className="text-xs text-muted">
                 เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE
               </p>
-              <div className="flex items-center justify-between rounded-xl border border-border p-3">
-                <div className="flex items-center gap-2">
-                  <GoogleIcon className="size-5 shrink-0" />
-                  <span className="text-sm text-navy">Google</span>
+              <div className="flex flex-col divide-y divide-border">
+                <div className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <GoogleIcon className="size-5 shrink-0" />
+                    <span className="text-sm text-navy">Google</span>
+                  </div>
+                  {googleLinked ? (
+                    <span className="text-xs font-medium text-success">เชื่อมต่อแล้ว</span>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleLinkGoogle}>
+                      เชื่อมต่อ
+                    </Button>
+                  )}
                 </div>
-                {googleLinked ? (
-                  <span className="text-xs font-medium text-success">เชื่อมต่อแล้ว</span>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={handleLinkGoogle}>
-                    เชื่อมต่อ
-                  </Button>
-                )}
-              </div>
-              <div className="flex items-center justify-between rounded-xl border border-border p-3">
-                <div className="flex items-center gap-2">
-                  <LineIcon className="size-5 shrink-0 rounded-md" />
-                  <span className="text-sm text-navy">LINE</span>
+                <div className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <LineIcon className="size-5 shrink-0 rounded-md" />
+                    <span className="text-sm text-navy">LINE</span>
+                  </div>
+                  {lineLinked ? (
+                    <Button variant="outline" size="sm" loading={unlinkLineLoading} onClick={handleUnlinkLine}>
+                      ยกเลิกการเชื่อมต่อ
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleLinkLine}>
+                      เชื่อมต่อ
+                    </Button>
+                  )}
                 </div>
-                {lineLinked ? (
-                  <Button variant="outline" size="sm" loading={unlinkLineLoading} onClick={handleUnlinkLine}>
-                    ยกเลิกการเชื่อมต่อ
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={handleLinkLine}>
-                    เชื่อมต่อ
-                  </Button>
-                )}
               </div>
             </div>
 
