@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { ToastTone } from '@/lib/toast'
 import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/alertSound'
 import { showNativeNotification } from '@/lib/nativeNotify'
+import { CaseAlertModal } from './CaseAlertModal'
 import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 
 const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
@@ -13,7 +15,7 @@ const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
   emergency: 'error',
 }
 
-interface HandoffAlert {
+export interface HandoffAlert {
   case: EmergencyCase
   title: string
   message: string
@@ -113,6 +115,12 @@ function playHandoffSound(h: HandoffAlert) {
   else playAlertSound(h.urgent)
 }
 
+function routeForHandoff(h: HandoffAlert): string {
+  if (h.kind === 'dispatch') return `/dispatch/case/${h.case.id}`
+  if (h.kind === 'rescue') return `/rescue/case/${h.case.id}`
+  return `/hospital/case/${h.case.id}`
+}
+
 /**
  * Headless: turns every new store notification relevant to the current
  * user's role into an on-screen toast + a short alert sound, once, the
@@ -133,9 +141,11 @@ export function NotificationAlertBridge() {
   const notifications = useStore((s) => s.notifications)
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
+  const navigate = useNavigate()
   const seenNotificationIds = useRef<Set<string>>(new Set())
   const alertedCaseKeys = useRef<Set<string>>(new Set())
   const isFirstRun = useRef(true)
+  const [alertQueue, setAlertQueue] = useState<HandoffAlert[]>([])
 
   useEffect(() => {
     const audience = currentUser?.role ?? 'public'
@@ -165,11 +175,27 @@ export function NotificationAlertBridge() {
     for (const h of handoffs) {
       if (alertedCaseKeys.current.has(h.key)) continue
       alertedCaseKeys.current.add(h.key)
-      toast({ title: h.title, message: h.message, tone: h.urgent ? 'error' : 'warning' })
+      // A staff-facing handoff (new case, rejection, hospital incoming) gets
+      // the harder-to-miss modal below instead of a toast -- these are
+      // exactly the events where missing the notification has real
+      // consequences, unlike a generic info/success toast.
+      setAlertQueue((q) => [...q, h])
       playHandoffSound(h)
       void showNativeNotification(h.title, h.message)
     }
   }, [notifications, cases, currentUser])
 
-  return null
+  const activeAlert = alertQueue[0] ?? null
+
+  return (
+    <CaseAlertModal
+      alert={activeAlert}
+      queueCount={alertQueue.length}
+      onDismiss={() => setAlertQueue((q) => q.slice(1))}
+      onView={() => {
+        if (activeAlert) navigate(routeForHandoff(activeAlert))
+        setAlertQueue((q) => q.slice(1))
+      }}
+    />
+  )
 }
