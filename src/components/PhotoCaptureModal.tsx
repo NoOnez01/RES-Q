@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Camera, CameraOff, X } from 'lucide-react'
+import { Camera, CameraOff, SwitchCamera, X } from 'lucide-react'
 import { Button } from './ui/Button'
 import type { PhotoCategory } from '@/lib/types'
 
@@ -31,6 +31,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
   const streamRef = useRef<MediaStream | null>(null)
   const [status, setStatus] = useState<'idle' | 'starting' | 'ready' | 'unavailable'>('idle')
   const [flash, setFlash] = useState(false)
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
     if (!open) return
@@ -44,7 +45,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
       setStatus('starting')
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
+          video: { facingMode },
           audio: false,
         })
         if (cancelled) {
@@ -69,7 +70,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
       streamRef.current = null
       setStatus('idle')
     }
-  }, [open, slot?.key])
+  }, [open, slot?.key, facingMode])
 
   useEffect(() => {
     if (!open) return
@@ -139,6 +140,17 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
                 <CameraOff className="size-10" />
                 <p className="text-sm font-medium">ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง</p>
               </div>
+            )}
+
+            {status === 'ready' && (
+              <button
+                type="button"
+                onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
+                aria-label="สลับกล้องหน้า/หลัง"
+                className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+              >
+                <SwitchCamera className="size-5" />
+              </button>
             )}
 
             <div

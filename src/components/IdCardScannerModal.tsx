@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Camera, CameraOff, X, ScanLine, RotateCcw, Check, Upload, AlertTriangle } from 'lucide-react'
+import { Camera, CameraOff, X, ScanLine, RotateCcw, Check, Upload, AlertTriangle, SwitchCamera } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Field'
 
@@ -55,6 +55,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
   const [editName, setEditName] = useState('')
   const [editIdNumber, setEditIdNumber] = useState('')
   const [ocrProgress, setOcrProgress] = useState<{ status: string; progress: number } | null>(null)
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
     if (!open || mode !== 'camera') return
@@ -67,7 +68,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
       }
       setCameraStatus('starting')
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false })
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop())
           return
@@ -90,7 +91,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
       streamRef.current = null
       setCameraStatus('idle')
     }
-  }, [open, mode])
+  }, [open, mode, facingMode])
 
   useEffect(() => {
     if (!open) return
@@ -227,6 +228,16 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                   <CameraOff className="size-10" />
                   <p className="text-sm font-medium">ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง</p>
                 </div>
+              )}
+              {cameraStatus === 'ready' && (
+                <button
+                  type="button"
+                  onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
+                  aria-label="สลับกล้องหน้า/หลัง"
+                  className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                >
+                  <SwitchCamera className="size-5" />
+                </button>
               )}
               <canvas ref={canvasRef} className="hidden" />
             </div>
