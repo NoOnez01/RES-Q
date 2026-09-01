@@ -31,8 +31,6 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_METERED_APP_NAME: ${{ secrets.VITE_METERED_APP_NAME }}
-          VITE_METERED_API_KEY: ${{ secrets.VITE_METERED_API_KEY }}
           VITE_LINE_LOGIN_CHANNEL_ID: ${{ secrets.VITE_LINE_LOGIN_CHANNEL_ID }}
           GH_PAGES_BASE: /${{ github.event.repository.name }}/
 

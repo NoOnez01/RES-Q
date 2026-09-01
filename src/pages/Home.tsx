@@ -9,7 +9,6 @@ import {
   Camera,
   Clock,
   Facebook,
-  FileText,
   Lock,
   MessageCircle,
   PhoneCall,
@@ -51,20 +50,6 @@ const FEATURES = [
     title: 'โทร 1669',
     description: 'เชื่อมต่อศูนย์รับแจ้งเหตุการแพทย์ฉุกเฉิน',
     extra: 'สายด่วนการแพทย์ฉุกเฉินพร้อมรับสายตลอด 24 ชั่วโมง',
-  },
-  {
-    id: 'rescue',
-    icon: <Ambulance className="size-5" />,
-    title: 'ประสานหน่วยกู้ชีพ',
-    description: 'ค้นหาและมอบหมายทีมที่เหมาะสม',
-    extra: 'ระบบจับคู่หน่วยกู้ชีพที่ใกล้จุดเกิดเหตุที่สุดโดยอัตโนมัติ',
-  },
-  {
-    id: 'patient',
-    icon: <FileText className="size-5" />,
-    title: 'บันทึกข้อมูลผู้ป่วย',
-    description: 'ส่งต่อข้อมูลสำคัญให้โรงพยาบาล',
-    extra: 'บันทึกอาการและสัญญาณชีพระหว่างนำส่งผู้ป่วย',
   },
   {
     id: 'tracking',
@@ -363,10 +348,6 @@ export default function Home() {
                 พร้อมช่วยเหลือ 24 ชม.
               </span>
               <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-                <ShieldCheck className="size-4 text-primary" />
-                ข้อมูลปลอดภัยตามบทบาท
-              </span>
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                 <Activity className="size-4 text-primary" />
                 ติดตามสถานะแบบ Real-time
               </span>
@@ -390,7 +371,7 @@ export default function Home() {
       <section id="features" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <Reveal className="text-center">
           <h2 className="text-2xl font-bold text-navy sm:text-3xl">ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน</h2>
-          <p className="mt-2 text-sm text-muted">6 ขั้นตอน ตั้งแต่แจ้งเหตุจนถึงการส่งต่อผู้ป่วย ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน</p>
+          <p className="mt-2 text-sm text-muted">ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน</p>
         </Reveal>
 
         <div className="relative mt-12">

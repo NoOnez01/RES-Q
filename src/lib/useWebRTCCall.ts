@@ -14,26 +14,30 @@ type SignalPayload =
 // call just hangs with no video/audio on either end. TURN relays the media
 // through a server instead when a direct path can't be found.
 //
-// This app's own Metered.ca TURN account issues short-lived credentials via
-// their REST API rather than using a fixed username/password -- fetched
-// fresh per call below. If that account isn't configured (env vars unset)
-// or the fetch fails, falling back to STUN-only means calls can still work
-// on simple networks, just not ones that actually require a TURN relay.
-const METERED_APP_NAME = import.meta.env.VITE_METERED_APP_NAME as string | undefined
-const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY as string | undefined
-
+// TURN credentials come from Cloudflare Calls (previously Metered.ca --
+// switched for reliability) via the cloudflare-turn-credentials Edge
+// Function, which holds the real Cloudflare API token server-side and
+// hands back a short-lived username/credential pair. If that function
+// isn't reachable or isn't configured, falling back to STUN-only means
+// calls can still work on simple networks, just not ones that actually
+// require a TURN relay.
 const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ]
 
+interface CloudflareTurnResponse {
+  iceServers?: { urls: string | string[]; username?: string; credential?: string }
+}
+
 async function fetchIceServers(): Promise<RTCIceServer[]> {
-  if (!METERED_APP_NAME || !METERED_API_KEY) return FALLBACK_ICE_SERVERS
+  if (!supabase) return FALLBACK_ICE_SERVERS
   try {
-    const res = await fetch(`https://${METERED_APP_NAME}/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`)
-    if (!res.ok) return FALLBACK_ICE_SERVERS
-    const servers = (await res.json()) as RTCIceServer[]
-    return servers.length ? servers : FALLBACK_ICE_SERVERS
+    const { data, error } = await supabase.functions.invoke<CloudflareTurnResponse>('cloudflare-turn-credentials', {
+      method: 'POST',
+    })
+    if (error || !data?.iceServers) return FALLBACK_ICE_SERVERS
+    return [data.iceServers as RTCIceServer, ...FALLBACK_ICE_SERVERS]
   } catch {
     return FALLBACK_ICE_SERVERS
   }
@@ -97,9 +101,9 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
     let connectTimeout: ReturnType<typeof setTimeout> | null = null
 
     // Subscribing to signaling has to happen before fetchIceServers() below,
-    // not after: that fetch is a real network round-trip (Metered.ca's TURN
-    // credential API), and it used to run first, delaying this side's
-    // channel subscription by however long it took. Supabase broadcast
+    // not after: that fetch is a real network round-trip (the Cloudflare
+    // TURN credential Edge Function), and it used to run first, delaying
+    // this side's channel subscription by however long it took. Supabase broadcast
     // channels don't replay missed messages to a late subscriber, so on a
     // slow fetch the other side's "join" could be sent and lost before this
     // side was listening at all -- silently killing the call for both

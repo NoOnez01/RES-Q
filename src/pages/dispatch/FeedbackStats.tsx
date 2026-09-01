@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Star, MessageSquareWarning } from 'lucide-react'
+import { Star, MessageSquareWarning, Ambulance } from 'lucide-react'
 import clsx from 'clsx'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '@/components/layout/AppShell'
@@ -40,7 +40,7 @@ export default function DispatchFeedbackStats() {
   }, [])
 
   return (
-    <AppShell variant="dashboard" title="สถิติความพึงพอใจ">
+    <AppShell variant="dashboard" title="ประเมินหน่วยกู้ชีพ">
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-6">
@@ -93,6 +93,44 @@ export default function DispatchFeedbackStats() {
                     </ResponsiveContainer>
                   </div>
                 </Card>
+              </div>
+
+              <div>
+                <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-navy">
+                  <Ambulance className="size-4.5 text-primary" />
+                  คะแนนแยกตามหน่วยกู้ชีพ ({stats.teamStats.length})
+                </h2>
+                {stats.teamStats.length === 0 ? (
+                  <p className="text-sm text-muted">ยังไม่มีข้อมูลการประเมินหน่วยกู้ชีพ</p>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    {stats.teamStats.map((t, i) => (
+                      <Card
+                        key={t.teamId ?? t.teamName}
+                        className={clsx(
+                          'flex flex-wrap items-center justify-between gap-3',
+                          t.teamId === null && 'border-dashed opacity-70',
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          {t.teamId !== null && (
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-skyblue-light text-xs font-extrabold text-primary">
+                              {i + 1}
+                            </span>
+                          )}
+                          <div>
+                            <p className="font-semibold text-navy">{t.teamName}</p>
+                            <p className="text-xs text-muted">{t.count} รีวิว</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StarRow filled={Math.round(t.averageRating)} />
+                          <span className="text-sm font-bold text-navy">{t.averageRating.toFixed(1)}</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

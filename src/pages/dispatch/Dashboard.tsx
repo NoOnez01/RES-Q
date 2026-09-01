@@ -122,7 +122,7 @@ export default function DispatchDashboard() {
               </Link>
               <Link to="/dispatch/feedback-stats">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  สถิติความพึงพอใจ
+                  ประเมินหน่วยกู้ชีพ
                 </Button>
               </Link>
               <Link to="/dispatch/unit-search">

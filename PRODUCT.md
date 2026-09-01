@@ -33,7 +33,7 @@ Unlike a generic CAD/dispatch tool or a plain group chat, ResQ is role-scoped en
 - Dispatch/hospital staff: desktop, operations-center setting, monitoring multiple concurrent cases.
 - Rescue teams: mobile, in the field, often in a moving vehicle.
 - LINE is a primary channel for the Thai market: LINE Login (account linking) and a LINE OA bot (incident reporting + Flex Message status push) run alongside the web app, sharing one underlying case record.
-- Live video calling (WebRTC, Supabase Realtime signaling, Metered.ca TURN fallback) connects a citizen and a dispatcher for real-time triage.
+- Live video calling (WebRTC, Supabase Realtime signaling, Cloudflare Calls TURN fallback) connects a citizen and a dispatcher for real-time triage.
 - Thai is the sole UI language throughout; no English-language screens exist today.
 
 ## Capabilities and Constraints
