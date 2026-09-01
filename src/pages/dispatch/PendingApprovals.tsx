@@ -72,8 +72,9 @@ export default function DispatchPendingApprovals() {
         tone: 'success',
       })
       await reloadStaff()
-    } catch {
-      toast({ title: 'ดำเนินการไม่สำเร็จ', tone: 'error' })
+    } catch (err) {
+      console.error('Action failed:', err)
+      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setAdminBusyId(null)
     }
@@ -86,8 +87,9 @@ export default function DispatchPendingApprovals() {
       toast({ title: 'อนุมัติบัญชีแล้ว', message: `${user.name} เข้าใช้งานได้แล้ว`, tone: 'success' })
       await reload()
       await reloadStaff()
-    } catch {
-      toast({ title: 'อนุมัติไม่สำเร็จ', tone: 'error' })
+    } catch (err) {
+      console.error('Approve account failed:', err)
+      toast({ title: 'อนุมัติไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setBusyId(null)
     }
@@ -112,8 +114,9 @@ export default function DispatchPendingApprovals() {
         tone: 'success',
       })
       await reloadStaff()
-    } catch {
-      toast({ title: 'ดำเนินการไม่สำเร็จ', tone: 'error' })
+    } catch (err) {
+      console.error('Action failed:', err)
+      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setOrgLeadBusyId(null)
     }
@@ -126,8 +129,9 @@ export default function DispatchPendingApprovals() {
       await rejectAccount(rejectTarget.id)
       toast({ title: 'ปฏิเสธบัญชีแล้ว', tone: 'warning' })
       await reload()
-    } catch {
-      toast({ title: 'ดำเนินการไม่สำเร็จ', tone: 'error' })
+    } catch (err) {
+      console.error('Action failed:', err)
+      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setBusyId(null)
       setRejectTarget(null)
