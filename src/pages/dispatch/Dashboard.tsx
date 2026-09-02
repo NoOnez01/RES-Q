@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
-import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, Building2 } from 'lucide-react'
+import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, ClipboardPlus, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
@@ -115,6 +115,11 @@ export default function DispatchDashboard() {
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-navy">เคสทั้งหมด</h2>
             <div className="flex flex-wrap gap-2">
+              <Link to="/dispatch/new-case">
+                <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
+                  บันทึกเคสใหม่
+                </Button>
+              </Link>
               <Link to="/dispatch/pending-approvals">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
                   บัญชีรออนุมัติ

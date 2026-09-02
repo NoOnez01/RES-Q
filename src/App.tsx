@@ -33,6 +33,7 @@ import Contact1669 from '@/pages/Contact1669'
 import CaseTracking from '@/pages/public/CaseTracking'
 
 import DispatchDashboard from '@/pages/dispatch/Dashboard'
+import DispatchNewCase from '@/pages/dispatch/NewCase'
 import DispatchPendingApprovals from '@/pages/dispatch/PendingApprovals'
 import ManageOrgs from '@/pages/dispatch/ManageOrgs'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
@@ -47,6 +48,7 @@ const DispatchUnitSearch = lazy(() => import('@/pages/dispatch/UnitSearch'))
 const PersonalStats = lazy(() => import('@/pages/PersonalStats'))
 
 import RescueDashboard from '@/pages/rescue/Dashboard'
+import RescueNewCase from '@/pages/rescue/NewCase'
 import RescueCaseDetail from '@/pages/rescue/CaseDetail'
 import RescuePatientRecord from '@/pages/rescue/PatientRecord'
 import RescueCallReporter from '@/pages/rescue/CallReporter'
@@ -162,6 +164,7 @@ export default function App() {
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
         <Route path="/dispatch/dashboard" element={<RequireRole role="dispatch"><DispatchDashboard /></RequireRole>} />
+        <Route path="/dispatch/new-case" element={<RequireRole role="dispatch"><DispatchNewCase /></RequireRole>} />
         <Route path="/dispatch/pending-approvals" element={<RequireRole role="dispatch"><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/org-approvals" element={<RequireRole role={['rescue', 'hospital']}><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/manage-orgs" element={<RequireRole role="dispatch"><ManageOrgs /></RequireRole>} />
@@ -191,6 +194,7 @@ export default function App() {
         />
 
         <Route path="/rescue/dashboard" element={<RequireRole role="rescue"><RescueDashboard /></RequireRole>} />
+        <Route path="/rescue/new-case" element={<RequireRole role="rescue"><RescueNewCase /></RequireRole>} />
         <Route path="/rescue/case/:id" element={<RequireRole role="rescue"><RescueCaseDetail /></RequireRole>} />
         <Route path="/rescue/patient-record/:id" element={<RequireRole role="rescue"><RescuePatientRecord /></RequireRole>} />
         <Route path="/rescue/call-reporter/:id" element={<RequireRole role="rescue"><RescueCallReporter /></RequireRole>} />

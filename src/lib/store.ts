@@ -113,6 +113,31 @@ interface ResQState {
 
   // case lifecycle — public
   createCase: (reporterName?: string, reporterPhone?: string) => string
+  /** 1669 logging a case that didn't come through the citizen app -- a
+   * phone-in report, a walk-in, etc. Starts directly at 'received' (there
+   * was no citizen photo/call step to walk through) with the incident
+   * already detailed and assessed, since the dispatcher has that
+   * information in hand while taking the call. Returns the new case id. */
+  createDispatchCase: (
+    input: Omit<IncidentDetails, 'callbackPhone' | 'location'> &
+      Omit<DispatcherAssessment, 'assessedAt'> & {
+        location: GeoLocation
+        reporterName?: string
+        reporterPhone?: string
+      },
+  ) => string
+  /** A rescue crew logging an incident they came across themselves, with no
+   * prior report or dispatch assignment -- fast-forwards the case through
+   * the normal intake/assignment statuses (self-assigned to their own
+   * team) straight to 'rescue-arrived', since they're already on scene
+   * writing this up. Returns the new case id. */
+  createRescueFoundCase: (
+    input: Omit<IncidentDetails, 'callbackPhone' | 'location'> &
+      Omit<DispatcherAssessment, 'assessedAt'> & {
+        location: GeoLocation
+        team: RescueTeam
+      },
+  ) => string
   setActiveCase: (caseId: string | null) => void
   deleteCase: (caseId: string) => void
   addPhoto: (caseId: string, dataUrl: string, category?: PhotoCategory) => void
@@ -279,6 +304,51 @@ export const useStore = create<ResQState>()(
           title: 'เริ่มการขอความช่วยเหลือ',
           message: `สร้างเคส ${c.caseNumber} เรียบร้อยแล้ว`,
           tone: 'info',
+        })
+        return c.id
+      },
+
+      createDispatchCase: (input) => {
+        const seq = get().caseSeq + 1
+        const { incidentType, location, patientCount, conscious, notes, severity, injuryDescription, reporterName, reporterPhone } = input
+        let c = makeNewCase(seq, reporterName, reporterPhone)
+        c = pushStatus(c, 'received', 'บันทึกเคสโดยศูนย์สั่งการ 1669 (รับแจ้งเหตุทางโทรศัพท์ ไม่ผ่านแอปประชาชน)')
+        c = {
+          ...c,
+          location,
+          incidentDetails: { incidentType, location: location.address, patientCount, conscious, notes, callbackPhone: reporterPhone ?? '' },
+          assessment: { severity, injuryDescription, assessedAt: Date.now() },
+          reportedBy: 'dispatch',
+        }
+        set((s) => ({ cases: { ...s.cases, [c.id]: c }, caseSeq: seq, activeCaseId: c.id }))
+        return c.id
+      },
+
+      createRescueFoundCase: (input) => {
+        const seq = get().caseSeq + 1
+        const { incidentType, location, patientCount, conscious, notes, severity, injuryDescription, team } = input
+        let c = makeNewCase(seq)
+        c = pushStatus(c, 'received', 'พบเหตุโดยหน่วยกู้ชีพเอง (ไม่ผ่านศูนย์สั่งการ)')
+        c = pushStatus(c, 'finding-rescue')
+        c = { ...c, assignedRescueTeam: team }
+        c = pushStatus(c, 'rescue-assigned')
+        c = { ...c, rescueEnRoutePct: 100 }
+        c = pushStatus(c, 'rescue-en-route')
+        c = pushStatus(c, 'rescue-arrived', 'หน่วยกู้ชีพถึงที่เกิดเหตุแล้ว (พบเหตุด้วยตนเอง)')
+        c = {
+          ...c,
+          location,
+          incidentDetails: { incidentType, location: location.address, patientCount, conscious, notes, callbackPhone: '' },
+          assessment: { severity, injuryDescription, assessedAt: Date.now() },
+          reportedBy: 'rescue',
+        }
+        set((s) => ({ cases: { ...s.cases, [c.id]: c }, caseSeq: seq, activeCaseId: c.id }))
+        notify(set, {
+          audience: 'dispatch',
+          caseId: c.id,
+          title: 'หน่วยกู้ชีพบันทึกเคสที่พบเอง',
+          message: `${team.name} พบเหตุและบันทึกเคส ${c.caseNumber} ด้วยตนเอง`,
+          tone: 'warning',
         })
         return c.id
       },

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { ClipboardList, Loader2, CheckCircle2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ClipboardList, ClipboardPlus, Loader2, CheckCircle2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { StatBar, StatItem } from '@/components/DashboardCard'
@@ -95,7 +96,15 @@ export default function RescueDashboard() {
             />
           </StatBar>
 
-          <section className="mt-8">
+          <div className="mt-8 flex justify-end">
+            <Link to="/rescue/new-case">
+              <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
+                พบเหตุด้วยตนเอง
+              </Button>
+            </Link>
+          </div>
+
+          <section className="mt-4">
             <h2 className="mb-3 text-lg font-bold text-navy">เคสใหม่ที่ได้รับมอบหมาย</h2>
             {newCases.length === 0 ? (
               <EmptyState title="ยังไม่มีเคสใหม่" description="เมื่อมีการมอบหมายเคสให้หน่วยของคุณ จะแสดงที่นี่" />

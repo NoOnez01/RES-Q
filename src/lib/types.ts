@@ -451,6 +451,10 @@ export interface EmergencyCase {
   /** Local sample case shown to a first-time visitor with no cases yet.
    * Never synced to Supabase -- it's not a real incident. */
   isDemo?: boolean
+  /** Who logged this case when it didn't start from the citizen app --
+   * 1669 taking a phone-in report, or a rescue crew logging an incident
+   * they came across themselves. Absent means the normal citizen-app path. */
+  reportedBy?: 'dispatch' | 'rescue'
 }
 
 export type NotificationAudience = Role | 'all'
