@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CheckCircle2, Check, MapPin, Phone, Users, AlertTriangle, Navigation as NavigationIcon } from 'lucide-react'
+import { CheckCircle2, Check, MapPin, Phone, Users, AlertTriangle, Navigation as NavigationIcon, FileDown } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -23,6 +23,7 @@ import { VehicleLevelBadge } from '@/components/VehicleLevelBadge'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDateTime } from '@/lib/utils'
+import { generateCaseSheetPdf } from '@/lib/caseSheetPdf'
 import type { CaseStatus } from '@/lib/types'
 import { Truck } from 'lucide-react'
 
@@ -105,6 +106,7 @@ export default function RescueCaseDetail() {
   const [updateLoading, setUpdateLoading] = useState(false)
   const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
   const [crewCount, setCrewCount] = useState('')
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   if (!id || !c) {
     return (
@@ -162,6 +164,18 @@ export default function RescueCaseDetail() {
     toast({ title: 'เลือกรถ/ทีมที่รับผิดชอบแล้ว', message: `${vehicle.unitCode} · ${count} คน`, tone: 'success' })
   }
 
+  async function handleExportPdf() {
+    if (!c) return
+    setExportingPdf(true)
+    try {
+      await generateCaseSheetPdf(c)
+    } catch {
+      toast({ title: 'สร้างใบเคสไม่สำเร็จ', message: 'กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)', tone: 'error' })
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   function handleAddUpdate() {
     if (!updateNote.trim()) return
     setUpdateLoading(true)
@@ -205,26 +219,31 @@ export default function RescueCaseDetail() {
               <StatusBadge status={c.status} />
             </div>
           </div>
-          {c.status !== 'completed' && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<Phone className="size-4" />}
-                onClick={() => navigate(`/contact-1669/${c.id}`)}
-              >
-                ติดต่อ 1669
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<Phone className="size-4" />}
-                onClick={() => navigate(`/rescue/call-reporter/${c.id}`)}
-              >
-                โทรหาผู้แจ้งเหตุ
-              </Button>
-            </div>
-          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {c.status !== 'completed' && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={<Phone className="size-4" />}
+                  onClick={() => navigate(`/contact-1669/${c.id}`)}
+                >
+                  ติดต่อ 1669
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={<Phone className="size-4" />}
+                  onClick={() => navigate(`/rescue/call-reporter/${c.id}`)}
+                >
+                  โทรหาผู้แจ้งเหตุ
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" icon={<FileDown className="size-4" />} loading={exportingPdf} onClick={handleExportPdf}>
+              ออกใบเคส (PDF)
+            </Button>
+          </div>
         </Card>
 
         <Card>
