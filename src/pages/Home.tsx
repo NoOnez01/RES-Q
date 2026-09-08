@@ -202,7 +202,7 @@ function OrbitRing({
         width: `${sizePct}%`,
         height: `${sizePct}%`,
         transform: `translate(-50%, -50%) rotate(${rotate}deg) scaleY(${scaleY})`,
-        borderColor: `rgba(30, 58, 138, ${opacity})`,
+        borderColor: `rgba(11, 110, 189, ${opacity})`,
       }}
     >
       <span className={clsx('bg-fx absolute inset-0', spin)}>
@@ -321,6 +321,12 @@ export default function Home() {
   return (
     <AppShell variant="public">
       <div className="relative bg-gradient-to-b from-skyblue-light via-skyblue-pale to-bg">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute left-[-10%] top-[22%] size-[560px] rounded-full bg-primary/[0.08] blur-3xl" />
+          <div className="absolute right-[-10%] top-[50%] size-[460px] rounded-full bg-primary/[0.08] blur-3xl" />
+          <div className="absolute left-[-8%] top-[76%] size-96 rounded-full bg-primary/[0.08] blur-3xl" />
+        </div>
+
         <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
         <div className="hero-grid relative z-10 w-full">
           <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">

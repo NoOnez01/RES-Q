@@ -3,16 +3,16 @@
  * dropped in verbatim -- recharts ships blues/greens/purples that don't
  * match this app's calm-blue-plus-rationed-red language at all. */
 export const CHART_COLORS = {
-  primary: '#1E3A8A',
-  primaryBright: '#2563EB',
-  navy: '#0F172A',
-  muted: '#64748B',
-  border: '#E2E8F0',
+  primary: '#0B6EBD',
+  primaryBright: '#1479C9',
+  navy: '#12304A',
+  muted: '#667085',
+  border: '#D9E7F2',
   emergency: '#D92D20',
   warning: '#F79009',
   moderate: '#F5C542',
   success: '#12B76A',
-  skyblueLight: '#EFF6FF',
+  skyblueLight: '#EAF6FF',
 } as const
 
 /** Same 1 (worst/most severe) -> 5 (best/least severe) ladder used
@@ -29,9 +29,9 @@ export const SEVERITY_CHART_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
 export const CHART_TICK_STYLE = { fontSize: 12, fill: CHART_COLORS.muted, fontFamily: 'inherit' }
 
 export const CHART_TOOLTIP_STYLE = {
-  borderRadius: 8,
+  borderRadius: 12,
   border: `1px solid ${CHART_COLORS.border}`,
-  boxShadow: '0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.06)',
+  boxShadow: '0 8px 24px rgba(18,48,74,.10), 0 2px 6px rgba(18,48,74,.06)',
   fontSize: 13,
   fontFamily: 'inherit',
 }

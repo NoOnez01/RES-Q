@@ -9,7 +9,7 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmptyState, ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { roleLabel } from '@/lib/nav'
-import { CHART_COLORS, CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
+import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 import type { EmergencyCase, Severity } from '@/lib/types'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 
@@ -127,11 +127,11 @@ export default function PersonalStats() {
                           <XAxis dataKey="label" tickLine={false} axisLine={false} tick={CHART_TICK_STYLE} />
                           <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={CHART_TICK_STYLE} />
                           <Tooltip
-                            cursor={{ fill: CHART_COLORS.skyblueLight }}
+                            cursor={{ fill: '#EAF6FF' }}
                             contentStyle={CHART_TOOLTIP_STYLE}
                             formatter={(value) => [`${value} เคส`, 'จำนวน']}
                           />
-                          <Bar dataKey="count" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} maxBarSize={36} />
+                          <Bar dataKey="count" fill="#0B6EBD" radius={[6, 6, 0, 0]} maxBarSize={36} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

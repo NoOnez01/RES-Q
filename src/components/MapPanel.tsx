@@ -13,7 +13,7 @@ export interface MapPin {
 
 const pinColors: Record<MapPin['kind'], string> = {
   incident: '#D92D20',
-  rescue: '#1E3A8A',
+  rescue: '#0B6EBD',
   hospital: '#12B76A',
 }
 
@@ -39,7 +39,7 @@ function buildIcon(kind: MapPin['kind']) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 10px rgba(15,23,42,0.35)',
+          boxShadow: '0 4px 10px rgba(18,48,74,0.35)',
           border: '2px solid white',
           position: 'relative',
           zIndex: 1,
@@ -97,9 +97,9 @@ export function MapPanel({
       className={className}
       style={{
         height,
-        borderRadius: 8,
+        borderRadius: 20,
         overflow: 'hidden',
-        border: '1px solid #E2E8F0',
+        border: '1px solid #D9E7F2',
         cursor: onPickLocation ? 'crosshair' : undefined,
       }}
     >
@@ -117,7 +117,7 @@ export function MapPanel({
         {showRoute && pins.length > 1 && (
           <Polyline
             positions={pins.map((p) => [p.lat, p.lng])}
-            pathOptions={{ color: '#1E3A8A', weight: 4, opacity: 0.6, dashArray: '2 10' }}
+            pathOptions={{ color: '#0B6EBD', weight: 4, opacity: 0.6, dashArray: '2 10' }}
           >
             <Popup>เส้นทางการเดินทางไปยัง {pins[pins.length - 1]?.label ?? 'จุดหมาย'}</Popup>
           </Polyline>
