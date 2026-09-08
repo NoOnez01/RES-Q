@@ -12,15 +12,21 @@ export default {
         // emergency/warning/moderate/success are deliberately untouched --
         // severity/status color-coding is a triage signal, not decoration.
         primary: {
-          DEFAULT: '#1E3A8A',
-          bright: '#2563EB',
+          // Blue-600, not blue-900: the darker navy read as flat/lifeless
+          // once the decorative background system was gone -- this keeps
+          // the same restrained, single-hue system but with enough
+          // saturation that buttons/links/accents still carry energy.
+          DEFAULT: '#2563EB',
+          bright: '#1D4ED8',
         },
         navy: '#0F172A',
         skyblue: {
           light: '#EFF6FF',
           pale: '#F8FAFC',
         },
-        bg: '#FFFFFF',
+        // A visibly cooler canvas (not just a hair off white) so white
+        // cards/panels read as distinct surfaces instead of blending in.
+        bg: '#F1F5F9',
         border: '#E2E8F0',
         muted: '#64748B',
         emergency: {
@@ -49,8 +55,8 @@ export default {
         // ONLY box-shadow classes used anywhere in the app (no raw
         // shadow-lg/xl/2xl exist), so this alone removes the "deep shadow"
         // pattern everywhere a <Card> or <Button> is rendered.
-        card: '0 1px 2px 0 rgba(15, 23, 42, 0.05)',
-        'card-lg': '0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px 0 rgba(15, 23, 42, 0.06)',
+        card: '0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+        'card-lg': '0 4px 8px 0 rgba(15, 23, 42, 0.10), 0 2px 4px 0 rgba(15, 23, 42, 0.06)',
         // Kept as a tight ring + short shadow (not a soft blurred "glow")
         // around the emergency color, which stays untouched per above.
         'red-glow': '0 0 0 3px rgba(217, 45, 32, 0.15), 0 2px 6px 0 rgba(217, 45, 32, 0.25)',
