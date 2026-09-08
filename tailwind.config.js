@@ -4,18 +4,25 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Blue-cyan-white system (see .claude/skills/blue-ui-redesign) --
+        // primary/navy/skyblue/bg/border/muted keep their existing NAMES so
+        // every className referencing them (bg-primary, text-navy,
+        // bg-skyblue-light, ...) across the whole app repaints automatically;
+        // only the VALUES moved to the flatter blue-900/slate palette.
+        // emergency/warning/moderate/success are deliberately untouched --
+        // severity/status color-coding is a triage signal, not decoration.
         primary: {
-          DEFAULT: '#0B6EBD',
-          bright: '#1479C9',
+          DEFAULT: '#1E3A8A',
+          bright: '#2563EB',
         },
-        navy: '#12304A',
+        navy: '#0F172A',
         skyblue: {
-          light: '#EAF6FF',
-          pale: '#F4FAFE',
+          light: '#EFF6FF',
+          pale: '#F8FAFC',
         },
-        bg: '#F6FAFD',
-        border: '#D9E7F2',
-        muted: '#667085',
+        bg: '#FFFFFF',
+        border: '#E2E8F0',
+        muted: '#64748B',
         emergency: {
           DEFAULT: '#D92D20',
           dark: '#B42318',
@@ -28,14 +35,26 @@ export default {
         sans: ['"Noto Sans Thai"', '"Noto Sans"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        xl2: '1.25rem',
-        xl3: '1.75rem',
+        // Overriding Tailwind's own xl/2xl/3xl (not just the custom xl2/xl3
+        // below) is what flattens every rounded-xl/2xl/3xl class already
+        // written across ~50 files, app-wide, without touching any of them.
+        xl: '0.5rem',
+        '2xl': '0.5rem',
+        '3xl': '0.5rem',
+        xl2: '0.5rem',
+        xl3: '0.5rem',
       },
       boxShadow: {
-        card: '0 2px 8px 0 rgba(18, 48, 74, 0.06), 0 1px 2px 0 rgba(18, 48, 74, 0.04)',
-        'card-lg': '0 8px 24px 0 rgba(18, 48, 74, 0.10), 0 2px 6px 0 rgba(18, 48, 74, 0.06)',
-        'red-glow': '0 0 0 8px rgba(217, 45, 32, 0.10), 0 12px 32px 0 rgba(217, 45, 32, 0.35)',
-        'red-glow-lg': '0 0 0 14px rgba(217, 45, 32, 0.12), 0 20px 48px 0 rgba(217, 45, 32, 0.40)',
+        // Flatter, border-first shadows -- these two custom tokens are the
+        // ONLY box-shadow classes used anywhere in the app (no raw
+        // shadow-lg/xl/2xl exist), so this alone removes the "deep shadow"
+        // pattern everywhere a <Card> or <Button> is rendered.
+        card: '0 1px 2px 0 rgba(15, 23, 42, 0.05)',
+        'card-lg': '0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px 0 rgba(15, 23, 42, 0.06)',
+        // Kept as a tight ring + short shadow (not a soft blurred "glow")
+        // around the emergency color, which stays untouched per above.
+        'red-glow': '0 0 0 3px rgba(217, 45, 32, 0.15), 0 2px 6px 0 rgba(217, 45, 32, 0.25)',
+        'red-glow-lg': '0 0 0 4px rgba(217, 45, 32, 0.18), 0 4px 10px 0 rgba(217, 45, 32, 0.28)',
       },
       keyframes: {
         'pulse-glow': {

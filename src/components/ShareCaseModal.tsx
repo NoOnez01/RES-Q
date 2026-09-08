@@ -8,9 +8,17 @@ interface ShareCaseModalProps {
   open: boolean
   url: string
   onClose: () => void
+  title?: string
+  description?: string
 }
 
-export function ShareCaseModal({ open, url, onClose }: ShareCaseModalProps) {
+export function ShareCaseModal({
+  open,
+  url,
+  onClose,
+  title = 'แชร์ให้ญาติติดตามสถานะ',
+  description = 'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์',
+}: ShareCaseModalProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 

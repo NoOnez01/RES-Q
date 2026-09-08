@@ -18,6 +18,7 @@ import {
   XCircle,
   ArrowUpCircle,
   Search,
+  Share2,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
@@ -33,6 +34,7 @@ import { RelativeContacts } from '@/components/RelativeContacts'
 import { MapPanel } from '@/components/MapPanel'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
+import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
@@ -99,6 +101,7 @@ export default function DispatchCaseDetail() {
   const [closeAdviceLoading, setCloseAdviceLoading] = useState(false)
   const [escalateConfirmOpen, setEscalateConfirmOpen] = useState(false)
   const [escalating, setEscalating] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
@@ -265,6 +268,9 @@ export default function DispatchCaseDetail() {
             />
             <StatusBadge status={c.status} />
           </span>
+          <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
+            แชร์ QR/ลิงก์
+          </Button>
         </div>
       </div>
 
@@ -806,6 +812,14 @@ export default function DispatchCaseDetail() {
           setShowAddSupport(true)
         }}
         onCancel={() => setEscalateConfirmOpen(false)}
+      />
+
+      <ShareCaseModal
+        open={shareOpen}
+        url={`${window.location.origin}${import.meta.env.BASE_URL}public/case/${c.id}`}
+        onClose={() => setShareOpen(false)}
+        title="แชร์ลิงก์ติดตามเคส"
+        description="สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์"
       />
         </div>
       </div>

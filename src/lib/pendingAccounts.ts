@@ -45,6 +45,14 @@ export async function fetchPendingAccounts(): Promise<AppUser[]> {
   return (data ?? []).map(toAppUser)
 }
 
+// RLS can block an UPDATE without ever setting `error` -- a row the caller
+// isn't authorized to touch just doesn't match the policy's USING clause,
+// so Postgres reports 0 rows affected, not a failure. Asking for the
+// updated row back (`.select()`) is what makes that distinguishable: an
+// empty result here means "the button did nothing," which needs to surface
+// as a real error instead of the misleading success toast callers show.
+const RLS_BLOCKED_MESSAGE = 'ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)'
+
 /** `asOrgLead` also grants is_org_lead in the same update -- useful for the
  * common case of approving the very first member of a newly self-registered
  * org, who then becomes able to approve their own colleagues afterward. */
@@ -52,14 +60,16 @@ export async function approveAccount(userId: string, asOrgLead = false): Promise
   if (!supabase) return
   const patch: { approval_status: 'approved'; is_org_lead?: boolean } = { approval_status: 'approved' }
   if (asOrgLead) patch.is_org_lead = true
-  const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
+  const { data, error } = await supabase.from('profiles').update(patch).eq('id', userId).select('id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
 }
 
 export async function rejectAccount(userId: string): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase.from('profiles').update({ approval_status: 'rejected' }).eq('id', userId)
+  const { data, error } = await supabase.from('profiles').update({ approval_status: 'rejected' }).eq('id', userId).select('id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
 }
 
 /** Approved staff accounts (not the public role -- promoting an anonymous-
@@ -84,8 +94,9 @@ export async function fetchApprovedStaff(): Promise<AppUser[]> {
  * (see supabase-admin-grant-policy.sql), so a non-admin request just fails. */
 export async function setAdminStatus(userId: string, isAdmin: boolean): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId)
+  const { data, error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId).select('id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
 }
 
 /** Admin/dispatch can call this for anyone; an org lead can only call it
@@ -93,6 +104,7 @@ export async function setAdminStatus(userId: string, isAdmin: boolean): Promise<
  * supabase-org-lead-system.sql), so a mismatched request just fails. */
 export async function setOrgLeadStatus(userId: string, isOrgLead: boolean): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase.from('profiles').update({ is_org_lead: isOrgLead }).eq('id', userId)
+  const { data, error } = await supabase.from('profiles').update({ is_org_lead: isOrgLead }).eq('id', userId).select('id')
   if (error) throw error
+  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
 }

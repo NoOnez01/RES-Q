@@ -241,7 +241,7 @@ export default function CaseTracking() {
           <Card
             className={clsx(
               'flex flex-col gap-3 transition-all duration-500',
-              isCompleted ? 'border-success/40 bg-success/5' : 'border-primary/30 shadow-[0_0_0_4px_rgba(11,110,189,0.10)]',
+              isCompleted ? 'border-success/40 bg-success/5' : 'border-primary/30 shadow-[0_0_0_3px_rgba(30,58,138,0.10)]',
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">

@@ -36,7 +36,7 @@ export function FloatingInfoCard({
         onClick={onClick}
         className="
           group flex w-64 items-start gap-3 rounded-2xl border border-border bg-white/95 p-4 text-left shadow-card backdrop-blur
-          transition-shadow duration-200 hover:border-primary/40 hover:shadow-card-lg hover:shadow-[0_0_0_4px_rgba(11,110,189,0.10)]
+          transition-shadow duration-200 hover:border-primary/40 hover:shadow-card-lg hover:shadow-[0_0_0_3px_rgba(30,58,138,0.10)]
           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20
         "
       >
