@@ -70,12 +70,15 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
   5: 'ระดับ 5: Non-Urgent',
 }
 
+// Thai ESI-scale terminology already used in Thai EMS/hospital triage --
+// matches the Thai descriptions in SEVERITY_OPTIONS (severityOptions.ts),
+// keeping this the one severity label in the app that wasn't Thai.
 export const SEVERITY_SHORT_LABEL: Record<Severity, string> = {
-  1: 'Resuscitation',
-  2: 'Emergency',
-  3: 'Urgent',
-  4: 'Less-Urgent',
-  5: 'Non-Urgent',
+  1: 'วิกฤต',
+  2: 'ฉุกเฉิน',
+  3: 'เร่งด่วน',
+  4: 'ไม่เร่งด่วน',
+  5: 'ทั่วไป',
 }
 
 export type CallStatus = 'idle' | 'connecting' | 'in-call' | 'ended'

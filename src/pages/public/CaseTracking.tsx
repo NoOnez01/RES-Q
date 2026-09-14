@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/StatusBadge'
 import { SeverityBadge } from '@/components/SeverityBadge'
 import { CaseTimeline } from '@/components/CaseTimeline'
+import { RescueEnRouteProgress } from '@/components/RescueEnRouteProgress'
 import { MapPanel } from '@/components/MapPanel'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { CaseQrPanel } from '@/components/CaseQrPanel'
@@ -287,13 +288,16 @@ export default function CaseTracking() {
                 )}
               </div>
               {etaMin !== null && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-                    คาดว่าถึงในอีกประมาณ {etaMin} นาที
-                  </span>
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                    กำลังเดินทาง {Math.round(activeCase.rescueEnRoutePct)}%
-                  </span>
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
+                      คาดว่าถึงในอีกประมาณ {etaMin} นาที
+                    </span>
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                      กำลังเดินทาง {Math.round(activeCase.rescueEnRoutePct)}%
+                    </span>
+                  </div>
+                  <RescueEnRouteProgress pct={activeCase.rescueEnRoutePct} />
                 </div>
               )}
               <MapPanel pins={pins} height="220px" showRoute />

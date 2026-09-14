@@ -12,6 +12,14 @@ import { useStore } from '@/lib/store'
 import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
 import { toast } from '@/lib/toast'
 
+// How long the citizen waits with no dispatcher answering before the call
+// is treated as unanswered. Without this, a busy dispatch center left the
+// citizen ringing forever with a "cancel" button as the only way out -- and
+// because the report itself only reaches dispatch's queue once the call
+// *ends* (see handleProceed's submitReport below), an emergency report
+// could sit stuck indefinitely behind a call nobody ever picked up.
+const RING_TIMEOUT_MS = 45000
+
 export default function Call1669() {
   const navigate = useNavigate()
   const activeCaseId = useStore((s) => s.activeCaseId)
@@ -26,9 +34,11 @@ export default function Call1669() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const selfHungUpRef = useRef(false)
+  const noAnswerRef = useRef(false)
   const hasShownEndedRef = useRef(false)
   const hasProceededRef = useRef(false)
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
@@ -61,14 +71,40 @@ export default function Call1669() {
     }
   }, [activeCase?.callStatus, activeCaseId, tickCallDuration])
 
+  // If nobody at dispatch answers within RING_TIMEOUT_MS, stop ringing on
+  // our own rather than leaving the citizen staring at "รอเจ้าหน้าที่รับสาย"
+  // indefinitely. Ending the call here (same as a manual hang-up) still lets
+  // the existing "call ended -> proceed" effect below submit the report, so
+  // an unanswered call never leaves the emergency report itself stuck.
+  useEffect(() => {
+    if (activeCase?.callStatus !== 'connecting' || !activeCaseId) return
+    const id = activeCaseId
+    ringTimeoutRef.current = setTimeout(() => {
+      noAnswerRef.current = true
+      setCallStatus(id, 'ended')
+    }, RING_TIMEOUT_MS)
+    return () => {
+      if (ringTimeoutRef.current) {
+        clearTimeout(ringTimeoutRef.current)
+        ringTimeoutRef.current = null
+      }
+    }
+  }, [activeCase?.callStatus, activeCaseId, setCallStatus])
+
   // The call ending is driven purely by the synced callStatus field, so this
-  // fires whether the citizen hung up themselves or the dispatcher did on
-  // their end — one side ending the call ends it for both. Only worth an
-  // explicit toast when it wasn't the citizen's own action.
+  // fires whether the citizen hung up themselves, the dispatcher did on
+  // their end, or nobody ever answered (see the ring-timeout effect above)
+  // — one side ending the call ends it for both.
   useEffect(() => {
     if (activeCase?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    if (!selfHungUpRef.current) {
+    if (noAnswerRef.current) {
+      toast({
+        title: 'ยังไม่มีเจ้าหน้าที่รับสาย',
+        message: 'ระบบบันทึกเรื่องแจ้งเหตุของคุณเข้าคิวของศูนย์สั่งการแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด',
+        tone: 'warning',
+      })
+    } else if (!selfHungUpRef.current) {
       toast({ title: 'เจ้าหน้าที่วางสายแล้ว', message: 'การโทรสิ้นสุดแล้ว', tone: 'info' })
     }
   }, [activeCase?.callStatus])
@@ -97,11 +133,16 @@ export default function Call1669() {
       clearTimeout(proceedTimerRef.current)
       proceedTimerRef.current = null
     }
+    if (ringTimeoutRef.current) {
+      clearTimeout(ringTimeoutRef.current)
+      ringTimeoutRef.current = null
+    }
   }
 
   function handleConfirmCall() {
     if (!activeCaseId) return
     selfHungUpRef.current = false
+    noAnswerRef.current = false
     hasShownEndedRef.current = false
     hasProceededRef.current = false
     setConfirmOpen(false)
@@ -175,7 +216,12 @@ export default function Call1669() {
             <p className="text-2xl font-extrabold tracking-wide text-emergency">1669</p>
             <p className="text-sm font-semibold text-navy">สายด่วนการแพทย์ฉุกเฉิน 1669</p>
             {activeCase.callStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">กำลังโทร... รอเจ้าหน้าที่รับสาย</p>
+              <>
+                <p className="text-xs font-medium text-warning animate-pulse">กำลังโทร... รอเจ้าหน้าที่รับสาย</p>
+                <p className="text-xs text-muted">
+                  หากไม่มีผู้รับสายภายใน {RING_TIMEOUT_MS / 1000} วินาที ระบบจะบันทึกเรื่องแจ้งเหตุของคุณให้อัตโนมัติ
+                </p>
+              </>
             )}
             {activeCase.callStatus === 'in-call' && (
               <p className="text-xs font-medium text-success">เจ้าหน้าที่รับสายแล้ว กำลังสนทนา</p>

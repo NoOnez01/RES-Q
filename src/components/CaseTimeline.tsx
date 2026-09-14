@@ -1,8 +1,45 @@
 import clsx from 'clsx'
-import { Check } from 'lucide-react'
+import {
+  Check,
+  Phone,
+  Camera,
+  PhoneCall,
+  ClipboardCheck,
+  Search,
+  UserCheck,
+  Ambulance,
+  MapPin,
+  HeartPulse,
+  Navigation,
+  Building2,
+  BedDouble,
+  CheckCircle2,
+} from 'lucide-react'
 import { CASE_STATUS_FLOW, statusMeta } from '@/lib/types'
 import type { CaseStatus, TimelineEvent } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
+
+// Gives each step its own recognizable identity (instead of an identical
+// numbered circle for all 13) so the sequence reads at a glance -- what's
+// literally happening at this step, not just "step 6 of 13". Shown for
+// every step that isn't done yet; a completed step still shows a plain
+// checkmark (see below), since "this happened" is the more useful signal
+// once a step is behind you.
+const STEP_ICON: Record<CaseStatus, React.ElementType> = {
+  contacted: Phone,
+  'photos-taken': Camera,
+  'called-1669': PhoneCall,
+  received: ClipboardCheck,
+  'finding-rescue': Search,
+  'rescue-assigned': UserCheck,
+  'rescue-en-route': Ambulance,
+  'rescue-arrived': MapPin,
+  assisted: HeartPulse,
+  transporting: Navigation,
+  'hospital-arrived': Building2,
+  'hospital-received': BedDouble,
+  completed: CheckCircle2,
+}
 
 export function CaseTimeline({
   timeline,
@@ -34,6 +71,7 @@ export function CaseTimeline({
         const isCurrent = step.order === currentOrder
         const isNext = step.order === currentOrder + 1
         const isLast = i === steps.length - 1
+        const StepIcon = STEP_ICON[step.key]
 
         return (
           <li key={step.key} className="relative flex gap-3 pb-6 last:pb-0">
@@ -54,7 +92,7 @@ export function CaseTimeline({
                 !isDone && !isCurrent && !isNext && 'border-border bg-white text-muted/50',
               )}
             >
-              {isDone ? <Check className="size-3.5" strokeWidth={3} /> : i + 1}
+              {isDone ? <Check className="size-3.5" strokeWidth={3} /> : <StepIcon className="size-3.5" />}
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, ClipboardPlus, Building2 } from 'lucide-react'
@@ -6,10 +6,13 @@ import { AppShell } from '@/components/layout/AppShell'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
+import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
+
+const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 
 const IN_PROGRESS_STATUSES = [
   'rescue-assigned',
@@ -199,6 +202,12 @@ export default function DispatchDashboard() {
                 })}
               </div>
             )}
+          </div>
+
+          <div className="mt-8">
+            <Suspense fallback={<ChartCardSkeleton />}>
+              <SeverityDistributionChart title="สัดส่วนระดับความรุนแรงของเคส" cases={allCases} />
+            </Suspense>
           </div>
         </div>
       </div>

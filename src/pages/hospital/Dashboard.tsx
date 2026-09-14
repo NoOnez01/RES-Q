@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Truck, Clock, CheckCircle2, Building2, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
 import clsx from 'clsx'
@@ -9,10 +9,13 @@ import { Card } from '@/components/ui/Card'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
+import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
+
+const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 
 export default function HospitalDashboard() {
   const cases = useStore((s) => s.cases)
@@ -279,6 +282,12 @@ export default function HospitalDashboard() {
               </section>
             </div>
           )}
+
+          <div className="mt-8">
+            <Suspense fallback={<ChartCardSkeleton />}>
+              <SeverityDistributionChart title="สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา" cases={hospitalCases} />
+            </Suspense>
+          </div>
         </div>
       </div>
 
