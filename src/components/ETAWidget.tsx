@@ -5,11 +5,17 @@ export function ETAWidget({
   etaMin,
   distanceKm,
   progressPct,
+  realRoute,
   className,
 }: {
   etaMin: number
   distanceKm?: number
   progressPct?: number
+  /** True once a real OSRM road route loaded -- shows this is following
+   * actual streets, not a generic straight-line distance/speed guess. Not
+   * live-traffic-aware (see lib/routing.ts for why), so the label says
+   * "real route", not "real traffic". */
+  realRoute?: boolean
   className?: string
 }) {
   return (
@@ -25,7 +31,14 @@ export function ETAWidget({
         <Clock3 className="relative size-5" />
       </div>
       <div className="relative min-w-0 flex-1">
-        <p className="text-xs text-muted">เวลาโดยประมาณถึงจุดหมาย</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="text-xs text-muted">เวลาโดยประมาณถึงจุดหมาย</p>
+          {realRoute && (
+            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
+              เส้นทางจริงตามถนน
+            </span>
+          )}
+        </div>
         <p key={etaMin} className="animate-fade-in text-xl font-extrabold text-navy">
           {etaMin} <span className="text-sm font-semibold text-muted">นาที</span>
         </p>

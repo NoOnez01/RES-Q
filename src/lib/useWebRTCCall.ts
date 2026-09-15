@@ -224,7 +224,32 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         if (cancelled) return
         if (msg.type === 'join') {
           setRemoteJoined(true)
-          if (role === 'caller' && msg.role === 'callee') void sendOffer()
+          if (role === 'caller' && msg.role === 'callee') {
+            // A fresh 'join' after we've already sent an offer means the
+            // callee's side reset (they navigated away and back mid-call,
+            // or their connection dropped and reconnected) -- our original
+            // offer/answer is now stale on their end, but the plain
+            // `hasOffered` guard in sendOffer() would silently swallow this
+            // rejoin, leaving this side waiting forever for an answer that
+            // was never coming until connectTimeout declared the call
+            // failed ("can't connect"). Restart ICE and re-offer instead.
+            if (hasOffered) {
+              hasOffered = false
+              pc.restartIce()
+              // Re-arm the same watchdog init() set up for the first
+              // attempt -- it already fired and cleared itself once
+              // (connected, then the other side left), so without this a
+              // retry that also fails to connect would just hang in
+              // 'connecting' forever instead of eventually surfacing as
+              // 'failed'.
+              if (connectTimeout) clearTimeout(connectTimeout)
+              connectTimeout = setTimeout(() => {
+                if (cancelled) return
+                setConnectionState((s) => (s === 'connected' ? s : 'failed'))
+              }, 15000)
+            }
+            void sendOffer()
+          }
           return
         }
         if (msg.type === 'offer' && role === 'callee') {
@@ -267,6 +292,11 @@ export function useWebRTCCall(caseId: string | null, role: 'caller' | 'callee', 
         if (msg.type === 'hangup') {
           setRemoteStream(null)
           setRemoteJoined(false)
+          // Otherwise a stale 'connected' (or 'failed', from a prior drop)
+          // lingers on screen even though the other side just left and may
+          // rejoin any moment -- this reads as "waiting" instead of a
+          // leftover status from the connection that just ended.
+          setConnectionState('connecting')
         }
       }
 

@@ -76,6 +76,12 @@ interface MapPanelProps {
   zoom?: number
   height?: string
   showRoute?: boolean
+  /** Real road-route geometry (decoded from OSRM's route polyline, see
+   * lib/routing.ts) to draw instead of the straight pin-to-pin line
+   * `showRoute` alone draws. Falls back to the straight line when absent
+   * (route still loading, or the request failed) so every existing caller
+   * keeps working unchanged. */
+  routePoints?: [number, number][]
   className?: string
   /** When set, clicking the map reports the clicked coordinates instead of just panning. */
   onPickLocation?: (lat: number, lng: number) => void
@@ -87,6 +93,7 @@ export function MapPanel({
   zoom = 14,
   height = '320px',
   showRoute = false,
+  routePoints,
   className,
   onPickLocation,
 }: MapPanelProps) {
@@ -114,7 +121,17 @@ export function MapPanel({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {showRoute && pins.length > 1 && (
+        {showRoute && routePoints && routePoints.length > 1 && (
+          // The real road route once it's loaded -- solid, not dashed, since
+          // this is an actual path a vehicle drives, not a placeholder.
+          <Polyline positions={routePoints} pathOptions={{ color: '#0B6EBD', weight: 4, opacity: 0.7 }}>
+            <Popup>เส้นทางการเดินทางไปยัง {pins[pins.length - 1]?.label ?? 'จุดหมาย'}</Popup>
+          </Polyline>
+        )}
+        {showRoute && !routePoints && pins.length > 1 && (
+          // Straight pin-to-pin placeholder while the real route is still
+          // loading, or when routing isn't configured at all -- dashed so it
+          // reads as "as the crow flies", not a real driving path.
           <Polyline
             positions={pins.map((p) => [p.lat, p.lng])}
             pathOptions={{ color: '#0B6EBD', weight: 4, opacity: 0.6, dashArray: '2 10' }}

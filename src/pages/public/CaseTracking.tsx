@@ -20,6 +20,7 @@ import { useStore } from '@/lib/store'
 import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
 import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
+import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import type { EmergencyCase } from '@/lib/types'
 
@@ -116,6 +117,48 @@ export default function CaseTracking() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCase?.status])
 
+  // Real road route + typical-speed ETA for whichever leg is currently live
+  // (rescue team -> incident, or incident -> hospital) -- see lib/routing.ts.
+  // Stays null (every value below then falls back to the old straight-line
+  // estimate) if the routing request fails.
+  const [route, setRoute] = useState<RouteResult | null>(null)
+  useEffect(() => {
+    if (!activeCase?.assignedRescueTeam) {
+      setRoute(null)
+      return
+    }
+    const teamBase = activeCase.assignedRescueTeam.base
+    const origin =
+      activeCase.status === 'rescue-en-route'
+        ? teamBase
+        : activeCase.status === 'transporting'
+          ? (activeCase.location ?? DEFAULT_INCIDENT_LOCATION)
+          : null
+    const destination =
+      activeCase.status === 'rescue-en-route'
+        ? (activeCase.location ?? DEFAULT_INCIDENT_LOCATION)
+        : activeCase.status === 'transporting'
+          ? activeCase.selectedHospital?.location ?? null
+          : null
+    if (!origin || !destination) {
+      setRoute(null)
+      return
+    }
+    let cancelled = false
+    setRoute(null)
+    void fetchRoute(origin, destination).then((r) => {
+      if (!cancelled) setRoute(r)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    activeCase?.assignedRescueTeam,
+    activeCase?.status,
+    activeCase?.location,
+    activeCase?.selectedHospital?.location,
+  ])
+
   if (!activeCase) {
     return (
       <AppShell variant="flow" title="ติดตามเคส" showBack onBack={() => navigate('/')}>
@@ -135,11 +178,13 @@ export default function CaseTracking() {
   const isTransporting = activeCase.status === 'transporting'
   const hospitalLoc = activeCase.selectedHospital?.location ?? null
 
-  // Same base->incident (and, once transporting, incident->hospital)
-  // interpolation the rescue team's own navigation screen uses for its live
-  // position, driven by the same synced rescueEnRoutePct -- so the citizen
-  // sees the vehicle actually moving across the map for BOTH legs of the
-  // trip instead of a pin frozen at the team's home base throughout.
+  // Same base->incident (and, once transporting, incident->hospital) leg
+  // the rescue team's own navigation screen tracks, driven by the same
+  // synced rescueEnRoutePct -- so the citizen sees the vehicle actually
+  // moving across the map for BOTH legs instead of a pin frozen at the
+  // team's home base throughout. Rides the real route geometry once it's
+  // loaded (see the fetchRoute effect above); falls back to the original
+  // straight-line interpolation otherwise.
   const ratio = clamp(activeCase.rescueEnRoutePct, 0, 100) / 100
   const leg =
     isEnRoute
@@ -148,14 +193,18 @@ export default function CaseTracking() {
         ? { from: location, to: hospitalLoc, label: activeCase.selectedHospital?.name ?? 'โรงพยาบาล', kind: 'hospital' as const }
         : null
   const rescuePos =
-    team && leg && leg.from && leg.to
-      ? { lat: leg.from.lat + (leg.to.lat - leg.from.lat) * ratio, lng: leg.from.lng + (leg.to.lng - leg.from.lng) * ratio }
-      : team
-        ? team.base
-        : null
+    team && route
+      ? pointAlongRoute(route.points, ratio)
+      : team && leg && leg.from && leg.to
+        ? { lat: leg.from.lat + (leg.to.lat - leg.from.lat) * ratio, lng: leg.from.lng + (leg.to.lng - leg.from.lng) * ratio }
+        : team
+          ? team.base
+          : null
 
   let etaMin: number | null = null
-  if (team && leg?.to && rescuePos) {
+  if (route) {
+    etaMin = route.durationMin
+  } else if (team && leg?.to && rescuePos) {
     const distanceKm = haversineKm(rescuePos, leg.to)
     etaMin = estimateEtaMin(distanceKm || 0.1)
   }
@@ -296,11 +345,16 @@ export default function CaseTracking() {
                     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
                       กำลังเดินทาง {Math.round(activeCase.rescueEnRoutePct)}%
                     </span>
+                    {route && (
+                      <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                        เส้นทางจริงตามถนน
+                      </span>
+                    )}
                   </div>
                   <RescueEnRouteProgress pct={activeCase.rescueEnRoutePct} />
                 </div>
               )}
-              <MapPanel pins={pins} height="220px" showRoute />
+              <MapPanel pins={pins} height="220px" showRoute routePoints={route?.points} />
             </Card>
           )}
 

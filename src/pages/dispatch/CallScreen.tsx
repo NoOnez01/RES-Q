@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PhoneOff, MapPin, User } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
@@ -26,6 +27,43 @@ export default function DispatchCallScreen() {
     isActive,
   )
   const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+
+  // This screen has no back button (showBack={false} below) so a stray tap
+  // can't hang up -- but the browser/Android back gesture still can, and
+  // silently dropping a live emergency call was the actual bug report: an
+  // accidental back-navigation ended the call with no warning, and the pc
+  // torn down by unmounting left nothing to "retry" back into (see the
+  // hasOffered/restartIce fix in useWebRTCCall.ts for that second half).
+  // Traps ONE back-press per mount: push a dummy history entry now, and
+  // treat popstate while still on a live call as "confirm before leaving"
+  // rather than letting it through.
+  useEffect(() => {
+    if (!isActive) return
+    window.history.pushState(null, '', window.location.href)
+    function onPopState() {
+      setShowLeaveConfirm(true)
+      window.history.pushState(null, '', window.location.href)
+    }
+    window.addEventListener('popstate', onPopState)
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      window.removeEventListener('popstate', onPopState)
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [isActive])
+
+  function handleConfirmLeave() {
+    setShowLeaveConfirm(false)
+    // Same path as the "วางสาย" button -- just flip callStatus and let the
+    // existing "call ended" effect above show the toast and navigate away,
+    // rather than duplicating that here.
+    if (id) setCallStatus(id, 'ended')
+  }
 
   // The call ending is driven purely by the synced callStatus field, so this
   // fires the same way whether WE hung up or the citizen on the other end
@@ -113,6 +151,17 @@ export default function DispatchCallScreen() {
           </Button>
         </div>
       </div>
+
+      <ConfirmationModal
+        open={showLeaveConfirm}
+        title="ยังอยู่ระหว่างการสนทนา"
+        message="ต้องการวางสายและออกจากหน้านี้หรือไม่"
+        confirmLabel="วางสายและออก"
+        cancelLabel="คุยต่อ"
+        tone="danger"
+        onConfirm={handleConfirmLeave}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
     </AppShell>
   )
 }

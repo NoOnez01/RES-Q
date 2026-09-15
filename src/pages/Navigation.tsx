@@ -16,6 +16,7 @@ import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { clamp, estimateEtaMin, haversineKm, formatDateTime } from '@/lib/utils'
+import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
 import type { GeoLocation } from '@/lib/types'
 
 export default function NavigationPage() {
@@ -31,6 +32,7 @@ export default function NavigationPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [updateNote, setUpdateNote] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
+  const [route, setRoute] = useState<RouteResult | null>(null)
 
   const isEnRoute = c?.status === 'rescue-en-route'
   const isTransporting = c?.status === 'transporting'
@@ -40,6 +42,26 @@ export default function NavigationPage() {
   const target: GeoLocation | null = isEnRoute ? c?.location ?? null : isTransporting ? c?.selectedHospital?.location ?? null : null
   const destinationLabel = isEnRoute ? 'จุดเกิดเหตุ' : isTransporting ? c?.selectedHospital?.name ?? 'โรงพยาบาล' : ''
   const arriveButtonLabel = isEnRoute ? 'ถึงจุดเกิดเหตุแล้ว' : 'ถึงโรงพยาบาลแล้ว'
+
+  // Real road route + typical-speed ETA (see lib/routing.ts) for whichever
+  // leg is currently active. Silently stays null -- and every value below
+  // falls back to the old straight-line estimate -- if the routing request
+  // fails (no key needed; OSRM's public server is called directly).
+  useEffect(() => {
+    if (!isNavigable || !base || !target) {
+      setRoute(null)
+      return
+    }
+    let cancelled = false
+    setRoute(null)
+    void fetchRoute(base, target).then((r) => {
+      if (!cancelled) setRoute(r)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNavigable, base?.lat, base?.lng, target?.lat, target?.lng])
 
   useEffect(() => {
     if (!c || !id || !isNavigable || !base || !target) return
@@ -101,18 +123,22 @@ export default function NavigationPage() {
   }
 
   const ratio = clamp(pct, 0, 100) / 100
-  const livePos = {
-    lat: base.lat + (target.lat - base.lat) * ratio,
-    lng: base.lng + (target.lng - base.lng) * ratio,
-  }
+  // Rides the real road geometry once it's loaded; falls back to the
+  // original straight-line interpolation otherwise (route still loading,
+  // or routing not configured) so this screen never blocks on it.
+  const livePos = route
+    ? pointAlongRoute(route.points, ratio)
+    : { lat: base.lat + (target.lat - base.lat) * ratio, lng: base.lng + (target.lng - base.lng) * ratio }
 
   const pins: MapPinT[] = [
     { id: 'rescue', lat: livePos.lat, lng: livePos.lng, label: 'หน่วยกู้ชีพ', kind: 'rescue' },
     { id: 'dest', lat: target.lat, lng: target.lng, label: destinationLabel, kind: isTransporting ? 'hospital' : 'incident' },
   ]
 
-  const distanceKm = haversineKm(base, target)
-  const etaMin = estimateEtaMin(distanceKm)
+  // Real road distance + road-network ETA when available; the old
+  // as-the-crow-flies estimate otherwise.
+  const distanceKm = route ? route.distanceKm : haversineKm(base, target)
+  const etaMin = route ? route.durationMin : estimateEtaMin(distanceKm)
   const arrived = pct >= 100
 
   function handleArrive() {
@@ -150,10 +176,10 @@ export default function NavigationPage() {
             </div>
           )}
 
-          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={Math.round(pct)} />
+          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={Math.round(pct)} realRoute={!!route} />
 
           <Card className="!p-0 overflow-hidden">
-            <MapPanel pins={pins} showRoute height="360px" />
+            <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
           </Card>
 
           <Card className="flex items-center justify-center gap-2 py-4 text-center">
