@@ -39,28 +39,24 @@ const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/driving'
 // fetchRoute() below skips straight to the OSRM path, so this integration
 // ships "wired but dormant" and turns on the moment a key is added.
 //
-// NOTE: written against Longdo's publicly documented Route Service shape,
-// but not yet exercised against a live key (none was available while
-// building this) -- fetchRouteFromLongdo is defensive about that (any
-// unexpected field/shape just returns null, same as a network failure) so a
-// wrong assumption here safely falls back to OSRM instead of breaking
-// routing. Worth a quick real-key smoke test once one exists, using the
-// browser network tab to confirm the `data[].guide[]` shape assumed below.
-const LONGDO_ROUTE_URL = 'https://api.longdo.com/RouteService/json/route/guide'
+// Uses the GeoJSON variant of the route endpoint rather than the plain JSON
+// `route/guide` one -- confirmed against a live key that `route/guide`'s
+// `guide[]` entries carry turn-by-turn text (name/distance/interval) but no
+// lat/lon at all, so distance/duration would come back fine but `points`
+// would always end up empty (falling back to OSRM with no visible error).
+// The `geojson/route` endpoint returns the same segment list, but each
+// segment carries its own `geometry.coordinates` ([lon,lat] pairs) alongside
+// the same `properties.distance`/`interval` -- one request gets both the
+// real road-following geometry and accurate totals.
+const LONGDO_ROUTE_URL = 'https://api.longdo.com/RouteService/geojson/route'
 
-interface LongdoGuideStep {
-  lat?: number
-  lon?: number
-  distance?: number
-  interval?: number
+interface LongdoRouteFeature {
+  geometry?: { coordinates?: [number, number][] }
+  properties?: { distance?: number; interval?: number }
 }
 
-interface LongdoRouteResponse {
-  data?: {
-    distance?: number
-    interval?: number
-    guide?: LongdoGuideStep[]
-  }[]
+interface LongdoGeoJsonResponse {
+  features?: LongdoRouteFeature[]
 }
 
 async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
@@ -81,19 +77,19 @@ async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocatio
   try {
     const res = await fetch(`${LONGDO_ROUTE_URL}?${params}`, { signal: AbortSignal.timeout(8000) })
     if (!res.ok) return null
-    const data = (await res.json()) as LongdoRouteResponse
-    const legs = data.data
-    if (!legs || legs.length === 0) return null
+    const data = (await res.json()) as LongdoGeoJsonResponse
+    const features = data.features
+    if (!features || features.length === 0) return null
 
     const points: [number, number][] = []
     let distanceM = 0
     let durationS = 0
-    for (const leg of legs) {
-      distanceM += leg.distance ?? 0
-      durationS += leg.interval ?? 0
-      for (const step of leg.guide ?? []) {
-        if (typeof step.lat === 'number' && typeof step.lon === 'number') {
-          points.push([step.lat, step.lon])
+    for (const feature of features) {
+      distanceM += feature.properties?.distance ?? 0
+      durationS += feature.properties?.interval ?? 0
+      for (const [lon, lat] of feature.geometry?.coordinates ?? []) {
+        if (typeof lat === 'number' && typeof lon === 'number') {
+          points.push([lat, lon])
         }
       }
     }
