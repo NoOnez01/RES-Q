@@ -5,6 +5,23 @@ import type { Hospital } from '@/lib/types'
 import { Input } from './ui/Field'
 import { EmptyState } from './States'
 import { ConfirmationModal } from './ConfirmationModal'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'ค้นหาโรงพยาบาลด้วยชื่อ...': 'Search hospitals by name...',
+  ค้นหาโรงพยาบาล: 'Search hospitals',
+  ไม่พบโรงพยาบาลที่ค้นหา: 'No matching hospital found',
+  ลองค้นหาด้วยชื่ออื่น: 'Try a different search term',
+  แนะนำที่สุด: 'Best match',
+  ห้องฉุกเฉินพร้อมรับ: 'ER available',
+  ห้องฉุกเฉินเต็ม: 'ER full',
+  'เตียงว่าง {n}': '{n} beds available',
+  '{km} กม. · {eta} นาที': '{km} km · {eta} min',
+  โรงพยาบาลนี้: 'this hospital',
+  'ห้องฉุกเฉินของ{name}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?': "{name}'s emergency room is currently full. Confirm you still want to select this hospital?",
+  ยืนยันเลือกโรงพยาบาลนี้: 'Confirm this hospital',
+  เลือกที่อื่นแทน: 'Choose a different one',
+})
 
 export function HospitalSelector({
   hospitals,
@@ -33,6 +50,7 @@ export function HospitalSelector({
   // one was previously a single accidental tap away from an available
   // hospital's card, with nothing to confirm the choice was intentional.
   const [pendingFullErHospital, setPendingFullErHospital] = useState<Hospital | null>(null)
+  const t = useT()
 
   function handleCardClick(h: Hospital) {
     if (!h.erAvailable) {
@@ -45,14 +63,14 @@ export function HospitalSelector({
   return (
     <div className="flex flex-col gap-3">
       <Input
-        placeholder="ค้นหาโรงพยาบาลด้วยชื่อ..."
+        placeholder={t('ค้นหาโรงพยาบาลด้วยชื่อ...')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="!py-2.5"
-        aria-label="ค้นหาโรงพยาบาล"
+        aria-label={t('ค้นหาโรงพยาบาล')}
       />
       {filtered.length === 0 ? (
-        <EmptyState icon={<Search className="size-6" />} title="ไม่พบโรงพยาบาลที่ค้นหา" description="ลองค้นหาด้วยชื่ออื่น" />
+        <EmptyState icon={<Search className="size-6" />} title={t('ไม่พบโรงพยาบาลที่ค้นหา')} description={t('ลองค้นหาด้วยชื่ออื่น')} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((h) => {
@@ -63,7 +81,7 @@ export function HospitalSelector({
                 key={h.id}
                 onClick={() => handleCardClick(h)}
                 className={clsx(
-                  'relative flex flex-col gap-3 rounded-2xl border-2 bg-white text-left transition-all hover:shadow-card-lg',
+                  'relative flex flex-col gap-3 rounded-2xl border-2 bg-surface text-left transition-all hover:shadow-card-lg',
                   selected ? 'border-primary bg-skyblue-light' : 'border-border hover:border-primary/50',
                   isTop ? 'p-5 shadow-card-lg sm:col-span-2 sm:p-6' : 'p-4',
                 )}
@@ -75,7 +93,7 @@ export function HospitalSelector({
                 )}
                 {isTop && (
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
-                    แนะนำที่สุด
+                    {t('แนะนำที่สุด')}
                   </span>
                 )}
                 <div className="flex items-start gap-3 pr-8">
@@ -88,7 +106,7 @@ export function HospitalSelector({
                     <Building2 className={isTop ? 'size-6' : 'size-5'} />
                   </div>
                   <div className="min-w-0">
-                    <p className={clsx('font-bold text-navy leading-snug', isTop && 'text-lg')}>{h.name}</p>
+                    <p className={clsx('font-bold text-ink leading-snug', isTop && 'text-lg')}>{h.name}</p>
                     <p className="text-xs text-muted mt-0.5">{h.location.address}</p>
                   </div>
                 </div>
@@ -100,13 +118,13 @@ export function HospitalSelector({
                       h.erAvailable ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted',
                     )}
                   >
-                    {h.erAvailable ? 'ห้องฉุกเฉินพร้อมรับ' : 'ห้องฉุกเฉินเต็ม'}
+                    {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับ') : t('ห้องฉุกเฉินเต็ม')}
                   </span>
                   <span className="flex items-center gap-1 rounded-full bg-skyblue-pale px-2.5 py-1 font-semibold text-primary">
-                    <BedDouble className="size-3.5" /> เตียงว่าง {h.bedsAvailable}
+                    <BedDouble className="size-3.5" /> {t('เตียงว่าง {n}', { n: h.bedsAvailable })}
                   </span>
                   <span className="flex items-center gap-1 rounded-full bg-skyblue-pale px-2.5 py-1 font-semibold text-primary">
-                    <Navigation className="size-3.5" /> {h.distanceKm.toFixed(1)} กม. · {h.etaMin} นาที
+                    <Navigation className="size-3.5" /> {t('{km} กม. · {eta} นาที', { km: h.distanceKm.toFixed(1), eta: h.etaMin })}
                   </span>
                 </div>
 
@@ -129,10 +147,12 @@ export function HospitalSelector({
 
       <ConfirmationModal
         open={!!pendingFullErHospital}
-        title="ห้องฉุกเฉินเต็ม"
-        message={`ห้องฉุกเฉินของ${pendingFullErHospital?.name ?? 'โรงพยาบาลนี้'}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?`}
-        confirmLabel="ยืนยันเลือกโรงพยาบาลนี้"
-        cancelLabel="เลือกที่อื่นแทน"
+        title={t('ห้องฉุกเฉินเต็ม')}
+        message={t('ห้องฉุกเฉินของ{name}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?', {
+          name: pendingFullErHospital?.name ?? t('โรงพยาบาลนี้'),
+        })}
+        confirmLabel={t('ยืนยันเลือกโรงพยาบาลนี้')}
+        cancelLabel={t('เลือกที่อื่นแทน')}
         tone="danger"
         icon={<AlertTriangle className="size-5" />}
         onConfirm={() => {

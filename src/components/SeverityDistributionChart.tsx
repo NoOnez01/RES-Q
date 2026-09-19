@@ -4,6 +4,18 @@ import { Card } from './ui/Card'
 import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 import type { EmergencyCase, Severity } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  วิกฤต: 'Critical',
+  ฉุกเฉิน: 'Emergency',
+  เร่งด่วน: 'Urgent',
+  ไม่เร่งด่วน: 'Less urgent',
+  ทั่วไป: 'General',
+  ยังไม่มีเคสที่ประเมินระดับความรุนแรงแล้ว: 'No cases have a severity assessment yet',
+  '{n} เคส': '{n} cases',
+  จำนวน: 'Count',
+})
 
 const SEVERITIES: Severity[] = [1, 2, 3, 4, 5]
 
@@ -21,21 +33,22 @@ const SEVERITIES: Severity[] = [1, 2, 3, 4, 5]
 // eager bundle. See src/App.tsx's comment on DispatchFeedbackStats for
 // the same reasoning.
 export default function SeverityDistributionChart({ title, cases }: { title: string; cases: EmergencyCase[] }) {
+  const t = useT()
   const counts = SEVERITIES.map((sev) => ({
     severity: sev,
-    label: SEVERITY_SHORT_LABEL[sev],
+    label: t(SEVERITY_SHORT_LABEL[sev]),
     count: cases.filter((c) => c.assessment?.severity === sev).length,
   }))
   const total = counts.reduce((sum, c) => sum + c.count, 0)
 
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-2 text-base font-bold text-navy">
+      <h2 className="flex items-center gap-2 text-base font-bold text-ink">
         <PieChartIcon className="size-4.5 text-primary" />
         {title}
       </h2>
       {total === 0 ? (
-        <p className="text-sm text-muted">ยังไม่มีเคสที่ประเมินระดับความรุนแรงแล้ว</p>
+        <p className="text-sm text-muted">{t('ยังไม่มีเคสที่ประเมินระดับความรุนแรงแล้ว')}</p>
       ) : (
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
@@ -45,7 +58,7 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
               <Tooltip
                 cursor={{ fill: 'transparent' }}
                 contentStyle={CHART_TOOLTIP_STYLE}
-                formatter={(value) => [`${value} เคส`, 'จำนวน']}
+                formatter={(value) => [t('{n} เคส', { n: value as number }), t('จำนวน')]}
               />
               <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
                 {counts.map((c) => (

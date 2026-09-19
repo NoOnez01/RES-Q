@@ -1,6 +1,12 @@
 import { Component } from 'react'
 import type { ReactNode } from 'react'
 import { ErrorState } from './States'
+import { t, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  เกิดข้อผิดพลาดที่ไม่คาดคิด: 'An unexpected error occurred',
+  กรุณาลองโหลดหน้านี้ใหม่อีกครั้ง: 'Please try reloading this page',
+})
 
 interface Props {
   children: ReactNode
@@ -32,8 +38,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return (
         <div className="mx-auto max-w-md px-4 py-16">
           <ErrorState
-            title="เกิดข้อผิดพลาดที่ไม่คาดคิด"
-            description="กรุณาลองโหลดหน้านี้ใหม่อีกครั้ง"
+            title={t('เกิดข้อผิดพลาดที่ไม่คาดคิด')}
+            description={t('กรุณาลองโหลดหน้านี้ใหม่อีกครั้ง')}
             onRetry={() => window.location.reload()}
           />
         </div>

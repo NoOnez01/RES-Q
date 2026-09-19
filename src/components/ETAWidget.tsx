@@ -1,27 +1,38 @@
 import { Clock3, Navigation } from 'lucide-react'
 import clsx from 'clsx'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  เวลาโดยประมาณถึงจุดหมาย: 'Estimated time to destination',
+  'เส้นทางเร็วที่สุด (ทราฟฟิกสด)': 'Fastest route (live traffic)',
+  เส้นทางจริงตามถนน: 'Real road route',
+  นาที: 'min',
+  'ระยะทาง {km} กม.': 'Distance {km} km',
+})
 
 export function ETAWidget({
   etaMin,
   distanceKm,
   progressPct,
-  realRoute,
+  routeProvider,
   className,
 }: {
   etaMin: number
   distanceKm?: number
   progressPct?: number
-  /** True once a real OSRM road route loaded -- shows this is following
-   * actual streets, not a generic straight-line distance/speed guess. Not
-   * live-traffic-aware (see lib/routing.ts for why), so the label says
-   * "real route", not "real traffic". */
-  realRoute?: boolean
+  /** Which routing provider produced this ETA (see lib/routing.ts) --
+   * 'longdo' means the ETA reflects live Thailand traffic, 'osrm' means a
+   * real road route but typical-speed only, and undefined means neither
+   * loaded yet (still a straight-line estimate). Shown as two different
+   * badges so the label never overclaims what data backs the number. */
+  routeProvider?: 'longdo' | 'osrm'
   className?: string
 }) {
+  const t = useT()
   return (
     <div
       className={clsx(
-        'relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-card',
+        'relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border bg-surface p-4 shadow-card',
         className,
       )}
     >
@@ -32,19 +43,24 @@ export function ETAWidget({
       </div>
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <p className="text-xs text-muted">เวลาโดยประมาณถึงจุดหมาย</p>
-          {realRoute && (
+          <p className="text-xs text-muted">{t('เวลาโดยประมาณถึงจุดหมาย')}</p>
+          {routeProvider === 'longdo' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              เส้นทางจริงตามถนน
+              {t('เส้นทางเร็วที่สุด (ทราฟฟิกสด)')}
+            </span>
+          )}
+          {routeProvider === 'osrm' && (
+            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
+              {t('เส้นทางจริงตามถนน')}
             </span>
           )}
         </div>
-        <p key={etaMin} className="animate-fade-in text-xl font-extrabold text-navy">
-          {etaMin} <span className="text-sm font-semibold text-muted">นาที</span>
+        <p key={etaMin} className="animate-fade-in text-xl font-extrabold text-ink">
+          {etaMin} <span className="text-sm font-semibold text-muted">{t('นาที')}</span>
         </p>
         {typeof distanceKm === 'number' && (
           <p className="flex items-center gap-1 text-xs text-muted mt-0.5">
-            <Navigation className="size-3" /> ระยะทาง {distanceKm.toFixed(1)} กม.
+            <Navigation className="size-3" /> {t('ระยะทาง {km} กม.', { km: distanceKm.toFixed(1) })}
           </p>
         )}
       </div>

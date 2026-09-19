@@ -1,6 +1,15 @@
 import { createPortal } from 'react-dom'
 import { PhoneCall } from 'lucide-react'
 import { Button } from './ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  สายเรียกเข้าใหม่: 'New incoming call',
+  'เคส {caseNumber} กำลังโทรเข้า': 'Case {caseNumber} is calling',
+  รับสาย: 'Answer',
+  ซ่อนการแจ้งเตือนสายนี้: 'Hide this call alert',
+  ปิด: 'Close',
+})
 
 /**
  * The ringtone in CallRingtoneBridge is audible from any page, but until now
@@ -19,6 +28,7 @@ export function IncomingCallAlert({
   onAnswer: () => void
   onDismiss: () => void
 }) {
+  const t = useT()
   return createPortal(
     <div className="fixed inset-x-0 top-0 z-[210] flex justify-center p-3 sm:p-4">
       <div
@@ -30,18 +40,18 @@ export function IncomingCallAlert({
           <span className="relative inline-flex size-2.5 rounded-full bg-white" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold">สายเรียกเข้าใหม่</p>
-          <p className="truncate text-xs text-white/85">เคส {caseNumber} กำลังโทรเข้า</p>
+          <p className="text-sm font-bold">{t('สายเรียกเข้าใหม่')}</p>
+          <p className="truncate text-xs text-white/85">{t('เคส {caseNumber} กำลังโทรเข้า', { caseNumber })}</p>
         </div>
         <Button size="sm" variant="secondary" icon={<PhoneCall className="size-4" />} onClick={onAnswer}>
-          รับสาย
+          {t('รับสาย')}
         </Button>
         <button
           onClick={onDismiss}
-          aria-label="ซ่อนการแจ้งเตือนสายนี้"
+          aria-label={t('ซ่อนการแจ้งเตือนสายนี้')}
           className="rounded-full px-2 py-1 text-xs font-medium text-white/70 hover:text-white"
         >
-          ปิด
+          {t('ปิด')}
         </button>
       </div>
     </div>,

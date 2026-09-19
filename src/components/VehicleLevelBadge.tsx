@@ -16,7 +16,7 @@ const TONE: Record<VehicleLevel, string> = {
 export const VEHICLE_LEVEL_SELECTED_CLASSES: Record<VehicleLevel, string> = {
   CLS: 'border-emergency bg-emergency/10 text-emergency-dark',
   ALS: 'border-primary bg-primary/10 text-primary',
-  BLS: 'border-navy bg-navy/5 text-navy',
+  BLS: 'border-navy bg-navy/5 text-ink',
 }
 
 /** Missing level defaults to 'BLS' -- the same lowest/safest assumption

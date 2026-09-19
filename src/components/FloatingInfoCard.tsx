@@ -35,7 +35,7 @@ export function FloatingInfoCard({
         type="button"
         onClick={onClick}
         className="
-          group flex w-64 items-start gap-3 rounded-2xl border border-border bg-white/95 p-4 text-left shadow-card backdrop-blur
+          group flex w-64 items-start gap-3 rounded-2xl border border-border bg-surface/95 p-4 text-left shadow-card backdrop-blur
           transition-shadow duration-200 hover:border-primary/40 hover:shadow-card-lg hover:shadow-[0_0_0_4px_rgba(11,110,189,0.10)]
           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20
         "
@@ -44,7 +44,7 @@ export function FloatingInfoCard({
           {icon}
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-bold leading-snug text-navy">{title}</span>
+          <span className="block text-sm font-bold leading-snug text-ink">{title}</span>
           <span className="mt-0.5 block text-xs leading-relaxed text-muted">{subtitle}</span>
         </span>
       </button>

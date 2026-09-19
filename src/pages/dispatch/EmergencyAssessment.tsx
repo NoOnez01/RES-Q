@@ -18,6 +18,53 @@ import { INCIDENT_TYPES, DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { reverseGeocode, type Coords } from '@/lib/geolocation'
 import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
 import type { Severity } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'มีสติ (Conscious)': 'Conscious',
+  'ไม่มีสติ (Unconscious)': 'Unconscious',
+  'ไม่ทราบ (Unknown)': 'Unknown',
+  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น (Please select an incident type)': 'Please select an incident type',
+  'กรุณาระบุจุดเกิดเหตุ (Please specify the incident location)': 'Please specify the incident location',
+  'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน (Please enter at least 1 patient)': 'Please enter at least 1 patient',
+  'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย (Please select the consciousness level)': 'Please select the consciousness level',
+  'กรุณาเลือกระดับความรุนแรง (Please select a severity level)': 'Please select a severity level',
+  'กรุณาระบุลักษณะการบาดเจ็บ (Please describe the injury)': 'Please describe the injury',
+  'เหตุการณ์ที่เกิดขึ้น (Incident Type)': 'Incident Type',
+  'พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์': 'Type a search term or CBD code to select an incident type',
+  ไม่พบประเภทเหตุการณ์ที่ค้นหา: 'No matching incident type found',
+  'จุดเกิดเหตุ (Incident Location)': 'Incident Location',
+  'ปักหมุดตำแหน่งบนแผนที่ (Pin location on map)': 'Pin location on map',
+  'จำนวนผู้ป่วย (Number of Patients)': 'Number of Patients',
+  'ผู้ป่วยยังมีสติหรือไม่ (Is the Patient Conscious?)': 'Is the Patient Conscious?',
+  'เลือกระดับความรู้สึกตัว (Select consciousness level)': 'Select consciousness level',
+  'หมายเหตุเพิ่มเติม (Additional Notes)': 'Additional Notes',
+  พิมพ์หรือพูดเพื่อบันทึก: 'Type or speak to record',
+  'ไม่บังคับ (Optional)': 'Optional',
+  'ระดับความรุนแรง (Severity Level)': 'Severity Level',
+  'ลักษณะการบาดเจ็บ (Injury Description)': 'Injury Description',
+  '{cur}/{max} ตัวอักษร (characters)': '{cur}/{max} characters',
+  'ยกเลิก (Cancel)': 'Cancel',
+  'กรอกรายละเอียดเหตุการณ์ (Incident Details)': 'Incident Details',
+  'ไม่พบเคสนี้ (Case Not Found)': 'Case Not Found',
+  'เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ (This case may have been deleted or does not exist)':
+    'This case may have been deleted or does not exist',
+  'รายละเอียดเหตุการณ์และการประเมิน (Incident Details & Assessment)': 'Incident Details & Assessment',
+  'เคส {caseNumber} — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ พร้อมประเมินระดับความรุนแรง':
+    "Case {caseNumber} — fill in details from the conversation with the reporter, and assess severity",
+  'ข้อมูลจากผู้แจ้งเหตุ (Reporter Information)': 'Reporter Information',
+  'ยังไม่ระบุเบอร์ติดต่อกลับ (No callback number provided)': 'No callback number provided',
+  'รูปภาพที่แนบ (Attached photos) ({n})': 'Attached photos ({n})',
+  ภาพจุดเกิดเหตุ: 'Scene photo',
+  'ตำแหน่งที่ตรวจพบโดยประมาณจาก GPS ผู้แจ้ง ตรวจสอบและแก้ไขได้ (Approximate GPS location — verify and edit as needed)':
+    'Approximate GPS location — verify and edit as needed',
+  'ผู้แจ้งเหตุระบุว่า: {label} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป': 'The reporter said: {label} — editable if the photos suggest otherwise',
+  'แก้ไขข้อมูลแล้ว (Changes saved)': 'Changes saved',
+  'บันทึกรายละเอียดและการประเมินแล้ว (Details & assessment saved)': 'Details & assessment saved',
+  'เคส {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว (Case ready to search for rescue units)': 'Case {caseNumber} is ready to search for rescue units',
+  'บันทึกการแก้ไข (Save Changes)': 'Save Changes',
+  'บันทึกรายละเอียดและการประเมิน (Save Details & Assessment)': 'Save Details & Assessment',
+})
 
 type Conscious = '' | 'conscious' | 'unconscious' | 'unknown'
 
@@ -35,6 +82,7 @@ export default function DispatchEmergencyAssessment() {
   const c = useStore((s) => (id ? s.cases[id] : undefined))
   const submitDispatcherAssessment = useStore((s) => s.submitDispatcherAssessment)
   const setCaseLocation = useStore((s) => s.setLocation)
+  const t = useT()
 
   const details = c?.incidentDetails
   const isEditing = !!details
@@ -58,10 +106,10 @@ export default function DispatchEmergencyAssessment() {
 
   if (!id || !c) {
     return (
-      <AppShell variant="dashboard" title="กรอกรายละเอียดเหตุการณ์ (Incident Details)">
+      <AppShell variant="dashboard" title={t('กรอกรายละเอียดเหตุการณ์ (Incident Details)')}>
         <ErrorState
-          title="ไม่พบเคสนี้ (Case Not Found)"
-          description="เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ (This case may have been deleted or does not exist)"
+          title={t('ไม่พบเคสนี้ (Case Not Found)')}
+          description={t('เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ (This case may have been deleted or does not exist)')}
         />
       </AppShell>
     )
@@ -77,15 +125,15 @@ export default function DispatchEmergencyAssessment() {
   function handleSubmit() {
     if (!id || !c) return
     const errs: Record<string, string> = {}
-    if (!incidentType) errs.incidentType = 'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น (Please select an incident type)'
-    if (!location.trim()) errs.location = 'กรุณาระบุจุดเกิดเหตุ (Please specify the incident location)'
+    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น (Please select an incident type)')
+    if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ (Please specify the incident location)')
     const countNum = Number(patientCount)
     if (!patientCount.trim() || Number.isNaN(countNum) || countNum < 1) {
-      errs.patientCount = 'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน (Please enter at least 1 patient)'
+      errs.patientCount = t('กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน (Please enter at least 1 patient)')
     }
-    if (!conscious) errs.conscious = 'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย (Please select the consciousness level)'
-    if (!severity) errs.severity = 'กรุณาเลือกระดับความรุนแรง (Please select a severity level)'
-    if (!injuryDescription.trim()) errs.injuryDescription = 'กรุณาระบุลักษณะการบาดเจ็บ (Please describe the injury)'
+    if (!conscious) errs.conscious = t('กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย (Please select the consciousness level)')
+    if (!severity) errs.severity = t('กรุณาเลือกระดับความรุนแรง (Please select a severity level)')
+    if (!injuryDescription.trim()) errs.injuryDescription = t('กรุณาระบุลักษณะการบาดเจ็บ (Please describe the injury)')
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
       setHighlight(true)
@@ -110,8 +158,8 @@ export default function DispatchEmergencyAssessment() {
       })
       setSubmitting(false)
       toast({
-        title: isEditing ? 'แก้ไขข้อมูลแล้ว (Changes saved)' : 'บันทึกรายละเอียดและการประเมินแล้ว (Details & assessment saved)',
-        message: `เคส ${c.caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว (Case ready to search for rescue units)`,
+        title: isEditing ? t('แก้ไขข้อมูลแล้ว (Changes saved)') : t('บันทึกรายละเอียดและการประเมินแล้ว (Details & assessment saved)'),
+        message: t('เคส {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว (Case ready to search for rescue units)', { caseNumber: c.caseNumber }),
         tone: 'success',
       })
       navigate(`/dispatch/case/${id}`)
@@ -122,39 +170,39 @@ export default function DispatchEmergencyAssessment() {
     id: 'incident',
     lat: coords?.lat ?? c.location?.lat ?? DEFAULT_INCIDENT_LOCATION.lat,
     lng: coords?.lng ?? c.location?.lng ?? DEFAULT_INCIDENT_LOCATION.lng,
-    label: 'จุดเกิดเหตุ',
+    label: t('จุดเกิดเหตุ'),
     kind: 'incident' as const,
   }
 
   return (
-    <AppShell variant="dashboard" title="กรอกรายละเอียดเหตุการณ์ (Incident Details)">
+    <AppShell variant="dashboard" title={t('กรอกรายละเอียดเหตุการณ์ (Incident Details)')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-navy">รายละเอียดเหตุการณ์และการประเมิน (Incident Details & Assessment)</h1>
+            <h1 className="text-xl font-bold text-ink">{t('รายละเอียดเหตุการณ์และการประเมิน (Incident Details & Assessment)')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              เคส {c.caseNumber} — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ พร้อมประเมินระดับความรุนแรง
+              {t('เคส {caseNumber} — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ พร้อมประเมินระดับความรุนแรง', { caseNumber: c.caseNumber })}
             </p>
           </div>
 
           <Card className="space-y-3">
-            <h2 className="text-sm font-bold text-navy">ข้อมูลจากผู้แจ้งเหตุ (Reporter Information)</h2>
+            <h2 className="text-sm font-bold text-ink">{t('ข้อมูลจากผู้แจ้งเหตุ (Reporter Information)')}</h2>
             <div className="flex items-start gap-2 text-sm">
               <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
-              <span className="text-navy">{c.reporterPhone || 'ยังไม่ระบุเบอร์ติดต่อกลับ (No callback number provided)'}</span>
+              <span className="text-ink">{c.reporterPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ (No callback number provided)')}</span>
             </div>
             {c.photos.length > 0 && (
               <div className="border-t border-border pt-3">
                 <p className="mb-2 flex items-center gap-1.5 text-xs text-muted">
-                  <ImageIcon className="size-3.5" /> รูปภาพที่แนบ (Attached photos) ({c.photos.length})
+                  <ImageIcon className="size-3.5" /> {t('รูปภาพที่แนบ (Attached photos) ({n})', { n: c.photos.length })}
                 </p>
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                   {c.photos.map((p) => (
                     <img
                       key={p.id}
                       src={p.dataUrl}
-                      alt="ภาพจุดเกิดเหตุ"
+                      alt={t('ภาพจุดเกิดเหตุ')}
                       className="aspect-square rounded-lg border border-border object-cover"
                     />
                   ))}
@@ -164,24 +212,24 @@ export default function DispatchEmergencyAssessment() {
           </Card>
 
           <SearchableSelect
-            label="เหตุการณ์ที่เกิดขึ้น (Incident Type)"
+            label={t('เหตุการณ์ที่เกิดขึ้น (Incident Type)')}
             required
             value={incidentType}
             error={errors.incidentType}
             onChange={setIncidentType}
             options={INCIDENT_TYPES}
-            placeholder="พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์"
-            emptyLabel="ไม่พบประเภทเหตุการณ์ที่ค้นหา"
+            placeholder={t('พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์')}
+            emptyLabel={t('ไม่พบประเภทเหตุการณ์ที่ค้นหา')}
             className={clsx(highlight && errors.incidentType && 'animate-pulse')}
           />
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-xs text-muted">
               <PulseRing tone="primary" size="sm" />
-              <span>ตำแหน่งที่ตรวจพบโดยประมาณจาก GPS ผู้แจ้ง ตรวจสอบและแก้ไขได้ (Approximate GPS location — verify and edit as needed)</span>
+              <span>{t('ตำแหน่งที่ตรวจพบโดยประมาณจาก GPS ผู้แจ้ง ตรวจสอบและแก้ไขได้ (Approximate GPS location — verify and edit as needed)')}</span>
             </div>
             <Textarea
-              label="จุดเกิดเหตุ (Incident Location)"
+              label={t('จุดเกิดเหตุ (Incident Location)')}
               required
               rows={2}
               value={location}
@@ -190,7 +238,7 @@ export default function DispatchEmergencyAssessment() {
               className={clsx(highlight && errors.location && 'animate-pulse')}
             />
             <Button variant="outline" size="sm" icon={<MapPin className="size-4" />} onClick={() => setShowMap((v) => !v)}>
-              ปักหมุดตำแหน่งบนแผนที่ (Pin location on map)
+              {t('ปักหมุดตำแหน่งบนแผนที่ (Pin location on map)')}
             </Button>
             {showMap && (
               <MapPanel pins={[incidentPin]} center={[incidentPin.lat, incidentPin.lng]} height="200px" onPickLocation={handlePickOnMap} />
@@ -198,7 +246,7 @@ export default function DispatchEmergencyAssessment() {
           </div>
 
           <Input
-            label="จำนวนผู้ป่วย (Number of Patients)"
+            label={t('จำนวนผู้ป่วย (Number of Patients)')}
             type="number"
             min={1}
             required
@@ -209,35 +257,35 @@ export default function DispatchEmergencyAssessment() {
           />
 
           <Select
-            label="ผู้ป่วยยังมีสติหรือไม่ (Is the Patient Conscious?)"
+            label={t('ผู้ป่วยยังมีสติหรือไม่ (Is the Patient Conscious?)')}
             required
             value={conscious}
             error={errors.conscious}
             hint={
               !errors.conscious && c.reporterConsciousness
-                ? `ผู้แจ้งเหตุระบุว่า: ${CONSCIOUS_LABEL[c.reporterConsciousness]} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป`
+                ? t('ผู้แจ้งเหตุระบุว่า: {label} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป', { label: t(CONSCIOUS_LABEL[c.reporterConsciousness]) })
                 : undefined
             }
             onChange={(e) => setConscious(e.target.value as Conscious)}
             className={clsx(highlight && errors.conscious && 'animate-pulse')}
           >
-            <option value="">เลือกระดับความรู้สึกตัว (Select consciousness level)</option>
-            <option value="conscious">{CONSCIOUS_LABEL.conscious}</option>
-            <option value="unconscious">{CONSCIOUS_LABEL.unconscious}</option>
-            <option value="unknown">{CONSCIOUS_LABEL.unknown}</option>
+            <option value="">{t('เลือกระดับความรู้สึกตัว (Select consciousness level)')}</option>
+            <option value="conscious">{t(CONSCIOUS_LABEL.conscious)}</option>
+            <option value="unconscious">{t(CONSCIOUS_LABEL.unconscious)}</option>
+            <option value="unknown">{t(CONSCIOUS_LABEL.unknown)}</option>
           </Select>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-navy">หมายเหตุเพิ่มเติม (Additional Notes)</label>
-            <SpeechToTextPanel value={notes} onChange={setNotes} label="พิมพ์หรือพูดเพื่อบันทึก" />
-            <p className="text-xs text-muted">ไม่บังคับ (Optional)</p>
+            <label className="text-sm font-semibold text-ink">{t('หมายเหตุเพิ่มเติม (Additional Notes)')}</label>
+            <SpeechToTextPanel value={notes} onChange={setNotes} label={t('พิมพ์หรือพูดเพื่อบันทึก')} />
+            <p className="text-xs text-muted">{t('ไม่บังคับ (Optional)')}</p>
           </div>
 
           <Card
             className={clsx('flex flex-col gap-2 transition-all', highlight && errors.severity && 'animate-pulse')}
           >
-            <label className="text-sm font-semibold text-navy">
-              ระดับความรุนแรง (Severity Level)<span className="ml-0.5 text-emergency">*</span>
+            <label className="text-sm font-semibold text-ink">
+              {t('ระดับความรุนแรง (Severity Level)')}<span className="ml-0.5 text-emergency">*</span>
             </label>
             <div className="flex flex-col gap-2.5">
               {SEVERITY_OPTIONS.map((opt) => (
@@ -245,8 +293,8 @@ export default function DispatchEmergencyAssessment() {
                   key={opt.value}
                   selected={severity === opt.value}
                   onClick={() => setSeverity(opt.value)}
-                  title={opt.title}
-                  description={opt.description}
+                  title={t(opt.title)}
+                  description={opt.description ? t(opt.description) : undefined}
                   tone={opt.tone}
                   className={clsx(
                     'transition-transform duration-200',
@@ -261,19 +309,19 @@ export default function DispatchEmergencyAssessment() {
           <Card className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
               <Activity className="size-4 text-primary" />
-              <label className="text-sm font-semibold text-navy">
-                ลักษณะการบาดเจ็บ (Injury Description)<span className="ml-0.5 text-emergency">*</span>
+              <label className="text-sm font-semibold text-ink">
+                {t('ลักษณะการบาดเจ็บ (Injury Description)')}<span className="ml-0.5 text-emergency">*</span>
               </label>
             </div>
             <SpeechToTextPanel
               value={injuryDescription}
               onChange={setInjuryDescription}
-              label="พิมพ์หรือพูดเพื่อบันทึก"
+              label={t('พิมพ์หรือพูดเพื่อบันทึก')}
               error={errors.injuryDescription}
               textareaClassName={clsx(highlight && errors.injuryDescription && 'animate-pulse')}
             />
             <p className="self-end text-xs text-muted">
-              {injuryDescription.length}/{INJURY_SOFT_LIMIT} ตัวอักษร (characters)
+              {t('{cur}/{max} ตัวอักษร (characters)', { cur: injuryDescription.length, max: INJURY_SOFT_LIMIT })}
             </p>
           </Card>
 
@@ -286,10 +334,10 @@ export default function DispatchEmergencyAssessment() {
               loading={submitting}
               onClick={handleSubmit}
             >
-              {isEditing ? 'บันทึกการแก้ไข (Save Changes)' : 'บันทึกรายละเอียดและการประเมิน (Save Details & Assessment)'}
+              {isEditing ? t('บันทึกการแก้ไข (Save Changes)') : t('บันทึกรายละเอียดและการประเมิน (Save Details & Assessment)')}
             </Button>
             <Button variant="outline" size="lg" fullWidth disabled={submitting} onClick={() => navigate(`/dispatch/case/${id}`)}>
-              ยกเลิก (Cancel)
+              {t('ยกเลิก (Cancel)')}
             </Button>
           </div>
         </div>

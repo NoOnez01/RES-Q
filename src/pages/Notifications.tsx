@@ -7,6 +7,12 @@ import { NotificationCenter } from '@/components/NotificationCenter'
 import { Button } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
 import type { Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  รายการที่ยังไม่ได้อ่าน: 'Unread items',
+  ทำเครื่องหมายว่าอ่านแล้วทั้งหมด: 'Mark all as read',
+})
 
 function caseRouteForRole(role: Role | undefined, caseId: string): string {
   switch (role) {
@@ -27,6 +33,7 @@ export default function Notifications() {
   const markNotificationRead = useStore((s) => s.markNotificationRead)
   const markAllNotificationsRead = useStore((s) => s.markAllNotificationsRead)
   const navigate = useNavigate()
+  const t = useT()
 
   const filtered = useMemo(
     () =>
@@ -39,7 +46,7 @@ export default function Notifications() {
   const unreadCount = useMemo(() => filtered.filter((n) => !n.read).length, [filtered])
 
   return (
-    <AppShell variant="dashboard" title="การแจ้งเตือน">
+    <AppShell variant="dashboard" title={t('การแจ้งเตือน')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
@@ -54,7 +61,7 @@ export default function Notifications() {
               >
                 {unreadCount}
               </span>
-              <p className="text-sm font-medium text-muted">รายการที่ยังไม่ได้อ่าน</p>
+              <p className="text-sm font-medium text-muted">{t('รายการที่ยังไม่ได้อ่าน')}</p>
             </div>
             <Button
               variant="outline"
@@ -62,11 +69,11 @@ export default function Notifications() {
               disabled={unreadCount === 0}
               onClick={() => markAllNotificationsRead(currentUser?.role ?? 'public')}
             >
-              ทำเครื่องหมายว่าอ่านแล้วทั้งหมด
+              {t('ทำเครื่องหมายว่าอ่านแล้วทั้งหมด')}
             </Button>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-border bg-white p-3 shadow-card sm:p-5">
+          <div className="mt-4 rounded-2xl border border-border bg-surface p-3 shadow-card sm:p-5">
             <NotificationCenter
               notifications={filtered}
               onMarkRead={markNotificationRead}

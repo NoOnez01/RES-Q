@@ -9,7 +9,7 @@ export function StatBar({ className, children }: { className?: string; children:
   return (
     <div
       className={clsx(
-        'flex flex-col divide-y divide-border rounded-2xl border border-border bg-white shadow-card sm:flex-row sm:divide-x sm:divide-y-0',
+        'flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface shadow-card sm:flex-row sm:divide-x sm:divide-y-0',
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function StatItem({
         </span>
       )}
       <div className="min-w-0">
-        <p className="text-2xl font-extrabold leading-none text-navy">{value}</p>
+        <p className="text-2xl font-extrabold leading-none text-ink">{value}</p>
         <p className="mt-1.5 text-xs font-medium text-muted">{label}</p>
       </div>
     </div>

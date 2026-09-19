@@ -4,6 +4,13 @@ import { Siren, Ambulance, Building2 } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from './ui/Button'
 import type { HandoffAlert } from './NotificationAlertBridge'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'มีเคสอื่นรออีก {count} รายการ': '{count} more case(s) waiting',
+  ปิด: 'Close',
+  ดูรายละเอียด: 'View details',
+})
 
 const KIND_ICON: Record<HandoffAlert['kind'], React.ComponentType<{ className?: string }>> = {
   dispatch: Siren,
@@ -30,6 +37,7 @@ export function CaseAlertModal({
   onView: () => void
   onDismiss: () => void
 }) {
+  const t = useT()
   useEffect(() => {
     if (!alert) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onDismiss()
@@ -52,7 +60,7 @@ export function CaseAlertModal({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="case-alert-title"
-        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-white p-6 shadow-card-lg animate-scale-in"
+        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface p-6 shadow-card-lg animate-scale-in"
       >
         <div
           className={clsx(
@@ -62,16 +70,16 @@ export function CaseAlertModal({
         >
           <Icon className="size-6" />
         </div>
-        <h2 id="case-alert-title" className="mt-4 text-lg font-bold text-navy">
+        <h2 id="case-alert-title" className="mt-4 text-lg font-bold text-ink">
           {alert.title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{alert.message}</p>
         {queueCount > 1 && (
-          <p className="mt-3 text-xs font-medium text-muted">มีเคสอื่นรออีก {queueCount - 1} รายการ</p>
+          <p className="mt-3 text-xs font-medium text-muted">{t('มีเคสอื่นรออีก {count} รายการ', { count: queueCount - 1 })}</p>
         )}
         <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
           <Button variant="outline" fullWidth onClick={onDismiss} className="sm:flex-1">
-            ปิด
+            {t('ปิด')}
           </Button>
           <Button
             variant={alert.urgent ? 'danger' : 'primary'}
@@ -79,7 +87,7 @@ export function CaseAlertModal({
             onClick={onView}
             className="sm:flex-1"
           >
-            ดูรายละเอียด
+            {t('ดูรายละเอียด')}
           </Button>
         </div>
       </div>

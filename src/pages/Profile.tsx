@@ -13,6 +13,40 @@ import { uploadAvatar } from '@/lib/storageUploads'
 import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
 import { calculateAge } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ข้อมูลส่วนตัว: 'Profile',
+  ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
+  กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว: 'Please log in to edit your profile',
+  กรุณาเลือกไฟล์รูปภาพ: 'Please select an image file',
+  'อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน': 'Profile photo uploaded — tap "Save changes" to confirm',
+  อัปโหลดรูปไม่สำเร็จ: 'Failed to upload photo',
+  'กรุณากรอกชื่อ-นามสกุล': 'Please enter your full name',
+  บันทึกข้อมูลส่วนตัวแล้ว: 'Profile saved',
+  บันทึกไม่สำเร็จ: 'Failed to save',
+  เปลี่ยนรูปโปรไฟล์: 'Change profile photo',
+  แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์: 'Tap the photo to change it',
+  สถิติของฉัน: 'My stats',
+  ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ: 'View an overview and trends for cases related to you',
+  แก้ไขข้อมูลส่วนตัว: 'Edit profile',
+  บทบาท: 'Role',
+  แอดมิน: 'Admin',
+  'ชื่อ-นามสกุล': 'Full name',
+  ชื่อเล่น: 'Nickname',
+  เบอร์ติดต่อ: 'Contact number',
+  วันเกิด: 'Date of birth',
+  'อายุ {n} ปี': '{n} years old',
+  ข้อมูลทางการแพทย์: 'Medical information',
+  ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น: 'Used only to help in an emergency',
+  กรุ๊ปเลือด: 'Blood type',
+  'ไม่ทราบ / ไม่ระบุ': 'Unknown / not specified',
+  โรคประจำตัว: 'Chronic conditions',
+  'เช่น เบาหวาน ความดันโลหิตสูง หอบหืด': 'e.g. diabetes, hypertension, asthma',
+  'ประวัติแพ้ยา/แพ้อาหาร': 'Drug/food allergy history',
+  'เช่น แพ้เพนนิซิลลิน แพ้อาหารทะเล': 'e.g. penicillin allergy, seafood allergy',
+  บันทึกการเปลี่ยนแปลง: 'Save changes',
+})
 
 const BLOOD_TYPES = ['A', 'B', 'AB', 'O', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
@@ -23,6 +57,7 @@ export default function Profile() {
   const rescueTeams = useStore((s) => s.rescueTeams)
   const hospitals = useStore((s) => s.hospitals)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const t = useT()
 
   const [name, setName] = useState(currentUser?.name ?? '')
   const [nickname, setNickname] = useState(currentUser?.nickname ?? '')
@@ -38,12 +73,12 @@ export default function Profile() {
 
   if (!currentUser) {
     return (
-      <AppShell variant="dashboard" title="ข้อมูลส่วนตัว">
+      <AppShell variant="dashboard" title={t('ข้อมูลส่วนตัว')}>
         <ErrorState
-          title="ยังไม่ได้เข้าสู่ระบบ"
-          description="กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว"
+          title={t('ยังไม่ได้เข้าสู่ระบบ')}
+          description={t('กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว')}
           onRetry={() => navigate('/login')}
-          retryLabel="เข้าสู่ระบบ"
+          retryLabel={t('เข้าสู่ระบบ')}
         />
       </AppShell>
     )
@@ -51,7 +86,7 @@ export default function Profile() {
 
   const orgName =
     currentUser.role === 'rescue'
-      ? rescueTeams.find((t) => t.id === currentUser.rescueTeamId)?.name
+      ? rescueTeams.find((team) => team.id === currentUser.rescueTeamId)?.name
       : currentUser.role === 'hospital'
         ? hospitals.find((h) => h.id === currentUser.hospitalId)?.name
         : undefined
@@ -63,17 +98,17 @@ export default function Profile() {
     e.target.value = ''
     if (!file || !currentUser) return
     if (!file.type.startsWith('image/')) {
-      toast({ title: 'กรุณาเลือกไฟล์รูปภาพ', tone: 'error' })
+      toast({ title: t('กรุณาเลือกไฟล์รูปภาพ'), tone: 'error' })
       return
     }
     setAvatarUploading(true)
     try {
       const url = await uploadAvatar(currentUser.id, file, file.type === 'image/png' ? 'image/png' : 'image/jpeg')
       setAvatarUrl(url)
-      toast({ title: 'อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน', tone: 'success' })
+      toast({ title: t('อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน'), tone: 'success' })
     } catch (err) {
       const message = err instanceof Error ? err.message : undefined
-      toast({ title: 'อัปโหลดรูปไม่สำเร็จ', message, tone: 'error' })
+      toast({ title: t('อัปโหลดรูปไม่สำเร็จ'), message, tone: 'error' })
     } finally {
       setAvatarUploading(false)
     }
@@ -82,7 +117,7 @@ export default function Profile() {
   async function handleSave() {
     if (!currentUser) return
     if (!name.trim()) {
-      setError('กรุณากรอกชื่อ-นามสกุล')
+      setError(t('กรุณากรอกชื่อ-นามสกุล'))
       return
     }
     setError('')
@@ -100,16 +135,16 @@ export default function Profile() {
       }
       await updateProfile(currentUser.id, patch)
       setUser({ ...currentUser, ...patch })
-      toast({ title: 'บันทึกข้อมูลส่วนตัวแล้ว', tone: 'success' })
+      toast({ title: t('บันทึกข้อมูลส่วนตัวแล้ว'), tone: 'success' })
     } catch {
-      toast({ title: 'บันทึกไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('บันทึกไม่สำเร็จ'), tone: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AppShell variant="dashboard" title="ข้อมูลส่วนตัว">
+    <AppShell variant="dashboard" title={t('ข้อมูลส่วนตัว')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 mx-auto flex max-w-md flex-col gap-5">
@@ -118,7 +153,7 @@ export default function Profile() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="group relative size-24 shrink-0 overflow-hidden rounded-full border-4 border-skyblue-pale bg-skyblue-pale"
-              aria-label="เปลี่ยนรูปโปรไฟล์"
+              aria-label={t('เปลี่ยนรูปโปรไฟล์')}
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="size-full object-cover" />
@@ -134,7 +169,7 @@ export default function Profile() {
               </span>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-            <p className="text-xs text-muted">แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์</p>
+            <p className="text-xs text-muted">{t('แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์')}</p>
           </Card>
 
           <Link to="/personal-stats">
@@ -143,45 +178,45 @@ export default function Profile() {
                 <BarChart3 className="size-5" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-navy">สถิติของฉัน</p>
-                <p className="text-xs text-muted">ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ</p>
+                <p className="font-bold text-ink">{t('สถิติของฉัน')}</p>
+                <p className="text-xs text-muted">{t('ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ')}</p>
               </div>
               <ChevronRight className="size-5 shrink-0 text-muted" />
             </Card>
           </Link>
 
           <Card className="space-y-4 animate-fade-in-up">
-            <h3 className="flex items-center gap-2 font-bold text-navy">
-              <UserCircle2 className="size-4 text-primary" /> แก้ไขข้อมูลส่วนตัว
+            <h3 className="flex items-center gap-2 font-bold text-ink">
+              <UserCircle2 className="size-4 text-primary" /> {t('แก้ไขข้อมูลส่วนตัว')}
             </h3>
 
             <div className="rounded-xl bg-skyblue-pale p-3 text-sm">
-              <p className="text-muted">บทบาท</p>
-              <p className="font-semibold text-navy">
-                {roleLabel(currentUser.role)}
+              <p className="text-muted">{t('บทบาท')}</p>
+              <p className="font-semibold text-ink">
+                {t(roleLabel(currentUser.role))}
                 {orgName && ` · ${orgName}`}
-                {currentUser.isAdmin && ' · แอดมิน'}
+                {currentUser.isAdmin && ` · ${t('แอดมิน')}`}
               </p>
             </div>
 
-            <Input label="ชื่อ-นามสกุล" required value={name} onChange={(e) => setName(e.target.value)} error={error} />
-            <Input label="ชื่อเล่น" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-            <Input label="เบอร์ติดต่อ" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Input label={t('ชื่อ-นามสกุล')} required value={name} onChange={(e) => setName(e.target.value)} error={error} />
+            <Input label={t('ชื่อเล่น')} value={nickname} onChange={(e) => setNickname(e.target.value)} />
+            <Input label={t('เบอร์ติดต่อ')} value={phone} onChange={(e) => setPhone(e.target.value)} />
             <Input
-              label="วันเกิด"
+              label={t('วันเกิด')}
               type="date"
               value={birthdate}
               max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => setBirthdate(e.target.value)}
-              hint={age !== null ? `อายุ ${age} ปี` : undefined}
+              hint={age !== null ? t('อายุ {n} ปี', { n: age }) : undefined}
             />
           </Card>
 
           <Card className="space-y-4 animate-fade-in-up">
-            <h3 className="font-bold text-navy">ข้อมูลทางการแพทย์</h3>
-            <p className="text-xs text-muted">ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น</p>
-            <Select label="กรุ๊ปเลือด" value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
-              <option value="">ไม่ทราบ / ไม่ระบุ</option>
+            <h3 className="font-bold text-ink">{t('ข้อมูลทางการแพทย์')}</h3>
+            <p className="text-xs text-muted">{t('ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น')}</p>
+            <Select label={t('กรุ๊ปเลือด')} value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
+              <option value="">{t('ไม่ทราบ / ไม่ระบุ')}</option>
               {BLOOD_TYPES.map((bt) => (
                 <option key={bt} value={bt}>
                   {bt}
@@ -189,21 +224,21 @@ export default function Profile() {
               ))}
             </Select>
             <Textarea
-              label="โรคประจำตัว"
-              placeholder="เช่น เบาหวาน ความดันโลหิตสูง หอบหืด"
+              label={t('โรคประจำตัว')}
+              placeholder={t('เช่น เบาหวาน ความดันโลหิตสูง หอบหืด')}
               value={chronicConditions}
               onChange={(e) => setChronicConditions(e.target.value)}
             />
             <Textarea
-              label="ประวัติแพ้ยา/แพ้อาหาร"
-              placeholder="เช่น แพ้เพนนิซิลลิน แพ้อาหารทะเล"
+              label={t('ประวัติแพ้ยา/แพ้อาหาร')}
+              placeholder={t('เช่น แพ้เพนนิซิลลิน แพ้อาหารทะเล')}
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
             />
           </Card>
 
           <Button fullWidth loading={loading} onClick={handleSave}>
-            บันทึกการเปลี่ยนแปลง
+            {t('บันทึกการเปลี่ยนแปลง')}
           </Button>
         </div>
       </div>

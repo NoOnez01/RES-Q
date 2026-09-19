@@ -9,6 +9,8 @@ import { initNativeNotifications } from '@/lib/nativeNotify'
 import { ToastViewport } from '@/components/ToastNotification'
 import { NotificationAlertBridge } from '@/components/NotificationAlertBridge'
 import { CallRingtoneBridge } from '@/components/CallRingtoneBridge'
+import { ThemeBridge } from '@/components/ThemeBridge'
+import { FirstVisitSetup } from '@/components/FirstVisitSetup'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
 import { RequireRole } from '@/components/RequireRole'
 import { AppUpdateBanner } from '@/components/AppUpdateBanner'
@@ -140,10 +142,12 @@ export default function App() {
 
   return (
     <>
+      <ThemeBridge />
       <ToastViewport />
       <NotificationAlertBridge />
       <CallRingtoneBridge />
       <AppUpdateBanner />
+      <FirstVisitSetup />
       <RouteErrorBoundary>
       <Routes>
         <Route path="/" element={<Home />} />

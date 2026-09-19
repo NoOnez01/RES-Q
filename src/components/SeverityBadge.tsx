@@ -3,6 +3,15 @@ import { AlertTriangle, AlertOctagon, AlertCircle, Info, CheckCircle2 } from 'lu
 import type { Severity } from '@/lib/types'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 import { PulseRing } from './backgrounds/PulseRing'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  วิกฤต: 'Critical',
+  ฉุกเฉิน: 'Emergency',
+  เร่งด่วน: 'Urgent',
+  ไม่เร่งด่วน: 'Less urgent',
+  ทั่วไป: 'General',
+})
 
 const config: Record<Severity, { classes: string; icon: React.ElementType }> = {
   1: { classes: 'bg-emergency/10 text-emergency-dark border-emergency/30', icon: AlertOctagon },
@@ -14,6 +23,7 @@ const config: Record<Severity, { classes: string; icon: React.ElementType }> = {
 
 export function SeverityBadge({ severity, className }: { severity: Severity; className?: string }) {
   const { classes, icon: Icon } = config[severity]
+  const t = useT()
   return (
     <span
       className={clsx(
@@ -24,7 +34,7 @@ export function SeverityBadge({ severity, className }: { severity: Severity; cla
     >
       {severity === 1 && <PulseRing tone="emergency" size="sm" />}
       <Icon className="size-3.5" />
-      {SEVERITY_SHORT_LABEL[severity]}
+      {t(SEVERITY_SHORT_LABEL[severity])}
     </span>
   )
 }

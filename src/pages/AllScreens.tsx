@@ -4,6 +4,44 @@ import clsx from 'clsx'
 import { ChevronRight, Lock } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useStore } from '@/lib/store'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  สาธารณะและการเข้าสู่ระบบ: 'Public & authentication',
+  หน้าหลัก: 'Home',
+  เลือกบทบาท: 'Choose role',
+  เข้าสู่ระบบ: 'Log in',
+  สมัครสมาชิก: 'Sign up',
+  'สมัครสมาชิก (ประชาชน)': 'Sign up (public)',
+  'สมัครสมาชิก (หน่วยกู้ชีพ)': 'Sign up (rescue team)',
+  'สมัครสมาชิก (ศูนย์สั่งการ)': 'Sign up (dispatch center)',
+  'สมัครสมาชิก (โรงพยาบาล)': 'Sign up (hospital)',
+  การแจ้งเหตุฉุกเฉิน: 'Emergency reporting',
+  'ถ่ายรูปจุดเกิดเหตุ / เบอร์ติดต่อกลับ': 'Photograph scene / callback number',
+  'ติดต่อ 1669': 'Contact 1669',
+  'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
+  แดชบอร์ดศูนย์สั่งการ: 'Dispatch dashboard',
+  สายเรียกเข้า: 'Incoming calls',
+  หน่วยกู้ชีพ: 'Rescue team',
+  แดชบอร์ดหน่วยกู้ชีพ: 'Rescue dashboard',
+  โรงพยาบาล: 'Hospital',
+  แดชบอร์ดโรงพยาบาล: 'Hospital dashboard',
+  'อื่น ๆ': 'Other',
+  เลือกโรงพยาบาล: 'Select a hospital',
+  การแจ้งเตือน: 'Notifications',
+  ตั้งค่า: 'Settings',
+  ประวัติเคส: 'Case history',
+  หน้าทั้งหมด: 'All pages',
+  'ติดตามเคส (ประชาชน)': 'Track case (public)',
+  'รายละเอียดเคส (ศูนย์สั่งการ)': 'Case details (dispatch)',
+  'กรอกรายละเอียดเหตุการณ์ (ศูนย์สั่งการ)': 'Fill in incident details (dispatch)',
+  'รายละเอียดเคส (หน่วยกู้ชีพ)': 'Case details (rescue)',
+  'รายละเอียดเคส (โรงพยาบาล)': 'Case details (hospital)',
+  บันทึกข้อมูลผู้ป่วย: 'Record patient data',
+  แผนที่นำทาง: 'Navigation map',
+  ตัวอย่างเคส: 'Example case',
+  'ต้องมีเคสตัวอย่างก่อน — ลองเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก': 'Needs a sample case first — try the "Contact responders" button on the home page',
+})
 
 interface ScreenEntry {
   label: string
@@ -73,6 +111,7 @@ function caseScreens(caseId: string): ScreenEntry[] {
 export default function AllScreens() {
   const navigate = useNavigate()
   const cases = useStore((s) => s.cases)
+  const t = useT()
 
   const latestCaseId = useMemo(() => {
     const all = Object.values(cases).sort((a, b) => b.createdAt - a.createdAt)
@@ -82,7 +121,7 @@ export default function AllScreens() {
   const caseItems = latestCaseId ? caseScreens(latestCaseId) : null
 
   return (
-    <AppShell variant="public" title="หน้าทั้งหมด">
+    <AppShell variant="public" title={t('หน้าทั้งหมด')}>
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8">
         {STATIC_GROUPS.map((group, gi) => (
           <section
@@ -90,12 +129,12 @@ export default function AllScreens() {
             className="animate-fade-in-up"
             style={{ animationDelay: `${gi * 50}ms`, animationFillMode: 'backwards' }}
           >
-            <h2 className="mb-3 text-lg font-bold text-navy">{group.title}</h2>
+            <h2 className="mb-3 text-lg font-bold text-ink">{t(group.title)}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {group.items.map((item, ii) => (
                 <ScreenButton
                   key={item.path}
-                  label={item.label}
+                  label={t(item.label)}
                   onClick={() => navigate(item.path)}
                   delayMs={ii * 30}
                 />
@@ -108,13 +147,13 @@ export default function AllScreens() {
           className="animate-fade-in-up"
           style={{ animationDelay: `${STATIC_GROUPS.length * 50}ms`, animationFillMode: 'backwards' }}
         >
-          <h2 className="mb-3 text-lg font-bold text-navy">ตัวอย่างเคส</h2>
+          <h2 className="mb-3 text-lg font-bold text-ink">{t('ตัวอย่างเคส')}</h2>
           {caseItems ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {caseItems.map((item, ii) => (
                 <ScreenButton
                   key={item.path}
-                  label={item.label}
+                  label={t(item.label)}
                   onClick={() => navigate(item.path)}
                   delayMs={ii * 30}
                 />
@@ -125,9 +164,9 @@ export default function AllScreens() {
               {caseScreens('demo').map((item, ii) => (
                 <ScreenButton
                   key={item.path}
-                  label={item.label}
+                  label={t(item.label)}
                   disabled
-                  note="ต้องมีเคสตัวอย่างก่อน — ลองเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก"
+                  note={t('ต้องมีเคสตัวอย่างก่อน — ลองเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก')}
                   delayMs={ii * 30}
                 />
               ))}
@@ -158,7 +197,7 @@ function ScreenButton({
       disabled={disabled}
       aria-label={note ? `${label} — ${note}` : label}
       className={clsx(
-        'flex w-full min-h-[48px] items-center gap-3 rounded-xl border border-border bg-white p-4 text-left shadow-card transition-all animate-fade-in-up',
+        'flex w-full min-h-[48px] items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left shadow-card transition-all animate-fade-in-up',
         'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30',
         disabled
           ? 'cursor-not-allowed opacity-60'
@@ -167,7 +206,7 @@ function ScreenButton({
       style={{ animationDelay: `${delayMs}ms`, animationFillMode: 'backwards' }}
     >
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-navy">{label}</p>
+        <p className="font-semibold text-ink">{label}</p>
         {note && <p className="mt-1 text-xs text-muted">{note}</p>}
       </div>
       {disabled ? (

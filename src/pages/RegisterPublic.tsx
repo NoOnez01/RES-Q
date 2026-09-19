@@ -10,6 +10,33 @@ import { GoogleIcon, LineIcon } from '@/components/icons/SocialIcons'
 import { useStore } from '@/lib/store'
 import { registerAccount, signIn, signInWithGoogle, signInWithLine } from '@/lib/auth'
 import { toast } from '@/lib/toast'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'กรุณากรอกชื่อ-นามสกุล': 'Please enter your full name',
+  กรุณากรอกเบอร์โทรศัพท์: 'Please enter your phone number',
+  กรุณากรอกอีเมล: 'Please enter your email',
+  กรุณากรอกรหัสผ่าน: 'Please enter your password',
+  'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร': 'Password must be at least 6 characters',
+  กรุณายืนยันรหัสผ่าน: 'Please confirm your password',
+  รหัสผ่านไม่ตรงกัน: 'Passwords do not match',
+  กรุณายอมรับเงื่อนไขการใช้งาน: 'Please accept the terms of use',
+  สมัครสมาชิกสำเร็จ: 'Sign-up successful',
+  'ยินดีต้อนรับ {name}': 'Welcome, {name}',
+  สมัครสมาชิกไม่สำเร็จ: 'Sign-up failed',
+  'สมัครสมาชิกด้วย {provider}': 'Sign up with {provider}',
+  'สมัครสมาชิกด้วย {provider} ไม่สำเร็จ': 'Failed to sign up with {provider}',
+  เข้าสู่ระบบสำเร็จ: 'Logged in successfully',
+  สมัครสมาชิกประชาชน: 'Public sign-up',
+  หรือกรอกข้อมูลเอง: 'Or fill in the details yourself',
+  'ชื่อ-นามสกุล': 'Full name',
+  เบอร์โทรศัพท์: 'Phone number',
+  อีเมล: 'Email',
+  รหัสผ่าน: 'Password',
+  ยืนยันรหัสผ่าน: 'Confirm password',
+  ยอมรับเงื่อนไขการใช้งาน: 'I accept the terms of use',
+  สมัครสมาชิก: 'Sign up',
+})
 
 interface FormState {
   fullName: string
@@ -22,6 +49,7 @@ interface FormState {
 export default function RegisterPublic() {
   const navigate = useNavigate()
   const setUser = useStore((s) => s.setUser)
+  const t = useT()
 
   const [form, setForm] = useState<FormState>({
     fullName: '',
@@ -43,14 +71,14 @@ export default function RegisterPublic() {
 
   function validate() {
     const next: typeof errors = {}
-    if (!form.fullName.trim()) next.fullName = 'กรุณากรอกชื่อ-นามสกุล'
-    if (!form.phone.trim()) next.phone = 'กรุณากรอกเบอร์โทรศัพท์'
-    if (!form.email.trim()) next.email = 'กรุณากรอกอีเมล'
-    if (!form.password) next.password = 'กรุณากรอกรหัสผ่าน'
-    else if (form.password.length < 6) next.password = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
-    if (!form.confirmPassword) next.confirmPassword = 'กรุณายืนยันรหัสผ่าน'
-    else if (form.confirmPassword !== form.password) next.confirmPassword = 'รหัสผ่านไม่ตรงกัน'
-    if (!agree) next.agree = 'กรุณายอมรับเงื่อนไขการใช้งาน'
+    if (!form.fullName.trim()) next.fullName = t('กรุณากรอกชื่อ-นามสกุล')
+    if (!form.phone.trim()) next.phone = t('กรุณากรอกเบอร์โทรศัพท์')
+    if (!form.email.trim()) next.email = t('กรุณากรอกอีเมล')
+    if (!form.password) next.password = t('กรุณากรอกรหัสผ่าน')
+    else if (form.password.length < 6) next.password = t('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
+    if (!form.confirmPassword) next.confirmPassword = t('กรุณายืนยันรหัสผ่าน')
+    else if (form.confirmPassword !== form.password) next.confirmPassword = t('รหัสผ่านไม่ตรงกัน')
+    if (!agree) next.agree = t('กรุณายอมรับเงื่อนไขการใช้งาน')
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -76,11 +104,11 @@ export default function RegisterPublic() {
         // Project has email confirmation on -- registration still
         // succeeded, they'll just need to log in normally afterward.
       }
-      toast({ title: 'สมัครสมาชิกสำเร็จ', message: `ยินดีต้อนรับ ${form.fullName}`, tone: 'success' })
+      toast({ title: t('สมัครสมาชิกสำเร็จ'), message: t('ยินดีต้อนรับ {name}', { name: form.fullName }), tone: 'success' })
       setSubmitted(true)
       setTimeout(() => navigate('/'), 800)
     } catch (err) {
-      toast({ title: 'สมัครสมาชิกไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('สมัครสมาชิกไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setLoading(false)
     }
@@ -91,7 +119,7 @@ export default function RegisterPublic() {
     try {
       await signInWithGoogle()
     } catch {
-      toast({ title: 'สมัครสมาชิกด้วย Google ไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('สมัครสมาชิกด้วย {provider} ไม่สำเร็จ', { provider: 'Google' }), tone: 'error' })
       setGoogleLoading(false)
     }
   }
@@ -106,27 +134,27 @@ export default function RegisterPublic() {
       const profile = await signInWithLine()
       if (profile) {
         setUser(profile)
-        toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
+        toast({ title: t('เข้าสู่ระบบสำเร็จ'), message: t('ยินดีต้อนรับ {name}', { name: profile.name }), tone: 'success' })
         navigate('/')
       }
     } catch (err) {
-      toast({ title: 'สมัครสมาชิกด้วย LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('สมัครสมาชิกด้วย {provider} ไม่สำเร็จ', { provider: 'LINE' }), message: err instanceof Error ? err.message : undefined, tone: 'error' })
       setLineLoading(false)
     }
   }
 
   if (submitted) {
     return (
-      <AppShell variant="public" title="สมัครสมาชิกประชาชน">
+      <AppShell variant="public" title={t('สมัครสมาชิกประชาชน')}>
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
-          <SuccessState title="สมัครสมาชิกสำเร็จ" description={`ยินดีต้อนรับ ${form.fullName}`} />
+          <SuccessState title={t('สมัครสมาชิกสำเร็จ')} description={t('ยินดีต้อนรับ {name}', { name: form.fullName })} />
         </div>
       </AppShell>
     )
   }
 
   return (
-    <AppShell variant="public" title="สมัครสมาชิกประชาชน">
+    <AppShell variant="public" title={t('สมัครสมาชิกประชาชน')}>
       <div className="relative">
         <AnimatedBackground variant="auth" />
         <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
@@ -139,7 +167,7 @@ export default function RegisterPublic() {
                 loading={googleLoading}
                 onClick={handleGoogleSignup}
               >
-                สมัครสมาชิกด้วย Google
+                {t('สมัครสมาชิกด้วย {provider}', { provider: 'Google' })}
               </Button>
               <Button
                 variant="outline"
@@ -148,33 +176,33 @@ export default function RegisterPublic() {
                 loading={lineLoading}
                 onClick={handleLineSignup}
               >
-                สมัครสมาชิกด้วย LINE
+                {t('สมัครสมาชิกด้วย {provider}', { provider: 'LINE' })}
               </Button>
             </div>
 
             <div className="my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted">หรือกรอกข้อมูลเอง</span>
+              <span className="text-xs text-muted">{t('หรือกรอกข้อมูลเอง')}</span>
               <div className="h-px flex-1 bg-border" />
             </div>
 
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <Input
-                label="ชื่อ-นามสกุล"
+                label={t('ชื่อ-นามสกุล')}
                 required
                 value={form.fullName}
                 onChange={(e) => update('fullName', e.target.value)}
                 error={errors.fullName}
               />
               <Input
-                label="เบอร์โทรศัพท์"
+                label={t('เบอร์โทรศัพท์')}
                 required
                 value={form.phone}
                 onChange={(e) => update('phone', e.target.value)}
                 error={errors.phone}
               />
               <Input
-                label="อีเมล"
+                label={t('อีเมล')}
                 type="email"
                 required
                 value={form.email}
@@ -182,28 +210,28 @@ export default function RegisterPublic() {
                 error={errors.email}
               />
               <Input
-                label="รหัสผ่าน"
+                label={t('รหัสผ่าน')}
                 type="password"
                 required
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
                 error={errors.password}
-                hint="อย่างน้อย 6 ตัวอักษร"
+                hint={t('อย่างน้อย 6 ตัวอักษร')}
               />
               <Input
-                label="ยืนยันรหัสผ่าน"
+                label={t('ยืนยันรหัสผ่าน')}
                 type="password"
                 required
                 value={form.confirmPassword}
                 onChange={(e) => update('confirmPassword', e.target.value)}
                 error={errors.confirmPassword}
               />
-              <Checkbox checked={agree} onChange={setAgree} label="ยอมรับเงื่อนไขการใช้งาน" />
+              <Checkbox checked={agree} onChange={setAgree} label={t('ยอมรับเงื่อนไขการใช้งาน')} />
               {errors.agree && (
                 <p className="animate-fade-in text-xs font-medium text-emergency">{errors.agree}</p>
               )}
               <Button type="submit" fullWidth loading={loading}>
-                สมัครสมาชิก
+                {t('สมัครสมาชิก')}
               </Button>
             </form>
           </Card>

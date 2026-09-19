@@ -1,5 +1,11 @@
 import { supabase, supabaseEnabled } from './supabase'
 import type { AppUser, Role } from './types'
+import { t, registerTranslations } from './i18n'
+
+registerTranslations({
+  'ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)':
+    'Not authorized to perform this action, or the account no longer exists (check the admin/org-lead permissions of the account in use)',
+})
 
 interface ProfileRow {
   id: string
@@ -51,7 +57,9 @@ export async function fetchPendingAccounts(): Promise<AppUser[]> {
 // updated row back (`.select()`) is what makes that distinguishable: an
 // empty result here means "the button did nothing," which needs to surface
 // as a real error instead of the misleading success toast callers show.
-const RLS_BLOCKED_MESSAGE = 'ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)'
+function rlsBlockedMessage(): string {
+  return t('ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)')
+}
 
 /** `asOrgLead` also grants is_org_lead in the same update -- useful for the
  * common case of approving the very first member of a newly self-registered
@@ -62,14 +70,14 @@ export async function approveAccount(userId: string, asOrgLead = false): Promise
   if (asOrgLead) patch.is_org_lead = true
   const { data, error } = await supabase.from('profiles').update(patch).eq('id', userId).select('id')
   if (error) throw error
-  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
+  if (!data || data.length === 0) throw new Error(rlsBlockedMessage())
 }
 
 export async function rejectAccount(userId: string): Promise<void> {
   if (!supabase) return
   const { data, error } = await supabase.from('profiles').update({ approval_status: 'rejected' }).eq('id', userId).select('id')
   if (error) throw error
-  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
+  if (!data || data.length === 0) throw new Error(rlsBlockedMessage())
 }
 
 /** Approved staff accounts (not the public role -- promoting an anonymous-
@@ -96,7 +104,7 @@ export async function setAdminStatus(userId: string, isAdmin: boolean): Promise<
   if (!supabase) return
   const { data, error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId).select('id')
   if (error) throw error
-  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
+  if (!data || data.length === 0) throw new Error(rlsBlockedMessage())
 }
 
 /** Admin/dispatch can call this for anyone; an org lead can only call it
@@ -106,5 +114,5 @@ export async function setOrgLeadStatus(userId: string, isOrgLead: boolean): Prom
   if (!supabase) return
   const { data, error } = await supabase.from('profiles').update({ is_org_lead: isOrgLead }).eq('id', userId).select('id')
   if (error) throw error
-  if (!data || data.length === 0) throw new Error(RLS_BLOCKED_MESSAGE)
+  if (!data || data.length === 0) throw new Error(rlsBlockedMessage())
 }

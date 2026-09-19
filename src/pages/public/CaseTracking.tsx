@@ -23,12 +23,39 @@ import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import type { EmergencyCase } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ติดตามเคส: 'Track case',
+  'กำลังค้นหาเคส...': 'Looking up the case...',
+  ไม่พบเคสนี้: 'Case not found',
+  เคสอาจถูกลบหรือรหัสไม่ถูกต้อง: 'This case may have been deleted, or the code is incorrect',
+  หน่วยกู้ชีพกำลังโทรหาคุณ: 'The rescue team is calling you',
+  ปฏิเสธ: 'Reject',
+  รับสาย: 'Answer',
+  'เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ': 'Case complete — thank you for using ResQ',
+  ขอบคุณสำหรับความคิดเห็นของท่าน: 'Thank you for your feedback',
+  แชร์ให้ญาติติดตามสถานะ: 'Share so family can track status',
+  'ติดต่อ 1669': 'Contact 1669',
+  หน่วยกู้ชีพที่รับผิดชอบ: 'Assigned rescue team',
+  'คนขับ {driver} · ทะเบียน {plate} · สังกัด {unit}': 'Driver {driver} · plate {plate} · unit {unit}',
+  'คาดว่าถึงในอีกประมาณ {n} นาที': 'Estimated arrival in about {n} min',
+  'กำลังเดินทาง {n}%': '{n}% en route',
+  โรงพยาบาลปลายทาง: 'Destination hospital',
+  ขั้นตอนการดำเนินการ: 'Progress',
+  รูปภาพที่แนบ: 'Attached photos',
+  รูปภาพจุดเกิดเหตุ: 'Scene photo',
+  ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย: 'This system is a prototype for demonstration and research.',
+  ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
+  'แจ้งเหตุเมื่อ {date}': 'Reported {date}',
+})
 
 export default function CaseTracking() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const storedCase = useStore((s) => (id ? s.cases[id] : undefined))
   const markFeedbackSubmitted = useStore((s) => s.markFeedbackSubmitted)
+  const t = useT()
 
   const [justUpdated, setJustUpdated] = useState(false)
   const prevStatusRef = useRef<string | undefined>(undefined)
@@ -161,11 +188,11 @@ export default function CaseTracking() {
 
   if (!activeCase) {
     return (
-      <AppShell variant="flow" title="ติดตามเคส" showBack onBack={() => navigate('/')}>
+      <AppShell variant="flow" title={t('ติดตามเคส')} showBack onBack={() => navigate('/')}>
         {storedCase === undefined && remoteStatus === 'loading' ? (
-          <LoadingState label="กำลังค้นหาเคส..." />
+          <LoadingState label={t('กำลังค้นหาเคส...')} />
         ) : (
-          <ErrorState title="ไม่พบเคสนี้" description="เคสอาจถูกลบหรือรหัสไม่ถูกต้อง" />
+          <ErrorState title={t('ไม่พบเคสนี้')} description={t('เคสอาจถูกลบหรือรหัสไม่ถูกต้อง')} />
         )}
       </AppShell>
     )
@@ -188,9 +215,9 @@ export default function CaseTracking() {
   const ratio = clamp(activeCase.rescueEnRoutePct, 0, 100) / 100
   const leg =
     isEnRoute
-      ? { from: team?.base ?? null, to: location, label: 'จุดเกิดเหตุ', kind: 'incident' as const }
+      ? { from: team?.base ?? null, to: location, label: t('จุดเกิดเหตุ'), kind: 'incident' as const }
       : isTransporting
-        ? { from: location, to: hospitalLoc, label: activeCase.selectedHospital?.name ?? 'โรงพยาบาล', kind: 'hospital' as const }
+        ? { from: location, to: hospitalLoc, label: activeCase.selectedHospital?.name ?? t('โรงพยาบาล'), kind: 'hospital' as const }
         : null
   const rescuePos =
     team && route
@@ -214,13 +241,13 @@ export default function CaseTracking() {
       ? [
           ...(leg?.to
             ? [{ id: 'destination', lat: leg.to.lat, lng: leg.to.lng, label: leg.label, kind: leg.kind }]
-            : [{ id: 'incident', lat: location.lat, lng: location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' as const }]),
+            : [{ id: 'incident', lat: location.lat, lng: location.lng, label: t('จุดเกิดเหตุ'), kind: 'incident' as const }]),
           { id: 'rescue', lat: rescuePos.lat, lng: rescuePos.lng, label: team.name, kind: 'rescue' as const },
         ]
       : []
 
   return (
-    <AppShell variant="flow" title="ติดตามเคส" showBack onBack={() => navigate('/')}>
+    <AppShell variant="flow" title={t('ติดตามเคส')} showBack onBack={() => navigate('/')}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 
@@ -230,17 +257,17 @@ export default function CaseTracking() {
               <span className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
                 <PhoneIncoming className="size-6 animate-pulse" />
               </span>
-              <p className="font-bold text-navy">หน่วยกู้ชีพกำลังโทรหาคุณ</p>
+              <p className="font-bold text-ink">{t('หน่วยกู้ชีพกำลังโทรหาคุณ')}</p>
               <div className="flex w-full gap-2">
                 <Button
                   variant="outline"
                   fullWidth
                   onClick={() => setRescueCallStatus(activeCase.id, 'ended')}
                 >
-                  ปฏิเสธ
+                  {t('ปฏิเสธ')}
                 </Button>
                 <Button variant="primary" fullWidth icon={<Phone className="size-4" />} onClick={() => answerRescueCall(activeCase.id)}>
-                  รับสาย
+                  {t('รับสาย')}
                 </Button>
               </div>
             </Card>
@@ -257,8 +284,8 @@ export default function CaseTracking() {
                 remoteStream={rescueRemoteStream}
                 cameraState={rescueCameraState}
                 connectionState={rescueConnectionState}
-                remoteLabel="หน่วยกู้ชีพ"
-                remoteWaitingLabel={rescueRemoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอหน่วยกู้ชีพเปิดกล้อง'}
+                remoteLabel={t('หน่วยกู้ชีพ')}
+                remoteWaitingLabel={rescueRemoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอหน่วยกู้ชีพเปิดกล้อง')}
                 cameraOn={rescueCameraOn}
                 onToggleCamera={() => setRescueCameraOn((v) => !v)}
                 micOn={rescueMicOn}
@@ -271,7 +298,7 @@ export default function CaseTracking() {
           {activeCase.status === 'completed' && (
             <div className="flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 animate-fade-in-up">
               <CheckCircle2 className="size-6 shrink-0 text-success" />
-              <p className="text-sm font-semibold text-navy">เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ</p>
+              <p className="text-sm font-semibold text-ink">{t('เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ')}</p>
             </div>
           )}
 
@@ -279,7 +306,7 @@ export default function CaseTracking() {
             (activeCase.feedbackSubmitted || remoteFeedbackSubmitted ? (
               <Card className="flex items-center gap-3">
                 <CheckCircle2 className="size-5 shrink-0 text-success" />
-                <p className="text-sm font-medium text-navy">ขอบคุณสำหรับความคิดเห็นของท่าน</p>
+                <p className="text-sm font-medium text-ink">{t('ขอบคุณสำหรับความคิดเห็นของท่าน')}</p>
               </Card>
             ) : (
               <CaseFeedbackForm
@@ -295,16 +322,16 @@ export default function CaseTracking() {
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h1 className="text-lg font-bold text-navy">{activeCase.caseNumber}</h1>
+              <h1 className="text-lg font-bold text-ink">{activeCase.caseNumber}</h1>
               <StatusBadge status={activeCase.status} />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {activeCase.assessment && <SeverityBadge severity={activeCase.assessment.severity} />}
-              <span className="text-xs text-muted">แจ้งเหตุเมื่อ {formatDateTime(activeCase.createdAt)}</span>
+              <span className="text-xs text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: formatDateTime(activeCase.createdAt) })}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
-                แชร์ให้ญาติติดตามสถานะ
+                {t('แชร์ให้ญาติติดตามสถานะ')}
               </Button>
               {!isRemoteOnly && !isCompleted && id && (
                 <Button
@@ -313,7 +340,7 @@ export default function CaseTracking() {
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/contact-1669/${id}`)}
                 >
-                  ติดต่อ 1669
+                  {t('ติดต่อ 1669')}
                 </Button>
               )}
             </div>
@@ -323,16 +350,19 @@ export default function CaseTracking() {
 
           {team && (
             <Card className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-navy">
-                <Ambulance className="size-4 text-primary" /> หน่วยกู้ชีพที่รับผิดชอบ
+              <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Ambulance className="size-4 text-primary" /> {t('หน่วยกู้ชีพที่รับผิดชอบ')}
               </div>
               <div className="text-sm">
-                <p className="font-semibold text-navy">{team.name}</p>
+                <p className="font-semibold text-ink">{team.name}</p>
                 {activeCase.assignedVehicle && <p className="text-muted">{activeCase.assignedVehicle.vehicle}</p>}
                 {activeCase.status !== 'rescue-assigned' && activeCase.assignedVehicle?.driverName && (
                   <p className="mt-1 text-muted">
-                    คนขับ {activeCase.assignedVehicle.driverName} · ทะเบียน {activeCase.assignedVehicle.plateNumber} · สังกัด{' '}
-                    {activeCase.assignedVehicle.unitCode}
+                    {t('คนขับ {driver} · ทะเบียน {plate} · สังกัด {unit}', {
+                      driver: activeCase.assignedVehicle.driverName,
+                      plate: activeCase.assignedVehicle.plateNumber ?? '',
+                      unit: activeCase.assignedVehicle.unitCode,
+                    })}
                   </p>
                 )}
               </div>
@@ -340,14 +370,14 @@ export default function CaseTracking() {
                 <div className="flex flex-col gap-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-                      คาดว่าถึงในอีกประมาณ {etaMin} นาที
+                      {t('คาดว่าถึงในอีกประมาณ {n} นาที', { n: etaMin })}
                     </span>
                     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                      กำลังเดินทาง {Math.round(activeCase.rescueEnRoutePct)}%
+                      {t('กำลังเดินทาง {n}%', { n: Math.round(activeCase.rescueEnRoutePct) })}
                     </span>
                     {route && (
                       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                        เส้นทางจริงตามถนน
+                        {t('เส้นทางจริงตามถนน')}
                       </span>
                     )}
                   </div>
@@ -360,10 +390,10 @@ export default function CaseTracking() {
 
           {activeCase.selectedHospital && (
             <Card className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-navy">
-                <Building2 className="size-4 text-primary" /> โรงพยาบาลปลายทาง
+              <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Building2 className="size-4 text-primary" /> {t('โรงพยาบาลปลายทาง')}
               </div>
-              <p className="text-sm font-semibold text-navy">{activeCase.selectedHospital.name}</p>
+              <p className="text-sm font-semibold text-ink">{activeCase.selectedHospital.name}</p>
               <p className="text-sm text-muted">{activeCase.selectedHospital.location.address}</p>
             </Card>
           )}
@@ -374,7 +404,7 @@ export default function CaseTracking() {
               justUpdated && 'ring-4 ring-primary/30',
             )}
           >
-            <h2 className="mb-4 text-sm font-bold text-navy">ขั้นตอนการดำเนินการ</h2>
+            <h2 className="mb-4 text-sm font-bold text-ink">{t('ขั้นตอนการดำเนินการ')}</h2>
             <CaseTimeline
               timeline={activeCase.timeline}
               currentStatus={activeCase.status}
@@ -384,13 +414,13 @@ export default function CaseTracking() {
 
           {activeCase.photos.length > 0 && (
             <Card className="flex flex-col gap-3">
-              <h2 className="text-sm font-bold text-navy">รูปภาพที่แนบ</h2>
+              <h2 className="text-sm font-bold text-ink">{t('รูปภาพที่แนบ')}</h2>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {activeCase.photos.map((p) => (
                   <img
                     key={p.id}
                     src={p.dataUrl}
-                    alt="รูปภาพจุดเกิดเหตุ"
+                    alt={t('รูปภาพจุดเกิดเหตุ')}
                     className="aspect-square rounded-xl border border-border object-cover"
                   />
                 ))}
@@ -399,8 +429,8 @@ export default function CaseTracking() {
           )}
 
           <div className="space-y-0.5 text-center text-xs text-muted">
-            <p>ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย</p>
-            <p>ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง</p>
+            <p>{t('ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย')}</p>
+            <p>{t('ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง')}</p>
           </div>
         </div>
       </div>

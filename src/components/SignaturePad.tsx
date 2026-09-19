@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Eraser, PenLine } from 'lucide-react'
 import { Button } from './ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ลงชื่อรับทราบ: 'Sign to acknowledge',
+  ล้าง: 'Clear',
+  เซ็นชื่อด้วยนิ้วหรือเมาส์ในกรอบนี้: 'Sign with your finger or mouse in this box',
+})
 
 /**
  * A canvas-drawn signature -- for documenting a relative's informed refusal
@@ -10,7 +17,7 @@ import { Button } from './ui/Button'
  * or null once cleared/empty).
  */
 export function SignaturePad({
-  label = 'ลงชื่อรับทราบ',
+  label,
   onChange,
 }: {
   label?: string
@@ -20,6 +27,8 @@ export function SignaturePad({
   const drawingRef = useRef(false)
   const hasStrokeRef = useRef(false)
   const [hasStroke, setHasStroke] = useState(false)
+  const t = useT()
+  const resolvedLabel = label ?? t('ลงชื่อรับทราบ')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -88,15 +97,15 @@ export function SignaturePad({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
+    <div className="rounded-2xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
           <PenLine className="size-4 text-primary" />
-          {label}
+          {resolvedLabel}
         </p>
         {hasStroke && (
           <Button variant="ghost" size="sm" icon={<Eraser className="size-3.5" />} onClick={handleClear}>
-            ล้าง
+            {t('ล้าง')}
           </Button>
         )}
       </div>
@@ -108,11 +117,11 @@ export function SignaturePad({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          aria-label={label}
+          aria-label={resolvedLabel}
         />
         {!hasStroke && (
           <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted">
-            เซ็นชื่อด้วยนิ้วหรือเมาส์ในกรอบนี้
+            {t('เซ็นชื่อด้วยนิ้วหรือเมาส์ในกรอบนี้')}
           </p>
         )}
       </div>

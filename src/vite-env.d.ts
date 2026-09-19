@@ -7,6 +7,13 @@ interface ImportMetaEnv {
    * OAuth client id anywhere else), unlike the channel *secret*, which only
    * ever lives server-side in the line-login-exchange Edge Function. */
   readonly VITE_LINE_LOGIN_CHANNEL_ID?: string
+  /** Longdo Map API key (https://map.longdo.com/console) -- optional; used
+   * for Thailand-specific, traffic-aware routing (see lib/routing.ts).
+   * Longdo's map/route keys are designed for direct client-side use (like
+   * Google Maps' browser key), not a server secret, so it's fine to bundle
+   * this the same way as the other VITE_ vars above. Routing silently falls
+   * back to OSRM (no live traffic, but free and keyless) when unset. */
+  readonly VITE_LONGDO_MAP_KEY?: string
 }
 
 interface ImportMeta {

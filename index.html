@@ -2,6 +2,19 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
+    <script type="text/javascript">
+      // Applies the .dark class before first paint so there's no flash of
+      // the wrong theme while React/Zustand hydrate -- kept in sync with
+      // the 'theme' field ThemeBridge.tsx manages once the app is running.
+      ;(function () {
+        try {
+          var raw = localStorage.getItem('resq-storage')
+          var theme = raw ? JSON.parse(raw).state.theme : 'system'
+          var dark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="theme-color" content="#0B6EBD" />

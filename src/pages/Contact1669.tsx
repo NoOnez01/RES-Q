@@ -12,6 +12,7 @@ import { useStore } from '@/lib/store'
 import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
+import { useT } from '@/lib/i18n'
 
 /**
  * Generic "contact 1669" call screen for reaching dispatch about a case
@@ -30,6 +31,7 @@ export default function Contact1669() {
   const c = useStore((s) => (caseId ? s.cases[caseId] : undefined))
   const setCallStatus = useStore((s) => s.setCallStatus)
   const tickCallDuration = useStore((s) => s.tickCallDuration)
+  const t = useT()
 
   const isRescue = currentUser?.role === 'rescue'
   const backTo = caseId ? (isRescue ? `/rescue/case/${caseId}` : `/public/case/${caseId}`) : '/'
@@ -64,7 +66,7 @@ export default function Contact1669() {
   useEffect(() => {
     if (c?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    toast({ title: 'การโทรสิ้นสุดแล้ว', tone: 'info' })
+    toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
   }, [c?.callStatus])
 
   // Once the call ends -- from either side -- return to the case's own
@@ -84,8 +86,8 @@ export default function Contact1669() {
 
   if (!caseId || !c) {
     return (
-      <AppShell variant="flow" title="ติดต่อศูนย์ 1669" showBack>
-        <div className="py-16 text-center text-sm text-muted">ไม่พบข้อมูลเคส</div>
+      <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
       </AppShell>
     )
   }
@@ -107,7 +109,7 @@ export default function Contact1669() {
   const isCallActive = c.callStatus === 'connecting' || c.callStatus === 'in-call'
 
   return (
-    <AppShell variant="flow" title="ติดต่อศูนย์ 1669" showBack onBack={() => navigate(backTo)}>
+    <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack onBack={() => navigate(backTo)}>
       <div className="relative">
         <AnimatedBackground variant="call" />
         <div className="relative z-10 flex flex-col gap-5 pb-8">
@@ -126,9 +128,9 @@ export default function Contact1669() {
               </div>
             </div>
             <p className="text-2xl font-extrabold tracking-wide text-emergency">1669</p>
-            <p className="text-sm font-semibold text-navy">เคส {c.caseNumber}</p>
+            <p className="text-sm font-semibold text-ink">{t('เคส {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.callStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">กำลังโทร... รอเจ้าหน้าที่รับสาย</p>
+              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทร... รอเจ้าหน้าที่รับสาย')}</p>
             )}
             {c.callStatus === 'in-call' && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
@@ -145,8 +147,8 @@ export default function Contact1669() {
                 remoteStream={remoteStream}
                 cameraState={cameraState}
                 connectionState={connectionState}
-                remoteLabel="เจ้าหน้าที่ 1669"
-                remoteWaitingLabel={remoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอเจ้าหน้าที่รับสาย'}
+                remoteLabel={t('เจ้าหน้าที่ 1669')}
+                remoteWaitingLabel={remoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอเจ้าหน้าที่รับสาย')}
                 cameraOn={cameraOn}
                 onToggleCamera={() => setCameraOn((v) => !v)}
                 micOn={micOn}
@@ -155,19 +157,19 @@ export default function Contact1669() {
               />
               {isRescue || c.callStatus === 'connecting' ? (
                 <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                  {isRescue ? 'วางสาย' : 'ยกเลิกการโทร'}
+                  {isRescue ? t('วางสาย') : t('ยกเลิกการโทร')}
                 </Button>
               ) : (
                 // Once connected, only staff ends the call -- a citizen
                 // calling in doesn't get to hang up on 1669 mid-conversation.
-                <p className="text-center text-xs text-muted">เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา</p>
+                <p className="text-center text-xs text-muted">{t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}</p>
               )}
             </>
           )}
 
           {!isCallActive && (
             <Button variant="danger" size="lg" fullWidth icon={<Phone className="size-5" />} onClick={handleCall}>
-              โทร 1669
+              {t('โทร 1669')}
             </Button>
           )}
         </div>

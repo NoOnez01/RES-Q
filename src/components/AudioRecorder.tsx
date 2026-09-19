@@ -2,14 +2,28 @@ import { useRef, useState } from 'react'
 import { Mic, Square, Play, Pause, Trash2 } from 'lucide-react'
 import { Button } from './ui/Button'
 import { formatDuration } from '@/lib/utils'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  บันทึกเสียงบันทึกเพิ่มเติม: 'Record additional voice note',
+  'อุปกรณ์นี้ไม่รองรับการบันทึกเสียง สามารถพิมพ์บันทึกแทนได้': 'This device does not support audio recording, you can type a note instead',
+  เริ่มบันทึกเสียง: 'Start recording',
+  หยุดบันทึก: 'Stop recording',
+  หยุดชั่วคราว: 'Pause',
+  เล่นเสียง: 'Play',
+  'บันทึกแล้ว {duration}': 'Recorded {duration}',
+  ลบการบันทึกเสียง: 'Delete recording',
+})
 
 export function AudioRecorder({
-  label = 'บันทึกเสียงบันทึกเพิ่มเติม',
+  label,
   onSave,
 }: {
   label?: string
   onSave?: (blob: Blob, seconds: number) => void
 }) {
+  const t = useT()
+  const resolvedLabel = label ?? t('บันทึกเสียงบันทึกเพิ่มเติม')
   const [supported] = useState(() => typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia)
   const [recording, setRecording] = useState(false)
   const [seconds, setSeconds] = useState(0)
@@ -32,7 +46,7 @@ export function AudioRecorder({
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         setAudioUrl(URL.createObjectURL(blob))
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach((track) => track.stop())
         onSave?.(blob, secondsRef.current)
       }
       recorder.start()
@@ -72,23 +86,23 @@ export function AudioRecorder({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
-      <p className="text-sm font-semibold text-navy mb-3">{label}</p>
+    <div className="rounded-2xl border border-border bg-surface p-4">
+      <p className="text-sm font-semibold text-ink mb-3">{resolvedLabel}</p>
 
       {!supported && (
-        <p className="text-xs text-muted mb-2">อุปกรณ์นี้ไม่รองรับการบันทึกเสียง สามารถพิมพ์บันทึกแทนได้</p>
+        <p className="text-xs text-muted mb-2">{t('อุปกรณ์นี้ไม่รองรับการบันทึกเสียง สามารถพิมพ์บันทึกแทนได้')}</p>
       )}
 
       {!audioUrl ? (
         <div className="flex items-center gap-3">
           {!recording ? (
             <Button variant="secondary" icon={<Mic className="size-4" />} onClick={startRecording} disabled={!supported}>
-              เริ่มบันทึกเสียง
+              {t('เริ่มบันทึกเสียง')}
             </Button>
           ) : (
             <>
               <Button variant="danger" icon={<Square className="size-4" />} onClick={stopRecording}>
-                หยุดบันทึก
+                {t('หยุดบันทึก')}
               </Button>
               <span className="flex items-center gap-2 text-sm font-semibold text-emergency">
                 <span className="size-2 animate-pulse rounded-full bg-emergency" />
@@ -105,10 +119,10 @@ export function AudioRecorder({
             icon={playing ? <Pause className="size-4" /> : <Play className="size-4" />}
             onClick={togglePlay}
           >
-            {playing ? 'หยุดชั่วคราว' : 'เล่นเสียง'}
+            {playing ? t('หยุดชั่วคราว') : t('เล่นเสียง')}
           </Button>
-          <span className="text-sm text-muted">บันทึกแล้ว {formatDuration(seconds)}</span>
-          <button onClick={discard} aria-label="ลบการบันทึกเสียง" className="text-muted hover:text-emergency ml-auto">
+          <span className="text-sm text-muted">{t('บันทึกแล้ว {duration}', { duration: formatDuration(seconds) })}</span>
+          <button onClick={discard} aria-label={t('ลบการบันทึกเสียง')} className="text-muted hover:text-emergency ml-auto">
             <Trash2 className="size-4" />
           </button>
           <audio ref={audioRef} src={audioUrl} onEnded={() => setPlaying(false)} className="hidden" />

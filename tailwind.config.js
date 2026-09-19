@@ -1,28 +1,51 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // Design tokens resolve through CSS variables (defined for :root and
+        // .dark in index.css) instead of fixed hex values, so dark mode is a
+        // matter of swapping the variables, not touching every className
+        // that uses these colors. The `rgb(var(...) / <alpha-value>)` form
+        // keeps Tailwind's opacity modifiers (e.g. bg-surface/90) working.
         primary: {
-          DEFAULT: '#0B6EBD',
-          bright: '#1479C9',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          bright: 'rgb(var(--color-primary-bright) / <alpha-value>)',
         },
-        navy: '#12304A',
+        // Fixed dark navy -- used deliberately as a dark color (modal
+        // scrims, video-call panel backgrounds, badges) that should stay
+        // dark in both themes, so it does NOT swap with the theme.
+        navy: 'rgb(var(--color-navy) / <alpha-value>)',
+        // Primary heading/body text color -- swaps to a light tone in dark
+        // mode. Kept separate from `navy` (see above) even though they
+        // share the same light-mode value, because the two need to move in
+        // opposite directions when the theme changes.
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',
         skyblue: {
-          light: '#EAF6FF',
-          pale: '#F4FAFE',
+          light: 'rgb(var(--color-skyblue-light) / <alpha-value>)',
+          pale: 'rgb(var(--color-skyblue-pale) / <alpha-value>)',
         },
-        bg: '#F6FAFD',
-        border: '#D9E7F2',
-        muted: '#667085',
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
         emergency: {
-          DEFAULT: '#D92D20',
-          dark: '#B42318',
+          DEFAULT: 'rgb(var(--color-emergency) / <alpha-value>)',
+          dark: 'rgb(var(--color-emergency-dark) / <alpha-value>)',
         },
-        warning: '#F79009',
-        moderate: '#F5C542',
-        success: '#12B76A',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        moderate: 'rgb(var(--color-moderate) / <alpha-value>)',
+        success: 'rgb(var(--color-success) / <alpha-value>)',
+        // Card/panel/header backgrounds -- what used to be plain `white`.
+        // Literal `white`/`black` are left alone since those are almost
+        // always text/icons sitting on a saturated color that doesn't
+        // change between themes (e.g. white text on the emergency-red
+        // button), not a surface that should invert.
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          alt: 'rgb(var(--color-surface-alt) / <alpha-value>)',
+        },
       },
       fontFamily: {
         sans: ['"Noto Sans Thai"', '"Noto Sans"', 'system-ui', 'sans-serif'],

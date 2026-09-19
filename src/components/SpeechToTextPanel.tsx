@@ -2,6 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, AlertTriangle, AlertCircle } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Textarea } from './ui/Field'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'ไม่สามารถพูดบันทึกได้ขณะนี้ (ต้องใช้สัญญาณอินเทอร์เน็ต) กรุณาพิมพ์แทน':
+    'Voice input is unavailable right now (requires an internet connection), please type instead',
+  ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน: 'Microphone access was not granted',
+  ไม่พบไมโครโฟนบนอุปกรณ์นี้: 'No microphone found on this device',
+  'พูดบันทึกไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์แทน': 'Voice input failed, please try again or type instead',
+  พูดเพื่อบันทึกข้อความ: 'Speak to record text',
+  'กำลังฟัง...': 'Listening...',
+  พูดบันทึก: 'Voice input',
+  อุปกรณ์นี้ไม่รองรับการพูดบันทึกข้อความ: 'This device does not support voice-to-text input',
+  'พิมพ์หรือพูดเพื่อบันทึกข้อความ...': 'Type or speak to record text...',
+})
 
 interface SpeechToTextPanelProps {
   value: string
@@ -17,17 +31,10 @@ interface SpeechToTextPanelProps {
 // Google's speech servers and needs a live connection to return anything at
 // all, so a 'network' error here is the expected failure mode on a moving
 // rescue vehicle's spotty signal, not an edge case.
-const ERROR_LABEL: Record<string, string> = {
-  network: 'ไม่สามารถพูดบันทึกได้ขณะนี้ (ต้องใช้สัญญาณอินเทอร์เน็ต) กรุณาพิมพ์แทน',
-  'not-allowed': 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน',
-  'service-not-allowed': 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน',
-  'audio-capture': 'ไม่พบไมโครโฟนบนอุปกรณ์นี้',
-}
-
 export function SpeechToTextPanel({
   value,
   onChange,
-  label = 'พูดเพื่อบันทึกข้อความ',
+  label,
   error,
   textareaClassName,
 }: SpeechToTextPanelProps) {
@@ -35,6 +42,14 @@ export function SpeechToTextPanel({
   const [supported, setSupported] = useState(false)
   const [errorLabel, setErrorLabel] = useState<string | null>(null)
   const recognitionRef = useRef<any>(null)
+  const t = useT()
+  const resolvedLabel = label ?? t('พูดเพื่อบันทึกข้อความ')
+  const ERROR_LABEL: Record<string, string> = {
+    network: t('ไม่สามารถพูดบันทึกได้ขณะนี้ (ต้องใช้สัญญาณอินเทอร์เน็ต) กรุณาพิมพ์แทน'),
+    'not-allowed': t('ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน'),
+    'service-not-allowed': t('ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน'),
+    'audio-capture': t('ไม่พบไมโครโฟนบนอุปกรณ์นี้'),
+  }
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -61,7 +76,7 @@ export function SpeechToTextPanel({
     recognition.onerror = (event: { error: string }) => {
       setListening(false)
       if (event.error === 'no-speech' || event.error === 'aborted') return
-      setErrorLabel(ERROR_LABEL[event.error] ?? 'พูดบันทึกไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์แทน')
+      setErrorLabel(ERROR_LABEL[event.error] ?? t('พูดบันทึกไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์แทน'))
     }
     recognition.onend = () => setListening(false)
     recognitionRef.current = recognition
@@ -90,7 +105,7 @@ export function SpeechToTextPanel({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-navy">{label}</p>
+        <p className="text-sm font-semibold text-ink">{resolvedLabel}</p>
         {supported ? (
           <Button
             variant={listening ? 'danger' : 'secondary'}
@@ -98,10 +113,10 @@ export function SpeechToTextPanel({
             icon={listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
             onClick={toggle}
           >
-            {listening ? 'กำลังฟัง...' : 'พูดบันทึก'}
+            {listening ? t('กำลังฟัง...') : t('พูดบันทึก')}
           </Button>
         ) : (
-          <span className="text-xs text-muted">อุปกรณ์นี้ไม่รองรับการพูดบันทึกข้อความ</span>
+          <span className="text-xs text-muted">{t('อุปกรณ์นี้ไม่รองรับการพูดบันทึกข้อความ')}</span>
         )}
       </div>
       {errorLabel && (
@@ -112,7 +127,7 @@ export function SpeechToTextPanel({
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="พิมพ์หรือพูดเพื่อบันทึกข้อความ..."
+        placeholder={t('พิมพ์หรือพูดเพื่อบันทึกข้อความ...')}
         className={textareaClassName}
       />
       {error && (

@@ -27,6 +27,70 @@ import { VEHICLE_LEVEL_RANK, VEHICLE_LEVEL_LABEL } from '@/lib/types'
 import type { RescueTeam, RescueVehicle, Hospital } from '@/lib/types'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Ambulance, Building2, Plus, Pencil, Trash2, Truck } from 'lucide-react'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์: 'Please enter the team name and phone number',
+  บันทึกข้อมูลหน่วยกู้ชีพแล้ว: 'Rescue team details saved',
+  สร้างหน่วยกู้ชีพใหม่แล้ว: 'New rescue team created',
+  บันทึกไม่สำเร็จ: 'Failed to save',
+  'ชื่อหน่วยกู้ชีพ (สาขา/จังหวัด)': 'Rescue team name (branch/province)',
+  เบอร์โทรศัพท์: 'Phone number',
+  ที่ตั้งหน่วย: 'Base location',
+  บันทึก: 'Save',
+  ยกเลิก: 'Cancel',
+  'กรุณากรอกรหัสรถ/ทีม': 'Please enter the vehicle/crew code',
+  'รหัสรถ/ทีม': 'Vehicle/crew code',
+  จำนวนสมาชิก: 'Number of members',
+  ยานพาหนะ: 'Vehicle',
+  ทะเบียนรถ: 'License plate',
+  ชื่อคนขับ: 'Driver name',
+  ระดับรถ: 'Vehicle level',
+  'อุปกรณ์เฉพาะทาง (คั่นด้วยจุลภาค)': 'Specialized equipment (comma-separated)',
+  'เครื่องตัดถ่าง, เฝือกดามคอ': 'Jaws of life, cervical collar',
+  กรุณากรอกชื่อเบอร์โทรศัพท์และที่อยู่โรงพยาบาล: "Please enter the hospital's name, phone number, and address",
+  บันทึกข้อมูลโรงพยาบาลแล้ว: 'Hospital details saved',
+  สร้างโรงพยาบาลใหม่แล้ว: 'New hospital created',
+  ชื่อโรงพยาบาล: 'Hospital name',
+  ที่อยู่: 'Address',
+  จำนวนเตียงว่าง: 'Beds available',
+  ห้องฉุกเฉินพร้อมรับผู้ป่วย: 'Emergency room ready to receive patients',
+  'ความเชี่ยวชาญเฉพาะทาง (คั่นด้วยจุลภาค)': 'Specialties (comma-separated)',
+  'ศัลยกรรมประสาท, หัวใจ': 'Neurosurgery, cardiology',
+  'บันทึกข้อมูลรถ/ทีมแล้ว': 'Vehicle/crew details saved',
+  'เพิ่มรถ/ทีมใหม่แล้ว': 'New vehicle/crew added',
+  'รถ/ทีม ({n})': 'Vehicles/crews ({n})',
+  'เพิ่มรถ/ทีม': 'Add vehicle/crew',
+  'ยังไม่มีรถ/ทีมในหน่วยนี้': 'No vehicles/crews in this team yet',
+  '{vehicle} · {n} คน': '{vehicle} · {n} people',
+  แก้ไข: 'Edit',
+  ลบ: 'Delete',
+  'จัดการหน่วยกู้ชีพ/โรงพยาบาล': 'Manage rescue teams / hospitals',
+  ไม่มีสิทธิ์เข้าถึงหน้านี้: 'No access to this page',
+  'เฉพาะแอดมินเท่านั้นที่จัดการหน่วยกู้ชีพ/โรงพยาบาลได้': 'Only admins can manage rescue teams / hospitals',
+  ลบหน่วยกู้ชีพแล้ว: 'Rescue team deleted',
+  ลบไม่สำเร็จ: 'Delete failed',
+  'ลบรถ/ทีมแล้ว': 'Vehicle/crew deleted',
+  ลบโรงพยาบาลแล้ว: 'Hospital deleted',
+  'หน่วยกู้ชีพ (สาขา/จังหวัด)': 'Rescue teams (branch/province)',
+  เพิ่มหน่วยกู้ชีพ: 'Add rescue team',
+  ยังไม่มีหน่วยกู้ชีพในระบบ: 'No rescue teams in the system yet',
+  เพิ่มหน่วยกู้ชีพแรกได้ที่ปุ่มด้านบน: 'Add the first rescue team using the button above',
+  โรงพยาบาล: 'Hospital',
+  เพิ่มโรงพยาบาล: 'Add hospital',
+  ยังไม่มีโรงพยาบาลในระบบ: 'No hospitals in the system yet',
+  เพิ่มโรงพยาบาลแรกได้ที่ปุ่มด้านบน: 'Add the first hospital using the button above',
+  'เตียงว่าง {n} · {phone}': 'Beds available {n} · {phone}',
+  ยืนยันการลบหน่วยกู้ชีพ: 'Confirm deleting this rescue team',
+  'ต้องการลบ "{name}" หรือไม่ รถ/ทีมทั้งหมดในหน่วยนี้จะถูกลบไปด้วย เคสที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเคสใหม่ให้หน่วยนี้ได้อีก':
+    'Delete "{name}"? All vehicles/crews in this team will also be deleted. Previously assigned cases are not deleted, but no new case can be assigned to this team.',
+  ยืนยันลบ: 'Confirm delete',
+  'ยืนยันการลบรถ/ทีม': 'Confirm deleting this vehicle/crew',
+  'ต้องการลบ "{name}" หรือไม่': 'Delete "{name}"?',
+  ยืนยันการลบโรงพยาบาล: 'Confirm deleting this hospital',
+  'ต้องการลบ "{name}" หรือไม่ เคสที่ส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกส่งผู้ป่วยไปที่นี่ได้อีก':
+    'Delete "{name}"? Previously sent cases are not deleted, but no new patient can be sent here.',
+})
 
 const EMPTY_TEAM_FORM: NewRescueTeamInput = { name: '', phone: '', baseAddress: '' }
 const EMPTY_VEHICLE_FORM: NewRescueVehicleInput = { unitCode: '', members: 3, vehicle: '', equipment: [], level: 'BLS' }
@@ -60,20 +124,21 @@ function RescueTeamForm({
       : EMPTY_TEAM_FORM,
   )
   const [saving, setSaving] = useState(false)
+  const t = useT()
 
   async function handleSave() {
     if (!form.name.trim() || !form.phone.trim()) {
-      toast({ title: 'กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์', tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์'), tone: 'error' })
       return
     }
     setSaving(true)
     try {
       if (initial) await updateRescueTeam(initial.id, form)
       else await createRescueTeam(form)
-      toast({ title: initial ? 'บันทึกข้อมูลหน่วยกู้ชีพแล้ว' : 'สร้างหน่วยกู้ชีพใหม่แล้ว', tone: 'success' })
+      toast({ title: initial ? t('บันทึกข้อมูลหน่วยกู้ชีพแล้ว') : t('สร้างหน่วยกู้ชีพใหม่แล้ว'), tone: 'success' })
       onSaved()
     } catch {
-      toast({ title: 'บันทึกไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('บันทึกไม่สำเร็จ'), tone: 'error' })
     } finally {
       setSaving(false)
     }
@@ -82,10 +147,10 @@ function RescueTeamForm({
   return (
     <Card className="flex flex-col gap-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="ชื่อหน่วยกู้ชีพ (สาขา/จังหวัด)" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <Input label="เบอร์โทรศัพท์" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <Input label={t('ชื่อหน่วยกู้ชีพ (สาขา/จังหวัด)')} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Input label={t('เบอร์โทรศัพท์')} required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <Input
-          label="ที่ตั้งหน่วย"
+          label={t('ที่ตั้งหน่วย')}
           className="sm:col-span-2"
           value={form.baseAddress}
           onChange={(e) => setForm({ ...form, baseAddress: e.target.value })}
@@ -93,10 +158,10 @@ function RescueTeamForm({
       </div>
       <div className="flex gap-2">
         <Button size="sm" loading={saving} onClick={handleSave}>
-          บันทึก
+          {t('บันทึก')}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel} disabled={saving}>
-          ยกเลิก
+          {t('ยกเลิก')}
         </Button>
       </div>
     </Card>
@@ -127,10 +192,11 @@ function VehicleForm({
   )
   const [equipmentText, setEquipmentText] = useState(initial?.equipment.join(', ') ?? '')
   const [saving, setSaving] = useState(false)
+  const t = useT()
 
   async function handleSave() {
     if (!form.unitCode.trim()) {
-      toast({ title: 'กรุณากรอกรหัสรถ/ทีม', tone: 'error' })
+      toast({ title: t('กรุณากรอกรหัสรถ/ทีม'), tone: 'error' })
       return
     }
     setSaving(true)
@@ -144,20 +210,20 @@ function VehicleForm({
   return (
     <Card className="flex flex-col gap-3 border-primary/20 bg-skyblue-pale">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="รหัสรถ/ทีม" required value={form.unitCode} onChange={(e) => setForm({ ...form, unitCode: e.target.value })} />
+        <Input label={t('รหัสรถ/ทีม')} required value={form.unitCode} onChange={(e) => setForm({ ...form, unitCode: e.target.value })} />
         <Input
-          label="จำนวนสมาชิก"
+          label={t('จำนวนสมาชิก')}
           type="number"
           min={1}
           value={form.members}
           onChange={(e) => setForm({ ...form, members: Number(e.target.value) || 1 })}
         />
-        <Input label="ยานพาหนะ" value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} />
-        <Input label="ทะเบียนรถ" value={form.plateNumber ?? ''} onChange={(e) => setForm({ ...form, plateNumber: e.target.value })} />
-        <Input label="ชื่อคนขับ" value={form.driverName ?? ''} onChange={(e) => setForm({ ...form, driverName: e.target.value })} />
+        <Input label={t('ยานพาหนะ')} value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} />
+        <Input label={t('ทะเบียนรถ')} value={form.plateNumber ?? ''} onChange={(e) => setForm({ ...form, plateNumber: e.target.value })} />
+        <Input label={t('ชื่อคนขับ')} value={form.driverName ?? ''} onChange={(e) => setForm({ ...form, driverName: e.target.value })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-navy">ระดับรถ</label>
+        <label className="mb-1.5 block text-sm font-medium text-ink">{t('ระดับรถ')}</label>
         <div className="flex gap-2">
           {VEHICLE_LEVEL_RANK.map((lvl) => (
             <button
@@ -168,7 +234,7 @@ function VehicleForm({
                 'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
                 (form.level ?? 'BLS') === lvl
                   ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
-                  : 'border-border bg-white text-muted hover:border-primary/40',
+                  : 'border-border bg-surface text-muted hover:border-primary/40',
               )}
             >
               {VEHICLE_LEVEL_LABEL[lvl]}
@@ -177,17 +243,17 @@ function VehicleForm({
         </div>
       </div>
       <Input
-        label="อุปกรณ์เฉพาะทาง (คั่นด้วยจุลภาค)"
-        placeholder="เครื่องตัดถ่าง, เฝือกดามคอ"
+        label={t('อุปกรณ์เฉพาะทาง (คั่นด้วยจุลภาค)')}
+        placeholder={t('เครื่องตัดถ่าง, เฝือกดามคอ')}
         value={equipmentText}
         onChange={(e) => setEquipmentText(e.target.value)}
       />
       <div className="flex gap-2">
         <Button size="sm" loading={saving} onClick={handleSave}>
-          บันทึก
+          {t('บันทึก')}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel} disabled={saving}>
-          ยกเลิก
+          {t('ยกเลิก')}
         </Button>
       </div>
     </Card>
@@ -219,10 +285,11 @@ function HospitalForm({
   )
   const [specialtiesText, setSpecialtiesText] = useState(initial?.specialties.join(', ') ?? '')
   const [saving, setSaving] = useState(false)
+  const t = useT()
 
   async function handleSave() {
     if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast({ title: 'กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่โรงพยาบาล', tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อเบอร์โทรศัพท์และที่อยู่โรงพยาบาล'), tone: 'error' })
       return
     }
     setSaving(true)
@@ -230,10 +297,10 @@ function HospitalForm({
       const input: NewHospitalInput = { ...form, specialties: splitList(specialtiesText) }
       if (initial) await updateHospital(initial.id, input)
       else await createHospital(input)
-      toast({ title: initial ? 'บันทึกข้อมูลโรงพยาบาลแล้ว' : 'สร้างโรงพยาบาลใหม่แล้ว', tone: 'success' })
+      toast({ title: initial ? t('บันทึกข้อมูลโรงพยาบาลแล้ว') : t('สร้างโรงพยาบาลใหม่แล้ว'), tone: 'success' })
       onSaved()
     } catch {
-      toast({ title: 'บันทึกไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('บันทึกไม่สำเร็จ'), tone: 'error' })
     } finally {
       setSaving(false)
     }
@@ -242,17 +309,17 @@ function HospitalForm({
   return (
     <Card className="flex flex-col gap-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="ชื่อโรงพยาบาล" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <Input label="เบอร์โทรศัพท์" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <Input label={t('ชื่อโรงพยาบาล')} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Input label={t('เบอร์โทรศัพท์')} required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <Input
-          label="ที่อยู่"
+          label={t('ที่อยู่')}
           required
           className="sm:col-span-2"
           value={form.address}
           onChange={(e) => setForm({ ...form, address: e.target.value })}
         />
         <Input
-          label="จำนวนเตียงว่าง"
+          label={t('จำนวนเตียงว่าง')}
           type="number"
           min={0}
           value={form.bedsAvailable}
@@ -262,20 +329,20 @@ function HospitalForm({
       <Checkbox
         checked={form.erAvailable ?? true}
         onChange={(v) => setForm({ ...form, erAvailable: v })}
-        label="ห้องฉุกเฉินพร้อมรับผู้ป่วย"
+        label={t('ห้องฉุกเฉินพร้อมรับผู้ป่วย')}
       />
       <Input
-        label="ความเชี่ยวชาญเฉพาะทาง (คั่นด้วยจุลภาค)"
-        placeholder="ศัลยกรรมประสาท, หัวใจ"
+        label={t('ความเชี่ยวชาญเฉพาะทาง (คั่นด้วยจุลภาค)')}
+        placeholder={t('ศัลยกรรมประสาท, หัวใจ')}
         value={specialtiesText}
         onChange={(e) => setSpecialtiesText(e.target.value)}
       />
       <div className="flex gap-2">
         <Button size="sm" loading={saving} onClick={handleSave}>
-          บันทึก
+          {t('บันทึก')}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel} disabled={saving}>
-          ยกเลิก
+          {t('ยกเลิก')}
         </Button>
       </div>
     </Card>
@@ -302,19 +369,20 @@ function TeamVehicles({
   onDeleteVehicle: (vehicle: RescueVehicle) => void
   reload: () => Promise<void>
 }) {
+  const t = useT()
   async function handleVehicleSaved(input: NewRescueVehicleInput) {
     try {
       if (vehicleFormTarget?.vehicleId && vehicleFormTarget.vehicleId !== 'new') {
         await updateRescueVehicle(vehicleFormTarget.vehicleId, input)
-        toast({ title: 'บันทึกข้อมูลรถ/ทีมแล้ว', tone: 'success' })
+        toast({ title: t('บันทึกข้อมูลรถ/ทีมแล้ว'), tone: 'success' })
       } else {
         await createRescueVehicle(team.id, input)
-        toast({ title: 'เพิ่มรถ/ทีมใหม่แล้ว', tone: 'success' })
+        toast({ title: t('เพิ่มรถ/ทีมใหม่แล้ว'), tone: 'success' })
       }
       setVehicleFormTarget(null)
       await reload()
     } catch {
-      toast({ title: 'บันทึกไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('บันทึกไม่สำเร็จ'), tone: 'error' })
     }
   }
 
@@ -322,7 +390,7 @@ function TeamVehicles({
     <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-          <Truck className="size-3.5" /> รถ/ทีม ({team.vehicles.length})
+          <Truck className="size-3.5" /> {t('รถ/ทีม ({n})', { n: team.vehicles.length })}
         </p>
         {!(vehicleFormTarget?.teamId === team.id && vehicleFormTarget.vehicleId === 'new') && (
           <Button
@@ -331,7 +399,7 @@ function TeamVehicles({
             icon={<Plus className="size-3.5" />}
             onClick={() => setVehicleFormTarget({ teamId: team.id, vehicleId: 'new' })}
           >
-            เพิ่มรถ/ทีม
+            {t('เพิ่มรถ/ทีม')}
           </Button>
         )}
       </div>
@@ -341,7 +409,7 @@ function TeamVehicles({
       )}
 
       {team.vehicles.length === 0 && vehicleFormTarget?.teamId !== team.id && (
-        <p className="text-xs text-muted">ยังไม่มีรถ/ทีมในหน่วยนี้</p>
+        <p className="text-xs text-muted">{t('ยังไม่มีรถ/ทีมในหน่วยนี้')}</p>
       )}
 
       {team.vehicles.map((vehicle) =>
@@ -350,12 +418,12 @@ function TeamVehicles({
         ) : (
           <div key={vehicle.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-bg p-3">
             <div>
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                 {vehicle.unitCode}
                 <VehicleLevelBadge level={vehicle.level} />
               </p>
               <p className="text-xs text-muted">
-                {vehicle.vehicle} · {vehicle.members} คน
+                {t('{vehicle} · {n} คน', { vehicle: vehicle.vehicle, n: vehicle.members })}
                 {vehicle.plateNumber && ` · ${vehicle.plateNumber}`}
               </p>
             </div>
@@ -366,10 +434,10 @@ function TeamVehicles({
                 icon={<Pencil className="size-3" />}
                 onClick={() => setVehicleFormTarget({ teamId: team.id, vehicleId: vehicle.id })}
               >
-                แก้ไข
+                {t('แก้ไข')}
               </Button>
               <Button size="sm" variant="danger" icon={<Trash2 className="size-3" />} onClick={() => onDeleteVehicle(vehicle)}>
-                ลบ
+                {t('ลบ')}
               </Button>
             </div>
           </div>
@@ -397,11 +465,12 @@ export default function ManageOrgs() {
   const [deleteVehicleTarget, setDeleteVehicleTarget] = useState<RescueVehicle | null>(null)
   const [deleteHospitalTarget, setDeleteHospitalTarget] = useState<Hospital | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const t = useT()
 
   if (!currentUser?.isAdmin) {
     return (
-      <AppShell variant="dashboard" title="จัดการหน่วยกู้ชีพ/โรงพยาบาล">
-        <ErrorState title="ไม่มีสิทธิ์เข้าถึงหน้านี้" description="เฉพาะแอดมินเท่านั้นที่จัดการหน่วยกู้ชีพ/โรงพยาบาลได้" />
+      <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}>
+        <ErrorState title={t('ไม่มีสิทธิ์เข้าถึงหน้านี้')} description={t('เฉพาะแอดมินเท่านั้นที่จัดการหน่วยกู้ชีพ/โรงพยาบาลได้')} />
       </AppShell>
     )
   }
@@ -417,10 +486,10 @@ export default function ManageOrgs() {
     setDeleting(true)
     try {
       await deleteRescueTeam(deleteTeamTarget.id)
-      toast({ title: 'ลบหน่วยกู้ชีพแล้ว', tone: 'success' })
+      toast({ title: t('ลบหน่วยกู้ชีพแล้ว'), tone: 'success' })
       await refreshOrgs()
     } catch {
-      toast({ title: 'ลบไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('ลบไม่สำเร็จ'), tone: 'error' })
     } finally {
       setDeleting(false)
       setDeleteTeamTarget(null)
@@ -432,10 +501,10 @@ export default function ManageOrgs() {
     setDeleting(true)
     try {
       await deleteRescueVehicle(deleteVehicleTarget.id)
-      toast({ title: 'ลบรถ/ทีมแล้ว', tone: 'success' })
+      toast({ title: t('ลบรถ/ทีมแล้ว'), tone: 'success' })
       await refreshOrgs()
     } catch {
-      toast({ title: 'ลบไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('ลบไม่สำเร็จ'), tone: 'error' })
     } finally {
       setDeleting(false)
       setDeleteVehicleTarget(null)
@@ -447,10 +516,10 @@ export default function ManageOrgs() {
     setDeleting(true)
     try {
       await deleteHospital(deleteHospitalTarget.id)
-      toast({ title: 'ลบโรงพยาบาลแล้ว', tone: 'success' })
+      toast({ title: t('ลบโรงพยาบาลแล้ว'), tone: 'success' })
       await refreshOrgs()
     } catch {
-      toast({ title: 'ลบไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('ลบไม่สำเร็จ'), tone: 'error' })
     } finally {
       setDeleting(false)
       setDeleteHospitalTarget(null)
@@ -458,18 +527,18 @@ export default function ManageOrgs() {
   }
 
   return (
-    <AppShell variant="dashboard" title="จัดการหน่วยกู้ชีพ/โรงพยาบาล">
+    <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-8">
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-                <Ambulance className="size-4 text-primary" /> หน่วยกู้ชีพ (สาขา/จังหวัด)
+                <Ambulance className="size-4 text-primary" /> {t('หน่วยกู้ชีพ (สาขา/จังหวัด)')}
               </h2>
               {teamFormOpen === null && (
                 <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => setTeamFormOpen('new')}>
-                  เพิ่มหน่วยกู้ชีพ
+                  {t('เพิ่มหน่วยกู้ชีพ')}
                 </Button>
               )}
             </div>
@@ -479,7 +548,7 @@ export default function ManageOrgs() {
             )}
 
             {rescueTeams.length === 0 ? (
-              <EmptyState title="ยังไม่มีหน่วยกู้ชีพในระบบ" description="เพิ่มหน่วยกู้ชีพแรกได้ที่ปุ่มด้านบน" />
+              <EmptyState title={t('ยังไม่มีหน่วยกู้ชีพในระบบ')} description={t('เพิ่มหน่วยกู้ชีพแรกได้ที่ปุ่มด้านบน')} />
             ) : (
               rescueTeams.map((team) =>
                 teamFormOpen === team.id ? (
@@ -488,14 +557,14 @@ export default function ManageOrgs() {
                   <Card key={team.id}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="font-bold text-navy">
+                        <p className="font-bold text-ink">
                           {team.name} <span className="font-mono text-xs text-muted">{team.id}</span>
                         </p>
                         <p className="text-sm text-muted">{team.phone}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" icon={<Pencil className="size-3.5" />} onClick={() => setTeamFormOpen(team.id)}>
-                          แก้ไข
+                          {t('แก้ไข')}
                         </Button>
                         <Button
                           size="sm"
@@ -503,7 +572,7 @@ export default function ManageOrgs() {
                           icon={<Trash2 className="size-3.5" />}
                           onClick={() => setDeleteTeamTarget(team)}
                         >
-                          ลบ
+                          {t('ลบ')}
                         </Button>
                       </div>
                     </div>
@@ -524,11 +593,11 @@ export default function ManageOrgs() {
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-                <Building2 className="size-4 text-primary" /> โรงพยาบาล
+                <Building2 className="size-4 text-primary" /> {t('โรงพยาบาล')}
               </h2>
               {hospitalFormOpen === null && (
                 <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => setHospitalFormOpen('new')}>
-                  เพิ่มโรงพยาบาล
+                  {t('เพิ่มโรงพยาบาล')}
                 </Button>
               )}
             </div>
@@ -538,7 +607,7 @@ export default function ManageOrgs() {
             )}
 
             {hospitals.length === 0 ? (
-              <EmptyState title="ยังไม่มีโรงพยาบาลในระบบ" description="เพิ่มโรงพยาบาลแรกได้ที่ปุ่มด้านบน" />
+              <EmptyState title={t('ยังไม่มีโรงพยาบาลในระบบ')} description={t('เพิ่มโรงพยาบาลแรกได้ที่ปุ่มด้านบน')} />
             ) : (
               hospitals.map((hospital) =>
                 hospitalFormOpen === hospital.id ? (
@@ -551,11 +620,11 @@ export default function ManageOrgs() {
                 ) : (
                   <Card key={hospital.id} className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-bold text-navy">
+                      <p className="font-bold text-ink">
                         {hospital.name} <span className="font-mono text-xs text-muted">{hospital.id}</span>
                       </p>
                       <p className="text-sm text-muted">
-                        เตียงว่าง {hospital.bedsAvailable} · {hospital.phone}
+                        {t('เตียงว่าง {n} · {phone}', { n: hospital.bedsAvailable, phone: hospital.phone })}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -565,7 +634,7 @@ export default function ManageOrgs() {
                         icon={<Pencil className="size-3.5" />}
                         onClick={() => setHospitalFormOpen(hospital.id)}
                       >
-                        แก้ไข
+                        {t('แก้ไข')}
                       </Button>
                       <Button
                         size="sm"
@@ -573,7 +642,7 @@ export default function ManageOrgs() {
                         icon={<Trash2 className="size-3.5" />}
                         onClick={() => setDeleteHospitalTarget(hospital)}
                       >
-                        ลบ
+                        {t('ลบ')}
                       </Button>
                     </div>
                   </Card>
@@ -586,9 +655,12 @@ export default function ManageOrgs() {
 
       <ConfirmationModal
         open={!!deleteTeamTarget}
-        title="ยืนยันการลบหน่วยกู้ชีพ"
-        message={`ต้องการลบ "${deleteTeamTarget?.name}" หรือไม่ รถ/ทีมทั้งหมดในหน่วยนี้จะถูกลบไปด้วย เคสที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเคสใหม่ให้หน่วยนี้ได้อีก`}
-        confirmLabel="ยืนยันลบ"
+        title={t('ยืนยันการลบหน่วยกู้ชีพ')}
+        message={t(
+          'ต้องการลบ "{name}" หรือไม่ รถ/ทีมทั้งหมดในหน่วยนี้จะถูกลบไปด้วย เคสที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเคสใหม่ให้หน่วยนี้ได้อีก',
+          { name: deleteTeamTarget?.name ?? '' },
+        )}
+        confirmLabel={t('ยืนยันลบ')}
         tone="danger"
         confirmLoading={deleting}
         onConfirm={handleDeleteTeam}
@@ -596,9 +668,9 @@ export default function ManageOrgs() {
       />
       <ConfirmationModal
         open={!!deleteVehicleTarget}
-        title="ยืนยันการลบรถ/ทีม"
-        message={`ต้องการลบ "${deleteVehicleTarget?.unitCode}" หรือไม่`}
-        confirmLabel="ยืนยันลบ"
+        title={t('ยืนยันการลบรถ/ทีม')}
+        message={t('ต้องการลบ "{name}" หรือไม่', { name: deleteVehicleTarget?.unitCode ?? '' })}
+        confirmLabel={t('ยืนยันลบ')}
         tone="danger"
         confirmLoading={deleting}
         onConfirm={handleDeleteVehicle}
@@ -606,9 +678,11 @@ export default function ManageOrgs() {
       />
       <ConfirmationModal
         open={!!deleteHospitalTarget}
-        title="ยืนยันการลบโรงพยาบาล"
-        message={`ต้องการลบ "${deleteHospitalTarget?.name}" หรือไม่ เคสที่ส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกส่งผู้ป่วยไปที่นี่ได้อีก`}
-        confirmLabel="ยืนยันลบ"
+        title={t('ยืนยันการลบโรงพยาบาล')}
+        message={t('ต้องการลบ "{name}" หรือไม่ เคสที่ส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกส่งผู้ป่วยไปที่นี่ได้อีก', {
+          name: deleteHospitalTarget?.name ?? '',
+        })}
+        confirmLabel={t('ยืนยันลบ')}
         tone="danger"
         confirmLoading={deleting}
         onConfirm={handleDeleteHospital}

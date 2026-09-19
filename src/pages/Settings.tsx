@@ -13,6 +13,10 @@ import {
   Wrench,
   KeyRound,
   Mail,
+  Sun,
+  Moon,
+  MonitorSmartphone,
+  Languages,
 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -24,10 +28,75 @@ import { GoogleIcon, LineIcon } from '@/components/icons/SocialIcons'
 import { useStore } from '@/lib/store'
 import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
+import { useT, registerTranslations } from '@/lib/i18n'
 import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
 import { supabase } from '@/lib/supabase'
 import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
 import { isNativeApp } from '@/lib/nativeNotify'
+
+registerTranslations({
+  ตั้งค่า: 'Settings',
+  ข้อมูลผู้ใช้งาน: 'Account',
+  ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
+  ออกจากระบบ: 'Log out',
+  หน้าตาและภาษา: 'Appearance & language',
+  บัญชีและความปลอดภัย: 'Account & security',
+  'เข้าสู่ระบบด้วย Google': 'Signed in with Google',
+  'เข้าสู่ระบบด้วย LINE': 'Signed in with LINE',
+  เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน: 'Signed in with email & password',
+  บัญชีที่เชื่อมต่อ: 'Linked accounts',
+  'เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE':
+    'Link multiple sign-in methods to the same account so you can log in any way, and get notifications via LINE.',
+  เชื่อมต่อแล้ว: 'Linked',
+  เชื่อมต่อ: 'Link',
+  ยกเลิกการเชื่อมต่อ: 'Unlink',
+  เปลี่ยนรหัสผ่าน: 'Change password',
+  ตั้งอีเมลและรหัสผ่าน: 'Set email & password',
+  'ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE': 'Set an email and password so you can log in even without Google or LINE.',
+  อีเมล: 'Email',
+  รหัสผ่านใหม่: 'New password',
+  'อย่างน้อย 6 ตัวอักษร': 'At least 6 characters',
+  ยืนยันรหัสผ่านใหม่: 'Confirm new password',
+  บันทึกรหัสผ่านใหม่: 'Save new password',
+  บันทึก: 'Save',
+  มุมมองผู้ดูแลระบบ: 'Admin view',
+  'เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)':
+    "View any organization's dashboard without restriction (every rescue team / every hospital).",
+  ศูนย์สั่งการ: 'Dispatch center',
+  'หน่วยกู้ชีพ (ทุกหน่วย)': 'Rescue teams (all)',
+  'โรงพยาบาล (ทุกแห่ง)': 'Hospitals (all)',
+  'บัญชีรออนุมัติ / จัดการสิทธิ์': 'Pending accounts / permissions',
+  'จัดการหน่วยกู้ชีพ/โรงพยาบาล': 'Manage rescue teams / hospitals',
+  ข้อควรทราบ: 'Notices',
+  ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย: 'This system is a prototype for demonstration and research.',
+  ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
+  ระบบไม่ทดแทนการประเมินทางการแพทย์: 'This system does not replace professional medical assessment.',
+  ล้างข้อมูลตัวอย่าง: 'Clear sample data',
+  'ลบเคสทั้งหมด (รวมข้อมูลที่ซิงค์ไว้ทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้':
+    "Deletes all cases (including data synced across every device) and this browser's local user data.",
+  ล้างข้อมูลตัวอย่างทั้งหมด: 'Clear all sample data',
+  ล้างข้อมูลทั้งหมด: 'Clear all data',
+  'การดำเนินการนี้จะลบเคสทั้งหมดทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ ไม่สามารถย้อนกลับได้':
+    "This deletes all cases both in this browser and in the synced database (every device), plus this browser's user data. This cannot be undone.",
+  เปลี่ยนรหัสผ่านแล้ว: 'Password changed',
+  บันทึกอีเมลแล้ว: 'Email saved',
+  กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยัน: 'Please check your email to confirm',
+  'เชื่อมต่อ Google ไม่สำเร็จ': 'Failed to link Google',
+  'เชื่อมต่อ LINE สำเร็จ': 'LINE linked successfully',
+  'เชื่อมต่อ LINE ไม่สำเร็จ': 'Failed to link LINE',
+  'ยกเลิกการเชื่อมต่อ LINE แล้ว': 'LINE unlinked',
+  ยกเลิกการเชื่อมต่อไม่สำเร็จ: 'Failed to unlink',
+  ล้างข้อมูลทั้งหมดแล้ว: 'All data cleared',
+  ออกจากระบบแล้ว: 'Logged out',
+  กรุณากรอกอีเมลให้ถูกต้อง: 'Please enter a valid email',
+  'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร': 'Password must be at least 6 characters',
+  รหัสผ่านทั้งสองช่องไม่ตรงกัน: 'Passwords do not match',
+  โหมดการแสดงผล: 'Appearance',
+  สว่าง: 'Light',
+  มืด: 'Dark',
+  ตามอุปกรณ์: 'System',
+  ภาษา: 'Language',
+})
 
 const NOTICES = [
   'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย',
@@ -47,7 +116,12 @@ export default function Settings() {
   const resetAll = useStore((s) => s.resetAll)
   const setViewingRole = useStore((s) => s.setViewingRole)
   const setUser = useStore((s) => s.setUser)
+  const theme = useStore((s) => s.theme)
+  const setTheme = useStore((s) => s.setTheme)
+  const language = useStore((s) => s.language)
+  const setLanguage = useStore((s) => s.setLanguage)
   const navigate = useNavigate()
+  const t = useT()
 
   function enterAdminView(view: (typeof ADMIN_VIEWS)[number]) {
     // Also swaps the sidebar/menu to match (see AppShell's effectiveRole) --
@@ -97,15 +171,15 @@ export default function Settings() {
   async function handleSaveEmailPassword() {
     setPasswordError('')
     if (!hasRealEmail && !/^\S+@\S+\.\S+$/.test(newEmail)) {
-      setPasswordError('กรุณากรอกอีเมลให้ถูกต้อง')
+      setPasswordError(t('กรุณากรอกอีเมลให้ถูกต้อง'))
       return
     }
     if (newPassword.length < 6) {
-      setPasswordError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
+      setPasswordError(t('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('รหัสผ่านทั้งสองช่องไม่ตรงกัน')
+      setPasswordError(t('รหัสผ่านทั้งสองช่องไม่ตรงกัน'))
       return
     }
     if (!supabase) return
@@ -122,8 +196,8 @@ export default function Settings() {
     setNewPassword('')
     setConfirmPassword('')
     toast({
-      title: hasRealEmail ? 'เปลี่ยนรหัสผ่านแล้ว' : 'บันทึกอีเมลแล้ว',
-      message: hasRealEmail ? undefined : 'กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยัน',
+      title: hasRealEmail ? t('เปลี่ยนรหัสผ่านแล้ว') : t('บันทึกอีเมลแล้ว'),
+      message: hasRealEmail ? undefined : t('กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยัน'),
       tone: 'success',
     })
   }
@@ -137,7 +211,7 @@ export default function Settings() {
         options: { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}auth/callback` },
       })
       .then(({ error }) => {
-        if (error) toast({ title: 'เชื่อมต่อ Google ไม่สำเร็จ', message: error.message, tone: 'error' })
+        if (error) toast({ title: t('เชื่อมต่อ Google ไม่สำเร็จ'), message: error.message, tone: 'error' })
       })
   }
 
@@ -151,10 +225,10 @@ export default function Settings() {
       if (isNativeApp() && currentUser) {
         const refreshed = await fetchProfile(currentUser.id, false)
         if (refreshed) setUser(refreshed)
-        toast({ title: 'เชื่อมต่อ LINE สำเร็จ', tone: 'success' })
+        toast({ title: t('เชื่อมต่อ LINE สำเร็จ'), tone: 'success' })
       }
     } catch (err) {
-      toast({ title: 'เชื่อมต่อ LINE ไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('เชื่อมต่อ LINE ไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     }
   }
 
@@ -165,9 +239,9 @@ export default function Settings() {
       await unlinkLineIdentity(currentUser.id)
       const refreshed = await fetchProfile(currentUser.id, false)
       if (refreshed) setUser(refreshed)
-      toast({ title: 'ยกเลิกการเชื่อมต่อ LINE แล้ว', tone: 'info' })
+      toast({ title: t('ยกเลิกการเชื่อมต่อ LINE แล้ว'), tone: 'info' })
     } catch (err) {
-      toast({ title: 'ยกเลิกการเชื่อมต่อไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('ยกเลิกการเชื่อมต่อไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setUnlinkLineLoading(false)
     }
@@ -184,41 +258,107 @@ export default function Settings() {
     await clearAllSupabaseCases()
     setResetLoading(false)
     setResetOpen(false)
-    toast({ title: 'ล้างข้อมูลทั้งหมดแล้ว', tone: 'success' })
+    toast({ title: t('ล้างข้อมูลทั้งหมดแล้ว'), tone: 'success' })
     navigate('/')
   }
 
   function handleLogout() {
     logout()
-    toast({ title: 'ออกจากระบบแล้ว', tone: 'info' })
+    toast({ title: t('ออกจากระบบแล้ว'), tone: 'info' })
     navigate('/')
   }
 
+  const THEME_OPTIONS = [
+    { value: 'light' as const, label: t('สว่าง'), icon: Sun },
+    { value: 'dark' as const, label: t('มืด'), icon: Moon },
+    { value: 'system' as const, label: t('ตามอุปกรณ์'), icon: MonitorSmartphone },
+  ]
+
   return (
-    <AppShell variant="dashboard" title="ตั้งค่า">
+    <AppShell variant="dashboard" title={t('ตั้งค่า')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-5">
         <Card className="space-y-4 animate-fade-in-up">
-          <h3 className="flex items-center gap-2 font-bold text-navy">
-            <UserCircle2 className="size-4 text-primary" /> ข้อมูลผู้ใช้งาน
+          <h3 className="flex items-center gap-2 font-bold text-ink">
+            <UserCircle2 className="size-4 text-primary" /> {t('ข้อมูลผู้ใช้งาน')}
           </h3>
           <div className="rounded-xl bg-skyblue-pale p-4">
-            <p className="font-semibold text-navy">{currentUser?.name ?? 'ยังไม่ได้เข้าสู่ระบบ'}</p>
-            <p className="text-sm text-muted">{roleLabel(currentUser?.role ?? null)}</p>
+            <p className="font-semibold text-ink">{currentUser?.name ?? t('ยังไม่ได้เข้าสู่ระบบ')}</p>
+            <p className="text-sm text-muted">{t(roleLabel(currentUser?.role ?? null))}</p>
           </div>
 
           {currentUser && !currentUser.isAnonymous && (
             <Button variant="outline" size="sm" icon={<LogOut className="size-4" />} onClick={handleLogout}>
-              ออกจากระบบ
+              {t('ออกจากระบบ')}
             </Button>
           )}
         </Card>
 
+        <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '15ms', animationFillMode: 'backwards' }}>
+          <h3 className="flex items-center gap-2 font-bold text-ink">
+            <Sun className="size-4 text-primary" /> {t('หน้าตาและภาษา')}
+          </h3>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t('โหมดการแสดงผล')}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {THEME_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTheme(opt.value)}
+                  aria-pressed={theme === opt.value}
+                  className={
+                    theme === opt.value
+                      ? 'flex flex-col items-center gap-1.5 rounded-xl border-2 border-primary bg-skyblue-light px-2 py-3 text-primary transition-all'
+                      : 'flex flex-col items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-2 py-3 text-muted transition-all hover:border-primary/40'
+                  }
+                >
+                  <opt.icon className="size-5" />
+                  <span className="text-xs font-semibold">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              <Languages className="size-3.5" /> {t('ภาษา')}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLanguage('th')}
+                aria-pressed={language === 'th'}
+                className={
+                  language === 'th'
+                    ? 'rounded-xl border-2 border-primary bg-skyblue-light px-3 py-2.5 text-sm font-semibold text-primary transition-all'
+                    : 'rounded-xl border-2 border-border bg-surface px-3 py-2.5 text-sm font-semibold text-muted transition-all hover:border-primary/40'
+                }
+              >
+                ไทย
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                aria-pressed={language === 'en'}
+                className={
+                  language === 'en'
+                    ? 'rounded-xl border-2 border-primary bg-skyblue-light px-3 py-2.5 text-sm font-semibold text-primary transition-all'
+                    : 'rounded-xl border-2 border-border bg-surface px-3 py-2.5 text-sm font-semibold text-muted transition-all hover:border-primary/40'
+                }
+              >
+                English
+              </button>
+            </div>
+          </div>
+        </Card>
+
         {currentUser && !currentUser.isAnonymous && (
           <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}>
-            <h3 className="flex items-center gap-2 font-bold text-navy">
-              <ShieldCheck className="size-4 text-primary" /> บัญชีและความปลอดภัย
+            <h3 className="flex items-center gap-2 font-bold text-ink">
+              <ShieldCheck className="size-4 text-primary" /> {t('บัญชีและความปลอดภัย')}
             </h3>
 
             <div className="flex items-center gap-3">
@@ -230,48 +370,48 @@ export default function Settings() {
                 <Mail className="size-6 shrink-0 text-primary" />
               )}
               <div>
-                <p className="text-sm font-semibold text-navy">
+                <p className="text-sm font-semibold text-ink">
                   {authProvider === 'google'
-                    ? 'เข้าสู่ระบบด้วย Google'
+                    ? t('เข้าสู่ระบบด้วย Google')
                     : authProvider === 'line'
-                      ? 'เข้าสู่ระบบด้วย LINE'
-                      : 'เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน'}
+                      ? t('เข้าสู่ระบบด้วย LINE')
+                      : t('เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน')}
                 </p>
                 {hasRealEmail && authEmail && <p className="text-xs text-muted">{authEmail}</p>}
               </div>
             </div>
 
             <div className="flex flex-col gap-3 border-t border-border pt-4">
-              <p className="text-sm font-semibold text-navy">บัญชีที่เชื่อมต่อ</p>
+              <p className="text-sm font-semibold text-ink">{t('บัญชีที่เชื่อมต่อ')}</p>
               <p className="text-xs text-muted">
-                เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE
+                {t('เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE')}
               </p>
               <div className="flex flex-col divide-y divide-border">
                 <div className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                   <div className="flex items-center gap-2">
                     <GoogleIcon className="size-5 shrink-0" />
-                    <span className="text-sm text-navy">Google</span>
+                    <span className="text-sm text-ink">Google</span>
                   </div>
                   {googleLinked ? (
-                    <span className="text-xs font-medium text-success">เชื่อมต่อแล้ว</span>
+                    <span className="text-xs font-medium text-success">{t('เชื่อมต่อแล้ว')}</span>
                   ) : (
                     <Button variant="outline" size="sm" onClick={handleLinkGoogle}>
-                      เชื่อมต่อ
+                      {t('เชื่อมต่อ')}
                     </Button>
                   )}
                 </div>
                 <div className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                   <div className="flex items-center gap-2">
                     <LineIcon className="size-5 shrink-0 rounded-md" />
-                    <span className="text-sm text-navy">LINE</span>
+                    <span className="text-sm text-ink">LINE</span>
                   </div>
                   {lineLinked ? (
                     <Button variant="outline" size="sm" loading={unlinkLineLoading} onClick={handleUnlinkLine}>
-                      ยกเลิกการเชื่อมต่อ
+                      {t('ยกเลิกการเชื่อมต่อ')}
                     </Button>
                   ) : (
                     <Button variant="outline" size="sm" onClick={handleLinkLine}>
-                      เชื่อมต่อ
+                      {t('เชื่อมต่อ')}
                     </Button>
                   )}
                 </div>
@@ -279,15 +419,15 @@ export default function Settings() {
             </div>
 
             <div className="flex flex-col gap-3 border-t border-border pt-4">
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
-                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? 'เปลี่ยนรหัสผ่าน' : 'ตั้งอีเมลและรหัสผ่าน'}
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? t('เปลี่ยนรหัสผ่าน') : t('ตั้งอีเมลและรหัสผ่าน')}
               </p>
               {!hasRealEmail && (
-                <p className="text-xs text-muted">ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE</p>
+                <p className="text-xs text-muted">{t('ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE')}</p>
               )}
               {!hasRealEmail && (
                 <Input
-                  label="อีเมล"
+                  label={t('อีเมล')}
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
@@ -295,14 +435,14 @@ export default function Settings() {
                 />
               )}
               <Input
-                label="รหัสผ่านใหม่"
+                label={t('รหัสผ่านใหม่')}
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="อย่างน้อย 6 ตัวอักษร"
+                placeholder={t('อย่างน้อย 6 ตัวอักษร')}
               />
               <Input
-                label="ยืนยันรหัสผ่านใหม่"
+                label={t('ยืนยันรหัสผ่านใหม่')}
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -316,7 +456,7 @@ export default function Settings() {
                 disabled={!newPassword || !confirmPassword || (!hasRealEmail && !newEmail)}
                 onClick={handleSaveEmailPassword}
               >
-                {hasRealEmail ? 'บันทึกรหัสผ่านใหม่' : 'บันทึก'}
+                {hasRealEmail ? t('บันทึกรหัสผ่านใหม่') : t('บันทึก')}
               </Button>
             </div>
           </Card>
@@ -324,10 +464,10 @@ export default function Settings() {
 
         {currentUser?.isAdmin && (
           <Card className="space-y-3 animate-fade-in-up border-primary/30 bg-skyblue-pale">
-            <h3 className="flex items-center gap-2 font-bold text-navy">
-              <ShieldAlert className="size-4 text-primary" /> มุมมองผู้ดูแลระบบ
+            <h3 className="flex items-center gap-2 font-bold text-ink">
+              <ShieldAlert className="size-4 text-primary" /> {t('มุมมองผู้ดูแลระบบ')}
             </h3>
-            <p className="text-sm text-muted">เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)</p>
+            <p className="text-sm text-muted">{t('เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {ADMIN_VIEWS.map((v) => (
                 <Button
@@ -338,19 +478,19 @@ export default function Settings() {
                   icon={<v.icon className="size-4" />}
                   onClick={() => enterAdminView(v)}
                 >
-                  {v.label}
+                  {t(v.label)}
                 </Button>
               ))}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Link to="/dispatch/pending-approvals">
                 <Button variant="outline" size="sm" fullWidth icon={<UserCheck className="size-4" />}>
-                  บัญชีรออนุมัติ / จัดการสิทธิ์
+                  {t('บัญชีรออนุมัติ / จัดการสิทธิ์')}
                 </Button>
               </Link>
               <Link to="/manage-orgs">
                 <Button variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
-                  จัดการหน่วยกู้ชีพ/โรงพยาบาล
+                  {t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}
                 </Button>
               </Link>
             </div>
@@ -358,23 +498,23 @@ export default function Settings() {
         )}
 
         <Card className="space-y-3 animate-fade-in-up" style={{ animationDelay: '60ms', animationFillMode: 'backwards' }}>
-          <h3 className="flex items-center gap-2 font-bold text-navy">
-            <ShieldCheck className="size-4 text-primary" /> ข้อควรทราบ
+          <h3 className="flex items-center gap-2 font-bold text-ink">
+            <ShieldCheck className="size-4 text-primary" /> {t('ข้อควรทราบ')}
           </h3>
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
             {NOTICES.map((notice) => (
-              <li key={notice}>{notice}</li>
+              <li key={notice}>{t(notice)}</li>
             ))}
           </ul>
         </Card>
 
         <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
           <div>
-            <p className="font-bold text-navy">ล้างข้อมูลตัวอย่าง</p>
-            <p className="text-sm text-muted">ลบเคสทั้งหมด (รวมข้อมูลที่ซิงค์ไว้ทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้</p>
+            <p className="font-bold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
+            <p className="text-sm text-muted">{t('ลบเคสทั้งหมด (รวมข้อมูลที่ซิงค์ไว้ทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้')}</p>
           </div>
           <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setResetOpen(true)}>
-            ล้างข้อมูลตัวอย่างทั้งหมด
+            {t('ล้างข้อมูลตัวอย่างทั้งหมด')}
           </Button>
         </Card>
         </div>
@@ -383,9 +523,11 @@ export default function Settings() {
       <ConfirmationModal
         open={resetOpen}
         tone="danger"
-        title="ล้างข้อมูลทั้งหมด"
-        message="การดำเนินการนี้จะลบเคสทั้งหมดทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ ไม่สามารถย้อนกลับได้"
-        confirmLabel="ล้างข้อมูลทั้งหมด"
+        title={t('ล้างข้อมูลทั้งหมด')}
+        message={t(
+          'การดำเนินการนี้จะลบเคสทั้งหมดทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ ไม่สามารถย้อนกลับได้',
+        )}
+        confirmLabel={t('ล้างข้อมูลทั้งหมด')}
         confirmLoading={resetLoading}
         onConfirm={handleReset}
         onCancel={() => setResetOpen(false)}

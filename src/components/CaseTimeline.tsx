@@ -18,6 +18,7 @@ import {
 import { CASE_STATUS_FLOW, statusMeta } from '@/lib/types'
 import type { CaseStatus, TimelineEvent } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
 // Gives each step its own recognizable identity (instead of an identical
 // numbered circle for all 13) so the sequence reads at a glance -- what's
@@ -58,6 +59,7 @@ export function CaseTimeline({
   // and history alone can't tell current status apart from a past one.
   const currentOrder = statusMeta(currentStatus).order
   const steps = hiddenSteps ? CASE_STATUS_FLOW.filter((s) => !hiddenSteps.includes(s.key)) : CASE_STATUS_FLOW
+  const t = useT()
 
   return (
     <ol className="relative flex flex-col gap-0">
@@ -65,7 +67,7 @@ export function CaseTimeline({
         // Most recent occurrence, not the first — a status can now be
         // revisited (e.g. finding-rescue again after a rejection), and the
         // latest note/timestamp is the one worth showing.
-        const matches = timeline.filter((t) => t.status === step.key)
+        const matches = timeline.filter((ev) => ev.status === step.key)
         const event = matches[matches.length - 1]
         const isDone = !!event
         const isCurrent = step.order === currentOrder
@@ -87,9 +89,9 @@ export function CaseTimeline({
               className={clsx(
                 'relative z-10 flex size-[26px] shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold',
                 isDone && 'border-primary bg-primary text-white',
-                !isDone && isCurrent && 'border-primary bg-white text-primary animate-pulse-glow',
-                !isDone && isNext && 'border-primary/40 bg-white text-primary/60',
-                !isDone && !isCurrent && !isNext && 'border-border bg-white text-muted/50',
+                !isDone && isCurrent && 'border-primary bg-surface text-primary animate-pulse-glow',
+                !isDone && isNext && 'border-primary/40 bg-surface text-primary/60',
+                !isDone && !isCurrent && !isNext && 'border-border bg-surface text-muted/50',
               )}
             >
               {isDone ? <Check className="size-3.5" strokeWidth={3} /> : <StepIcon className="size-3.5" />}
@@ -99,24 +101,24 @@ export function CaseTimeline({
                 <p
                   className={clsx(
                     'font-semibold',
-                    isDone || isCurrent ? 'text-navy' : 'text-muted',
+                    isDone || isCurrent ? 'text-ink' : 'text-muted',
                     compact && 'text-sm',
                   )}
                 >
-                  {step.label}
+                  {t(step.label)}
                 </p>
                 {isCurrent && !isDone && (
                   <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-bold text-warning">
-                    กำลังดำเนินการ
+                    {t('กำลังดำเนินการ')}
                   </span>
                 )}
                 {isNext && !isDone && (
                   <span className="rounded-full bg-skyblue-light px-2 py-0.5 text-[11px] font-bold text-primary">
-                    ขั้นตอนถัดไป
+                    {t('ขั้นตอนถัดไป')}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted mt-0.5">{step.org}</p>
+              <p className="text-xs text-muted mt-0.5">{t(step.org)}</p>
               {event && (
                 <p className="text-xs text-muted mt-0.5">
                   {formatDateTime(event.timestamp)}

@@ -18,6 +18,57 @@ import { watchPosition, reverseGeocode } from '@/lib/geolocation'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import { supabaseEnabled } from '@/lib/supabase'
 import type { AudioRecording, Consciousness, PhotoCategory } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'มีสติ รู้สึกตัวดี': 'Conscious, alert',
+  'ไม่มีสติ / ไม่รู้สึกตัว': 'Unconscious / unresponsive',
+  ไม่แน่ใจ: 'Not sure',
+  'ลักษณะจุดเกิดเหตุ/ผู้บาดเจ็บ': 'Scene / injured person',
+  'อาการหรือลักษณะผู้บาดเจ็บที่จุดเกิดเหตุ': 'Condition or appearance of the injured person at the scene',
+  สภาพแวดล้อมโดยรอบ: 'Surrounding environment',
+  ภาพกว้างของสภาพแวดล้อมบริเวณที่เกิดเหตุ: 'A wide shot of the surrounding area',
+  จุดสังเกตของสถานที่: 'Landmark',
+  ป้ายหรือจุดสังเกตที่ช่วยระบุตำแหน่งได้ง่าย: 'A sign or landmark that helps identify the location',
+  หยุดชั่วคราว: 'Pause',
+  เล่นเสียง: 'Play',
+  'บันทึกเสียง {duration}': 'Recording {duration}',
+  ลบการบันทึกเสียง: 'Delete recording',
+  'กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ': 'Please provide a callback phone number',
+  เบอร์โทรศัพท์ไม่ถูกต้อง: 'Invalid phone number',
+  กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่: 'Please indicate whether the patient is conscious',
+  บันทึกรูปภาพแล้ว: 'Photo saved',
+  อัปโหลดรูปภาพไม่สำเร็จ: 'Failed to upload photo',
+  บันทึกเสียงแล้ว: 'Audio saved',
+  อัปโหลดเสียงไม่สำเร็จ: 'Failed to upload audio',
+  ถ่ายรูปจุดเกิดเหตุ: 'Photograph the scene',
+  'กำลังเตรียมข้อมูล...': 'Preparing...',
+  'กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน': 'Tap to start, then follow each step',
+  'รูปภาพ: {n}/{total}': 'Photos: {n}/{total}',
+  ข้ามขั้นตอนนี้: 'Skip this step',
+  'กำลังค้นหาตำแหน่ง...': 'Locating...',
+  'สัญญาณ GPS พร้อมใช้งาน': 'GPS signal ready',
+  ใช้ตำแหน่งโดยประมาณ: 'Using an approximate location',
+  เบอร์โทรศัพท์สำหรับติดต่อกลับ: 'Callback phone number',
+  'ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน': 'Pulled from your profile ({name}) — editable if you want to change it',
+  ผู้ป่วยยังมีสติหรือไม่: 'Is the patient conscious?',
+  'ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น': 'Helps Center 1669 assess severity faster',
+  เลือกระดับความรู้สึกตัว: 'Select consciousness level',
+  ถ่ายใหม่: 'Retake',
+  ถ่าย: 'Take photo',
+  เริ่มถ่ายภาพ: 'Start taking photos',
+  ถ่ายภาพต่อ: 'Continue taking photos',
+  ถ่ายภาพใหม่ทั้งหมด: 'Retake all photos',
+  'กำลังอัปโหลดรูปภาพ...': 'Uploading photo...',
+  หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย: 'Or upload a photo from your device instead',
+  'บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)': 'Record audio describing the incident (if any)',
+  'เสียง: {n}': 'Audio: {n}',
+  กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์: 'Tap to start recording audio describing the situation',
+  'กำลังอัปโหลดเสียง...': 'Uploading audio...',
+  'ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง':
+    'Only take photos when you are somewhere safe — do not approach the scene if there is any risk',
+  'ไปต่อเพื่อโทร 1669': 'Continue to call 1669',
+})
 
 const CONSCIOUSNESS_LABEL: Record<Consciousness, string> = {
   conscious: 'มีสติ รู้สึกตัวดี',
@@ -34,6 +85,7 @@ const PHOTO_CATEGORIES: PhotoSlotConfig[] = [
 function AudioRecordingRow({ recording, onRemove }: { recording: AudioRecording; onRemove: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
+  const t = useT()
 
   function toggle() {
     if (!audioRef.current) return
@@ -43,20 +95,20 @@ function AudioRecordingRow({ recording, onRemove }: { recording: AudioRecording;
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? 'หยุดชั่วคราว' : 'เล่นเสียง'}
+        aria-label={playing ? t('หยุดชั่วคราว') : t('เล่นเสียง')}
         className="flex size-9 shrink-0 items-center justify-center rounded-full bg-skyblue-light text-primary"
       >
         {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
       </button>
-      <span className="text-sm text-navy">บันทึกเสียง {formatDuration(recording.durationSec)}</span>
+      <span className="text-sm text-ink">{t('บันทึกเสียง {duration}', { duration: formatDuration(recording.durationSec) })}</span>
       <button
         type="button"
         onClick={onRemove}
-        aria-label="ลบการบันทึกเสียง"
+        aria-label={t('ลบการบันทึกเสียง')}
         className="ml-auto text-muted hover:text-emergency"
       >
         <Trash2 className="size-4" />
@@ -81,6 +133,7 @@ export default function EmergencyPhoto() {
   const setReporterConsciousness = useStore((s) => s.setReporterConsciousness)
   const currentUser = useStore((s) => s.currentUser)
   const loggedIn = !!currentUser && !currentUser.isAnonymous
+  const t = useT()
 
   const resolvedRef = useRef<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
@@ -163,15 +216,15 @@ export default function EmergencyPhoto() {
     if (!caseId || submitting) return
     const digits = callbackPhone.replace(/\D/g, '')
     if (!callbackPhone.trim()) {
-      setPhoneError('กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ')
+      setPhoneError(t('กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ'))
       return
     }
     if (digits.length < 9 || digits.length > 10) {
-      setPhoneError('เบอร์โทรศัพท์ไม่ถูกต้อง')
+      setPhoneError(t('เบอร์โทรศัพท์ไม่ถูกต้อง'))
       return
     }
     if (!consciousness) {
-      setConsciousnessError('กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่')
+      setConsciousnessError(t('กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่'))
       return
     }
     setPhoneError(undefined)
@@ -219,11 +272,11 @@ export default function EmergencyPhoto() {
     try {
       const url = await uploadCasePhoto(activeCase.caseNumber, dataUrl)
       addPhoto(caseId, url, category)
-      toast({ title: 'บันทึกรูปภาพแล้ว', tone: 'success' })
+      toast({ title: t('บันทึกรูปภาพแล้ว'), tone: 'success' })
       const next = nextUnfilledAfter(category)
       setCaptureKey(next)
     } catch {
-      toast({ title: 'อัปโหลดรูปภาพไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('อัปโหลดรูปภาพไม่สำเร็จ'), tone: 'error' })
       setCaptureKey(null)
     } finally {
       setUploadingPhoto(false)
@@ -248,9 +301,9 @@ export default function EmergencyPhoto() {
     try {
       const url = await uploadCaseAudio(activeCase.caseNumber, blob)
       addAudioRecording(caseId, url, seconds)
-      toast({ title: 'บันทึกเสียงแล้ว', tone: 'success' })
+      toast({ title: t('บันทึกเสียงแล้ว'), tone: 'success' })
     } catch {
-      toast({ title: 'อัปโหลดเสียงไม่สำเร็จ', tone: 'error' })
+      toast({ title: t('อัปโหลดเสียงไม่สำเร็จ'), tone: 'error' })
     } finally {
       setUploadingAudio(false)
     }
@@ -258,8 +311,8 @@ export default function EmergencyPhoto() {
 
   if (!caseId || !activeCase) {
     return (
-      <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack>
-        <div className="py-16 text-center text-sm text-muted">กำลังเตรียมข้อมูล...</div>
+      <AppShell variant="flow" title={t('ถ่ายรูปจุดเกิดเหตุ')} showBack>
+        <div className="py-16 text-center text-sm text-muted">{t('กำลังเตรียมข้อมูล...')}</div>
       </AppShell>
     )
   }
@@ -267,30 +320,30 @@ export default function EmergencyPhoto() {
   const audioRecordings = activeCase.audioRecordings ?? []
 
   return (
-    <AppShell variant="flow" title="ถ่ายรูปจุดเกิดเหตุ" showBack onBack={handleBack}>
+    <AppShell variant="flow" title={t('ถ่ายรูปจุดเกิดเหตุ')} showBack onBack={handleBack}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 
         <div className="relative z-10 flex flex-col gap-5 pb-28">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h1 className="text-xl font-bold text-navy">ถ่ายรูปจุดเกิดเหตุ</h1>
-              <p className="mt-1.5 text-sm text-muted">กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน</p>
+              <h1 className="text-xl font-bold text-ink">{t('ถ่ายรูปจุดเกิดเหตุ')}</h1>
+              <p className="mt-1.5 text-sm text-muted">{t('กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน')}</p>
             </div>
             <span
               key={filledCount}
               className="inline-flex shrink-0 animate-count-pop items-center gap-1.5 rounded-full border border-primary/30 bg-skyblue-light px-3 py-1.5 text-xs font-bold text-primary whitespace-nowrap"
             >
-              รูปภาพ: {filledCount}/{PHOTO_CATEGORIES.length}
+              {t('รูปภาพ: {n}/{total}', { n: filledCount, total: PHOTO_CATEGORIES.length })}
             </span>
           </div>
 
           <Button variant="ghost" size="sm" className="self-start" onClick={proceed} disabled={submitting}>
-            ข้ามขั้นตอนนี้
+            {t('ข้ามขั้นตอนนี้')}
           </Button>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-white p-3.5">
-            <div className="flex items-center gap-2 text-sm text-navy">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-surface p-3.5">
+            <div className="flex items-center gap-2 text-sm text-ink">
               <MapPin
                 className={clsx('size-4 shrink-0 text-primary', gpsStatus === 'locating' && 'animate-bounce')}
                 style={{ animationDuration: '2s' }}
@@ -299,49 +352,49 @@ export default function EmergencyPhoto() {
             </div>
             {gpsStatus === 'locating' && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning whitespace-nowrap">
-                กำลังค้นหาตำแหน่ง...
+                {t('กำลังค้นหาตำแหน่ง...')}
               </span>
             )}
             {gpsStatus === 'ready' && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-bold text-success whitespace-nowrap">
-                สัญญาณ GPS พร้อมใช้งาน
+                {t('สัญญาณ GPS พร้อมใช้งาน')}
               </span>
             )}
             {gpsStatus === 'failed' && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-muted/30 bg-muted/10 px-2.5 py-1 text-xs font-bold text-muted whitespace-nowrap">
-                ใช้ตำแหน่งโดยประมาณ
+                {t('ใช้ตำแหน่งโดยประมาณ')}
               </span>
             )}
           </div>
 
           <Card className="flex flex-col gap-4">
             <Input
-              label="เบอร์โทรศัพท์สำหรับติดต่อกลับ"
+              label={t('เบอร์โทรศัพท์สำหรับติดต่อกลับ')}
               type="tel"
               required
               value={callbackPhone}
               error={phoneError}
-              hint={loggedIn && !phoneError ? `ดึงจากโปรไฟล์ของคุณ (${currentUser?.name}) แก้ไขได้หากต้องการเปลี่ยน` : undefined}
+              hint={loggedIn && !phoneError ? t('ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน', { name: currentUser?.name ?? '' }) : undefined}
               onChange={(e) => {
                 setCallbackPhoneInput(e.target.value)
                 if (phoneError) setPhoneError(undefined)
               }}
             />
             <Select
-              label="ผู้ป่วยยังมีสติหรือไม่"
+              label={t('ผู้ป่วยยังมีสติหรือไม่')}
               required
               value={consciousness}
               error={consciousnessError}
-              hint="ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น"
+              hint={t('ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น')}
               onChange={(e) => {
                 setConsciousnessInput(e.target.value as Consciousness)
                 if (consciousnessError) setConsciousnessError(undefined)
               }}
             >
-              <option value="">เลือกระดับความรู้สึกตัว</option>
-              <option value="conscious">{CONSCIOUSNESS_LABEL.conscious}</option>
-              <option value="unconscious">{CONSCIOUSNESS_LABEL.unconscious}</option>
-              <option value="unknown">{CONSCIOUSNESS_LABEL.unknown}</option>
+              <option value="">{t('เลือกระดับความรู้สึกตัว')}</option>
+              <option value="conscious">{t(CONSCIOUSNESS_LABEL.conscious)}</option>
+              <option value="unconscious">{t(CONSCIOUSNESS_LABEL.unconscious)}</option>
+              <option value="unknown">{t(CONSCIOUSNESS_LABEL.unknown)}</option>
             </Select>
           </Card>
 
@@ -355,33 +408,33 @@ export default function EmergencyPhoto() {
                 onClick={() => setCaptureKey(slot.key)}
                 className={clsx(
                   'flex items-center gap-3 rounded-2xl border p-3 text-left transition-colors',
-                  slot.photo ? 'border-success/30 bg-success/5' : 'border-border bg-white hover:border-primary/40',
+                  slot.photo ? 'border-success/30 bg-success/5' : 'border-border bg-surface hover:border-primary/40',
                 )}
               >
                 {slot.photo ? (
-                  <img src={slot.photo.dataUrl} alt={slot.label} className="size-12 shrink-0 rounded-xl object-cover" />
+                  <img src={slot.photo.dataUrl} alt={t(slot.label)} className="size-12 shrink-0 rounded-xl object-cover" />
                 ) : (
                   <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-sm font-bold text-primary">
                     {i + 1}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 text-sm font-bold text-navy">
-                    {slot.label}
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
+                    {t(slot.label)}
                     {slot.photo && <Check className="size-3.5 text-success" />}
                   </p>
-                  <p className="truncate text-xs text-muted">{slot.hint}</p>
+                  <p className="truncate text-xs text-muted">{t(slot.hint)}</p>
                 </div>
-                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? 'ถ่ายใหม่' : 'ถ่าย'}</span>
+                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? t('ถ่ายใหม่') : t('ถ่าย')}</span>
               </button>
             ))}
           </div>
 
           <div className="flex flex-col gap-2">
             <Button variant="primary" size="lg" fullWidth icon={<Camera className="size-5" />} onClick={startCapture}>
-              {filledCount === 0 ? 'เริ่มถ่ายภาพ' : filledCount < PHOTO_CATEGORIES.length ? 'ถ่ายภาพต่อ' : 'ถ่ายภาพใหม่ทั้งหมด'}
+              {filledCount === 0 ? t('เริ่มถ่ายภาพ') : filledCount < PHOTO_CATEGORIES.length ? t('ถ่ายภาพต่อ') : t('ถ่ายภาพใหม่ทั้งหมด')}
             </Button>
-            {uploadingPhoto && <p className="text-center text-xs font-medium text-primary">กำลังอัปโหลดรูปภาพ...</p>}
+            {uploadingPhoto && <p className="text-center text-xs font-medium text-primary">{t('กำลังอัปโหลดรูปภาพ...')}</p>}
             {filledCount < PHOTO_CATEGORIES.length && (
               <>
                 <input
@@ -400,7 +453,7 @@ export default function EmergencyPhoto() {
                   className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
                   <Upload className="size-3.5" />
-                  หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย
+                  {t('หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย')}
                 </button>
               </>
             )}
@@ -408,15 +461,15 @@ export default function EmergencyPhoto() {
 
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-bold text-navy">บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)</p>
+              <p className="text-sm font-bold text-ink">{t('บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)')}</p>
               {audioRecordings.length > 0 && (
                 <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-skyblue-light px-3 py-1.5 text-xs font-bold text-primary">
-                  เสียง: {audioRecordings.length}
+                  {t('เสียง: {n}', { n: audioRecordings.length })}
                 </span>
               )}
             </div>
-            <AudioRecorder label="กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์" onSave={handleSaveAudio} />
-            {uploadingAudio && <p className="text-xs font-medium text-primary">กำลังอัปโหลดเสียง...</p>}
+            <AudioRecorder label={t('กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์')} onSave={handleSaveAudio} />
+            {uploadingAudio && <p className="text-xs font-medium text-primary">{t('กำลังอัปโหลดเสียง...')}</p>}
             {audioRecordings.length > 0 && (
               <div className="flex flex-col gap-2">
                 {audioRecordings.map((recording) => (
@@ -432,17 +485,17 @@ export default function EmergencyPhoto() {
 
           <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
             <ShieldAlert className="mt-0.5 size-5 shrink-0 animate-pulse text-warning" />
-            <p className="text-sm font-medium text-navy">
-              ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง
+            <p className="text-sm font-medium text-ink">
+              {t('ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง')}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <Button variant="primary" size="lg" fullWidth loading={submitting} onClick={proceed}>
-            ไปต่อเพื่อโทร 1669
+            {t('ไปต่อเพื่อโทร 1669')}
           </Button>
         </div>
       </div>

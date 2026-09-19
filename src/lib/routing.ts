@@ -5,9 +5,13 @@ export interface RouteResult {
   /** [lat, lng] pairs tracing the actual road geometry, in travel order. */
   points: [number, number][]
   distanceKm: number
-  /** OSRM's typical-speed estimate for the road network -- NOT adjusted for
-   * live traffic conditions (see the module doc below for why). */
+  /** Route duration in minutes. Reflects live Thailand traffic when
+   * `provider === 'longdo'`; otherwise the road network's typical-speed
+   * estimate (see the module doc below for why). */
   durationMin: number
+  /** Which routing service actually produced this result -- lets the UI say
+   * "live traffic" only when that's true (see ETAWidget). */
+  provider: 'longdo' | 'osrm'
 }
 
 interface OsrmResponse {
@@ -27,6 +31,84 @@ interface OsrmResponse {
 // this app's per-case route lookups, worth revisiting with a self-hosted
 // OSRM instance if usage grows a lot.
 const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/driving'
+
+// Longdo Map's Route Service -- Thailand-specific, and (unlike OSRM) able to
+// factor in live traffic conditions for the ETA, which is the whole reason
+// to prefer it over OSRM when a key is configured. Needs a free key from
+// https://map.longdo.com/console (VITE_LONGDO_MAP_KEY) -- until one is set,
+// fetchRoute() below skips straight to the OSRM path, so this integration
+// ships "wired but dormant" and turns on the moment a key is added.
+//
+// NOTE: written against Longdo's publicly documented Route Service shape,
+// but not yet exercised against a live key (none was available while
+// building this) -- fetchRouteFromLongdo is defensive about that (any
+// unexpected field/shape just returns null, same as a network failure) so a
+// wrong assumption here safely falls back to OSRM instead of breaking
+// routing. Worth a quick real-key smoke test once one exists, using the
+// browser network tab to confirm the `data[].guide[]` shape assumed below.
+const LONGDO_ROUTE_URL = 'https://api.longdo.com/RouteService/json/route/guide'
+
+interface LongdoGuideStep {
+  lat?: number
+  lon?: number
+  distance?: number
+  interval?: number
+}
+
+interface LongdoRouteResponse {
+  data?: {
+    distance?: number
+    interval?: number
+    guide?: LongdoGuideStep[]
+  }[]
+}
+
+async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
+  const key = import.meta.env.VITE_LONGDO_MAP_KEY
+  if (!key) return null
+
+  const params = new URLSearchParams({
+    flon: String(origin.lng),
+    flat: String(origin.lat),
+    tlon: String(destination.lng),
+    tlat: String(destination.lat),
+    mode: 't', // fastest route, traffic-aware
+    type: 'A', // driving
+    locale: 'th',
+    key,
+  })
+
+  try {
+    const res = await fetch(`${LONGDO_ROUTE_URL}?${params}`, { signal: AbortSignal.timeout(8000) })
+    if (!res.ok) return null
+    const data = (await res.json()) as LongdoRouteResponse
+    const legs = data.data
+    if (!legs || legs.length === 0) return null
+
+    const points: [number, number][] = []
+    let distanceM = 0
+    let durationS = 0
+    for (const leg of legs) {
+      distanceM += leg.distance ?? 0
+      durationS += leg.interval ?? 0
+      for (const step of leg.guide ?? []) {
+        if (typeof step.lat === 'number' && typeof step.lon === 'number') {
+          points.push([step.lat, step.lon])
+        }
+      }
+    }
+    if (points.length < 2 || distanceM <= 0) return null
+
+    return {
+      points,
+      distanceKm: distanceM / 1000,
+      durationMin: Math.max(1, Math.round(durationS / 60)),
+      provider: 'longdo',
+    } satisfies RouteResult
+  } catch {
+    return null
+  }
+}
 
 // Standard Google/OSRM polyline algorithm (both use the same precision-5
 // encoding) -- encodes a lat/lng path as a compact ASCII string. No
@@ -73,20 +155,9 @@ function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
   return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}`
 }
 
-/**
- * Real driving route between two points, via OSRM's public routing API.
- * Returns null (never throws) on any failure -- unreachable server, no
- * route found, request timeout -- so every caller falls back to the old
- * straight-line estimate. This is an enhancement over that baseline, not a
- * hard dependency.
- */
-export function fetchRoute(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
-  const key = cacheKey(origin, destination)
-  const cached = routeCache.get(key)
-  if (cached) return cached
-
+function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
   const url = `${OSRM_BASE_URL}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=polyline`
-  const promise = fetch(url, { signal: AbortSignal.timeout(8000) })
+  return fetch(url, { signal: AbortSignal.timeout(8000) })
     .then((res) => (res.ok ? (res.json() as Promise<OsrmResponse>) : null))
     .then((data) => {
       const route = data?.code === 'Ok' ? data.routes?.[0] : undefined
@@ -95,9 +166,27 @@ export function fetchRoute(origin: GeoLocation, destination: GeoLocation): Promi
         points: decodePolyline(route.geometry),
         distanceKm: route.distance / 1000,
         durationMin: Math.max(1, Math.round(route.duration / 60)),
+        provider: 'osrm',
       } satisfies RouteResult
     })
     .catch(() => null)
+}
+
+/**
+ * Real driving route between two points. Prefers Longdo Map (live Thailand
+ * traffic) when VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
+ * (free, keyless, typical-speed only) if there's no key or the Longdo
+ * request fails for any reason. Returns null (never throws) only if both
+ * fail, so every caller can fall back further to its own straight-line
+ * estimate -- this is an enhancement over that baseline, not a hard
+ * dependency.
+ */
+export function fetchRoute(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
+  const key = cacheKey(origin, destination)
+  const cached = routeCache.get(key)
+  if (cached) return cached
+
+  const promise = fetchRouteFromLongdo(origin, destination).then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination))
 
   routeCache.set(key, promise)
   return promise

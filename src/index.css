@@ -4,6 +4,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Design tokens as RGB triplets (space-separated, no `rgb()` wrapper -- that's
+  added in tailwind.config.js so utilities like bg-surface/90 keep working).
+  :root holds the light "Calm Command Center" palette unchanged from before
+  dark mode existed; .dark overrides only what needs to invert for legibility
+  on a dark ground. `navy` deliberately keeps the same value in both blocks
+  (see tailwind.config.js) since it's used as a fixed dark accent, not text.
+*/
+:root {
+  --color-primary: 11 110 189;
+  --color-primary-bright: 20 121 201;
+  --color-navy: 18 48 74;
+  --color-ink: 18 48 74;
+  --color-skyblue-light: 234 246 255;
+  --color-skyblue-pale: 244 250 254;
+  --color-bg: 246 250 253;
+  --color-border: 217 231 242;
+  --color-muted: 102 112 133;
+  --color-emergency: 217 45 32;
+  --color-emergency-dark: 180 35 24;
+  --color-warning: 247 144 9;
+  --color-moderate: 245 197 66;
+  --color-success: 18 183 106;
+  --color-surface: 255 255 255;
+  --color-surface-alt: 248 251 253;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-primary: 59 158 219;
+  --color-primary-bright: 92 184 237;
+  --color-navy: 18 48 74;
+  --color-ink: 224 235 246;
+  --color-skyblue-light: 28 54 84;
+  --color-skyblue-pale: 23 46 71;
+  --color-bg: 11 20 32;
+  --color-border: 36 61 87;
+  --color-muted: 140 160 186;
+  --color-emergency: 240 68 56;
+  --color-emergency-dark: 217 45 32;
+  --color-warning: 253 176 34;
+  --color-moderate: 247 203 84;
+  --color-success: 50 213 131;
+  --color-surface: 20 36 55;
+  --color-surface-alt: 27 46 69;
+}
+
 html,
 body,
 #root {
@@ -15,9 +62,10 @@ html {
 }
 
 body {
-  @apply bg-bg text-navy antialiased;
+  @apply bg-bg text-ink antialiased;
   font-feature-settings: 'kern' 1;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
@@ -37,11 +85,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #d9e7f2;
+  background-color: rgb(var(--color-border));
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #b9d4e8;
+  background-color: rgb(var(--color-primary) / 0.35);
 }
 
 .leaflet-container {

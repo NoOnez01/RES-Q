@@ -12,6 +12,31 @@ import { roleLabel } from '@/lib/nav'
 import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 import type { EmergencyCase, Severity } from '@/lib/types'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  หน่วยกู้ชีพของฉัน: 'My rescue team',
+  โรงพยาบาลของฉัน: 'My hospital',
+  'ศูนย์สั่งการ 1669 (ภาพรวมระบบ)': 'Dispatch Center 1669 (system-wide)',
+  เคสที่ฉันแจ้งเหตุ: 'Cases I reported',
+  กรุณาเข้าสู่ระบบเพื่อดูสถิติของคุณ: 'Please log in to view your stats',
+  ยังไม่มีข้อมูลสถิติ: 'No stats yet',
+  สถิติจะปรากฏที่นี่เมื่อมีเคสที่เกี่ยวข้องกับคุณในระบบ: 'Stats will appear here once there are cases related to you in the system',
+  เคสทั้งหมด: 'Total cases',
+  กำลังดำเนินการ: 'In progress',
+  เสร็จสิ้นแล้ว: 'Completed',
+  แนวโน้มจำนวนเคสรายเดือน: 'Monthly case trend',
+  'ยังไม่มีข้อมูลในช่วง {n} เดือนล่าสุด': 'No data in the last {n} months',
+  '{n} เคส': '{n} cases',
+  จำนวน: 'Count',
+  สัดส่วนตามระดับความรุนแรง: 'Breakdown by severity',
+  ยังไม่มีเคสที่ประเมินระดับความรุนแรง: 'No cases with a severity assessment yet',
+  วิกฤต: 'Critical',
+  ฉุกเฉิน: 'Emergency',
+  เร่งด่วน: 'Urgent',
+  ไม่เร่งด่วน: 'Less urgent',
+  ทั่วไป: 'General',
+})
 
 const TREND_MONTHS = 6
 
@@ -20,8 +45,8 @@ function monthKey(ts: number): string {
   return `${d.getFullYear()}-${d.getMonth()}`
 }
 
-function monthLabel(ts: number): string {
-  return new Date(ts).toLocaleDateString('th-TH', { month: 'short', year: '2-digit' })
+function monthLabel(ts: number, language: 'th' | 'en'): string {
+  return new Date(ts).toLocaleDateString(language === 'en' ? 'en-US' : 'th-TH', { month: 'short', year: '2-digit' })
 }
 
 export default function PersonalStats() {
@@ -30,25 +55,27 @@ export default function PersonalStats() {
   const cases = useStore((s) => s.cases)
   const rescueTeams = useStore((s) => s.rescueTeams)
   const hospitals = useStore((s) => s.hospitals)
+  const language = useStore((s) => s.language)
+  const t = useT()
 
   const scoped = useMemo(() => {
     const all = Object.values(cases)
     if (!currentUser) return { list: [] as EmergencyCase[], scopeLabel: '' }
     switch (currentUser.role) {
       case 'rescue': {
-        const teamName = rescueTeams.find((t) => t.id === currentUser.rescueTeamId)?.name
+        const teamName = rescueTeams.find((team) => team.id === currentUser.rescueTeamId)?.name
         return {
           list: all.filter(
             (c) => c.assignedRescueTeam?.id === currentUser.rescueTeamId || c.supportingRescueTeam?.id === currentUser.rescueTeamId,
           ),
-          scopeLabel: teamName ?? 'หน่วยกู้ชีพของฉัน',
+          scopeLabel: teamName ?? t('หน่วยกู้ชีพของฉัน'),
         }
       }
       case 'hospital': {
         const hospitalName = hospitals.find((h) => h.id === currentUser.hospitalId)?.name
         return {
           list: all.filter((c) => c.selectedHospital?.id === currentUser.hospitalId),
-          scopeLabel: hospitalName ?? 'โรงพยาบาลของฉัน',
+          scopeLabel: hospitalName ?? t('โรงพยาบาลของฉัน'),
         }
       }
       case 'dispatch':
@@ -56,30 +83,31 @@ export default function PersonalStats() {
         // aren't tagged with which staff member filled them in) -- the
         // closest honest "personal" view for this role is the whole
         // system's activity, which is what a dispatcher actually oversees.
-        return { list: all, scopeLabel: 'ศูนย์สั่งการ 1669 (ภาพรวมระบบ)' }
+        return { list: all, scopeLabel: t('ศูนย์สั่งการ 1669 (ภาพรวมระบบ)') }
       default:
         return {
           list: all.filter((c) => c.reporterUserId === currentUser.id || c.isDemo),
-          scopeLabel: 'เคสที่ฉันแจ้งเหตุ',
+          scopeLabel: t('เคสที่ฉันแจ้งเหตุ'),
         }
     }
-  }, [cases, currentUser, rescueTeams, hospitals])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cases, currentUser, rescueTeams, hospitals, language])
 
   // Both memo hooks must run unconditionally on every render (the Rules of
   // Hooks) -- scoped.list is already [] when there's no currentUser, so
   // there's nothing to gate here; the "not logged in" screen is decided
   // below, after every hook has run.
   const severityCounts = useMemoSeverityCounts(scoped.list)
-  const trend = useMemoTrend(scoped.list)
+  const trend = useMemoTrend(scoped.list, language)
 
   if (!currentUser) {
     return (
-      <AppShell variant="dashboard" title="สถิติของฉัน">
+      <AppShell variant="dashboard" title={t('สถิติของฉัน')}>
         <ErrorState
-          title="ยังไม่ได้เข้าสู่ระบบ"
-          description="กรุณาเข้าสู่ระบบเพื่อดูสถิติของคุณ"
+          title={t('ยังไม่ได้เข้าสู่ระบบ')}
+          description={t('กรุณาเข้าสู่ระบบเพื่อดูสถิติของคุณ')}
           onRetry={() => navigate('/login')}
-          retryLabel="เข้าสู่ระบบ"
+          retryLabel={t('เข้าสู่ระบบ')}
         />
       </AppShell>
     )
@@ -90,36 +118,36 @@ export default function PersonalStats() {
   const inProgressCount = list.length - completedCount
 
   return (
-    <AppShell variant="dashboard" title="สถิติของฉัน">
+    <AppShell variant="dashboard" title={t('สถิติของฉัน')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-navy">สถิติของฉัน</h1>
+            <h1 className="text-xl font-bold text-ink">{t('สถิติของฉัน')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {roleLabel(currentUser.role)} · {scopeLabel}
+              {t(roleLabel(currentUser.role))} · {scopeLabel}
             </p>
           </div>
 
           {list.length === 0 ? (
             <EmptyState
               icon={<Activity className="size-6" />}
-              title="ยังไม่มีข้อมูลสถิติ"
-              description="สถิติจะปรากฏที่นี่เมื่อมีเคสที่เกี่ยวข้องกับคุณในระบบ"
+              title={t('ยังไม่มีข้อมูลสถิติ')}
+              description={t('สถิติจะปรากฏที่นี่เมื่อมีเคสที่เกี่ยวข้องกับคุณในระบบ')}
             />
           ) : (
             <>
               <StatBar>
-                <StatItem label="เคสทั้งหมด" value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
-                <StatItem label="กำลังดำเนินการ" value={inProgressCount} icon={<Ambulance className="size-5" />} tone="warning" />
-                <StatItem label="เสร็จสิ้นแล้ว" value={completedCount} icon={<CheckCircle2 className="size-5" />} tone="success" />
+                <StatItem label={t('เคสทั้งหมด')} value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
+                <StatItem label={t('กำลังดำเนินการ')} value={inProgressCount} icon={<Ambulance className="size-5" />} tone="warning" />
+                <StatItem label={t('เสร็จสิ้นแล้ว')} value={completedCount} icon={<CheckCircle2 className="size-5" />} tone="success" />
               </StatBar>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card className="flex flex-col gap-3">
-                  <p className="text-sm font-bold text-navy">แนวโน้มจำนวนเคสรายเดือน</p>
-                  {trend.every((t) => t.count === 0) ? (
-                    <p className="py-8 text-center text-sm text-muted">ยังไม่มีข้อมูลในช่วง {TREND_MONTHS} เดือนล่าสุด</p>
+                  <p className="text-sm font-bold text-ink">{t('แนวโน้มจำนวนเคสรายเดือน')}</p>
+                  {trend.every((item) => item.count === 0) ? (
+                    <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีข้อมูลในช่วง {n} เดือนล่าสุด', { n: TREND_MONTHS })}</p>
                   ) : (
                     <div className="h-52">
                       <ResponsiveContainer width="100%" height="100%">
@@ -129,7 +157,7 @@ export default function PersonalStats() {
                           <Tooltip
                             cursor={{ fill: '#EAF6FF' }}
                             contentStyle={CHART_TOOLTIP_STYLE}
-                            formatter={(value) => [`${value} เคส`, 'จำนวน']}
+                            formatter={(value) => [t('{n} เคส', { n: value as number }), t('จำนวน')]}
                           />
                           <Bar dataKey="count" fill="#0B6EBD" radius={[6, 6, 0, 0]} maxBarSize={36} />
                         </BarChart>
@@ -139,9 +167,9 @@ export default function PersonalStats() {
                 </Card>
 
                 <Card className="flex flex-col gap-3">
-                  <p className="text-sm font-bold text-navy">สัดส่วนตามระดับความรุนแรง</p>
+                  <p className="text-sm font-bold text-ink">{t('สัดส่วนตามระดับความรุนแรง')}</p>
                   {severityCounts.every((s) => s.count === 0) ? (
-                    <p className="py-8 text-center text-sm text-muted">ยังไม่มีเคสที่ประเมินระดับความรุนแรง</p>
+                    <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีเคสที่ประเมินระดับความรุนแรง')}</p>
                   ) : (
                     <div className="flex items-center gap-4">
                       <div className="h-40 w-40 shrink-0">
@@ -162,7 +190,7 @@ export default function PersonalStats() {
                                   <Cell key={s.severity} fill={SEVERITY_CHART_COLORS[s.severity]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [`${value} เคส`, '']} />
+                            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [t('{n} เคส', { n: value as number }), '']} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -172,8 +200,8 @@ export default function PersonalStats() {
                           .map((s) => (
                             <div key={s.severity} className="flex items-center gap-2 text-xs">
                               <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_CHART_COLORS[s.severity] }} />
-                              <span className="flex-1 text-navy">{s.label}</span>
-                              <span className="font-bold text-navy">{s.count}</span>
+                              <span className="flex-1 text-ink">{t(s.label)}</span>
+                              <span className="font-bold text-ink">{s.count}</span>
                             </div>
                           ))}
                       </div>
@@ -205,7 +233,7 @@ function useMemoSeverityCounts(list: EmergencyCase[]) {
   }, [list])
 }
 
-function useMemoTrend(list: EmergencyCase[]) {
+function useMemoTrend(list: EmergencyCase[], language: 'th' | 'en') {
   return useMemo(() => {
     const now = Date.now()
     const buckets: { key: string; label: string; count: number }[] = []
@@ -213,7 +241,7 @@ function useMemoTrend(list: EmergencyCase[]) {
       const d = new Date(now)
       d.setDate(1)
       d.setMonth(d.getMonth() - i)
-      buckets.push({ key: monthKey(d.getTime()), label: monthLabel(d.getTime()), count: 0 })
+      buckets.push({ key: monthKey(d.getTime()), label: monthLabel(d.getTime(), language), count: 0 })
     }
     const byKey = new Map(buckets.map((b) => [b.key, b]))
     for (const c of list) {
@@ -222,5 +250,5 @@ function useMemoTrend(list: EmergencyCase[]) {
     }
     return buckets
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list])
+  }, [list, language])
 }

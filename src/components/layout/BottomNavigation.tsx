@@ -1,14 +1,18 @@
 import { Link, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import type { NavItem } from '@/lib/nav'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({ เมนูหลัก: 'Main menu' })
 
 export function BottomNavigation({ items }: { items: NavItem[] }) {
   const location = useLocation()
+  const t = useT()
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
-      aria-label="เมนูหลัก"
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
+      aria-label={t('เมนูหลัก')}
     >
       {items.map((item) => {
         const active = location.pathname === item.path
@@ -23,7 +27,7 @@ export function BottomNavigation({ items }: { items: NavItem[] }) {
             )}
           >
             <Icon className={clsx('size-5', active && 'scale-110')} />
-            {item.label}
+            {t(item.label)}
           </Link>
         )
       })}

@@ -12,6 +12,19 @@ import { useStore } from '@/lib/store'
 import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  การโทรสิ้นสุดแล้ว: 'The call has ended',
+  โทรหาผู้แจ้งเหตุ: 'Call the reporter',
+  ไม่พบข้อมูลเคส: 'Case not found',
+  ผู้แจ้งเหตุ: 'Reporter',
+  'เคส {caseNumber}': 'Case {caseNumber}',
+  'กำลังโทร... รอผู้แจ้งเหตุรับสาย': 'Calling... waiting for the reporter to answer',
+  'กำลังเชื่อมต่อวิดีโอ...': 'Connecting video...',
+  รอผู้แจ้งเหตุรับสาย: 'Waiting for the reporter to answer',
+  วางสาย: 'Hang up',
+})
 
 /**
  * Rescue calling the reporter directly -- a separate call relationship from
@@ -29,6 +42,7 @@ export default function RescueCallReporter() {
   const c = useStore((s) => (id ? s.cases[id] : undefined))
   const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
   const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
+  const t = useT()
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
@@ -60,7 +74,7 @@ export default function RescueCallReporter() {
   useEffect(() => {
     if (c?.rescueCallStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    toast({ title: 'การโทรสิ้นสุดแล้ว', tone: 'info' })
+    toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
   }, [c?.rescueCallStatus])
 
   useEffect(() => {
@@ -75,8 +89,8 @@ export default function RescueCallReporter() {
 
   if (!id || !c) {
     return (
-      <AppShell variant="flow" title="โทรหาผู้แจ้งเหตุ" showBack>
-        <div className="py-16 text-center text-sm text-muted">ไม่พบข้อมูลเคส</div>
+      <AppShell variant="flow" title={t('โทรหาผู้แจ้งเหตุ')} showBack>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
       </AppShell>
     )
   }
@@ -98,7 +112,7 @@ export default function RescueCallReporter() {
   const isCallActive = c.rescueCallStatus === 'connecting' || c.rescueCallStatus === 'in-call'
 
   return (
-    <AppShell variant="flow" title="โทรหาผู้แจ้งเหตุ" showBack onBack={() => navigate(`/rescue/case/${id}`)}>
+    <AppShell variant="flow" title={t('โทรหาผู้แจ้งเหตุ')} showBack onBack={() => navigate(`/rescue/case/${id}`)}>
       <div className="relative">
         <AnimatedBackground variant="call" />
         <div className="relative z-10 flex flex-col gap-5 pb-8">
@@ -116,10 +130,10 @@ export default function RescueCallReporter() {
                 <Phone className="size-9" />
               </div>
             </div>
-            <p className="text-sm font-semibold text-navy">{c.reporterName ?? 'ผู้แจ้งเหตุ'}</p>
-            <p className="text-xs text-muted">เคส {c.caseNumber}</p>
+            <p className="text-sm font-semibold text-ink">{c.reporterName ?? t('ผู้แจ้งเหตุ')}</p>
+            <p className="text-xs text-muted">{t('เคส {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.rescueCallStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">กำลังโทร... รอผู้แจ้งเหตุรับสาย</p>
+              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทร... รอผู้แจ้งเหตุรับสาย')}</p>
             )}
             {c.rescueCallStatus === 'in-call' && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
@@ -136,8 +150,8 @@ export default function RescueCallReporter() {
                 remoteStream={remoteStream}
                 cameraState={cameraState}
                 connectionState={connectionState}
-                remoteLabel={c.reporterName ?? 'ผู้แจ้งเหตุ'}
-                remoteWaitingLabel={remoteJoined ? 'กำลังเชื่อมต่อวิดีโอ...' : 'รอผู้แจ้งเหตุรับสาย'}
+                remoteLabel={c.reporterName ?? t('ผู้แจ้งเหตุ')}
+                remoteWaitingLabel={remoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอผู้แจ้งเหตุรับสาย')}
                 cameraOn={cameraOn}
                 onToggleCamera={() => setCameraOn((v) => !v)}
                 micOn={micOn}
@@ -145,14 +159,14 @@ export default function RescueCallReporter() {
                 onSwitchCamera={switchCamera}
               />
               <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                วางสาย
+                {t('วางสาย')}
               </Button>
             </>
           )}
 
           {!isCallActive && (
             <Button variant="primary" size="lg" fullWidth icon={<Phone className="size-5" />} onClick={handleCall}>
-              โทรหาผู้แจ้งเหตุ
+              {t('โทรหาผู้แจ้งเหตุ')}
             </Button>
           )}
         </div>

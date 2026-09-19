@@ -1,3 +1,5 @@
+import { useStore } from './store'
+
 // Root-absolute string literals like "/favicon.svg" ignore Vite's base path
 // entirely, so they 404 the moment the app is served from a subpath (e.g.
 // GitHub Pages' /RES-Q/) instead of the domain root. BASE_URL always has a
@@ -15,12 +17,20 @@ export function formatCaseNumber(seq: number, date = new Date()): string {
   return `RQ-${date.getFullYear()}-${String(seq).padStart(3, '0')}-${suffix}`
 }
 
+// store.ts imports formatCaseNumber/uid from here, so this creates a
+// circular import -- safe in practice because useStore is only read inside
+// the function bodies below (at call time, well after both modules have
+// finished initializing at app startup), never at module-evaluation time.
+function currentLocale(): string {
+  return useStore.getState().language === 'en' ? 'en-US' : 'th-TH'
+}
+
 export function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+  return new Date(ts).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDateTime(ts: number): string {
-  return new Date(ts).toLocaleString('th-TH', {
+  return new Date(ts).toLocaleString(currentLocale(), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

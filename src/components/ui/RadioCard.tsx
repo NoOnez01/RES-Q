@@ -38,7 +38,7 @@ export function RadioCard({
       onClick={onClick}
       aria-pressed={selected}
       className={clsx(
-        'relative flex w-full items-start gap-3 rounded-2xl border-2 bg-white p-4 text-left transition-all',
+        'relative flex w-full items-start gap-3 rounded-2xl border-2 bg-surface p-4 text-left transition-all',
         'hover:border-primary/60 hover:shadow-card focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
         selected ? toneRing[tone] : 'border-border',
         className,
@@ -47,7 +47,7 @@ export function RadioCard({
       {icon && <div className="shrink-0 mt-0.5">{icon}</div>}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
-          <p className="font-semibold text-navy">{title}</p>
+          <p className="font-semibold text-ink">{title}</p>
           {badge}
         </div>
         {description && <p className="text-sm text-muted mt-0.5">{description}</p>}
@@ -55,7 +55,7 @@ export function RadioCard({
       <div
         className={clsx(
           'flex size-5 shrink-0 items-center justify-center rounded-full border-2 mt-0.5',
-          selected ? 'border-primary bg-primary' : 'border-border bg-white',
+          selected ? 'border-primary bg-primary' : 'border-border bg-surface',
         )}
       >
         {selected && <Check className="size-3.5 text-white" strokeWidth={3} />}

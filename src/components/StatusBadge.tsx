@@ -3,6 +3,28 @@ import { CheckCircle2, Clock, Loader2, Siren } from 'lucide-react'
 import type { CaseStatus } from '@/lib/types'
 import { statusMeta } from '@/lib/types'
 import { PulseRing } from './backgrounds/PulseRing'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ติดต่อเจ้าหน้าที่แล้ว: 'Contacted responders',
+  ถ่ายรูปจุดเกิดเหตุแล้ว: 'Photographed the scene',
+  'ติดต่อ 1669 แล้ว': 'Contacted 1669',
+  รับแจ้งเหตุแล้ว: 'Report received',
+  กำลังค้นหาหน่วยกู้ชีพ: 'Finding a rescue team',
+  มอบหมายหน่วยกู้ชีพแล้ว: 'Rescue team assigned',
+  หน่วยกู้ชีพกำลังเดินทาง: 'Rescue team en route',
+  ถึงจุดเกิดเหตุแล้ว: 'Arrived at the scene',
+  เข้าช่วยเหลือแล้ว: 'Assisting',
+  กำลังนำส่งโรงพยาบาล: 'Transporting to hospital',
+  ถึงโรงพยาบาลแล้ว: 'Arrived at the hospital',
+  โรงพยาบาลรับผู้ป่วยแล้ว: 'Hospital admitted patient',
+  เสร็จสิ้น: 'Completed',
+  ประชาชน: 'Public',
+  'ศูนย์ 1669': 'Center 1669',
+  หน่วยกู้ชีพ: 'Rescue team',
+  โรงพยาบาล: 'Hospital',
+  ระบบ: 'System',
+})
 
 function toneFor(status: CaseStatus): { classes: string; icon: React.ElementType } {
   if (status === 'completed') return { classes: 'bg-success/10 text-success border-success/30', icon: CheckCircle2 }
@@ -28,6 +50,7 @@ export function StatusBadge({ status, className }: { status: CaseStatus; classNa
   const { classes, icon: Icon } = toneFor(status)
   const spinning = status === 'finding-rescue' || status === 'rescue-en-route' || status === 'transporting'
   const isLive = LIVE_STATUSES.includes(status)
+  const t = useT()
   return (
     <span
       className={clsx(
@@ -38,7 +61,7 @@ export function StatusBadge({ status, className }: { status: CaseStatus; classNa
     >
       {isLive && <PulseRing tone="primary" size="sm" />}
       <Icon className={clsx('size-3.5', spinning && 'animate-spin-slow')} />
-      {meta.label}
+      {t(meta.label)}
     </span>
   )
 }

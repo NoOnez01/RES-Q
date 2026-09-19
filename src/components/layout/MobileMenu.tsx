@@ -7,6 +7,18 @@ import type { NavItem } from '@/lib/nav'
 import type { AppUser } from '@/lib/types'
 import { FAVICON_URL } from '@/lib/utils'
 import { useStore } from '@/lib/store'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ปิดเมนู: 'Close menu',
+  ดูหน้าทั้งหมด: 'View all pages',
+  ดูวิธีการใช้งาน: 'How it works',
+  ฟีเจอร์: 'Features',
+  ติดต่อเรา: 'Contact us',
+  ออกจากระบบ: 'Log out',
+  เข้าสู่ระบบ: 'Log in',
+  สมัครสมาชิก: 'Sign up',
+})
 
 interface MobileMenuProps {
   open: boolean
@@ -22,6 +34,7 @@ interface MobileMenuProps {
 export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }: MobileMenuProps) {
   const location = useLocation()
   const logout = useStore((s) => s.logout)
+  const t = useT()
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
@@ -36,13 +49,13 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
   return createPortal(
     <div className="fixed inset-0 z-[90] lg:hidden">
       <div className="absolute inset-0 bg-navy/50 animate-fade-in" onClick={onClose} />
-      <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs overflow-y-auto bg-white p-5 shadow-card-lg animate-fade-in-up">
+      <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs overflow-y-auto bg-surface p-5 shadow-card-lg animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={FAVICON_URL} alt="" className="size-8" />
-            <span className="text-lg font-extrabold text-navy">ResQ</span>
+            <span className="text-lg font-extrabold text-ink">ResQ</span>
           </div>
-          <button onClick={onClose} aria-label="ปิดเมนู" className="rounded-lg p-2 text-navy hover:bg-skyblue-light">
+          <button onClick={onClose} aria-label={t('ปิดเมนู')} className="rounded-lg p-2 text-ink hover:bg-skyblue-light">
             <X className="size-5" />
           </button>
         </div>
@@ -58,47 +71,47 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 onClick={onClose}
                 className={clsx(
                   'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold',
-                  active ? 'bg-primary text-white' : 'text-navy hover:bg-skyblue-light',
+                  active ? 'bg-primary text-white' : 'text-ink hover:bg-skyblue-light',
                 )}
               >
                 <Icon className="size-4.5" />
-                {item.label}
+                {t(item.label)}
               </Link>
             )
           })}
           <Link
             to="/all-screens"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
           >
             <LayoutGrid className="size-4.5" />
-            ดูหน้าทั้งหมด
+            {t('ดูหน้าทั้งหมด')}
           </Link>
           <Link
             to="/how-it-works"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
           >
             <HelpCircle className="size-4.5" />
-            ดูวิธีการใช้งาน
+            {t('ดูวิธีการใช้งาน')}
           </Link>
           {showAuthLinks && (
             <>
               <Link
                 to="/#features"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
               >
                 <Sparkles className="size-4.5" />
-                ฟีเจอร์
+                {t('ฟีเจอร์')}
               </Link>
               <Link
                 to="/#contact"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
               >
                 <PhoneCall className="size-4.5" />
-                ติดต่อเรา
+                {t('ติดต่อเรา')}
               </Link>
             </>
           )}
@@ -109,7 +122,7 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
             <Link
               to="/profile"
               onClick={onClose}
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-navy hover:bg-skyblue-light"
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
             >
               {loggedInUser.avatarUrl ? (
                 <img src={loggedInUser.avatarUrl} alt="" className="size-6 shrink-0 rounded-full object-cover" />
@@ -123,9 +136,9 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 onClose()
                 logout()
               }}
-              className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
+              className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-ink hover:bg-skyblue-light"
             >
-              <LogOut className="size-4.5" /> ออกจากระบบ
+              <LogOut className="size-4.5" /> {t('ออกจากระบบ')}
             </button>
           </div>
         ) : (
@@ -135,9 +148,9 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 <Link
                   to="/login"
                   onClick={onClose}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-navy hover:bg-skyblue-light"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-ink hover:bg-skyblue-light"
                 >
-                  <LogIn className="size-4.5" /> เข้าสู่ระบบ
+                  <LogIn className="size-4.5" /> {t('เข้าสู่ระบบ')}
                 </Link>
               )}
               {!location.pathname.startsWith('/register') && (
@@ -146,7 +159,7 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                   onClick={onClose}
                   className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
                 >
-                  <UserPlus className="size-4.5" /> สมัครสมาชิก
+                  <UserPlus className="size-4.5" /> {t('สมัครสมาชิก')}
                 </Link>
               )}
             </div>

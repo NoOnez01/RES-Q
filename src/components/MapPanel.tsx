@@ -2,6 +2,12 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from '
 import L from 'leaflet'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MapPin, Ambulance, Building2 } from 'lucide-react'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'เส้นทางการเดินทางไปยัง {label}': 'Route to {label}',
+  จุดหมาย: 'destination',
+})
 
 export interface MapPin {
   id: string
@@ -98,6 +104,7 @@ export function MapPanel({
   onPickLocation,
 }: MapPanelProps) {
   const resolvedCenter: [number, number] = center ?? (pins[0] ? [pins[0].lat, pins[0].lng] : [13.7563, 100.5018])
+  const t = useT()
 
   return (
     <div
@@ -125,7 +132,7 @@ export function MapPanel({
           // The real road route once it's loaded -- solid, not dashed, since
           // this is an actual path a vehicle drives, not a placeholder.
           <Polyline positions={routePoints} pathOptions={{ color: '#0B6EBD', weight: 4, opacity: 0.7 }}>
-            <Popup>เส้นทางการเดินทางไปยัง {pins[pins.length - 1]?.label ?? 'จุดหมาย'}</Popup>
+            <Popup>{t('เส้นทางการเดินทางไปยัง {label}', { label: pins[pins.length - 1]?.label ?? t('จุดหมาย') })}</Popup>
           </Polyline>
         )}
         {showRoute && !routePoints && pins.length > 1 && (
@@ -136,7 +143,7 @@ export function MapPanel({
             positions={pins.map((p) => [p.lat, p.lng])}
             pathOptions={{ color: '#0B6EBD', weight: 4, opacity: 0.6, dashArray: '2 10' }}
           >
-            <Popup>เส้นทางการเดินทางไปยัง {pins[pins.length - 1]?.label ?? 'จุดหมาย'}</Popup>
+            <Popup>{t('เส้นทางการเดินทางไปยัง {label}', { label: pins[pins.length - 1]?.label ?? t('จุดหมาย') })}</Popup>
           </Polyline>
         )}
         {pins.map((pin) => (

@@ -7,6 +7,18 @@ import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/aler
 import { showNativeNotification } from '@/lib/nativeNotify'
 import { CaseAlertModal } from './CaseAlertModal'
 import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  มีเคสฉุกเฉินใหม่: 'New emergency case',
+  'เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ': 'Case {caseNumber} has been submitted, awaiting rescue team assignment',
+  หน่วยกู้ชีพปฏิเสธเคส: 'Rescue team declined the case',
+  'เคส {caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่': 'Case {caseNumber} was declined by the rescue team, please assign a new team',
+  ได้รับมอบหมายเคสใหม่: 'New case assigned to you',
+  'คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส': 'You have been assigned case {caseNumber}, please confirm acceptance',
+  มีผู้ป่วยกำลังนำส่ง: 'A patient is being transported',
+  'เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา': 'Case {caseNumber} selected your hospital for transfer, please prepare the treatment team',
+})
 
 const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
   info: 'info',
@@ -44,14 +56,15 @@ function handoffsFor(
   role: Role | 'public',
   cases: EmergencyCase[],
   currentUser: { rescueTeamId?: string; hospitalId?: string } | null,
+  t: (text: string, vars?: Record<string, string | number>) => string,
 ): HandoffAlert[] {
   if (role === 'dispatch') {
     const newCases = cases
       .filter((c) => c.status === 'received' && !c.assessment)
       .map((c) => ({
         case: c,
-        title: 'มีเคสฉุกเฉินใหม่',
-        message: `เคส ${c.caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ`,
+        title: t('มีเคสฉุกเฉินใหม่'),
+        message: t('เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-new:${c.id}`,
@@ -60,8 +73,8 @@ function handoffsFor(
       .filter((c) => c.status === 'finding-rescue' && c.rescueRejectedAt)
       .map((c) => ({
         case: c,
-        title: 'หน่วยกู้ชีพปฏิเสธเคส',
-        message: `เคส ${c.caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่`,
+        title: t('หน่วยกู้ชีพปฏิเสธเคส'),
+        message: t('เคส {caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-rejected:${c.id}:${c.rescueRejectedAt}`,
@@ -73,8 +86,8 @@ function handoffsFor(
       .filter((c) => c.status === 'rescue-assigned' && c.assignedRescueTeam?.id === currentUser?.rescueTeamId)
       .map((c) => ({
         case: c,
-        title: 'ได้รับมอบหมายเคสใหม่',
-        message: `คุณได้รับมอบหมายเคส ${c.caseNumber} กรุณายืนยันการรับเคส`,
+        title: t('ได้รับมอบหมายเคสใหม่'),
+        message: t('คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส', { caseNumber: c.caseNumber }),
         urgent: false,
         kind: 'rescue' as const,
         key: `rescue-assigned:${c.id}`,
@@ -90,8 +103,8 @@ function handoffsFor(
       )
       .map((c) => ({
         case: c,
-        title: 'มีผู้ป่วยกำลังนำส่ง',
-        message: `เคส ${c.caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา`,
+        title: t('มีผู้ป่วยกำลังนำส่ง'),
+        message: t('เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'hospital' as const,
         key: `hospital-selected:${c.id}`,
@@ -146,12 +159,13 @@ export function NotificationAlertBridge() {
   const alertedCaseKeys = useRef<Set<string>>(new Set())
   const isFirstRun = useRef(true)
   const [alertQueue, setAlertQueue] = useState<HandoffAlert[]>([])
+  const t = useT()
 
   useEffect(() => {
     const audience = currentUser?.role ?? 'public'
     const isStaff = audience !== 'public'
     const relevantNotifications = notifications.filter((n) => n.audience === audience || n.audience === 'all')
-    const handoffs = handoffsFor(audience, Object.values(cases), currentUser)
+    const handoffs = handoffsFor(audience, Object.values(cases), currentUser, t)
 
     if (isFirstRun.current) {
       // Don't alert for anything that already existed on mount (seeded demo

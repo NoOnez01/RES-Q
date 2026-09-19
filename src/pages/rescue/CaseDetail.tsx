@@ -26,6 +26,69 @@ import { formatDateTime } from '@/lib/utils'
 import { generateCaseSheetPdf } from '@/lib/caseSheetPdf'
 import type { CaseStatus } from '@/lib/types'
 import { Truck } from 'lucide-react'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  เดินทาง: 'En route',
+  ถึงที่เกิดเหตุ: 'Arrived at scene',
+  บันทึกข้อมูล: 'Record data',
+  เลือกโรงพยาบาล: 'Select a hospital',
+  นำส่ง: 'Transport',
+  เสร็จสิ้น: 'Completed',
+  ความคืบหน้าของเคส: 'Case progress',
+  ความคืบหน้าการปฏิบัติงาน: 'Response progress',
+  'ผู้ป่วย {n} คน': '{n} patient(s)',
+  รายละเอียดเคส: 'Case details',
+  ไม่พบเคสนี้: 'Case not found',
+  เคสอาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
+  กลับแดชบอร์ด: 'Back to dashboard',
+  รับเคสแล้ว: 'Case accepted',
+  เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที: 'You can start heading to the scene right away',
+  ปฏิเสธเคสแล้ว: 'Case rejected',
+  ระบบกำลังค้นหาหน่วยกู้ชีพใหม่: 'Now finding a new rescue team',
+  เริ่มนำส่งโรงพยาบาล: 'Started transport to hospital',
+  กำลังนำทางไปยังโรงพยาบาลที่เลือก: 'Now navigating to the selected hospital',
+  'เลือกรถ/ทีมที่รับผิดชอบแล้ว': 'Responding vehicle/crew selected',
+  '{unit} · {n} คน': '{unit} · {n} people',
+  สร้างใบเคสไม่สำเร็จ: 'Failed to generate the case sheet',
+  'กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)': 'Please try again (an internet connection is needed the first time)',
+  บันทึกอัปเดตอาการแล้ว: 'Condition update saved',
+  ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที: 'The dispatch center and hospital will see this update right away',
+  จุดเกิดเหตุ: 'Incident location',
+  รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
+  'ติดต่อ 1669': 'Contact 1669',
+  โทรหาผู้แจ้งเหตุ: 'Call the reporter',
+  'ออกใบเคส (PDF)': 'Export case sheet (PDF)',
+  รายละเอียดเหตุการณ์: 'Incident details',
+  '{n} คน': '{n} people',
+  หน่วยกู้ชีพที่รับผิดชอบ: 'Assigned rescue team',
+  '{vehicle} · {n} คน': '{vehicle} · {n} people',
+  'ทะเบียน {plate}': 'plate {plate}',
+  'คนขับ: {name}': 'Driver: {name}',
+  'เลือกรถ/ทีมที่รับผิดชอบ': 'Choose the responding vehicle/crew',
+  จำนวนทีมที่ออกปฏิบัติงานจริง: 'Actual crew size deployed',
+  'ยืนยันเลือกรถ/ทีม': 'Confirm vehicle/crew selection',
+  ยกเลิก: 'Cancel',
+  อัปเดตอาการผู้ป่วย: "Update patient's condition",
+  'มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)': 'Any change in condition? (type or speak)',
+  บันทึกอัปเดต: 'Save update',
+  โรงพยาบาลที่เลือก: 'Selected hospital',
+  ไทม์ไลน์เคส: 'Case timeline',
+  รับเคส: 'Accept case',
+  ปฏิเสธเคส: 'Reject case',
+  เริ่มนำทางไปยังจุดเกิดเหตุ: 'Start navigating to the scene',
+  ถึงจุดเกิดเหตุแล้ว: 'Arrived at the scene',
+  บันทึกข้อมูลผู้ป่วย: 'Record patient data',
+  'กำลังนำส่ง — ดูเส้นทาง': 'In transit — view route',
+  ส่งมอบผู้ป่วยให้โรงพยาบาลเรียบร้อยแล้ว: 'Patient handed off to the hospital',
+  'อัปเดตล่าสุด {date}': 'Last updated {date}',
+  ยืนยันการรับเคส: 'Confirm accepting case',
+  'คุณต้องการรับเคส {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุใช่หรือไม่': 'Accept case {caseNumber} and start heading to the scene?',
+  ยืนยันรับเคส: 'Confirm accept',
+  ยืนยันการปฏิเสธเคส: 'Confirm rejecting this case',
+  'คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน': 'Reject case {caseNumber}? The system will find another rescue team instead.',
+  ยืนยันปฏิเสธ: 'Confirm rejection',
+})
 
 const WORKFLOW_STEPS = ['เดินทาง', 'ถึงที่เกิดเหตุ', 'บันทึกข้อมูล', 'เลือกโรงพยาบาล', 'นำส่ง', 'เสร็จสิ้น']
 
@@ -51,8 +114,9 @@ function workflowStepIndex(status: CaseStatus, hasHospital: boolean): number {
 
 function WorkflowStepper({ status, hasHospital }: { status: CaseStatus; hasHospital: boolean }) {
   const currentIndex = workflowStepIndex(status, hasHospital)
+  const t = useT()
   return (
-    <div className="flex items-start" role="list" aria-label="ความคืบหน้าของเคส">
+    <div className="flex items-start" role="list" aria-label={t('ความคืบหน้าของเคส')}>
       {WORKFLOW_STEPS.map((label, i) => {
         const done = i < currentIndex
         const current = i === currentIndex
@@ -63,8 +127,8 @@ function WorkflowStepper({ status, hasHospital }: { status: CaseStatus; hasHospi
                 className={clsx(
                   'flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-colors',
                   done && 'border-primary bg-primary text-white',
-                  current && !done && 'border-primary bg-white text-primary animate-pulse-glow',
-                  !done && !current && 'border-border bg-white text-muted/50',
+                  current && !done && 'border-primary bg-surface text-primary animate-pulse-glow',
+                  !done && !current && 'border-border bg-surface text-muted/50',
                 )}
               >
                 {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
@@ -72,10 +136,10 @@ function WorkflowStepper({ status, hasHospital }: { status: CaseStatus; hasHospi
               <span
                 className={clsx(
                   'hidden max-w-[64px] text-center text-[10px] leading-tight sm:block',
-                  current ? 'font-bold text-primary' : done ? 'text-navy' : 'text-muted/60',
+                  current ? 'font-bold text-primary' : done ? 'text-ink' : 'text-muted/60',
                 )}
               >
-                {label}
+                {t(label)}
               </span>
             </div>
             {i < WORKFLOW_STEPS.length - 1 && (
@@ -99,6 +163,7 @@ export default function RescueCaseDetail() {
   const assignVehicle = useStore((s) => s.assignVehicle)
   const startTransport = useStore((s) => s.startTransport)
   const addPatientUpdate = useStore((s) => s.addPatientUpdate)
+  const t = useT()
 
   const [confirmOpen, setConfirmOpen] = useState<'accept' | 'reject' | null>(null)
   const [loading, setLoading] = useState(false)
@@ -110,12 +175,12 @@ export default function RescueCaseDetail() {
 
   if (!id || !c) {
     return (
-      <AppShell variant="dashboard" title="รายละเอียดเคส">
+      <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
         <ErrorState
-          title="ไม่พบเคสนี้"
-          description="เคสอาจถูกลบหรือไม่มีอยู่ในระบบ"
+          title={t('ไม่พบเคสนี้')}
+          description={t('เคสอาจถูกลบหรือไม่มีอยู่ในระบบ')}
           onRetry={() => navigate('/rescue/dashboard')}
-          retryLabel="กลับแดชบอร์ด"
+          retryLabel={t('กลับแดชบอร์ด')}
         />
       </AppShell>
     )
@@ -127,7 +192,7 @@ export default function RescueCaseDetail() {
       rescueAcceptCase(c!.id)
       setLoading(false)
       setConfirmOpen(null)
-      toast({ title: 'รับเคสแล้ว', message: 'เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที', tone: 'success' })
+      toast({ title: t('รับเคสแล้ว'), message: t('เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที'), tone: 'success' })
     }, 500)
   }
 
@@ -137,14 +202,14 @@ export default function RescueCaseDetail() {
       rescueRejectCase(c!.id)
       setLoading(false)
       setConfirmOpen(null)
-      toast({ title: 'ปฏิเสธเคสแล้ว', message: 'ระบบกำลังค้นหาหน่วยกู้ชีพใหม่', tone: 'info' })
+      toast({ title: t('ปฏิเสธเคสแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่'), tone: 'info' })
       navigate('/rescue/dashboard')
     }, 500)
   }
 
   function handleStartTransport() {
     startTransport(c!.id)
-    toast({ title: 'เริ่มนำส่งโรงพยาบาล', message: 'กำลังนำทางไปยังโรงพยาบาลที่เลือก', tone: 'info' })
+    toast({ title: t('เริ่มนำส่งโรงพยาบาล'), message: t('กำลังนำทางไปยังโรงพยาบาลที่เลือก'), tone: 'info' })
     navigate(`/navigation/${c!.id}`)
   }
 
@@ -161,7 +226,7 @@ export default function RescueCaseDetail() {
     if (!vehicle || !c || !crewCount.trim() || Number.isNaN(count) || count < 1) return
     assignVehicle(c.id, vehicle, count)
     setPendingVehicleId(null)
-    toast({ title: 'เลือกรถ/ทีมที่รับผิดชอบแล้ว', message: `${vehicle.unitCode} · ${count} คน`, tone: 'success' })
+    toast({ title: t('เลือกรถ/ทีมที่รับผิดชอบแล้ว'), message: t('{unit} · {n} คน', { unit: vehicle.unitCode, n: count }), tone: 'success' })
   }
 
   async function handleExportPdf() {
@@ -170,7 +235,7 @@ export default function RescueCaseDetail() {
     try {
       await generateCaseSheetPdf(c)
     } catch {
-      toast({ title: 'สร้างใบเคสไม่สำเร็จ', message: 'กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)', tone: 'error' })
+      toast({ title: t('สร้างใบเคสไม่สำเร็จ'), message: t('กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)'), tone: 'error' })
     } finally {
       setExportingPdf(false)
     }
@@ -183,7 +248,7 @@ export default function RescueCaseDetail() {
       addPatientUpdate(c!.id, updateNote.trim())
       setUpdateNote('')
       setUpdateLoading(false)
-      toast({ title: 'บันทึกอัปเดตอาการแล้ว', message: 'ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที', tone: 'success' })
+      toast({ title: t('บันทึกอัปเดตอาการแล้ว'), message: t('ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที'), tone: 'success' })
     }, 400)
   }
 
@@ -191,7 +256,7 @@ export default function RescueCaseDetail() {
 
   const pins: MapPinT[] = []
   if (c.location) {
-    pins.push({ id: 'incident', lat: c.location.lat, lng: c.location.lng, label: 'จุดเกิดเหตุ', kind: 'incident' })
+    pins.push({ id: 'incident', lat: c.location.lat, lng: c.location.lng, label: t('จุดเกิดเหตุ'), kind: 'incident' })
   }
   if (c.assignedRescueTeam) {
     pins.push({
@@ -204,7 +269,7 @@ export default function RescueCaseDetail() {
   }
 
   return (
-    <AppShell variant="dashboard" title="รายละเอียดเคส">
+    <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-5">
@@ -212,7 +277,7 @@ export default function RescueCaseDetail() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-sm font-bold text-primary">{c.caseNumber}</p>
-              <p className="mt-1 text-lg font-bold text-navy">{c.incidentDetails?.incidentType ?? 'รอรายละเอียดเหตุการณ์'}</p>
+              <p className="mt-1 text-lg font-bold text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
@@ -228,7 +293,7 @@ export default function RescueCaseDetail() {
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/contact-1669/${c.id}`)}
                 >
-                  ติดต่อ 1669
+                  {t('ติดต่อ 1669')}
                 </Button>
                 <Button
                   variant="outline"
@@ -236,42 +301,42 @@ export default function RescueCaseDetail() {
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/rescue/call-reporter/${c.id}`)}
                 >
-                  โทรหาผู้แจ้งเหตุ
+                  {t('โทรหาผู้แจ้งเหตุ')}
                 </Button>
               </>
             )}
             <Button variant="outline" size="sm" icon={<FileDown className="size-4" />} loading={exportingPdf} onClick={handleExportPdf}>
-              ออกใบเคส (PDF)
+              {t('ออกใบเคส (PDF)')}
             </Button>
           </div>
         </Card>
 
         <Card>
-          <h3 className="mb-3 text-sm font-bold text-navy">ความคืบหน้าการปฏิบัติงาน</h3>
+          <h3 className="mb-3 text-sm font-bold text-ink">{t('ความคืบหน้าการปฏิบัติงาน')}</h3>
           <WorkflowStepper status={c.status} hasHospital={!!c.selectedHospital} />
         </Card>
 
         {c.incidentDetails && (
           <Card className="space-y-3">
-            <h3 className="font-bold text-navy">รายละเอียดเหตุการณ์</h3>
+            <h3 className="font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h3>
             <div className="grid gap-3 text-sm sm:grid-cols-2">
               <div className="flex items-start gap-2">
                 <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-navy">{c.location?.address ?? c.incidentDetails.location}</span>
+                <span className="text-ink">{c.location?.address ?? c.incidentDetails.location}</span>
               </div>
               <div className="flex items-start gap-2">
                 <Users className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-navy">ผู้ป่วย {c.incidentDetails.patientCount} คน</span>
+                <span className="text-ink">{t('ผู้ป่วย {n} คน', { n: c.incidentDetails.patientCount })}</span>
               </div>
               {c.assessment && (
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span className="text-navy">{c.assessment.injuryDescription}</span>
+                  <span className="text-ink">{c.assessment.injuryDescription}</span>
                 </div>
               )}
               <div className="flex items-start gap-2">
                 <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-navy">{c.incidentDetails.callbackPhone}</span>
+                <span className="text-ink">{c.incidentDetails.callbackPhone}</span>
               </div>
             </div>
             {c.incidentDetails.notes && (
@@ -292,29 +357,29 @@ export default function RescueCaseDetail() {
 
         {c.assignedRescueTeam && (
           <Card className="space-y-3">
-            <h3 className="font-bold text-navy">หน่วยกู้ชีพที่รับผิดชอบ</h3>
-            <p className="text-sm text-navy">{c.assignedRescueTeam.name}</p>
+            <h3 className="font-bold text-ink">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</h3>
+            <p className="text-sm text-ink">{c.assignedRescueTeam.name}</p>
             <p className="text-xs text-muted">{c.assignedRescueTeam.phone}</p>
 
             {c.assignedVehicle ? (
               <div className="rounded-xl border border-primary/20 bg-skyblue-pale p-3">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                   <Truck className="size-4 text-primary" /> {c.assignedVehicle.unitCode}
                   <VehicleLevelBadge level={c.assignedVehicle.level} />
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
-                  {c.assignedVehicle.vehicle} · {c.assignedVehicleCrewCount ?? c.assignedVehicle.members} คน
-                  {c.assignedVehicle.plateNumber && ` · ทะเบียน ${c.assignedVehicle.plateNumber}`}
+                  {t('{vehicle} · {n} คน', { vehicle: c.assignedVehicle.vehicle, n: c.assignedVehicleCrewCount ?? c.assignedVehicle.members })}
+                  {c.assignedVehicle.plateNumber && ` · ${t('ทะเบียน {plate}', { plate: c.assignedVehicle.plateNumber })}`}
                 </p>
                 {c.assignedVehicle.driverName && (
-                  <p className="mt-0.5 text-xs text-muted">คนขับ: {c.assignedVehicle.driverName}</p>
+                  <p className="mt-0.5 text-xs text-muted">{t('คนขับ: {name}', { name: c.assignedVehicle.driverName })}</p>
                 )}
               </div>
             ) : (
               c.status !== 'completed' &&
               ownVehicles.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-sm font-semibold text-navy">เลือกรถ/ทีมที่รับผิดชอบ</p>
+                  <p className="text-sm font-semibold text-ink">{t('เลือกรถ/ทีมที่รับผิดชอบ')}</p>
                   {ownVehicles.map((v) => (
                     <RadioCard
                       key={v.id}
@@ -322,14 +387,14 @@ export default function RescueCaseDetail() {
                       onClick={() => handlePickVehicle(v.id)}
                       icon={<Truck className="size-5 text-primary" />}
                       title={v.unitCode}
-                      description={`${v.vehicle} · ${v.members} คน`}
+                      description={t('{vehicle} · {n} คน', { vehicle: v.vehicle, n: v.members })}
                       badge={<VehicleLevelBadge level={v.level} />}
                     />
                   ))}
                   {pendingVehicleId && (
                     <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3">
                       <Input
-                        label="จำนวนทีมที่ออกปฏิบัติงานจริง"
+                        label={t('จำนวนทีมที่ออกปฏิบัติงานจริง')}
                         type="number"
                         min={1}
                         value={crewCount}
@@ -337,10 +402,10 @@ export default function RescueCaseDetail() {
                       />
                       <div className="flex gap-2">
                         <Button fullWidth onClick={handleConfirmVehicle} disabled={!crewCount.trim()}>
-                          ยืนยันเลือกรถ/ทีม
+                          {t('ยืนยันเลือกรถ/ทีม')}
                         </Button>
                         <Button variant="outline" onClick={() => setPendingVehicleId(null)}>
-                          ยกเลิก
+                          {t('ยกเลิก')}
                         </Button>
                       </div>
                     </div>
@@ -356,11 +421,11 @@ export default function RescueCaseDetail() {
             <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />
             {c.status !== 'completed' && (
               <Card className="space-y-3">
-                <h3 className="font-bold text-navy">อัปเดตอาการผู้ป่วย</h3>
+                <h3 className="font-bold text-ink">{t('อัปเดตอาการผู้ป่วย')}</h3>
                 <SpeechToTextPanel
                   value={updateNote}
                   onChange={setUpdateNote}
-                  label="มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)"
+                  label={t('มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)')}
                 />
                 <Button
                   variant="secondary"
@@ -369,7 +434,7 @@ export default function RescueCaseDetail() {
                   disabled={!updateNote.trim()}
                   onClick={handleAddUpdate}
                 >
-                  บันทึกอัปเดต
+                  {t('บันทึกอัปเดต')}
                 </Button>
               </Card>
             )}
@@ -378,14 +443,14 @@ export default function RescueCaseDetail() {
 
         {c.selectedHospital && (
           <Card className="space-y-1">
-            <h3 className="font-bold text-navy">โรงพยาบาลที่เลือก</h3>
-            <p className="text-sm text-navy">{c.selectedHospital.name}</p>
+            <h3 className="font-bold text-ink">{t('โรงพยาบาลที่เลือก')}</h3>
+            <p className="text-sm text-ink">{c.selectedHospital.name}</p>
             <p className="text-xs text-muted">{c.selectedHospital.location.address}</p>
           </Card>
         )}
 
         <Card>
-          <h3 className="mb-3 font-bold text-navy">ไทม์ไลน์เคส</h3>
+          <h3 className="mb-3 font-bold text-ink">{t('ไทม์ไลน์เคส')}</h3>
           <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
         </Card>
 
@@ -393,17 +458,17 @@ export default function RescueCaseDetail() {
           {c.status === 'rescue-assigned' && (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button variant="primary" size="lg" fullWidth onClick={() => setConfirmOpen('accept')}>
-                รับเคส
+                {t('รับเคส')}
               </Button>
               <Button variant="outline" fullWidth onClick={() => setConfirmOpen('reject')}>
-                ปฏิเสธเคส
+                {t('ปฏิเสธเคส')}
               </Button>
             </div>
           )}
 
           {c.status === 'rescue-en-route' && (
             <Button variant="primary" fullWidth size="lg" icon={<NavigationIcon className="size-5" />} onClick={() => navigate(`/navigation/${c.id}`)}>
-              เริ่มนำทางไปยังจุดเกิดเหตุ
+              {t('เริ่มนำทางไปยังจุดเกิดเหตุ')}
             </Button>
           )}
 
@@ -411,58 +476,58 @@ export default function RescueCaseDetail() {
             <div className="space-y-3 text-center">
               <div className="flex items-center justify-center gap-2 text-success">
                 <CheckCircle2 className="size-5" />
-                <p className="font-semibold">ถึงจุดเกิดเหตุแล้ว</p>
+                <p className="font-semibold">{t('ถึงจุดเกิดเหตุแล้ว')}</p>
               </div>
               <Button variant="primary" fullWidth size="lg" onClick={() => navigate(`/rescue/patient-record/${c.id}`)}>
-                บันทึกข้อมูลผู้ป่วย
+                {t('บันทึกข้อมูลผู้ป่วย')}
               </Button>
             </div>
           )}
 
           {c.status === 'assisted' && !c.selectedHospital && (
             <Button variant="primary" fullWidth size="lg" onClick={() => navigate(`/hospital-selection?caseId=${c.id}`)}>
-              เลือกโรงพยาบาล
+              {t('เลือกโรงพยาบาล')}
             </Button>
           )}
 
           {c.status === 'assisted' && c.selectedHospital && (
             <Button variant="primary" fullWidth size="lg" icon={<NavigationIcon className="size-5" />} onClick={handleStartTransport}>
-              เริ่มนำส่งโรงพยาบาล
+              {t('เริ่มนำส่งโรงพยาบาล')}
             </Button>
           )}
 
           {c.status === 'transporting' && (
             <Button variant="primary" fullWidth size="lg" icon={<NavigationIcon className="size-5" />} onClick={() => navigate(`/navigation/${c.id}`)}>
-              กำลังนำส่ง — ดูเส้นทาง
+              {t('กำลังนำส่ง — ดูเส้นทาง')}
             </Button>
           )}
 
           {(c.status === 'hospital-arrived' || c.status === 'hospital-received' || c.status === 'completed') && (
             <div className="flex items-center justify-center gap-2 py-2 text-center text-success">
               <CheckCircle2 className="size-5" />
-              <p className="font-semibold">ส่งมอบผู้ป่วยให้โรงพยาบาลเรียบร้อยแล้ว</p>
+              <p className="font-semibold">{t('ส่งมอบผู้ป่วยให้โรงพยาบาลเรียบร้อยแล้ว')}</p>
             </div>
           )}
 
-          <p className="text-center text-xs text-muted">อัปเดตล่าสุด {formatDateTime(c.updatedAt)}</p>
+          <p className="text-center text-xs text-muted">{t('อัปเดตล่าสุด {date}', { date: formatDateTime(c.updatedAt) })}</p>
         </Card>
         </div>
       </div>
 
       <ConfirmationModal
         open={confirmOpen === 'accept'}
-        title="ยืนยันการรับเคส"
-        message={`คุณต้องการรับเคส ${c.caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุใช่หรือไม่`}
-        confirmLabel="ยืนยันรับเคส"
+        title={t('ยืนยันการรับเคส')}
+        message={t('คุณต้องการรับเคส {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุใช่หรือไม่', { caseNumber: c.caseNumber })}
+        confirmLabel={t('ยืนยันรับเคส')}
         onConfirm={handleAccept}
         onCancel={() => setConfirmOpen(null)}
         confirmLoading={loading}
       />
       <ConfirmationModal
         open={confirmOpen === 'reject'}
-        title="ยืนยันการปฏิเสธเคส"
-        message={`คุณต้องการปฏิเสธเคส ${c.caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน`}
-        confirmLabel="ยืนยันปฏิเสธ"
+        title={t('ยืนยันการปฏิเสธเคส')}
+        message={t('คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน', { caseNumber: c.caseNumber })}
+        confirmLabel={t('ยืนยันปฏิเสธ')}
         tone="danger"
         onConfirm={handleReject}
         onCancel={() => setConfirmOpen(null)}

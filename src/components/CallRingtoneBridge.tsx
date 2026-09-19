@@ -4,6 +4,12 @@ import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  รับสายแล้ว: 'Call answered',
+  'กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}': 'Now talking with the reporter, case {caseNumber}',
+})
 
 /**
  * Headless, mounted once at the app root. A ringing (unanswered) 1669 call
@@ -21,6 +27,7 @@ export function CallRingtoneBridge() {
   const answerCall = useStore((s) => s.answerCall)
   const navigate = useNavigate()
   const [dismissedCallIds, setDismissedCallIds] = useState<Set<string>>(new Set())
+  const t = useT()
 
   useEffect(() => {
     const role = currentUser?.role ?? 'public'
@@ -79,7 +86,11 @@ export function CallRingtoneBridge() {
       caseNumber={visibleCall.caseNumber}
       onAnswer={() => {
         answerCall(visibleCall.id)
-        toast({ title: 'รับสายแล้ว', message: `กำลังสนทนากับผู้แจ้งเหตุ เคส ${visibleCall.caseNumber}`, tone: 'success' })
+        toast({
+          title: t('รับสายแล้ว'),
+          message: t('กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}', { caseNumber: visibleCall.caseNumber }),
+          tone: 'success',
+        })
         navigate(`/dispatch/call/${visibleCall.id}`)
       }}
       onDismiss={() => setDismissedCallIds((prev) => new Set(prev).add(visibleCall.id))}

@@ -14,6 +14,28 @@ import { toast } from '@/lib/toast'
 import { haversineKm } from '@/lib/utils'
 import { uploadCaseSignature } from '@/lib/storageUploads'
 import type { Hospital } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  บันทึกการปฏิเสธนำส่งโรงพยาบาลแล้ว: 'Hospital transport refusal recorded',
+  เคสนี้ปิดเป็นเสร็จสิ้นแล้ว: 'This case has been closed as complete',
+  เลือกโรงพยาบาลเรียบร้อยแล้ว: 'Hospital selected',
+  'เลือกส่งตัวไปยัง {name}': 'Chose to transport to {name}',
+  เลือกโรงพยาบาล: 'Select a hospital',
+  รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
+  หน้านี้ใช้สำหรับเลือกโรงพยาบาลระหว่างขั้นตอนการช่วยเหลือเคสฉุกเฉิน: "This page is used to select a hospital during an emergency case's rescue process",
+  'เลือก {name} แล้ว พร้อมยืนยันการส่งตัว': 'Selected {name}, ready to confirm transport',
+  'ญาติไม่ประสงค์ไปยัง {nearest} (โรงพยาบาลที่ใกล้ที่สุด) เลือก {chosen} เอง':
+    'Family declined {nearest} (the nearest hospital) and chose {chosen} themselves',
+  ญาติไม่ประสงค์ส่งโรงพยาบาล: 'Family declines hospital transport',
+  'ญาติไม่ประสงค์ส่งโรงพยาบาล — เคสนี้จะปิดเป็นเสร็จสิ้นโดยไม่นำส่งโรงพยาบาล':
+    'Family declines hospital transport — this case will be closed as complete without hospital transport',
+  'ยกเลิก กลับไปเลือกโรงพยาบาล': 'Cancel, go back to selecting a hospital',
+  'ชื่อญาติผู้ลงนาม (ถ้ามี)': "Signing family member's name (if any)",
+  'ลงชื่อรับทราบการปฏิเสธ (จำเป็น)': 'Signature acknowledging the refusal (required)',
+  ยืนยันปิดเคส: 'Confirm closing case',
+  ยืนยันเลือกโรงพยาบาล: 'Confirm hospital selection',
+})
 
 export default function HospitalSelectionPage() {
   const [searchParams] = useSearchParams()
@@ -23,6 +45,7 @@ export default function HospitalSelectionPage() {
   const c = useStore((s) => (caseId ? s.cases[caseId] : undefined))
   const hospitals = useStore((s) => s.hospitals)
   const recordHospitalDecision = useStore((s) => s.recordHospitalDecision)
+  const t = useT()
 
   const [selected, setSelected] = useState<Hospital | undefined>(undefined)
   const [loading, setLoading] = useState(false)
@@ -70,7 +93,7 @@ export default function HospitalSelectionPage() {
       try {
         const signatureUrl = signatureDataUrl ? await uploadCaseSignature(c!.caseNumber, signatureDataUrl) : undefined
         recordHospitalDecision(caseId, { type: 'declined-all', signatureUrl, decidedBy: decidedByName.trim() || undefined })
-        toast({ title: 'บันทึกการปฏิเสธนำส่งโรงพยาบาลแล้ว', message: 'เคสนี้ปิดเป็นเสร็จสิ้นแล้ว', tone: 'success' })
+        toast({ title: t('บันทึกการปฏิเสธนำส่งโรงพยาบาลแล้ว'), message: t('เคสนี้ปิดเป็นเสร็จสิ้นแล้ว'), tone: 'success' })
         navigate('/rescue/dashboard')
       } finally {
         setLoading(false)
@@ -89,7 +112,7 @@ export default function HospitalSelectionPage() {
         signatureUrl,
         decidedBy: decidedByName.trim() || undefined,
       })
-      toast({ title: 'เลือกโรงพยาบาลเรียบร้อยแล้ว', message: `เลือกส่งตัวไปยัง ${selected.name}`, tone: 'success' })
+      toast({ title: t('เลือกโรงพยาบาลเรียบร้อยแล้ว'), message: t('เลือกส่งตัวไปยัง {name}', { name: selected.name }), tone: 'success' })
       navigate(`/rescue/case/${caseId}`)
     } finally {
       setLoading(false)
@@ -97,7 +120,7 @@ export default function HospitalSelectionPage() {
   }
 
   return (
-    <AppShell variant="public" title="เลือกโรงพยาบาล">
+    <AppShell variant="public" title={t('เลือกโรงพยาบาล')}>
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
@@ -105,8 +128,8 @@ export default function HospitalSelectionPage() {
             <Card className="flex flex-wrap items-center justify-between gap-3 animate-fade-in-up">
               <div>
                 <p className="font-mono text-sm font-bold text-primary">{c.caseNumber}</p>
-                <p className="mt-1 font-semibold text-navy">
-                  {c.incidentDetails?.incidentType ?? 'รอรายละเอียดเหตุการณ์'}
+                <p className="mt-1 font-semibold text-ink">
+                  {c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}
                 </p>
               </div>
               {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
@@ -114,8 +137,8 @@ export default function HospitalSelectionPage() {
           ) : (
             <Card className="flex items-start gap-3 bg-skyblue-pale animate-fade-in-up">
               <Info className="mt-0.5 size-5 shrink-0 text-primary" />
-              <p className="text-sm text-navy">
-                หน้านี้ใช้สำหรับเลือกโรงพยาบาลระหว่างขั้นตอนการช่วยเหลือเคสฉุกเฉิน
+              <p className="text-sm text-ink">
+                {t('หน้านี้ใช้สำหรับเลือกโรงพยาบาลระหว่างขั้นตอนการช่วยเหลือเคสฉุกเฉิน')}
               </p>
             </Card>
           )}
@@ -139,15 +162,18 @@ export default function HospitalSelectionPage() {
             >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-5 shrink-0 text-success" />
-                <p className="text-sm font-semibold text-navy">
-                  เลือก {selected.name} แล้ว พร้อมยืนยันการส่งตัว
+                <p className="text-sm font-semibold text-ink">
+                  {t('เลือก {name} แล้ว พร้อมยืนยันการส่งตัว', { name: selected.name })}
                 </p>
               </div>
               {nearestHospital && selected.id !== nearestHospital.id && (
                 <Checkbox
                   checked={declinedNearest}
                   onChange={setDeclinedNearest}
-                  label={`ญาติไม่ประสงค์ไปยัง ${nearestHospital.name} (โรงพยาบาลที่ใกล้ที่สุด) เลือก ${selected.name} เอง`}
+                  label={t('ญาติไม่ประสงค์ไปยัง {nearest} (โรงพยาบาลที่ใกล้ที่สุด) เลือก {chosen} เอง', {
+                    nearest: nearestHospital.name,
+                    chosen: selected.name,
+                  })}
                 />
               )}
             </div>
@@ -155,18 +181,18 @@ export default function HospitalSelectionPage() {
 
           {isFlowMode && !decliningAll && (
             <Button variant="outline" fullWidth icon={<HeartCrack className="size-4" />} onClick={() => setDecliningAll(true)}>
-              ญาติไม่ประสงค์ส่งโรงพยาบาล
+              {t('ญาติไม่ประสงค์ส่งโรงพยาบาล')}
             </Button>
           )}
 
           {decliningAll && (
             <Card className="flex flex-col gap-3 border-warning/30 bg-warning/5 animate-fade-in-up">
-              <p className="flex items-start gap-2 text-sm font-semibold text-navy">
+              <p className="flex items-start gap-2 text-sm font-semibold text-ink">
                 <HeartCrack className="mt-0.5 size-4 shrink-0 text-warning" />
-                ญาติไม่ประสงค์ส่งโรงพยาบาล — เคสนี้จะปิดเป็นเสร็จสิ้นโดยไม่นำส่งโรงพยาบาล
+                {t('ญาติไม่ประสงค์ส่งโรงพยาบาล — เคสนี้จะปิดเป็นเสร็จสิ้นโดยไม่นำส่งโรงพยาบาล')}
               </p>
               <Button variant="ghost" size="sm" className="self-start" onClick={() => setDecliningAll(false)}>
-                ยกเลิก กลับไปเลือกโรงพยาบาล
+                {t('ยกเลิก กลับไปเลือกโรงพยาบาล')}
               </Button>
             </Card>
           )}
@@ -174,11 +200,11 @@ export default function HospitalSelectionPage() {
           {needsSignature && (
             <div className="flex flex-col gap-3 animate-fade-in-up">
               <Input
-                label="ชื่อญาติผู้ลงนาม (ถ้ามี)"
+                label={t('ชื่อญาติผู้ลงนาม (ถ้ามี)')}
                 value={decidedByName}
                 onChange={(e) => setDecidedByName(e.target.value)}
               />
-              <SignaturePad label="ลงชื่อรับทราบการปฏิเสธ (จำเป็น)" onChange={setSignatureDataUrl} />
+              <SignaturePad label={t('ลงชื่อรับทราบการปฏิเสธ (จำเป็น)')} onChange={setSignatureDataUrl} />
             </div>
           )}
 
@@ -190,7 +216,7 @@ export default function HospitalSelectionPage() {
               loading={loading}
               onClick={handleConfirm}
             >
-              {decliningAll ? 'ยืนยันปิดเคส' : 'ยืนยันเลือกโรงพยาบาล'}
+              {decliningAll ? t('ยืนยันปิดเคส') : t('ยืนยันเลือกโรงพยาบาล')}
             </Button>
           )}
         </div>

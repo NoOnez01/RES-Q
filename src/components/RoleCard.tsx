@@ -19,7 +19,7 @@ export function RoleCard({
     <button
       onClick={onClick}
       className={clsx(
-        'group flex w-full items-center gap-4 rounded-2xl border border-border bg-white p-5 text-left shadow-card transition-all',
+        'group flex w-full items-center gap-4 rounded-2xl border border-border bg-surface p-5 text-left shadow-card transition-all',
         'hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card-lg',
         'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
         className,
@@ -29,7 +29,7 @@ export function RoleCard({
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-navy">{title}</p>
+        <p className="font-bold text-ink">{title}</p>
         <p className="text-sm text-muted mt-0.5">{description}</p>
       </div>
       <ChevronRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />

@@ -7,6 +7,21 @@ import { completeLineLogin, consumeLineLoginState, getStoredLineState, linkLineI
 import { toast } from '@/lib/toast'
 import type { LineAuthMode } from '@/lib/auth'
 import type { Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'เชื่อมต่อ LINE สำเร็จ': 'LINE linked successfully',
+  เข้าสู่ระบบสำเร็จ: 'Logged in successfully',
+  'ยินดีต้อนรับ {name}': 'Welcome, {name}',
+  เข้าสู่ระบบ: 'Log in',
+  'เชื่อมต่อ LINE ไม่สำเร็จ': 'Failed to link LINE',
+  'ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองอีกครั้ง': 'Could not link LINE. Please try again.',
+  กลับไปตั้งค่า: 'Back to settings',
+  เข้าสู่ระบบไม่สำเร็จ: 'Login failed',
+  'ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง': 'Could not confirm login with LINE. Please try again.',
+  กลับไปเข้าสู่ระบบ: 'Back to login',
+  'กำลังเข้าสู่ระบบ...': 'Logging in...',
+})
 
 const ROLE_PATH: Record<Role, string> = {
   public: '/',
@@ -30,6 +45,7 @@ export default function LineCallback() {
   const [mode, setMode] = useState<LineAuthMode>('login')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const ranRef = useRef(false)
+  const t = useT()
 
   useEffect(() => {
     if (ranRef.current) return
@@ -58,7 +74,7 @@ export default function LineCallback() {
           // Attaching LINE to the account the user is already signed into
           // from Settings -- no new session to establish, just route back.
           await linkLineIdentity(code, consumed.redirectUri)
-          toast({ title: 'เชื่อมต่อ LINE สำเร็จ', tone: 'success' })
+          toast({ title: t('เชื่อมต่อ LINE สำเร็จ'), tone: 'success' })
           navigate('/settings', { replace: true })
           return
         }
@@ -68,7 +84,7 @@ export default function LineCallback() {
           return
         }
         setUser(profile)
-        toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
+        toast({ title: t('เข้าสู่ระบบสำเร็จ'), message: t('ยินดีต้อนรับ {name}', { name: profile.name }), tone: 'success' })
         navigate(ROLE_PATH[profile.role], { replace: true })
       } catch (err) {
         if (consumed.mode === 'link') {
@@ -82,25 +98,25 @@ export default function LineCallback() {
   }, [searchParams, navigate, setUser])
 
   return (
-    <AppShell variant="flow" title="เข้าสู่ระบบ">
+    <AppShell variant="flow" title={t('เข้าสู่ระบบ')}>
       {failed ? (
         mode === 'link' ? (
           <ErrorState
-            title="เชื่อมต่อ LINE ไม่สำเร็จ"
-            description={errorMessage || 'ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองอีกครั้ง'}
+            title={t('เชื่อมต่อ LINE ไม่สำเร็จ')}
+            description={errorMessage || t('ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองอีกครั้ง')}
             onRetry={() => navigate('/settings')}
-            retryLabel="กลับไปตั้งค่า"
+            retryLabel={t('กลับไปตั้งค่า')}
           />
         ) : (
           <ErrorState
-            title="เข้าสู่ระบบไม่สำเร็จ"
-            description="ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง"
+            title={t('เข้าสู่ระบบไม่สำเร็จ')}
+            description={t('ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง')}
             onRetry={() => navigate('/login')}
-            retryLabel="กลับไปเข้าสู่ระบบ"
+            retryLabel={t('กลับไปเข้าสู่ระบบ')}
           />
         )
       ) : (
-        <LoadingState label="กำลังเข้าสู่ระบบ..." />
+        <LoadingState label={t('กำลังเข้าสู่ระบบ...')} />
       )}
     </AppShell>
   )

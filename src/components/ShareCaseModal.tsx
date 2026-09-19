@@ -3,6 +3,18 @@ import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
 import { X, Copy, Check } from 'lucide-react'
 import { Button } from './ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ปิด: 'Close',
+  แชร์ให้ญาติติดตามสถานะ: 'Share so family can track status',
+  'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์':
+    'Scan the QR code or copy the link to let family view the transport status in real time',
+  'QR Code สำหรับแชร์เคส': 'QR code for sharing the case',
+  'กำลังสร้าง QR...': 'Generating QR...',
+  คัดลอกแล้ว: 'Copied',
+  คัดลอกลิงก์: 'Copy link',
+})
 
 interface ShareCaseModalProps {
   open: boolean
@@ -12,15 +24,12 @@ interface ShareCaseModalProps {
   description?: string
 }
 
-export function ShareCaseModal({
-  open,
-  url,
-  onClose,
-  title = 'แชร์ให้ญาติติดตามสถานะ',
-  description = 'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์',
-}: ShareCaseModalProps) {
+export function ShareCaseModal({ open, url, onClose, title, description }: ShareCaseModalProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const t = useT()
+  const resolvedTitle = title ?? t('แชร์ให้ญาติติดตามสถานะ')
+  const resolvedDescription = description ?? t('สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์')
 
   useEffect(() => {
     if (!open) return
@@ -66,35 +75,35 @@ export function ShareCaseModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="share-case-title"
-        className="relative w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-card-lg animate-scale-in sm:max-w-sm sm:rounded-3xl"
+        className="relative w-full overflow-y-auto rounded-t-3xl bg-surface p-6 shadow-card-lg animate-scale-in sm:max-w-sm sm:rounded-3xl"
       >
         <button
           onClick={onClose}
-          aria-label="ปิด"
-          className="absolute right-4 top-4 rounded-full p-1.5 text-muted transition-colors hover:bg-skyblue-light hover:text-navy"
+          aria-label={t('ปิด')}
+          className="absolute right-4 top-4 rounded-full p-1.5 text-muted transition-colors hover:bg-skyblue-light hover:text-ink"
         >
           <X className="size-5" />
         </button>
 
-        <h2 id="share-case-title" className="pr-8 text-lg font-bold text-navy">
-          แชร์ให้ญาติติดตามสถานะ
+        <h2 id="share-case-title" className="pr-8 text-lg font-bold text-ink">
+          {resolvedTitle}
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
-          สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์
+          {resolvedDescription}
         </p>
 
         <div className="mt-5 flex justify-center">
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt="QR Code สำหรับแชร์เคส" className="size-48 rounded-2xl border border-border" />
+            <img src={qrDataUrl} alt={t('QR Code สำหรับแชร์เคส')} className="size-48 rounded-2xl border border-border" />
           ) : (
             <div className="flex size-48 items-center justify-center rounded-2xl border border-border bg-skyblue-pale/50 text-xs text-muted">
-              กำลังสร้าง QR...
+              {t('กำลังสร้าง QR...')}
             </div>
           )}
         </div>
 
         <div className="mt-5 rounded-xl border border-border bg-skyblue-pale/40 px-3 py-2.5">
-          <p className="select-all break-all text-xs text-navy">{url}</p>
+          <p className="select-all break-all text-xs text-ink">{url}</p>
         </div>
 
         <Button
@@ -104,7 +113,7 @@ export function ShareCaseModal({
           icon={copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           onClick={handleCopy}
         >
-          {copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}
+          {copied ? t('คัดลอกแล้ว') : t('คัดลอกลิงก์')}
         </Button>
       </div>
     </div>,

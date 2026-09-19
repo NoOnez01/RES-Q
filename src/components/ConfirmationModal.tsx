@@ -3,6 +3,12 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from './ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ปิด: 'Close',
+  ยกเลิก: 'Cancel',
+})
 
 interface ConfirmationModalProps {
   open: boolean
@@ -24,13 +30,14 @@ export function ConfirmationModal({
   title,
   message,
   confirmLabel,
-  cancelLabel = 'ยกเลิก',
+  cancelLabel,
   onConfirm,
   onCancel,
   tone = 'primary',
   confirmLoading = false,
   icon,
 }: ConfirmationModalProps) {
+  const t = useT()
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCancel()
@@ -51,23 +58,23 @@ export function ConfirmationModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
-        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-white p-6 shadow-card-lg animate-scale-in"
+        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface p-6 shadow-card-lg animate-scale-in"
       >
         <button
           onClick={onCancel}
-          aria-label="ปิด"
-          className="absolute right-4 top-4 rounded-full p-1.5 text-muted hover:bg-skyblue-light hover:text-navy transition-colors"
+          aria-label={t('ปิด')}
+          className="absolute right-4 top-4 rounded-full p-1.5 text-muted hover:bg-skyblue-light hover:text-ink transition-colors"
         >
           <X className="size-5" />
         </button>
         {icon && <div className="mb-3">{icon}</div>}
-        <h2 id="confirm-modal-title" className="text-lg font-bold text-navy pr-8">
+        <h2 id="confirm-modal-title" className="text-lg font-bold text-ink pr-8">
           {title}
         </h2>
         {message && <p className="mt-2 text-sm leading-relaxed text-muted">{message}</p>}
         <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
           <Button variant="outline" fullWidth onClick={onCancel} className="sm:flex-1">
-            {cancelLabel}
+            {cancelLabel ?? t('ยกเลิก')}
           </Button>
           <Button
             variant={tone === 'danger' ? 'danger' : 'primary'}

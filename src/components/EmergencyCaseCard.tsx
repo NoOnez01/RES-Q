@@ -6,6 +6,17 @@ import { statusMeta } from '@/lib/types'
 import { SeverityBadge } from './SeverityBadge'
 import { StatusBadge } from './StatusBadge'
 import { formatDateTime } from '@/lib/utils'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  รอหน่วยกู้ชีพตอบรับ: 'Awaiting rescue team response',
+  หน่วยกู้ชีพตอบรับแล้ว: 'Rescue team responded',
+  หน่วยกู้ชีพปฏิเสธเคส: 'Rescue team declined the case',
+  รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
+  ยังไม่ระบุตำแหน่ง: 'No location set yet',
+  'ผู้ป่วย {n} คน': '{n} patient(s)',
+  ดูรายละเอียดเคส: 'View case details',
+})
 
 type RescueResponseColor = 'yellow' | 'green' | 'red'
 
@@ -38,6 +49,7 @@ export function EmergencyCaseCard({
   // Received but nobody has assessed it yet — the case a dispatcher must act on first.
   const isNew = c.status === 'received' && !c.assessment
   const rescueColor = rescueResponseColor(c)
+  const t = useT()
 
   return (
     <div
@@ -45,7 +57,7 @@ export function EmergencyCaseCard({
         'rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg',
         isCompleted && 'border-success/30 bg-success/[0.04]',
         isNew && 'border-emergency/40 bg-emergency/[0.035] ring-1 ring-emergency/15',
-        !isCompleted && !isNew && 'border-border bg-white',
+        !isCompleted && !isNew && 'border-border bg-surface',
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -58,14 +70,14 @@ export function EmergencyCaseCard({
           >
             {c.caseNumber}
           </p>
-          <p className="mt-1 font-semibold text-navy">{c.incidentDetails?.incidentType ?? 'รอรายละเอียดเหตุการณ์'}</p>
+          <p className="mt-1 font-semibold text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
           {rescueColor && (
             <span
-              title={RESCUE_RESPONSE_STYLE[rescueColor].label}
-              aria-label={RESCUE_RESPONSE_STYLE[rescueColor].label}
+              title={t(RESCUE_RESPONSE_STYLE[rescueColor].label)}
+              aria-label={t(RESCUE_RESPONSE_STYLE[rescueColor].label)}
               className={clsx(
                 'inline-flex size-6 shrink-0 items-center justify-center rounded-full border',
                 RESCUE_RESPONSE_STYLE[rescueColor].classes,
@@ -81,11 +93,11 @@ export function EmergencyCaseCard({
       <div className="mt-4 grid gap-2 text-sm text-muted sm:grid-cols-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <MapPin className="size-4 shrink-0 text-primary" />
-          <span className="truncate">{c.location?.address ?? 'ยังไม่ระบุตำแหน่ง'}</span>
+          <span className="truncate">{c.location?.address ?? t('ยังไม่ระบุตำแหน่ง')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Users className="size-4 shrink-0 text-primary" />
-          <span>ผู้ป่วย {c.incidentDetails?.patientCount ?? '-'} คน</span>
+          <span>{t('ผู้ป่วย {n} คน', { n: c.incidentDetails?.patientCount ?? '-' })}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Clock className="size-4 shrink-0 text-primary" />
@@ -98,7 +110,7 @@ export function EmergencyCaseCard({
           onClick={() => navigate(to)}
           className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-bright"
         >
-          ดูรายละเอียดเคส
+          {t('ดูรายละเอียดเคส')}
           <ChevronRight className="size-4" />
         </button>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

@@ -2,6 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { Video, VideoOff, Mic, MicOff, UserRound, AlertTriangle, SwitchCamera } from 'lucide-react'
 import clsx from 'clsx'
 import type { CameraState, ConnectionState } from '@/lib/useWebRTCCall'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'กำลังขอเข้าถึงกล้อง...': 'Requesting camera access...',
+  'ไม่ได้รับอนุญาตให้ใช้กล้อง/ไมโครโฟน': 'Camera/microphone access was not granted',
+  ไม่พบกล้องหรือไมโครโฟนบนอุปกรณ์นี้: 'No camera or microphone found on this device',
+  เชื่อมต่อวิดีโอไม่สำเร็จ: 'Video connection failed',
+  'เครือข่ายของทั้งสองฝ่ายอาจเชื่อมต่อโดยตรงไม่ได้ ลองสลับมาใช้ Wi-Fi หรือโทรผ่านเสียงแทน':
+    'The networks on both ends may not be able to connect directly. Try switching to Wi-Fi, or use a voice call instead',
+  'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
+  ไมโครโฟนเปิด: 'Mic on',
+  ปิดไมโครโฟน: 'Mic off',
+  กล้องเปิด: 'Camera on',
+  ปิดกล้อง: 'Camera off',
+})
 
 function VideoTag({
   stream,
@@ -28,12 +43,17 @@ function VideoTag({
   )
 }
 
-const CAMERA_STATE_LABEL: Record<CameraState, string> = {
-  idle: '',
-  requesting: 'กำลังขอเข้าถึงกล้อง...',
-  ready: '',
-  denied: 'ไม่ได้รับอนุญาตให้ใช้กล้อง/ไมโครโฟน',
-  unavailable: 'ไม่พบกล้องหรือไมโครโฟนบนอุปกรณ์นี้',
+function cameraStateLabel(t: (text: string) => string, state: CameraState): string {
+  switch (state) {
+    case 'requesting':
+      return t('กำลังขอเข้าถึงกล้อง...')
+    case 'denied':
+      return t('ไม่ได้รับอนุญาตให้ใช้กล้อง/ไมโครโฟน')
+    case 'unavailable':
+      return t('ไม่พบกล้องหรือไมโครโฟนบนอุปกรณ์นี้')
+    default:
+      return ''
+  }
 }
 
 export function VideoCallPanel({
@@ -62,7 +82,8 @@ export function VideoCallPanel({
   /** Omitted entirely on a device with no camera to switch to (desktop). */
   onSwitchCamera?: () => void
 }) {
-  const errorLabel = CAMERA_STATE_LABEL[cameraState]
+  const t = useT()
+  const errorLabel = cameraStateLabel(t, cameraState)
   const connectionFailed = connectionState === 'failed' || connectionState === 'disconnected'
   // ontrack (and so remoteStream) fires as soon as the SDP negotiates a
   // receiver -- well before ICE has actually finished connecting, so relying
@@ -92,9 +113,9 @@ export function VideoCallPanel({
             {connectionFailed ? (
               <>
                 <AlertTriangle className="size-10 text-warning" />
-                <p className="text-sm font-medium text-warning">เชื่อมต่อวิดีโอไม่สำเร็จ</p>
+                <p className="text-sm font-medium text-warning">{t('เชื่อมต่อวิดีโอไม่สำเร็จ')}</p>
                 <p className="max-w-[220px] text-center text-xs text-white/60">
-                  เครือข่ายของทั้งสองฝ่ายอาจเชื่อมต่อโดยตรงไม่ได้ ลองสลับมาใช้ Wi-Fi หรือโทรผ่านเสียงแทน
+                  {t('เครือข่ายของทั้งสองฝ่ายอาจเชื่อมต่อโดยตรงไม่ได้ ลองสลับมาใช้ Wi-Fi หรือโทรผ่านเสียงแทน')}
                 </p>
               </>
             ) : (
@@ -120,7 +141,7 @@ export function VideoCallPanel({
             <button
               type="button"
               onClick={onSwitchCamera}
-              aria-label="สลับกล้องหน้า/หลัง"
+              aria-label={t('สลับกล้องหน้า/หลัง')}
               className="absolute bottom-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               <SwitchCamera className="size-3.5" />
@@ -142,7 +163,7 @@ export function VideoCallPanel({
           )}
         >
           {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-          {micOn ? 'ไมโครโฟนเปิด' : 'ปิดไมโครโฟน'}
+          {micOn ? t('ไมโครโฟนเปิด') : t('ปิดไมโครโฟน')}
         </button>
         <button
           onClick={onToggleCamera}
@@ -154,7 +175,7 @@ export function VideoCallPanel({
           )}
         >
           {cameraOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
-          {cameraOn ? 'กล้องเปิด' : 'ปิดกล้อง'}
+          {cameraOn ? t('กล้องเปิด') : t('ปิดกล้อง')}
         </button>
       </div>
     </div>

@@ -46,6 +46,109 @@ import type { VehicleLevel, RescueTeam } from '@/lib/types'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Textarea, Input, SearchableSelect } from '@/components/ui/Field'
 import { THAILAND_PROVINCE_COORDS } from '@/lib/thailandProvinces'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  รู้สึกตัวดี: 'Conscious',
+  หมดสติ: 'Unconscious',
+  ไม่ทราบ: 'Unknown',
+  ทุกจังหวัด: 'All provinces',
+  รายละเอียดเคส: 'Case details',
+  ไม่พบเคสนี้: 'Case not found',
+  เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
+  'สร้างเคสเมื่อ {date}': 'Created {date}',
+  สถานะเคสอัปเดตแบบเรียลไทม์: 'Case status updates in real time',
+  'แชร์ QR/ลิงก์': 'Share QR/link',
+  รายละเอียดเหตุการณ์: 'Incident details',
+  ประเภทเหตุการณ์: 'Incident type',
+  จำนวนผู้ป่วย: 'Number of patients',
+  '{n} คน': '{n} people',
+  ระดับความรู้สึกตัว: 'Consciousness level',
+  เบอร์ติดต่อกลับ: 'Callback number',
+  หมายเหตุเพิ่มเติม: 'Additional notes',
+  ยังไม่ได้กรอกรายละเอียดเหตุการณ์: 'Incident details not yet filled in',
+  'การประเมินความรุนแรง (ศูนย์ 1669)': 'Severity assessment (Center 1669)',
+  แก้ไขการประเมิน: 'Edit assessment',
+  ลักษณะการบาดเจ็บ: 'Nature of injury',
+  'ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์ 1669': 'No severity assessment from Center 1669 yet',
+  กรอกรายละเอียดเหตุการณ์: 'Fill in incident details',
+  หน่วยกู้ชีพเสนอปรับระดับความรุนแรง: 'Rescue team proposed a severity change',
+  เดิม: 'Original',
+  เสนอโดยหน่วยกู้ชีพ: 'Proposed by rescue team',
+  ยืนยันระดับสี: 'Confirm severity',
+  ไม่ยืนยัน: 'Decline',
+  จุดเกิดเหตุ: 'Incident location',
+  ไทม์ไลน์เคส: 'Case timeline',
+  การดำเนินการ: 'Actions',
+  กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ชีพ: 'Please fill in incident details and assess severity before searching for a rescue team',
+  'เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้':
+    'This case was assessed as non-urgent — consider closing it without dispatch, or search for a rescue team as usual',
+  ค้นหาหน่วยกู้ชีพ: 'Search for a rescue team',
+  'เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด': 'This case has been assessed — ready to search for the nearest rescue team',
+  'เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด':
+    'Choose which rescue team to assign to this case — sorted by availability and proximity',
+  ค้นหาชื่อหน่วยกู้ชีพ: 'Search rescue team name',
+  'กรองตามจังหวัด (ไม่บังคับ)': 'Filter by province (optional)',
+  พิมพ์ชื่อจังหวัดเพื่อค้นหา: 'Type a province name to search',
+  ไม่พบจังหวัดที่ค้นหา: 'No matching province found',
+  'กรองตามระดับรถ (ไม่บังคับ)': 'Filter by vehicle level (optional)',
+  'เหตุนี้ต้องการอุปกรณ์: {list}': 'This incident requires equipment: {list}',
+  ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก: 'No rescue team matches the search or selected province',
+  '{km} กม. · {n} รถ/ทีม': '{km} km · {n} vehicle(s)/crew(s)',
+  ไม่ว่าง: 'busy',
+  แนะนำที่สุด: 'Best match',
+  'มีรถระดับ {level}': '{level}-level vehicle available',
+  'ไม่มีรถระดับ {level}': 'No {level}-level vehicle',
+  'แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย': 'Showing the {limit} nearest units, out of {total} total',
+  'หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์':
+    'The nearest unit lacks the right equipment — recommend assigning it alongside a unit that has it',
+  'มอบหมายร่วมกับ {team} ({km} กม.)': 'Assign together with {team} ({km} km)',
+  'มอบหมายทั้ง 2 หน่วย': 'Assign both teams',
+  มอบหมายหน่วยนี้: 'Assign this team',
+  มอบหมายหน่วยกู้ชีพสำเร็จแล้ว: 'Rescue team assigned successfully',
+  หน่วยกู้ชีพที่รับผิดชอบ: 'Assigned rescue team',
+  'รหัสรถ/ทีม': 'Vehicle/crew code',
+  ยานพาหนะ: 'Vehicle',
+  '{vehicle} · {n} คน': '{vehicle} · {n} people',
+  'หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ': "The rescue team hasn't selected a responding vehicle/crew yet",
+  เบอร์ติดต่อ: 'Contact number',
+  'คนขับ · ทะเบียนรถ': 'Driver · license plate',
+  '{driver} · {plate} · สังกัด {unit}': '{driver} · {plate} · unit {unit}',
+  'หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)': 'Support unit (specialized equipment)',
+  เพิ่มหน่วยสนับสนุนที่มีอุปกรณ์: 'Add a support unit with the right equipment',
+  'เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)': 'Choose a higher-level support unit (ALS/CLS recommended)',
+  เลือกหน่วยสนับสนุน: 'Choose a support unit',
+  'ต้องการอุปกรณ์: {list}': 'Requires equipment: {list}',
+  ยืนยันเพิ่มหน่วยสนับสนุน: 'Confirm adding support unit',
+  ยกเลิก: 'Cancel',
+  หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว: 'A rescue team is already responsible for this case',
+  เคสเสร็จสิ้นแล้ว: 'Case completed',
+  กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์: 'The emergency response process is complete',
+  ยืนยันการมอบหมายหน่วยกู้ชีพ: 'Confirm rescue team assignment',
+  'ต้องการมอบหมาย "{team}" ให้รับผิดชอบเคส {caseNumber} ใช่หรือไม่': 'Assign "{team}" to be responsible for case {caseNumber}?',
+  ยืนยันมอบหมาย: 'Confirm assignment',
+  ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่: 'Assign a higher-level support unit?',
+  'ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่':
+    'Severity has increased — assign an additional {level}-level support unit?',
+  มอบหมายหน่วยสนับสนุน: 'Assign support unit',
+  ไม่ต้อง: 'No',
+  แชร์ลิงก์ติดตามเคส: 'Share case tracking link',
+  'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์':
+    'Scan the QR code or copy the link to let the reporter, family, or related agencies watch the status in real time',
+  เริ่มค้นหาหน่วยกู้ชีพแล้ว: 'Started finding a rescue team',
+  'เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
+  ปิดเคสแล้ว: 'Case closed',
+  'บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ': 'Logged as advice given over the phone — no rescue team dispatched',
+  'ปิดเคส (ให้คำแนะนำแล้ว)': 'Close case (advice given)',
+  บันทึกคำแนะนำที่ให้ทางโทรศัพท์: 'Log the advice given over the phone',
+  'เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ': 'e.g. gave basic first-aid advice, no rescue team needed',
+  ยืนยันปิดเคส: 'Confirm closing case',
+  'มอบหมายหน่วยกู้ชีพสำเร็จ': 'Rescue team assigned',
+  '{team1} และ {team2} ได้รับมอบหมายเคส {caseNumber} แล้ว': '{team1} and {team2} have been assigned to case {caseNumber}',
+  '{team} ได้รับมอบหมายเคส {caseNumber} แล้ว': '{team} has been assigned to case {caseNumber}',
+  เพิ่มหน่วยสนับสนุนแล้ว: 'Support unit added',
+  '{team} เข้าร่วมช่วยเหลือเคสนี้': '{team} has joined to help with this case',
+})
 
 const CONSCIOUS_LABEL: Record<string, string> = {
   conscious: 'รู้สึกตัวดี',
@@ -81,6 +184,7 @@ export default function DispatchCaseDetail() {
   const addSupportingRescueTeam = useStore((s) => s.addSupportingRescueTeam)
   const closeCaseWithAdvice = useStore((s) => s.closeCaseWithAdvice)
   const confirmRescueSeverity = useStore((s) => s.confirmRescueSeverity)
+  const t = useT()
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [includeSupport, setIncludeSupport] = useState(true)
@@ -117,8 +221,8 @@ export default function DispatchCaseDetail() {
 
   if (!id || !emergencyCase || !recommendation) {
     return (
-      <AppShell variant="dashboard" title="รายละเอียดเคส">
-        <ErrorState title="ไม่พบเคสนี้" description="เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ" />
+      <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
+        <ErrorState title={t('ไม่พบเคสนี้')} description={t('เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')} />
       </AppShell>
     )
   }
@@ -134,8 +238,8 @@ export default function DispatchCaseDetail() {
       startFindingRescue(id!)
       setFindingLoading(false)
       toast({
-        title: 'เริ่มค้นหาหน่วยกู้ชีพแล้ว',
-        message: `เคส ${c.caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน`,
+        title: t('เริ่มค้นหาหน่วยกู้ชีพแล้ว'),
+        message: t('เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber: c.caseNumber }),
         tone: 'info',
       })
     }, 500)
@@ -147,7 +251,7 @@ export default function DispatchCaseDetail() {
     setTimeout(() => {
       closeCaseWithAdvice(id, closeAdviceNote.trim())
       setCloseAdviceLoading(false)
-      toast({ title: 'ปิดเคสแล้ว', message: 'บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ', tone: 'success' })
+      toast({ title: t('ปิดเคสแล้ว'), message: t('บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ'), tone: 'success' })
       navigate('/dispatch/dashboard')
     }, 400)
   }
@@ -159,23 +263,23 @@ export default function DispatchCaseDetail() {
   // out to be non-urgent -- so the note/confirm markup exists in one place.
   const closeAdviceBlock = !showCloseAdvice ? (
     <Button variant="outline" fullWidth icon={<XCircle className="size-4" />} onClick={() => setShowCloseAdvice(true)}>
-      ปิดเคส (ให้คำแนะนำแล้ว)
+      {t('ปิดเคส (ให้คำแนะนำแล้ว)')}
     </Button>
   ) : (
     <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
-      <p className="text-sm font-semibold text-navy">บันทึกคำแนะนำที่ให้ทางโทรศัพท์</p>
+      <p className="text-sm font-semibold text-ink">{t('บันทึกคำแนะนำที่ให้ทางโทรศัพท์')}</p>
       <Textarea
         value={closeAdviceNote}
         onChange={(e) => setCloseAdviceNote(e.target.value)}
         rows={2}
-        placeholder="เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ"
+        placeholder={t('เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ')}
       />
       <div className="flex gap-2">
         <Button fullWidth disabled={!closeAdviceNote.trim()} loading={closeAdviceLoading} onClick={handleCloseAdvice}>
-          ยืนยันปิดเคส
+          {t('ยืนยันปิดเคส')}
         </Button>
         <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
-          ยกเลิก
+          {t('ยกเลิก')}
         </Button>
       </div>
     </div>
@@ -199,10 +303,10 @@ export default function DispatchCaseDetail() {
       setConfirmOpen(false)
       setJustAssigned(true)
       toast({
-        title: 'มอบหมายหน่วยกู้ชีพสำเร็จ',
+        title: t('มอบหมายหน่วยกู้ชีพสำเร็จ'),
         message: supportTeam
-          ? `${selectedTeam.name} และ ${supportTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`
-          : `${selectedTeam.name} ได้รับมอบหมายเคส ${c.caseNumber} แล้ว`,
+          ? t('{team1} และ {team2} ได้รับมอบหมายเคส {caseNumber} แล้ว', { team1: selectedTeam.name, team2: supportTeam.name, caseNumber: c.caseNumber })
+          : t('{team} ได้รับมอบหมายเคส {caseNumber} แล้ว', { team: selectedTeam.name, caseNumber: c.caseNumber }),
         tone: 'success',
       })
       setTimeout(() => setJustAssigned(false), 3200)
@@ -245,23 +349,23 @@ export default function DispatchCaseDetail() {
       setAddSupportLoading(false)
       setShowAddSupport(false)
       setAddSupportTeamId(null)
-      toast({ title: 'เพิ่มหน่วยสนับสนุนแล้ว', message: `${team.name} เข้าร่วมช่วยเหลือเคสนี้`, tone: 'success' })
+      toast({ title: t('เพิ่มหน่วยสนับสนุนแล้ว'), message: t('{team} เข้าร่วมช่วยเหลือเคสนี้', { team: team.name }), tone: 'success' })
     }, 500)
   }
 
   return (
-    <AppShell variant="dashboard" title="รายละเอียดเคส">
+    <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono text-lg font-extrabold text-primary">{c.caseNumber}</p>
-          <p className="text-sm text-muted">สร้างเคสเมื่อ {new Date(c.createdAt).toLocaleString('th-TH')}</p>
+          <p className="text-sm text-muted">{t('สร้างเคสเมื่อ {date}', { date: new Date(c.createdAt).toLocaleString('th-TH') })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
-          <span className="inline-flex items-center gap-1.5" aria-label="สถานะเคสอัปเดตแบบเรียลไทม์">
+          <span className="inline-flex items-center gap-1.5" aria-label={t('สถานะเคสอัปเดตแบบเรียลไทม์')}>
             <PulseRing
               tone={c.status === 'completed' ? 'success' : c.status === 'called-1669' ? 'emergency' : 'primary'}
               size="sm"
@@ -269,7 +373,7 @@ export default function DispatchCaseDetail() {
             <StatusBadge status={c.status} />
           </span>
           <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
-            แชร์ QR/ลิงก์
+            {t('แชร์ QR/ลิงก์')}
           </Button>
         </div>
       </div>
@@ -277,55 +381,55 @@ export default function DispatchCaseDetail() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
-            <h2 className="mb-4 text-base font-bold text-navy">รายละเอียดเหตุการณ์</h2>
+            <h2 className="mb-4 text-base font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h2>
             {details ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-start gap-2.5">
                   <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
-                    <p className="text-xs text-muted">ประเภทเหตุการณ์</p>
-                    <p className="text-sm font-semibold text-navy">{details.incidentType}</p>
+                    <p className="text-xs text-muted">{t('ประเภทเหตุการณ์')}</p>
+                    <p className="text-sm font-semibold text-ink">{details.incidentType}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Users className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
-                    <p className="text-xs text-muted">จำนวนผู้ป่วย</p>
-                    <p className="text-sm font-semibold text-navy">{details.patientCount} คน</p>
+                    <p className="text-xs text-muted">{t('จำนวนผู้ป่วย')}</p>
+                    <p className="text-sm font-semibold text-ink">{t('{n} คน', { n: details.patientCount })}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <User className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
-                    <p className="text-xs text-muted">ระดับความรู้สึกตัว</p>
-                    <p className="text-sm font-semibold text-navy">{CONSCIOUS_LABEL[details.conscious] ?? details.conscious}</p>
+                    <p className="text-xs text-muted">{t('ระดับความรู้สึกตัว')}</p>
+                    <p className="text-sm font-semibold text-ink">{t(CONSCIOUS_LABEL[details.conscious] ?? details.conscious)}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
-                    <p className="text-xs text-muted">เบอร์ติดต่อกลับ</p>
-                    <p className="text-sm font-semibold text-navy">{details.callbackPhone}</p>
+                    <p className="text-xs text-muted">{t('เบอร์ติดต่อกลับ')}</p>
+                    <p className="text-sm font-semibold text-ink">{details.callbackPhone}</p>
                   </div>
                 </div>
                 {details.notes && (
                   <div className="flex items-start gap-2.5 sm:col-span-2">
                     <StickyNote className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">หมายเหตุเพิ่มเติม</p>
-                      <p className="text-sm font-semibold text-navy">{details.notes}</p>
+                      <p className="text-xs text-muted">{t('หมายเหตุเพิ่มเติม')}</p>
+                      <p className="text-sm font-semibold text-ink">{details.notes}</p>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted">ยังไม่ได้กรอกรายละเอียดเหตุการณ์</p>
+              <p className="text-sm text-muted">{t('ยังไม่ได้กรอกรายละเอียดเหตุการณ์')}</p>
             )}
           </Card>
 
           <Card>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-bold text-navy">การประเมินความรุนแรง (ศูนย์ 1669)</h2>
+              <h2 className="text-base font-bold text-ink">{t('การประเมินความรุนแรง (ศูนย์ 1669)')}</h2>
               {c.assessment && c.status !== 'completed' && (
                 <Button
                   variant="outline"
@@ -333,7 +437,7 @@ export default function DispatchCaseDetail() {
                   icon={<Pencil className="size-4" />}
                   onClick={() => navigate(`/dispatch/emergency-details/${id}`)}
                 >
-                  แก้ไขการประเมิน
+                  {t('แก้ไขการประเมิน')}
                 </Button>
               )}
             </div>
@@ -342,20 +446,20 @@ export default function DispatchCaseDetail() {
                 <div className="flex items-start gap-2.5 sm:col-span-2">
                   <FileText className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
-                    <p className="text-xs text-muted">ลักษณะการบาดเจ็บ</p>
-                    <p className="text-sm font-semibold text-navy">{c.assessment.injuryDescription}</p>
+                    <p className="text-xs text-muted">{t('ลักษณะการบาดเจ็บ')}</p>
+                    <p className="text-sm font-semibold text-ink">{c.assessment.injuryDescription}</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-start gap-3">
-                <p className="text-sm text-muted">ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์ 1669</p>
+                <p className="text-sm text-muted">{t('ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์ 1669')}</p>
                 <Button
                   size="sm"
                   icon={<ClipboardList className="size-4" />}
                   onClick={() => navigate(`/dispatch/emergency-details/${id}`)}
                 >
-                  กรอกรายละเอียดเหตุการณ์
+                  {t('กรอกรายละเอียดเหตุการณ์')}
                 </Button>
               </div>
             )}
@@ -363,31 +467,31 @@ export default function DispatchCaseDetail() {
 
           {c.rescueSeverityProposal && (
             <Card className="border-warning/30 bg-warning/5">
-              <h2 className="mb-3 flex items-center gap-1.5 text-base font-bold text-navy">
+              <h2 className="mb-3 flex items-center gap-1.5 text-base font-bold text-ink">
                 <AlertTriangle className="size-4 text-warning" />
-                หน่วยกู้ชีพเสนอปรับระดับความรุนแรง
+                {t('หน่วยกู้ชีพเสนอปรับระดับความรุนแรง')}
               </h2>
               <div className="flex flex-wrap items-center gap-3">
                 {c.assessment && (
                   <div className="flex flex-col items-start gap-1">
-                    <p className="text-xs text-muted">เดิม</p>
+                    <p className="text-xs text-muted">{t('เดิม')}</p>
                     <SeverityBadge severity={c.assessment.severity} />
                   </div>
                 )}
                 <div className="flex flex-col items-start gap-1">
-                  <p className="text-xs text-muted">เสนอโดยหน่วยกู้ชีพ</p>
+                  <p className="text-xs text-muted">{t('เสนอโดยหน่วยกู้ชีพ')}</p>
                   <SeverityBadge severity={c.rescueSeverityProposal.severity} />
                 </div>
               </div>
               {c.rescueSeverityProposal.note && (
-                <p className="mt-3 text-sm text-navy">{c.rescueSeverityProposal.note}</p>
+                <p className="mt-3 text-sm text-ink">{c.rescueSeverityProposal.note}</p>
               )}
               <div className="mt-4 flex gap-2">
                 <Button fullWidth onClick={() => handleConfirmSeverity(true)}>
-                  ยืนยันระดับสี
+                  {t('ยืนยันระดับสี')}
                 </Button>
                 <Button variant="outline" fullWidth onClick={() => handleConfirmSeverity(false)}>
-                  ไม่ยืนยัน
+                  {t('ไม่ยืนยัน')}
                 </Button>
               </div>
             </Card>
@@ -407,7 +511,7 @@ export default function DispatchCaseDetail() {
                     id: 'incident',
                     lat: c.location.lat,
                     lng: c.location.lng,
-                    label: 'จุดเกิดเหตุ',
+                    label: t('จุดเกิดเหตุ'),
                     kind: 'incident',
                   },
                 ]}
@@ -418,20 +522,20 @@ export default function DispatchCaseDetail() {
           )}
 
           <Card>
-            <h2 className="mb-4 text-base font-bold text-navy">ไทม์ไลน์เคส</h2>
+            <h2 className="mb-4 text-base font-bold text-ink">{t('ไทม์ไลน์เคส')}</h2>
             <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
           </Card>
         </div>
 
         <div className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-6 lg:self-start">
           <Card>
-            <h2 className="mb-4 text-base font-bold text-navy">การดำเนินการ</h2>
+            <h2 className="mb-4 text-base font-bold text-ink">{t('การดำเนินการ')}</h2>
 
             {c.status === 'received' && !c.assessment && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-muted">กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ชีพ</p>
+                <p className="text-sm text-muted">{t('กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ชีพ')}</p>
                 <Button fullWidth icon={<ClipboardList className="size-4" />} onClick={() => navigate(`/dispatch/emergency-details/${id}`)}>
-                  กรอกรายละเอียดเหตุการณ์
+                  {t('กรอกรายละเอียดเหตุการณ์')}
                 </Button>
 
                 {closeAdviceBlock}
@@ -443,18 +547,18 @@ export default function DispatchCaseDetail() {
                 {c.assessment.severity === 5 ? (
                   <>
                     <p className="text-sm text-muted">
-                      เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้
+                      {t('เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้')}
                     </p>
                     <Button fullWidth variant="outline" loading={findingLoading} onClick={handleStartFinding}>
-                      ค้นหาหน่วยกู้ชีพ
+                      {t('ค้นหาหน่วยกู้ชีพ')}
                     </Button>
                     {closeAdviceBlock}
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-muted">เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด</p>
+                    <p className="text-sm text-muted">{t('เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด')}</p>
                     <Button fullWidth loading={findingLoading} onClick={handleStartFinding}>
-                      ค้นหาหน่วยกู้ชีพ
+                      {t('ค้นหาหน่วยกู้ชีพ')}
                     </Button>
                   </>
                 )}
@@ -464,27 +568,27 @@ export default function DispatchCaseDetail() {
             {c.status === 'finding-rescue' && (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด
+                  {t('เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด')}
                 </p>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
                   <Input
                     value={teamQuery}
                     onChange={(e) => setTeamQuery(e.target.value)}
-                    placeholder="ค้นหาชื่อหน่วยกู้ชีพ"
+                    placeholder={t('ค้นหาชื่อหน่วยกู้ชีพ')}
                     className="pl-11"
                   />
                 </div>
                 <SearchableSelect
-                  label="กรองตามจังหวัด (ไม่บังคับ)"
+                  label={t('กรองตามจังหวัด (ไม่บังคับ)')}
                   value={teamProvinceFilter}
                   onChange={setTeamProvinceFilter}
-                  placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
-                  emptyLabel="ไม่พบจังหวัดที่ค้นหา"
+                  placeholder={t('พิมพ์ชื่อจังหวัดเพื่อค้นหา')}
+                  emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
                   options={PROVINCE_OPTIONS}
                 />
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-semibold text-navy">กรองตามระดับรถ (ไม่บังคับ)</p>
+                  <p className="text-xs font-semibold text-ink">{t('กรองตามระดับรถ (ไม่บังคับ)')}</p>
                   <div className="flex gap-2">
                     {VEHICLE_LEVEL_RANK.map((lvl) => (
                       <button
@@ -495,7 +599,7 @@ export default function DispatchCaseDetail() {
                           'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
                           selectedLevel === lvl
                             ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
-                            : 'border-border bg-white text-muted hover:border-primary/40',
+                            : 'border-border bg-surface text-muted hover:border-primary/40',
                         )}
                       >
                         {lvl}
@@ -506,7 +610,7 @@ export default function DispatchCaseDetail() {
                 {recommendation.requiredEquipment.length > 0 && (
                   <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
                     <Wrench className="size-3.5 text-primary" />
-                    เหตุนี้ต้องการอุปกรณ์: {recommendation.requiredEquipment.join(', ')}
+                    {t('เหตุนี้ต้องการอุปกรณ์: {list}', { list: recommendation.requiredEquipment.join(', ') })}
                   </p>
                 )}
                 <div className="flex flex-col gap-3">
@@ -529,7 +633,7 @@ export default function DispatchCaseDetail() {
                     const visibleRanked = filtered.slice(0, RENDER_LIMIT)
                     const overflowCount = filtered.length - visibleRanked.length
                     if (filtered.length === 0) {
-                      return <p className="py-4 text-center text-sm text-muted">ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก</p>
+                      return <p className="py-4 text-center text-sm text-muted">{t('ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก')}</p>
                     }
                     return (
                       <>
@@ -542,7 +646,7 @@ export default function DispatchCaseDetail() {
                           onClick={() => r.available && setSelectedTeamId(r.team.id)}
                           icon={<Truck className={isTop ? 'size-6 text-primary' : 'size-5 text-primary'} />}
                           title={r.team.name}
-                          description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
+                          description={t('{km} กม. · {n} รถ/ทีม', { km: r.distanceKm.toFixed(1), n: r.team.vehicles.length }) + (!r.available ? ` · ${t('ไม่ว่าง')}` : '')}
                           className={clsx(
                             !r.available && 'pointer-events-none opacity-50',
                             isTop && 'border-primary/50 bg-skyblue-light/40 p-5 shadow-card-lg sm:p-6',
@@ -551,7 +655,7 @@ export default function DispatchCaseDetail() {
                             <span className="flex flex-col items-end gap-1">
                               {isTop && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
-                                  แนะนำที่สุด
+                                  {t('แนะนำที่สุด')}
                                 </span>
                               )}
                               {selectedLevel && (
@@ -561,7 +665,7 @@ export default function DispatchCaseDetail() {
                                     r.hasVehicleAtLevel ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
                                   )}
                                 >
-                                  {r.hasVehicleAtLevel ? `มีรถระดับ ${selectedLevel}` : `ไม่มีรถระดับ ${selectedLevel}`}
+                                  {r.hasVehicleAtLevel ? t('มีรถระดับ {level}', { level: selectedLevel }) : t('ไม่มีรถระดับ {level}', { level: selectedLevel })}
                                 </span>
                               )}
                             </span>
@@ -571,8 +675,10 @@ export default function DispatchCaseDetail() {
                         })}
                         {overflowCount > 0 && (
                           <p className="text-center text-xs text-muted">
-                            แสดง {RENDER_LIMIT} หน่วยที่ใกล้ที่สุด จากทั้งหมด{' '}
-                            {filtered.length.toLocaleString('th-TH')} หน่วย
+                            {t('แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย', {
+                              limit: RENDER_LIMIT,
+                              total: filtered.length.toLocaleString('th-TH'),
+                            })}
                           </p>
                         )}
                       </>
@@ -582,24 +688,24 @@ export default function DispatchCaseDetail() {
 
                 {recommendation.needsSupport && recommendation.support && (
                   <div className="flex flex-col gap-2 rounded-xl border border-warning/30 bg-warning/5 p-3.5">
-                    <p className="flex items-start gap-2 text-sm font-semibold text-navy">
+                    <p className="flex items-start gap-2 text-sm font-semibold text-ink">
                       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-                      หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์
+                      {t('หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์')}
                     </p>
-                    <label className="flex items-center gap-2 text-sm text-navy">
+                    <label className="flex items-center gap-2 text-sm text-ink">
                       <input
                         type="checkbox"
                         checked={includeSupport}
                         onChange={(e) => setIncludeSupport(e.target.checked)}
                         className="size-4 accent-primary"
                       />
-                      มอบหมายร่วมกับ {recommendation.support.team.name} ({recommendation.support.distanceKm.toFixed(1)} กม.)
+                      {t('มอบหมายร่วมกับ {team} ({km} กม.)', { team: recommendation.support.team.name, km: recommendation.support.distanceKm.toFixed(1) })}
                     </label>
                   </div>
                 )}
 
                 <Button fullWidth disabled={!selectedTeamId} onClick={() => setConfirmOpen(true)}>
-                  {supportTeam ? 'มอบหมายทั้ง 2 หน่วย' : 'มอบหมายหน่วยนี้'}
+                  {supportTeam ? t('มอบหมายทั้ง 2 หน่วย') : t('มอบหมายหน่วยนี้')}
                 </Button>
               </div>
             )}
@@ -612,15 +718,15 @@ export default function DispatchCaseDetail() {
                     className="animate-scale-in flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5 text-sm font-semibold text-success"
                   >
                     <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
-                    มอบหมายหน่วยกู้ชีพสำเร็จแล้ว
+                    {t('มอบหมายหน่วยกู้ชีพสำเร็จแล้ว')}
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex items-start gap-2.5">
                     <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">หน่วยกู้ชีพที่รับผิดชอบ</p>
-                      <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.name}</p>
+                      <p className="text-xs text-muted">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</p>
+                      <p className="text-sm font-semibold text-ink">{c.assignedRescueTeam.name}</p>
                     </div>
                   </div>
                   {c.assignedVehicle ? (
@@ -628,8 +734,8 @@ export default function DispatchCaseDetail() {
                       <div className="flex items-start gap-2.5">
                         <Hash className="mt-0.5 size-4 shrink-0 text-primary" />
                         <div>
-                          <p className="text-xs text-muted">รหัสรถ/ทีม</p>
-                          <p className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+                          <p className="text-xs text-muted">{t('รหัสรถ/ทีม')}</p>
+                          <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                             {c.assignedVehicle.unitCode}
                             <VehicleLevelBadge level={c.assignedVehicle.level} />
                           </p>
@@ -638,31 +744,34 @@ export default function DispatchCaseDetail() {
                       <div className="flex items-start gap-2.5">
                         <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
                         <div>
-                          <p className="text-xs text-muted">ยานพาหนะ</p>
-                          <p className="text-sm font-semibold text-navy">
-                            {c.assignedVehicle.vehicle} · {c.assignedVehicleCrewCount ?? c.assignedVehicle.members} คน
+                          <p className="text-xs text-muted">{t('ยานพาหนะ')}</p>
+                          <p className="text-sm font-semibold text-ink">
+                            {t('{vehicle} · {n} คน', { vehicle: c.assignedVehicle.vehicle, n: c.assignedVehicleCrewCount ?? c.assignedVehicle.members })}
                           </p>
                         </div>
                       </div>
                     </>
                   ) : (
-                    <p className="text-xs text-muted">หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ</p>
+                    <p className="text-xs text-muted">{t('หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ')}</p>
                   )}
                   <div className="flex items-start gap-2.5">
                     <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">เบอร์ติดต่อ</p>
-                      <p className="text-sm font-semibold text-navy">{c.assignedRescueTeam.phone}</p>
+                      <p className="text-xs text-muted">{t('เบอร์ติดต่อ')}</p>
+                      <p className="text-sm font-semibold text-ink">{c.assignedRescueTeam.phone}</p>
                     </div>
                   </div>
                   {c.status !== 'rescue-assigned' && c.assignedVehicle?.driverName && (
                     <div className="flex items-start gap-2.5">
                       <IdCard className="mt-0.5 size-4 shrink-0 text-primary" />
                       <div>
-                        <p className="text-xs text-muted">คนขับ · ทะเบียนรถ</p>
-                        <p className="text-sm font-semibold text-navy">
-                          {c.assignedVehicle.driverName} · {c.assignedVehicle.plateNumber} · สังกัด{' '}
-                          {c.assignedVehicle.unitCode}
+                        <p className="text-xs text-muted">{t('คนขับ · ทะเบียนรถ')}</p>
+                        <p className="text-sm font-semibold text-ink">
+                          {t('{driver} · {plate} · สังกัด {unit}', {
+                            driver: c.assignedVehicle.driverName,
+                            plate: c.assignedVehicle.plateNumber ?? '',
+                            unit: c.assignedVehicle.unitCode,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -672,8 +781,8 @@ export default function DispatchCaseDetail() {
                   <div className="flex items-start gap-2.5 rounded-xl border border-border p-3">
                     <Wrench className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)</p>
-                      <p className="text-sm font-semibold text-navy">{c.supportingRescueTeam.name}</p>
+                      <p className="text-xs text-muted">{t('หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)')}</p>
+                      <p className="text-sm font-semibold text-ink">{c.supportingRescueTeam.name}</p>
                     </div>
                   </div>
                 )}
@@ -688,19 +797,19 @@ export default function DispatchCaseDetail() {
                       setShowAddSupport(true)
                     }}
                   >
-                    เพิ่มหน่วยสนับสนุนที่มีอุปกรณ์
+                    {t('เพิ่มหน่วยสนับสนุนที่มีอุปกรณ์')}
                   </Button>
                 )}
 
                 {canAddSupport && showAddSupport && (
                   <div className="flex flex-col gap-2.5 rounded-xl border border-border p-3">
-                    <p className="text-sm font-semibold text-navy">
-                      {escalating ? `เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)` : 'เลือกหน่วยสนับสนุน'}
+                    <p className="text-sm font-semibold text-ink">
+                      {escalating ? t('เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)') : t('เลือกหน่วยสนับสนุน')}
                     </p>
                     {requiredEquipment.length > 0 && (
                       <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
                         <Wrench className="size-3.5 text-primary" />
-                        ต้องการอุปกรณ์: {requiredEquipment.join(', ')}
+                        {t('ต้องการอุปกรณ์: {list}', { list: requiredEquipment.join(', ') })}
                       </p>
                     )}
                     <div className="relative">
@@ -708,16 +817,16 @@ export default function DispatchCaseDetail() {
                       <Input
                         value={supportTeamQuery}
                         onChange={(e) => setSupportTeamQuery(e.target.value)}
-                        placeholder="ค้นหาชื่อหน่วยกู้ชีพ"
+                        placeholder={t('ค้นหาชื่อหน่วยกู้ชีพ')}
                         className="pl-11"
                       />
                     </div>
                     <SearchableSelect
-                      label="กรองตามจังหวัด (ไม่บังคับ)"
+                      label={t('กรองตามจังหวัด (ไม่บังคับ)')}
                       value={supportProvinceFilter}
                       onChange={setSupportProvinceFilter}
-                      placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
-                      emptyLabel="ไม่พบจังหวัดที่ค้นหา"
+                      placeholder={t('พิมพ์ชื่อจังหวัดเพื่อค้นหา')}
+                      emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
                       options={PROVINCE_OPTIONS}
                     />
                     <div className="flex flex-col gap-2">
@@ -728,7 +837,7 @@ export default function DispatchCaseDetail() {
                           return teamMatchesProvince(r.team, supportProvinceFilter)
                         })
                         if (filteredSupport.length === 0) {
-                          return <p className="py-2 text-center text-sm text-muted">ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก</p>
+                          return <p className="py-2 text-center text-sm text-muted">{t('ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก')}</p>
                         }
                         return (
                           <>
@@ -738,7 +847,7 @@ export default function DispatchCaseDetail() {
                                 selected={addSupportTeamId === r.team.id}
                                 onClick={() => r.available && setAddSupportTeamId(r.team.id)}
                                 title={r.team.name}
-                                description={`${r.distanceKm.toFixed(1)} กม. · ${r.team.vehicles.length} รถ/ทีม${!r.available ? ' · ไม่ว่าง' : ''}`}
+                                description={t('{km} กม. · {n} รถ/ทีม', { km: r.distanceKm.toFixed(1), n: r.team.vehicles.length }) + (!r.available ? ` · ${t('ไม่ว่าง')}` : '')}
                                 className={clsx(!r.available && 'pointer-events-none opacity-50')}
                                 badge={
                                   <span className="flex flex-col items-end gap-1">
@@ -749,7 +858,10 @@ export default function DispatchCaseDetail() {
                             ))}
                             {filteredSupport.length > 20 && (
                               <p className="text-center text-xs text-muted">
-                                แสดง 20 หน่วยที่ใกล้ที่สุด จากทั้งหมด {filteredSupport.length.toLocaleString('th-TH')} หน่วย
+                                {t('แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย', {
+                                  limit: 20,
+                                  total: filteredSupport.length.toLocaleString('th-TH'),
+                                })}
                               </p>
                             )}
                           </>
@@ -758,7 +870,7 @@ export default function DispatchCaseDetail() {
                     </div>
                     <div className="flex gap-2">
                       <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>
-                        ยืนยันเพิ่มหน่วยสนับสนุน
+                        {t('ยืนยันเพิ่มหน่วยสนับสนุน')}
                       </Button>
                       <Button
                         variant="outline"
@@ -768,19 +880,19 @@ export default function DispatchCaseDetail() {
                         }}
                         disabled={addSupportLoading}
                       >
-                        ยกเลิก
+                        {t('ยกเลิก')}
                       </Button>
                     </div>
                   </div>
                 )}
                 <p className="rounded-xl bg-skyblue-light px-3 py-2.5 text-xs font-medium text-muted">
-                  หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว
+                  {t('หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว')}
                 </p>
               </div>
             )}
 
             {c.status === 'completed' && (
-              <SuccessState title="เคสเสร็จสิ้นแล้ว" description="กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์" />
+              <SuccessState title={t('เคสเสร็จสิ้นแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')} />
             )}
           </Card>
         </div>
@@ -788,9 +900,9 @@ export default function DispatchCaseDetail() {
 
       <ConfirmationModal
         open={confirmOpen}
-        title="ยืนยันการมอบหมายหน่วยกู้ชีพ"
-        message={selectedTeam ? `ต้องการมอบหมาย "${selectedTeam.name}" ให้รับผิดชอบเคส ${c.caseNumber} ใช่หรือไม่` : ''}
-        confirmLabel="ยืนยันมอบหมาย"
+        title={t('ยืนยันการมอบหมายหน่วยกู้ชีพ')}
+        message={selectedTeam ? t('ต้องการมอบหมาย "{team}" ให้รับผิดชอบเคส {caseNumber} ใช่หรือไม่', { team: selectedTeam.name, caseNumber: c.caseNumber }) : ''}
+        confirmLabel={t('ยืนยันมอบหมาย')}
         confirmLoading={assignLoading}
         onConfirm={handleConfirmAssign}
         onCancel={() => setConfirmOpen(false)}
@@ -798,14 +910,14 @@ export default function DispatchCaseDetail() {
 
       <ConfirmationModal
         open={escalateConfirmOpen}
-        title="ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่"
+        title={t('ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่')}
         message={
           escalateLevel
-            ? `ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ ${escalateLevel} เพิ่มเติมหรือไม่`
+            ? t('ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่', { level: escalateLevel })
             : ''
         }
-        confirmLabel="มอบหมายหน่วยสนับสนุน"
-        cancelLabel="ไม่ต้อง"
+        confirmLabel={t('มอบหมายหน่วยสนับสนุน')}
+        cancelLabel={t('ไม่ต้อง')}
         onConfirm={() => {
           setEscalateConfirmOpen(false)
           setEscalating(true)
@@ -818,8 +930,8 @@ export default function DispatchCaseDetail() {
         open={shareOpen}
         url={`${window.location.origin}${import.meta.env.BASE_URL}public/case/${c.id}`}
         onClose={() => setShareOpen(false)}
-        title="แชร์ลิงก์ติดตามเคส"
-        description="สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์"
+        title={t('แชร์ลิงก์ติดตามเคส')}
+        description={t('สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์')}
       />
         </div>
       </div>

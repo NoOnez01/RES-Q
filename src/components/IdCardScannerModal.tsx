@@ -3,6 +3,34 @@ import { createPortal } from 'react-dom'
 import { Camera, CameraOff, X, ScanLine, RotateCcw, Check, Upload, AlertTriangle, SwitchCamera } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Field'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'กำลังดาวน์โหลดโมดูลอ่านข้อความ...': 'Downloading text-reading module...',
+  'กำลังเตรียมระบบอ่านข้อความ...': 'Preparing text recognition...',
+  'กำลังดาวน์โหลดข้อมูลภาษา...': 'Downloading language data...',
+  'กำลังอ่านข้อความจากบัตร...': 'Reading text from the card...',
+  'กำลังเริ่มต้น...': 'Starting...',
+  ปิด: 'Close',
+  สแกนบัตรประชาชน: 'Scan ID card',
+  ถ่ายรูปบัตรให้เห็นข้อความชัดเจน: 'Photograph the card so the text is clearly visible',
+  'กำลังอ่านข้อมูลจากบัตร...': 'Reading data from the card...',
+  ตรวจสอบและแก้ไขข้อมูลก่อนใช้: 'Review and edit the information before using it',
+  'กำลังเปิดกล้อง...': 'Opening camera...',
+  ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง: 'No camera found, or camera access was not granted',
+  'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
+  ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า: 'The first time may take a moment if the internet connection is slow',
+  'อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง': 'Failed to read the card, please enter the information manually',
+  'ข้อมูลที่อ่านได้อาจไม่ถูกต้อง 100% กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน':
+    'The extracted information may not be 100% accurate, please verify against the physical card before using it',
+  'ชื่อ-นามสกุล': 'Full name',
+  เลขบัตรประชาชน: 'National ID number',
+  ข้อความทั้งหมดที่อ่านได้: 'All extracted text',
+  ใช้ข้อมูลนี้: 'Use this information',
+  สแกนใหม่: 'Scan again',
+  ถ่ายรูปบัตร: 'Take photo of card',
+  หรืออัปโหลดรูปบัตรแทนการถ่าย: 'Or upload a photo of the card instead',
+})
 
 interface IdCardScannerModalProps {
   open: boolean
@@ -34,15 +62,15 @@ function extractFields(rawText: string): ExtractedFields {
 
 type Mode = 'camera' | 'processing' | 'review'
 
-const OCR_STATUS_LABEL: Record<string, string> = {
-  'loading tesseract core': 'กำลังดาวน์โหลดโมดูลอ่านข้อความ...',
-  'initializing tesseract': 'กำลังเตรียมระบบอ่านข้อความ...',
-  'loading language traineddata': 'กำลังดาวน์โหลดข้อมูลภาษา...',
-  'initializing api': 'กำลังเตรียมระบบอ่านข้อความ...',
-  'recognizing text': 'กำลังอ่านข้อความจากบัตร...',
-}
-
 export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModalProps) {
+  const t = useT()
+  const OCR_STATUS_LABEL: Record<string, string> = {
+    'loading tesseract core': t('กำลังดาวน์โหลดโมดูลอ่านข้อความ...'),
+    'initializing tesseract': t('กำลังเตรียมระบบอ่านข้อความ...'),
+    'loading language traineddata': t('กำลังดาวน์โหลดข้อมูลภาษา...'),
+    'initializing api': t('กำลังเตรียมระบบอ่านข้อความ...'),
+    'recognizing text': t('กำลังอ่านข้อความจากบัตร...'),
+  }
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -70,7 +98,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false })
         if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop())
+          stream.getTracks().forEach((track) => track.stop())
           return
         }
         streamRef.current = stream
@@ -87,7 +115,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
     void start()
     return () => {
       cancelled = true
-      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((track) => track.stop())
       streamRef.current = null
       setCameraStatus('idle')
     }
@@ -120,7 +148,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
     setCapturedImage(imageSource)
     setMode('processing')
     setOcrError(false)
-    setOcrProgress({ status: 'กำลังเริ่มต้น...', progress: 0 })
+    setOcrProgress({ status: t('กำลังเริ่มต้น...'), progress: 0 })
     try {
       const { createWorker } = await import('tesseract.js')
       // First run downloads the WASM engine + Thai/English language data from
@@ -192,18 +220,18 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
       <div role="dialog" aria-modal="true" className="relative w-full max-w-sm animate-scale-in">
         <button
           onClick={onClose}
-          aria-label="ปิด"
+          aria-label={t('ปิด')}
           className="absolute -top-11 right-0 flex size-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
         >
           <X className="size-5" />
         </button>
 
         <div className="mb-3 text-center text-white">
-          <p className="mt-1 text-lg font-bold">สแกนบัตรประชาชน</p>
+          <p className="mt-1 text-lg font-bold">{t('สแกนบัตรประชาชน')}</p>
           <p className="mt-0.5 text-sm text-white/70">
-            {mode === 'camera' && 'ถ่ายรูปบัตรให้เห็นข้อความชัดเจน'}
-            {mode === 'processing' && 'กำลังอ่านข้อมูลจากบัตร...'}
-            {mode === 'review' && 'ตรวจสอบและแก้ไขข้อมูลก่อนใช้'}
+            {mode === 'camera' && t('ถ่ายรูปบัตรให้เห็นข้อความชัดเจน')}
+            {mode === 'processing' && t('กำลังอ่านข้อมูลจากบัตร...')}
+            {mode === 'review' && t('ตรวจสอบและแก้ไขข้อมูลก่อนใช้')}
           </p>
         </div>
 
@@ -220,20 +248,20 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
               {(cameraStatus === 'idle' || cameraStatus === 'starting') && (
                 <div className="flex size-full flex-col items-center justify-center gap-3 text-white/70">
                   <Camera className="size-10 animate-pulse" />
-                  <p className="text-sm">กำลังเปิดกล้อง...</p>
+                  <p className="text-sm">{t('กำลังเปิดกล้อง...')}</p>
                 </div>
               )}
               {cameraStatus === 'unavailable' && (
                 <div className="flex size-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-navy to-primary/80 p-6 text-center text-white/85">
                   <CameraOff className="size-10" />
-                  <p className="text-sm font-medium">ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง</p>
+                  <p className="text-sm font-medium">{t('ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง')}</p>
                 </div>
               )}
               {cameraStatus === 'ready' && (
                 <button
                   type="button"
                   onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
-                  aria-label="สลับกล้องหน้า/หลัง"
+                  aria-label={t('สลับกล้องหน้า/หลัง')}
                   className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
                 >
                   <SwitchCamera className="size-5" />
@@ -248,7 +276,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
               <img src={capturedImage} alt="" className="size-full object-cover opacity-40" />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-white">
                 <ScanLine className="size-10 animate-pulse" />
-                <p className="text-sm font-medium">{ocrProgress?.status ?? 'กำลังอ่านข้อมูลจากบัตร...'}</p>
+                <p className="text-sm font-medium">{ocrProgress?.status ?? t('กำลังอ่านข้อมูลจากบัตร...')}</p>
                 <div className="h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-white/20">
                   <div
                     className="h-full rounded-full bg-primary-bright transition-[width] duration-300"
@@ -256,44 +284,44 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                   />
                 </div>
                 <p className="text-center text-xs text-white/50">
-                  ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า
+                  {t('ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า')}
                 </p>
               </div>
             </div>
           )}
 
           {mode === 'review' && (
-            <div className="flex flex-col gap-3 bg-white p-4">
+            <div className="flex flex-col gap-3 bg-surface p-4">
               {ocrError ? (
-                <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-navy">
+                <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-ink">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-                  อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง
+                  {t('อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง')}
                 </div>
               ) : (
-                <p className="flex items-start gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3 text-xs text-navy">
+                <p className="flex items-start gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3 text-xs text-ink">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                  ข้อมูลที่อ่านได้อาจไม่ถูกต้อง 100% กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน
+                  {t('ข้อมูลที่อ่านได้อาจไม่ถูกต้อง 100% กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน')}
                 </p>
               )}
-              <Input label="ชื่อ-นามสกุล" value={editName} onChange={(e) => setEditName(e.target.value)} />
+              <Input label={t('ชื่อ-นามสกุล')} value={editName} onChange={(e) => setEditName(e.target.value)} />
               <Input
-                label="เลขบัตรประชาชน"
+                label={t('เลขบัตรประชาชน')}
                 value={editIdNumber}
                 onChange={(e) => setEditIdNumber(e.target.value)}
                 maxLength={13}
               />
               {extracted?.rawText && (
                 <details className="text-xs text-muted">
-                  <summary className="cursor-pointer font-semibold">ข้อความทั้งหมดที่อ่านได้</summary>
+                  <summary className="cursor-pointer font-semibold">{t('ข้อความทั้งหมดที่อ่านได้')}</summary>
                   <p className="mt-1 whitespace-pre-wrap rounded-lg bg-bg p-2">{extracted.rawText}</p>
                 </details>
               )}
               <div className="flex gap-2">
                 <Button size="sm" fullWidth icon={<Check className="size-4" />} onClick={handleApply}>
-                  ใช้ข้อมูลนี้
+                  {t('ใช้ข้อมูลนี้')}
                 </Button>
                 <Button size="sm" variant="outline" icon={<RotateCcw className="size-4" />} onClick={handleRetry}>
-                  สแกนใหม่
+                  {t('สแกนใหม่')}
                 </Button>
               </div>
             </div>
@@ -309,7 +337,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                 disabled={cameraStatus !== 'ready'}
                 icon={<Camera className="size-5" />}
               >
-                ถ่ายรูปบัตร
+                {t('ถ่ายรูปบัตร')}
               </Button>
               <input
                 ref={fileInputRef}
@@ -328,7 +356,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                 className="flex items-center justify-center gap-1.5 py-1 text-xs font-semibold text-white/70 hover:text-white"
               >
                 <Upload className="size-3.5" />
-                หรืออัปโหลดรูปบัตรแทนการถ่าย
+                {t('หรืออัปโหลดรูปบัตรแทนการถ่าย')}
               </button>
             </div>
           )}

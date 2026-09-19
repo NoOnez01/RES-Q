@@ -28,6 +28,56 @@ import { InfoModal } from '@/components/ui/InfoModal'
 import { useInView } from '@/lib/useInView'
 import { useCountUp } from '@/lib/useCountUp'
 import { FAVICON_URL } from '@/lib/utils'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ติดต่อเจ้าหน้าที่: 'Contact responders',
+  เริ่มต้นการขอความช่วยเหลือได้อย่างรวดเร็ว: 'Start requesting help quickly',
+  'กดปุ่มเดียว ระบบพาไปยังขั้นตอนแจ้งเหตุทันที': 'One tap takes you straight into the report flow',
+  ถ่ายรูปจุดเกิดเหตุ: 'Photograph the scene',
+  ส่งข้อมูลภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์: 'Send photos to help responders assess the situation',
+  ถ่ายรูปหรือข้ามขั้นตอนนี้ได้ทันที: 'Take a photo or skip this step',
+  'โทร 1669': 'Call 1669',
+  เชื่อมต่อศูนย์รับแจ้งเหตุการแพทย์ฉุกเฉิน: 'Connect to the emergency medical dispatch center',
+  'สายด่วนการแพทย์ฉุกเฉินพร้อมรับสายตลอด 24 ชั่วโมง': 'The emergency medical hotline is staffed 24 hours a day',
+  ติดตามสถานะเคส: 'Track case status',
+  ดูความคืบหน้าตั้งแต่รับแจ้งเหตุจนเสร็จสิ้น: 'See progress from the report through to completion',
+  อัปเดตสถานะอัตโนมัติทุกขั้นตอนแบบเรียลไทม์: 'Every stage updates automatically, in real time',
+  บุคคลทั่วไป: 'Public',
+  'แจ้งเหตุ ถ่ายรูป และติดตามสถานะการช่วยเหลือ': 'Reports incidents, takes photos, and tracks help status',
+  'ศูนย์ 1669': 'Center 1669',
+  'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ': 'Takes reports, assesses severity, and assigns rescue teams',
+  หน่วยกู้ชีพ: 'Rescue team',
+  'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล': 'Travels to help, records the patient condition, and transports to hospital',
+  โรงพยาบาล: 'Hospital',
+  เตรียมทีมรักษาและยืนยันการรับผู้ป่วย: 'Prepares the care team and confirms patient admission',
+  'เร็วๆ นี้': 'Coming soon',
+  ระบบออกแบบเพื่อการประสานงานฉุกเฉิน: 'Built for emergency coordination',
+  มีการแบ่งสิทธิ์ตามบทบาทผู้ใช้งาน: 'Access is scoped by user role',
+  ข้อมูลผู้ป่วยควรได้รับการปกป้อง: 'Patient data is meant to be protected',
+  มีการแสดงสถานะและประวัติการดำเนินงาน: 'Status and history are visible throughout',
+  ออกแบบให้ใช้งานง่ายบนมือถือ: 'Designed to be easy to use on mobile',
+  '{label}: ดูรายละเอียด': '{label}: view details',
+  เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย: 'Connecting every step of emergency help, fast and safely',
+  'พร้อมช่วยเหลือ 24 ชม.': 'Available 24/7',
+  'ติดตามสถานะแบบ Real-time': 'Real-time status tracking',
+  เข้าสู่ระบบ: 'Log in',
+  สมัครสมาชิก: 'Sign up',
+  ดูวิธีการใช้งาน: 'How it works',
+  ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน: 'Keeping every step of the response connected',
+  'ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน': 'From the first report to the final follow-up, everyone sees the same data',
+  เริ่มต้นใช้งานทันที: 'Get started now',
+  ดูรายละเอียดทั้งหมด: 'See all the details',
+  'กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ': 'Tap a point to see details · Simulated data for this prototype',
+  ความปลอดภัยและความน่าเชื่อถือ: 'Security & trust',
+  ติดต่อเรา: 'Contact us',
+  'สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)':
+    'Reach the ResQ team through the channels below (for an actual emergency, please use the "Contact responders" button above instead)',
+  ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
+  'ดูหน้าทั้งหมด (สำหรับนักพัฒนา)': 'View all pages (for developers)',
+  'ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์':
+    'This system is a demonstration/research prototype and does not replace professional medical assessment.',
+})
 
 const FEATURES = [
   {
@@ -157,22 +207,23 @@ function FlowStep({
   extra: string
   onClick: () => void
 }) {
+  const t = useT()
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group relative z-10 flex w-full items-start gap-4 rounded-2xl p-3 text-left transition-colors duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:gap-5 sm:p-4"
+      className="group relative z-10 flex w-full items-start gap-4 rounded-2xl p-3 text-left transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:gap-5 sm:p-4"
     >
-      <span className="relative flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-primary/25 bg-white text-primary shadow-card transition-colors duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-white sm:size-16">
+      <span className="relative flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-primary/25 bg-surface text-primary shadow-card transition-colors duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-white sm:size-16">
         {icon}
         <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-navy text-[10px] font-extrabold text-white shadow-card">
           {index}
         </span>
       </span>
       <span className="flex flex-1 flex-col gap-1 pt-1.5 sm:pt-2.5">
-        <span className="font-bold text-navy">{title}</span>
-        <span className="text-sm leading-relaxed text-muted">{description}</span>
-        <span className="text-xs font-medium leading-relaxed text-primary/80">{extra}</span>
+        <span className="font-bold text-ink">{t(title)}</span>
+        <span className="text-sm leading-relaxed text-muted">{t(description)}</span>
+        <span className="text-xs font-medium leading-relaxed text-primary/80">{t(extra)}</span>
       </span>
       <ArrowRight
         aria-hidden="true"
@@ -237,14 +288,15 @@ function HubSatellite({
   onClick: () => void
 }) {
   const value = useCountUp(count, true)
+  const t = useT()
   return (
     <span className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={style}>
       <span className={clsx('bg-fx block', float)} style={{ animationDelay: delay }}>
         <button
           type="button"
           onClick={onClick}
-          aria-label={`${label}: ดูรายละเอียด`}
-          className="relative flex size-11 items-center justify-center rounded-full bg-white text-primary shadow-card transition-shadow duration-200 hover:bg-skyblue-light hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:size-12"
+          aria-label={t('{label}: ดูรายละเอียด', { label: t(label) })}
+          className="relative flex size-11 items-center justify-center rounded-full bg-surface text-primary shadow-card transition-shadow duration-200 hover:bg-skyblue-light hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:size-12"
         >
           {icon}
           <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-extrabold tabular-nums text-white shadow-card">
@@ -257,6 +309,7 @@ function HubSatellite({
 }
 
 function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[number]) => void }) {
+  const t = useT()
   return (
     <div className="hero-grid-hub mt-4 flex flex-col items-center gap-3">
       <div className="relative mx-auto flex size-64 items-center justify-center sm:size-72 lg:size-80">
@@ -279,14 +332,14 @@ function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[numb
         ))}
 
         <div
-          className="relative z-10 flex size-24 items-center justify-center rounded-full bg-white/90 shadow-card-lg backdrop-blur-sm sm:size-28 lg:size-32"
+          className="relative z-10 flex size-24 items-center justify-center rounded-full bg-surface/90 shadow-card-lg backdrop-blur-sm sm:size-28 lg:size-32"
           aria-hidden="true"
         >
           <span className="bg-fx absolute inset-0 rounded-full bg-primary/15 animate-ping-slow" />
           <img src={FAVICON_URL} alt="" className="relative size-14 sm:size-16 lg:size-[72px]" />
         </div>
       </div>
-      <p className="text-center text-xs text-muted">กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ</p>
+      <p className="text-center text-xs text-muted">{t('กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ')}</p>
     </div>
   )
 }
@@ -295,6 +348,7 @@ export default function Home() {
   const navigate = useNavigate()
   const location = useLocation()
   const [activeHubNode, setActiveHubNode] = useState<(typeof CONNECTION_NODES)[number] | null>(null)
+  const t = useT()
 
   useEffect(() => {
     if (!location.hash) return
@@ -330,8 +384,8 @@ export default function Home() {
         <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
         <div className="hero-grid relative z-10 w-full">
           <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-navy sm:text-4xl lg:text-5xl">
-              เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย
+            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-ink sm:text-4xl lg:text-5xl">
+              {t('เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย')}
             </h1>
           </div>
 
@@ -345,23 +399,23 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 lg:justify-start">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                 <Clock className="size-4 text-primary" />
-                พร้อมช่วยเหลือ 24 ชม.
+                {t('พร้อมช่วยเหลือ 24 ชม.')}
               </span>
               <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                 <Activity className="size-4 text-primary" />
-                ติดตามสถานะแบบ Real-time
+                {t('ติดตามสถานะแบบ Real-time')}
               </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
               <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
-                เข้าสู่ระบบ
+                {t('เข้าสู่ระบบ')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/register')}>
-                สมัครสมาชิก
+                {t('สมัครสมาชิก')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/how-it-works')}>
-                ดูวิธีการใช้งาน
+                {t('ดูวิธีการใช้งาน')}
               </Button>
             </div>
           </div>
@@ -370,8 +424,8 @@ export default function Home() {
 
       <section id="features" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <Reveal className="text-center">
-          <h2 className="text-2xl font-bold text-navy sm:text-3xl">ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน</h2>
-          <p className="mt-2 text-sm text-muted">ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน</p>
+          <h2 className="text-2xl font-bold text-ink sm:text-3xl">{t('ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน')}</h2>
+          <p className="mt-2 text-sm text-muted">{t('ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน')}</p>
         </Reveal>
 
         <div className="relative mt-12">
@@ -397,10 +451,10 @@ export default function Home() {
 
         <Reveal delayMs={FEATURES.length * 80} className="mt-8 flex flex-wrap justify-center gap-3">
           <Button onClick={openHeroCta} iconRight={<ArrowRight className="size-4" />}>
-            เริ่มต้นใช้งานทันที
+            {t('เริ่มต้นใช้งานทันที')}
           </Button>
           <Button variant="outline" onClick={() => navigate('/how-it-works')}>
-            ดูรายละเอียดทั้งหมด
+            {t('ดูรายละเอียดทั้งหมด')}
           </Button>
         </Reveal>
       </section>
@@ -408,24 +462,24 @@ export default function Home() {
       <section id="trust" className="bg-skyblue-pale/60 px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <Reveal className="text-center">
-            <h2 className="text-2xl font-bold text-navy sm:text-3xl">ความปลอดภัยและความน่าเชื่อถือ</h2>
+            <h2 className="text-2xl font-bold text-ink sm:text-3xl">{t('ความปลอดภัยและความน่าเชื่อถือ')}</h2>
           </Reveal>
 
           <Reveal delayMs={80}>
             <Card className="mt-8 flex flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
-              {TRUST_POINTS.map((t) => (
-                <div key={t.text} className="flex flex-1 items-center gap-3 px-2 py-4 text-left sm:flex-col sm:gap-2.5 sm:px-4 sm:text-center">
+              {TRUST_POINTS.map((point) => (
+                <div key={point.text} className="flex flex-1 items-center gap-3 px-2 py-4 text-left sm:flex-col sm:gap-2.5 sm:px-4 sm:text-center">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary">
-                    {t.icon}
+                    {point.icon}
                   </span>
-                  <p className="text-sm font-medium leading-snug text-navy">{t.text}</p>
+                  <p className="text-sm font-medium leading-snug text-ink">{t(point.text)}</p>
                 </div>
               ))}
             </Card>
           </Reveal>
 
           <p className="mx-auto mt-8 max-w-xl text-center text-xs leading-relaxed text-muted">
-            ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์
+            {t('ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์')}
           </p>
         </div>
       </section>
@@ -433,9 +487,9 @@ export default function Home() {
       <section id="contact" className="px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <Reveal>
-            <h2 className="text-xl font-bold text-navy sm:text-2xl">ติดต่อเรา</h2>
+            <h2 className="text-xl font-bold text-ink sm:text-2xl">{t('ติดต่อเรา')}</h2>
             <p className="mt-2 text-sm text-muted">
-              สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)
+              {t('สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)')}
             </p>
           </Reveal>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -446,7 +500,7 @@ export default function Home() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-navy shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold text-ink shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
                 >
                   {link.icon}
                   {link.label}
@@ -455,11 +509,11 @@ export default function Home() {
                 <span
                   key={link.key}
                   aria-disabled="true"
-                  className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-white/60 px-5 py-3 text-sm font-semibold text-muted"
+                  className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-surface/60 px-5 py-3 text-sm font-semibold text-muted"
                 >
                   {link.icon}
                   {link.label}
-                  <span className="text-xs font-normal">(เร็วๆ นี้)</span>
+                  <span className="text-xs font-normal">({t('เร็วๆ นี้')})</span>
                 </span>
               ),
             )}
@@ -468,21 +522,21 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-border px-4 py-8 text-center sm:px-6">
-        <p className="text-xs text-muted">ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง</p>
+        <p className="text-xs text-muted">{t('ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง')}</p>
         <button
           type="button"
           onClick={() => navigate('/all-screens')}
           className="mt-2 text-xs font-semibold text-primary hover:underline"
         >
-          ดูหน้าทั้งหมด (สำหรับนักพัฒนา)
+          {t('ดูหน้าทั้งหมด (สำหรับนักพัฒนา)')}
         </button>
       </footer>
       </div>
 
       <InfoModal
         open={activeHubNode !== null}
-        title={activeHubNode?.label ?? ''}
-        message={activeHubNode?.detail ?? ''}
+        title={activeHubNode ? t(activeHubNode.label) : ''}
+        message={activeHubNode ? t(activeHubNode.detail) : ''}
         icon={
           activeHubNode && (
             <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">

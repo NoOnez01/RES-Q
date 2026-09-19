@@ -7,6 +7,20 @@ import { FAVICON_URL } from '@/lib/utils'
 import { navItemsForRole } from '@/lib/nav'
 import type { AppUser } from '@/lib/types'
 import { Button } from '../ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  วิธีการใช้งาน: 'How it works',
+  ฟีเจอร์: 'Features',
+  ติดต่อเรา: 'Contact us',
+  ข้อมูลส่วนตัว: 'Profile',
+  ออกจากระบบ: 'Log out',
+  เปิดเมนู: 'Open menu',
+  ย้อนกลับ: 'Back',
+  การแจ้งเตือน: 'Notifications',
+  เข้าสู่ระบบ: 'Log in',
+  สมัครสมาชิก: 'Sign up',
+})
 
 interface TopNavigationProps {
   variant: 'public' | 'flow' | 'dashboard'
@@ -51,6 +65,7 @@ function AccountMenu({
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const t = useT()
 
   useEffect(() => {
     if (!open) return
@@ -73,7 +88,7 @@ function AccountMenu({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-navy hover:bg-skyblue-light"
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-ink hover:bg-skyblue-light"
       >
         <span className="relative">
           <Avatar url={currentUser.avatarUrl} className="size-5" />
@@ -87,7 +102,7 @@ function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-white py-1.5 shadow-card-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-surface py-1.5 shadow-card-lg"
         >
           {items.map((item) => (
             <button
@@ -98,10 +113,10 @@ function AccountMenu({
                 setOpen(false)
                 navigate(item.path)
               }}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-navy transition-colors hover:bg-skyblue-light"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-ink transition-colors hover:bg-skyblue-light"
             >
               <item.icon className="size-4 text-muted" />
-              {item.label}
+              {t(item.label)}
               {item.path === '/notifications' && unreadCount > 0 && (
                 <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-emergency px-1 text-[10px] font-bold text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -120,7 +135,7 @@ function AccountMenu({
             className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-emergency transition-colors hover:bg-emergency/5"
           >
             <LogOut className="size-4" />
-            ออกจากระบบ
+            {t('ออกจากระบบ')}
           </button>
         </div>
       )}
@@ -135,6 +150,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
   const currentUser = useStore((s) => s.currentUser)
   const logout = useStore((s) => s.logout)
   const loggedIn = !!currentUser && !currentUser.isAnonymous
+  const t = useT()
   const unread = useMemo(
     () =>
       notifications.filter(
@@ -146,14 +162,14 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
   return (
     <header
       className={clsx(
-        'sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur sm:px-6',
+        'sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur sm:px-6',
       )}
     >
       {(variant === 'dashboard' || variant === 'public') && onMenuClick && (
         <button
           onClick={onMenuClick}
-          aria-label="เปิดเมนู"
-          className="rounded-lg p-2 text-navy hover:bg-skyblue-light lg:hidden"
+          aria-label={t('เปิดเมนู')}
+          className="rounded-lg p-2 text-ink hover:bg-skyblue-light lg:hidden"
         >
           <Menu className="size-5" />
         </button>
@@ -162,8 +178,8 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
       {(variant === 'flow' || showBack) && (
         <button
           onClick={() => (onBack ? onBack() : navigate(-1))}
-          aria-label="ย้อนกลับ"
-          className="rounded-lg p-2 text-navy hover:bg-skyblue-light"
+          aria-label={t('ย้อนกลับ')}
+          className="rounded-lg p-2 text-ink hover:bg-skyblue-light"
         >
           <ArrowLeft className="size-5" />
         </button>
@@ -172,11 +188,11 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
       {variant !== 'flow' && (
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src={FAVICON_URL} alt="" className="size-8" />
-          <span className="text-lg font-extrabold text-navy">ResQ</span>
+          <span className="text-lg font-extrabold text-ink">ResQ</span>
         </Link>
       )}
 
-      {title && <h1 className="min-w-0 flex-1 truncate text-base font-bold text-navy sm:text-lg">{title}</h1>}
+      {title && <h1 className="min-w-0 flex-1 truncate text-base font-bold text-ink sm:text-lg">{title}</h1>}
 
       {variant === 'public' && !title && (
         <nav className="ml-4 hidden items-center gap-1 lg:flex">
@@ -188,10 +204,10 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
                 to={link.href}
                 className={clsx(
                   'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                  active ? 'text-primary' : 'text-navy hover:bg-skyblue-light',
+                  active ? 'text-primary' : 'text-ink hover:bg-skyblue-light',
                 )}
               >
-                {link.label}
+                {t(link.label)}
                 {active && <span className="absolute inset-x-3 -bottom-[1px] h-0.5 rounded-full bg-primary" />}
               </Link>
             )
@@ -217,12 +233,12 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
               <div className="hidden items-center gap-2 lg:flex">
                 {location.pathname !== '/login' && (
                   <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-                    เข้าสู่ระบบ
+                    {t('เข้าสู่ระบบ')}
                   </Button>
                 )}
                 {!location.pathname.startsWith('/register') && (
                   <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
-                    สมัครสมาชิก
+                    {t('สมัครสมาชิก')}
                   </Button>
                 )}
               </div>
@@ -234,8 +250,8 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
           <>
             <button
               onClick={() => navigate('/notifications')}
-              aria-label="การแจ้งเตือน"
-              className="relative rounded-lg p-2 text-navy hover:bg-skyblue-light"
+              aria-label={t('การแจ้งเตือน')}
+              className="relative rounded-lg p-2 text-ink hover:bg-skyblue-light"
             >
               <Bell className="size-5" />
               {unread > 0 && (
@@ -246,8 +262,8 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
             </button>
             <button
               onClick={() => navigate('/profile')}
-              aria-label="ข้อมูลส่วนตัว"
-              className="rounded-lg p-1.5 text-navy hover:bg-skyblue-light"
+              aria-label={t('ข้อมูลส่วนตัว')}
+              className="rounded-lg p-1.5 text-ink hover:bg-skyblue-light"
             >
               <Avatar url={currentUser?.avatarUrl} className="size-6" />
             </button>

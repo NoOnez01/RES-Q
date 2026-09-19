@@ -2,6 +2,14 @@ import { Mic } from 'lucide-react'
 import type { AudioRecording, EmergencyPhoto } from '@/lib/types'
 import { formatDateTime, formatDuration } from '@/lib/utils'
 import { Card } from './ui/Card'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  เสียงจากผู้แจ้งเหตุ: 'Audio from the reporter',
+  เสียงจากหน่วยกู้ชีพ: 'Audio from the rescue team',
+  ภาพและเสียงจากที่เกิดเหตุ: 'Photos and audio from the scene',
+  ภาพจุดเกิดเหตุ: 'Scene photo',
+})
 
 const SOURCE_LABEL: Record<NonNullable<AudioRecording['recordedBy']>, string> = {
   public: 'เสียงจากผู้แจ้งเหตุ',
@@ -15,11 +23,12 @@ export function CaseMediaGallery({
   photos: EmergencyPhoto[]
   audioRecordings: AudioRecording[]
 }) {
+  const t = useT()
   if (photos.length === 0 && audioRecordings.length === 0) return null
 
   return (
     <Card className="space-y-4">
-      <h3 className="font-bold text-navy">ภาพและเสียงจากที่เกิดเหตุ</h3>
+      <h3 className="font-bold text-ink">{t('ภาพและเสียงจากที่เกิดเหตุ')}</h3>
 
       {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -27,7 +36,7 @@ export function CaseMediaGallery({
             <img
               key={p.id}
               src={p.dataUrl}
-              alt="ภาพจุดเกิดเหตุ"
+              alt={t('ภาพจุดเกิดเหตุ')}
               className="aspect-square w-full rounded-xl border border-border object-cover"
             />
           ))}
@@ -41,7 +50,7 @@ export function CaseMediaGallery({
               <div className="flex items-center gap-2 text-sm">
                 <Mic className="size-4 shrink-0 text-primary" />
                 <div>
-                  <p className="font-semibold text-navy">{SOURCE_LABEL[r.recordedBy ?? 'public']}</p>
+                  <p className="font-semibold text-ink">{t(SOURCE_LABEL[r.recordedBy ?? 'public'])}</p>
                   <p className="text-xs text-muted">
                     {formatDuration(r.durationSec)} · {formatDateTime(r.recordedAt)}
                   </p>

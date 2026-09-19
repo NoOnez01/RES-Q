@@ -4,7 +4,7 @@ import type { HTMLAttributes } from 'react'
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx('rounded-2xl border border-border bg-white p-5 shadow-card', className)}
+      className={clsx('rounded-2xl border border-border bg-surface p-5 shadow-card', className)}
       {...props}
     />
   )
@@ -27,7 +27,7 @@ export function Checkbox({
         onChange={(e) => onChange(e.target.checked)}
         className="mt-0.5 size-5 shrink-0 rounded-md border-2 border-border text-primary focus:ring-4 focus:ring-primary/15 accent-primary"
       />
-      <span className="text-sm text-navy">{label}</span>
+      <span className="text-sm text-ink">{label}</span>
     </label>
   )
 }

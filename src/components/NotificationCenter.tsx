@@ -4,6 +4,12 @@ import type { AppNotification } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
 import { EmptyState } from './States'
 import { PulseRing } from './backgrounds/PulseRing'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ยังไม่มีการแจ้งเตือน: 'No notifications yet',
+  การแจ้งเตือนเกี่ยวกับเคสจะแสดงที่นี่: 'Case-related notifications will appear here',
+})
 
 const toneConfig: Record<AppNotification['tone'], { icon: React.ElementType; classes: string }> = {
   info: { icon: Info, classes: 'bg-primary/10 text-primary' },
@@ -21,8 +27,9 @@ export function NotificationCenter({
   onMarkRead: (id: string) => void
   onOpenCase?: (caseId: string) => void
 }) {
+  const t = useT()
   if (notifications.length === 0) {
-    return <EmptyState icon={<Bell className="size-6" />} title="ยังไม่มีการแจ้งเตือน" description="การแจ้งเตือนเกี่ยวกับเคสจะแสดงที่นี่" />
+    return <EmptyState icon={<Bell className="size-6" />} title={t('ยังไม่มีการแจ้งเตือน')} description={t('การแจ้งเตือนเกี่ยวกับเคสจะแสดงที่นี่')} />
   }
 
   return (
@@ -49,7 +56,7 @@ export function NotificationCenter({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className={clsx('text-sm', n.read ? 'font-medium text-navy' : 'font-bold text-navy')}>{n.title}</p>
+                  <p className={clsx('text-sm', n.read ? 'font-medium text-ink' : 'font-bold text-ink')}>{n.title}</p>
                   {!n.read && <PulseRing tone={n.tone === 'emergency' ? 'emergency' : 'primary'} size="sm" />}
                 </div>
                 <p className="text-xs text-muted mt-0.5">{n.message}</p>

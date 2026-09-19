@@ -11,6 +11,22 @@ import {
   Ambulance,
   Building2,
 } from 'lucide-react'
+import { registerTranslations } from './i18n'
+
+registerTranslations({
+  แดชบอร์ด: 'Dashboard',
+  สายเรียกเข้า: 'Incoming calls',
+  เคสปัจจุบัน: 'Current cases',
+  ประวัติเคส: 'Case history',
+  อนุมัติสมาชิกหน่วยงาน: 'Approve org members',
+  การแจ้งเตือน: 'Notifications',
+  ตั้งค่า: 'Settings',
+  หน้าหลัก: 'Home',
+  'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
+  หน่วยกู้ชีพ: 'Rescue team',
+  โรงพยาบาล: 'Hospital',
+  ประชาชน: 'Public',
+})
 
 export interface NavItem {
   label: string

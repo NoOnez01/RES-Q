@@ -11,6 +11,28 @@ import { Button } from '@/components/ui/Button'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  แดชบอร์ดศูนย์สั่งการ: 'Dispatch dashboard',
+  เคสใหม่รอดำเนินการ: 'New cases pending',
+  กำลังค้นหาหน่วยกู้ชีพ: 'Finding a rescue team',
+  หน่วยกู้ชีพกำลังปฏิบัติงาน: 'Rescue teams active',
+  เสร็จสิ้นวันนี้: 'Completed today',
+  เคสทั้งหมด: 'Total cases',
+  บันทึกเคสใหม่: 'Log new case',
+  บัญชีรออนุมัติ: 'Pending accounts',
+  ประเมินหน่วยกู้ชีพ: 'Rate rescue teams',
+  'ค้นหาหน่วยปฏิบัติการ (NDEMS)': 'Search units (NDEMS)',
+  ดูสายเรียกเข้าทั้งหมด: 'View all incoming calls',
+  ยังไม่มีเคสในระบบ: 'No cases yet',
+  เคสใหม่จะปรากฏที่นี่โดยอัตโนมัติ: 'New cases will appear here automatically',
+  เริ่มค้นหาหน่วยกู้ชีพ: 'Start finding a rescue team',
+  กรอกรายละเอียดเหตุการณ์: 'Fill in incident details',
+  เริ่มค้นหาหน่วยกู้ชีพแล้ว: 'Started finding a rescue team',
+  'เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
+  สัดส่วนระดับความรุนแรงของเคส: 'Case severity distribution',
+})
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 
@@ -27,6 +49,7 @@ export default function DispatchDashboard() {
   const navigate = useNavigate()
   const cases = useStore((s) => s.cases)
   const startFindingRescue = useStore((s) => s.startFindingRescue)
+  const t = useT()
 
   // Calls that are ringing/connected, or have ended but haven't had incident
   // details filled in yet, live exclusively on the Incoming Call page.
@@ -61,20 +84,20 @@ export default function DispatchDashboard() {
   function handleStartFinding(caseId: string, caseNumber: string) {
     startFindingRescue(caseId)
     toast({
-      title: 'เริ่มค้นหาหน่วยกู้ชีพแล้ว',
-      message: `เคส ${caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน`,
+      title: t('เริ่มค้นหาหน่วยกู้ชีพแล้ว'),
+      message: t('เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber }),
       tone: 'info',
     })
   }
 
   return (
-    <AppShell variant="dashboard" title="แดชบอร์ดศูนย์สั่งการ">
+    <AppShell variant="dashboard" title={t('แดชบอร์ดศูนย์สั่งการ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
           <StatBar>
             <StatItem
-              label="เคสใหม่รอดำเนินการ"
+              label={t('เคสใหม่รอดำเนินการ')}
               value={
                 <span key={newCount} className="inline-block animate-count-pop">
                   {newCount}
@@ -84,7 +107,7 @@ export default function DispatchDashboard() {
               tone="emergency"
             />
             <StatItem
-              label="กำลังค้นหาหน่วยกู้ชีพ"
+              label={t('กำลังค้นหาหน่วยกู้ชีพ')}
               value={
                 <span key={findingCount} className="inline-block animate-count-pop">
                   {findingCount}
@@ -94,7 +117,7 @@ export default function DispatchDashboard() {
               tone="warning"
             />
             <StatItem
-              label="หน่วยกู้ชีพกำลังปฏิบัติงาน"
+              label={t('หน่วยกู้ชีพกำลังปฏิบัติงาน')}
               value={
                 <span key={inProgressCount} className="inline-block animate-count-pop">
                   {inProgressCount}
@@ -104,7 +127,7 @@ export default function DispatchDashboard() {
               tone="primary"
             />
             <StatItem
-              label="เสร็จสิ้นวันนี้"
+              label={t('เสร็จสิ้นวันนี้')}
               value={
                 <span key={completedCount} className="inline-block animate-count-pop">
                   {completedCount}
@@ -116,31 +139,31 @@ export default function DispatchDashboard() {
           </StatBar>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-navy">เคสทั้งหมด</h2>
+            <h2 className="text-lg font-bold text-ink">{t('เคสทั้งหมด')}</h2>
             <div className="flex flex-wrap gap-2">
               <Link to="/dispatch/new-case">
                 <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
-                  บันทึกเคสใหม่
+                  {t('บันทึกเคสใหม่')}
                 </Button>
               </Link>
               <Link to="/dispatch/pending-approvals">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  บัญชีรออนุมัติ
+                  {t('บัญชีรออนุมัติ')}
                 </Button>
               </Link>
               <Link to="/dispatch/feedback-stats">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  ประเมินหน่วยกู้ชีพ
+                  {t('ประเมินหน่วยกู้ชีพ')}
                 </Button>
               </Link>
               <Link to="/dispatch/unit-search">
                 <Button variant="outline" size="sm" icon={<Building2 className="size-4" />}>
-                  ค้นหาหน่วยปฏิบัติการ (NDEMS)
+                  {t('ค้นหาหน่วยปฏิบัติการ (NDEMS)')}
                 </Button>
               </Link>
               <Link to="/dispatch/incoming-call">
                 <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  ดูสายเรียกเข้าทั้งหมด
+                  {t('ดูสายเรียกเข้าทั้งหมด')}
                 </Button>
               </Link>
             </div>
@@ -148,7 +171,7 @@ export default function DispatchDashboard() {
 
           <div className="mt-4">
             {activeCases.length === 0 ? (
-              <EmptyState title="ยังไม่มีเคสในระบบ" description="เคสใหม่จะปรากฏที่นี่โดยอัตโนมัติ" />
+              <EmptyState title={t('ยังไม่มีเคสในระบบ')} description={t('เคสใหม่จะปรากฏที่นี่โดยอัตโนมัติ')} />
             ) : (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {activeCases.map((c, index) => {
@@ -178,7 +201,7 @@ export default function DispatchDashboard() {
                                     handleStartFinding(c.id, c.caseNumber)
                                   }}
                                 >
-                                  เริ่มค้นหาหน่วยกู้ชีพ
+                                  {t('เริ่มค้นหาหน่วยกู้ชีพ')}
                                 </Button>
                               ) : (
                                 <Button
@@ -190,7 +213,7 @@ export default function DispatchDashboard() {
                                     navigate(`/dispatch/emergency-details/${c.id}`)
                                   }}
                                 >
-                                  กรอกรายละเอียดเหตุการณ์
+                                  {t('กรอกรายละเอียดเหตุการณ์')}
                                 </Button>
                               )
                             ) : undefined
@@ -206,7 +229,7 @@ export default function DispatchDashboard() {
 
           <div className="mt-8">
             <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title="สัดส่วนระดับความรุนแรงของเคส" cases={allCases} />
+              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเคส')} cases={allCases} />
             </Suspense>
           </div>
         </div>

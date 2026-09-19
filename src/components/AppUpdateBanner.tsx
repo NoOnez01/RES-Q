@@ -3,11 +3,19 @@ import { createPortal } from 'react-dom'
 import { Download, X } from 'lucide-react'
 import { checkForAppUpdate } from '@/lib/appUpdateCheck'
 import { Button } from './ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'มีเวอร์ชันใหม่ (v{version}) พร้อมใช้งาน': 'A new version (v{version}) is available',
+  ดาวน์โหลด: 'Download',
+  ปิด: 'Close',
+})
 
 const DISMISSED_KEY = 'resq-update-dismissed-version'
 
 export function AppUpdateBanner() {
   const [update, setUpdate] = useState<{ version: string; downloadUrl: string } | null>(null)
+  const t = useT()
 
   useEffect(() => {
     void checkForAppUpdate().then((result) => {
@@ -28,14 +36,14 @@ export function AppUpdateBanner() {
     <div className="fixed inset-x-0 top-0 z-[150] flex items-center gap-3 bg-primary px-4 py-2.5 text-sm text-white shadow-card">
       <Download className="size-4 shrink-0" />
       <p className="min-w-0 flex-1 truncate">
-        มีเวอร์ชันใหม่ (v{update.version}) พร้อมใช้งาน
+        {t('มีเวอร์ชันใหม่ (v{version}) พร้อมใช้งาน', { version: update.version })}
       </p>
       <a href={update.downloadUrl} target="_blank" rel="noreferrer">
         <Button size="sm" variant="secondary" className="!bg-white !text-primary">
-          ดาวน์โหลด
+          {t('ดาวน์โหลด')}
         </Button>
       </a>
-      <button onClick={dismiss} aria-label="ปิด" className="shrink-0 rounded-full p-1 text-white/80 hover:bg-white/10 hover:text-white">
+      <button onClick={dismiss} aria-label={t('ปิด')} className="shrink-0 rounded-full p-1 text-white/80 hover:bg-white/10 hover:text-white">
         <X className="size-4" />
       </button>
     </div>,

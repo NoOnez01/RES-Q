@@ -15,6 +15,62 @@ import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { InteractiveMapGrid } from '@/components/backgrounds/InteractiveMapGrid'
 import { Button } from '@/components/ui/Button'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ติดต่อเจ้าหน้าที่: 'Contact responders',
+  กดปุ่มวงกลมสีแดงบนหน้าหลักเพื่อเริ่มกระบวนการขอความช่วยเหลือฉุกเฉินได้ทันที:
+    'Tap the red circle button on the home page to start requesting emergency help right away',
+  'กดปุ่ม "ติดต่อเจ้าหน้าที่" แล้วยืนยันเพื่อเริ่มต้น': 'Tap "Contact responders" and confirm to begin',
+  ถ่ายรูปจุดเกิดเหตุ: 'Photograph the scene',
+  'ถ่ายภาพบริเวณที่เกิดเหตุเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์ได้แม่นยำขึ้น หรือข้ามขั้นตอนนี้ได้หากไม่สะดวก':
+    'Take a photo of the scene to help responders assess the situation more accurately, or skip this step if you can\'t',
+  'ถ่ายภาพจุดเกิดเหตุ หรือกด "ข้ามขั้นตอน" เพื่อไปต่อ': 'Photograph the scene, or tap "Skip" to continue',
+  'โทร 1669': 'Call 1669',
+  'ระบบจะเชื่อมต่อไปยังสายด่วนการแพทย์ฉุกเฉิน 1669 เพื่อแจ้งเหตุกับเจ้าหน้าที่โดยตรง':
+    'The app connects you directly to the 1669 emergency medical hotline to report the incident',
+  รอการเชื่อมต่อสายและแจ้งอาการเบื้องต้นกับเจ้าหน้าที่: 'Wait for the call to connect and describe the situation to the responder',
+  ส่งรายละเอียดเหตุการณ์: 'Send incident details',
+  'กรอกตำแหน่ง อาการ และรายละเอียดของผู้บาดเจ็บ เพื่อส่งให้ศูนย์ 1669 และหน่วยกู้ชีพที่เกี่ยวข้อง':
+    "Fill in the location, condition, and details of the injured person to send to Center 1669 and the assigned rescue team",
+  กรอกแบบฟอร์มรายละเอียดเหตุการณ์ให้ครบถ้วนแล้วกดส่งข้อมูล: 'Fill out the incident form completely and submit it',
+  หน่วยกู้ชีพเข้าช่วยเหลือ: 'Rescue team responds',
+  'หน่วยกู้ชีพที่ได้รับมอบหมายจะเดินทางไปยังจุดเกิดเหตุ พร้อมระบบติดตามตำแหน่งและเวลาถึงโดยประมาณ':
+    'The assigned rescue team travels to the scene, with live location tracking and an estimated arrival time',
+  ติดตามสถานะและตำแหน่งของหน่วยกู้ชีพแบบเรียลไทม์: "Track the rescue team's status and location in real time",
+  นำส่งโรงพยาบาล: 'Transport to hospital',
+  'หน่วยกู้ชีพนำผู้บาดเจ็บส่งโรงพยาบาลที่เตรียมทีมรักษาไว้ล่วงหน้า และยืนยันการรับตัวผู้ป่วย':
+    'The rescue team transports the patient to a hospital that has already prepared its care team, and confirms admission',
+  'ตรวจสอบสถานะ "ผู้ป่วยถึงแล้ว" เพื่อยืนยันว่าการช่วยเหลือเสร็จสมบูรณ์':
+    'Check the "patient arrived" status to confirm the response is complete',
+  บุคคลทั่วไป: 'Public',
+  'แจ้งเหตุ ถ่ายรูป และติดตามสถานะการช่วยเหลือ': 'Reports incidents, takes photos, and tracks help status',
+  'ศูนย์ 1669': 'Center 1669',
+  'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ': 'Takes reports, assesses severity, and assigns rescue teams',
+  หน่วยกู้ชีพ: 'Rescue team',
+  'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล': 'Travels to help, records the patient condition, and transports to hospital',
+  โรงพยาบาล: 'Hospital',
+  เตรียมทีมรักษาและยืนยันการรับผู้ป่วย: 'Prepares the care team and confirms patient admission',
+  'โปรดถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ': "Please photograph only the scene, not the injured person's face",
+  ถ่ายรูป: 'Take photo',
+  'กำลังติดต่อเจ้าหน้าที่ 1669': 'Contacting 1669',
+  ส่งข้อมูล: 'Submit',
+  'ถึงใน 5 นาที': 'Arriving in 5 min',
+  โรงพยาบาลจุฬาลงกรณ์: 'Chulalongkorn Hospital',
+  ผู้ป่วยถึงแล้ว: 'Patient arrived',
+  '{label}: ดูรายละเอียดบทบาท': "{label}: view this role's details",
+  'ไปยังขั้นตอนที่ {n}: {title}': 'Go to step {n}: {title}',
+  'การทำงานของ ResQ': 'How ResQ works',
+  'เชื่อมต่อทุกการช่วยเหลือ ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล': 'Connecting every step of the response, from report to hospital',
+  'ขั้นตอนที่ {n} จาก {total}': 'Step {n} of {total}',
+  'ขั้นตอนที่ {n}': 'Step {n}',
+  การดำเนินการ: 'Actions',
+  ขั้นตอนก่อนหน้า: 'Previous step',
+  เริ่มต้นใช้งาน: 'Get started',
+  ขั้นตอนถัดไป: 'Next step',
+  'การเชื่อมต่อทุกฝ่ายในระบบ ResQ': 'How everyone connects in ResQ',
+  กดที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่าย: 'Tap a point to see each role',
+})
 
 interface StepData {
   title: string
@@ -83,13 +139,14 @@ const CONNECTION_NODES = [
 ]
 
 function StepPreview({ step }: { step: number }) {
+  const t = useT()
   if (step === 0) {
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex size-[140px] items-center justify-center rounded-full bg-emergency text-white shadow-red-glow animate-pulse-glow">
           <PhoneCall className="size-10" strokeWidth={2.2} />
         </div>
-        <p className="text-sm font-bold text-navy">ติดต่อเจ้าหน้าที่</p>
+        <p className="text-sm font-bold text-ink">{t('ติดต่อเจ้าหน้าที่')}</p>
       </div>
     )
   }
@@ -105,10 +162,10 @@ function StepPreview({ step }: { step: number }) {
           <Camera className="absolute inset-0 m-auto size-10 text-white/70" />
         </div>
         <div className="flex h-9 w-32 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
-          ถ่ายรูป
+          {t('ถ่ายรูป')}
         </div>
         <div className="w-full rounded-lg bg-warning/10 px-3 py-2 text-center text-[11px] leading-relaxed text-warning">
-          โปรดถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ
+          {t('โปรดถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ')}
         </div>
       </div>
     )
@@ -121,7 +178,7 @@ function StepPreview({ step }: { step: number }) {
         <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-sm font-extrabold text-primary">
           1669
         </div>
-        <p className="text-sm font-semibold text-navy">กำลังติดต่อเจ้าหน้าที่ 1669</p>
+        <p className="text-sm font-semibold text-ink">{t('กำลังติดต่อเจ้าหน้าที่ 1669')}</p>
         <p className="font-mono text-xs text-muted">00:14</p>
         <div className="flex h-8 items-end gap-1" aria-hidden="true">
           {bars.map((h, i) => (
@@ -146,7 +203,7 @@ function StepPreview({ step }: { step: number }) {
         <div className="h-3 w-5/6 rounded bg-skyblue-light" />
         <div className="h-3 w-2/3 rounded bg-skyblue-light" />
         <div className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white">
-          ส่งข้อมูล
+          {t('ส่งข้อมูล')}
         </div>
       </div>
     )
@@ -159,8 +216,8 @@ function StepPreview({ step }: { step: number }) {
         <div className="absolute left-1/2 top-1/2 flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-emergency text-white shadow-red-glow">
           <Ambulance className="size-5" />
         </div>
-        <div className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-navy shadow-card">
-          ถึงใน 5 นาที
+        <div className="absolute right-2 top-2 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-card">
+          {t('ถึงใน 5 นาที')}
         </div>
       </div>
     )
@@ -171,8 +228,8 @@ function StepPreview({ step }: { step: number }) {
       <div className="flex size-14 items-center justify-center rounded-full bg-skyblue-light text-primary">
         <Hospital className="size-7" />
       </div>
-      <p className="text-sm font-bold text-navy">โรงพยาบาลจุฬาลงกรณ์</p>
-      <p className="text-xs text-muted">ผู้ป่วยถึงแล้ว</p>
+      <p className="text-sm font-bold text-ink">{t('โรงพยาบาลจุฬาลงกรณ์')}</p>
+      <p className="text-xs text-muted">{t('ผู้ป่วยถึงแล้ว')}</p>
       <div className="flex size-10 items-center justify-center rounded-full bg-success text-white animate-scale-in">
         <Check className="size-5" />
       </div>
@@ -182,6 +239,7 @@ function StepPreview({ step }: { step: number }) {
 
 function ConnectionFlow() {
   const [active, setActive] = useState<number | null>(null)
+  const t = useT()
 
   return (
     <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-start sm:gap-1">
@@ -192,18 +250,18 @@ function ConnectionFlow() {
               type="button"
               onClick={() => setActive((a) => (a === i ? null : i))}
               aria-expanded={active === i}
-              aria-label={`${node.label}: ดูรายละเอียดบทบาท`}
+              aria-label={t('{label}: ดูรายละเอียดบทบาท', { label: t(node.label) })}
               className={clsx(
                 'flex min-h-[48px] w-full flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
                 active === i
                   ? 'border-primary bg-skyblue-light shadow-card-lg'
-                  : 'border-border bg-white hover:border-primary/40 hover:shadow-card-lg',
+                  : 'border-border bg-surface hover:border-primary/40 hover:shadow-card-lg',
               )}
             >
               <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 {node.icon}
               </span>
-              <span className="text-xs font-bold text-navy sm:text-sm">{node.label}</span>
+              <span className="text-xs font-bold text-ink sm:text-sm">{t(node.label)}</span>
             </button>
             <div
               className={clsx(
@@ -211,7 +269,7 @@ function ConnectionFlow() {
                 active === i ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0',
               )}
             >
-              <p className="text-xs leading-relaxed text-muted">{node.detail}</p>
+              <p className="text-xs leading-relaxed text-muted">{t(node.detail)}</p>
             </div>
           </div>
           {i < CONNECTION_NODES.length - 1 && (
@@ -228,6 +286,7 @@ function ConnectionFlow() {
 
 function StepIndicator({ step, onSelect }: { step: number; onSelect: (i: number) => void }): ReactNode {
   const activeRef = useRef<HTMLButtonElement>(null)
+  const t = useT()
 
   // On narrow screens this row overflows and scrolls (no-scrollbar hides the
   // native scrollbar for looks) -- without this, advancing past whichever
@@ -249,17 +308,17 @@ function StepIndicator({ step, onSelect }: { step: number; onSelect: (i: number)
                 type="button"
                 onClick={() => onSelect(i)}
                 aria-current={i === step ? 'step' : undefined}
-                aria-label={`ไปยังขั้นตอนที่ ${i + 1}: ${s.title}`}
+                aria-label={t('ไปยังขั้นตอนที่ {n}: {title}', { n: i + 1, title: t(s.title) })}
                 className={clsx(
                   'flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
                   i < step && 'border-primary bg-primary text-white',
                   i === step && 'border-primary bg-primary text-white animate-pulse-glow',
-                  i > step && 'border-border bg-white text-muted hover:border-primary/40',
+                  i > step && 'border-border bg-surface text-muted hover:border-primary/40',
                 )}
               >
                 {i < step ? <Check className="size-5" /> : i + 1}
               </button>
-              <span className="text-center text-[11px] font-medium leading-tight text-navy">{s.title}</span>
+              <span className="text-center text-[11px] font-medium leading-tight text-ink">{t(s.title)}</span>
             </div>
             {i < STEPS.length - 1 && (
               <div
@@ -281,21 +340,22 @@ export default function HowItWorks() {
   const [step, setStep] = useState(0)
   const current = STEPS[step]
   const isLast = step === STEPS.length - 1
+  const t = useT()
 
   return (
-    <AppShell variant="public" title="การทำงานของ ResQ">
+    <AppShell variant="public" title={t('การทำงานของ ResQ')}>
       <section className="relative overflow-hidden px-4 py-14 sm:px-6 sm:py-16">
         <AnimatedBackground variant="howto" />
         <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <h1 className="text-3xl font-extrabold leading-tight text-navy sm:text-4xl">การทำงานของ ResQ</h1>
-          <p className="mt-3 text-muted">เชื่อมต่อทุกการช่วยเหลือ ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล</p>
+          <h1 className="text-3xl font-extrabold leading-tight text-ink sm:text-4xl">{t('การทำงานของ ResQ')}</h1>
+          <p className="mt-3 text-muted">{t('เชื่อมต่อทุกการช่วยเหลือ ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล')}</p>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-8 sm:px-6">
         <StepIndicator step={step} onSelect={setStep} />
         <p className="mt-4 text-center text-sm font-semibold text-muted">
-          ขั้นตอนที่ {step + 1} จาก {STEPS.length}
+          {t('ขั้นตอนที่ {n} จาก {total}', { n: step + 1, total: STEPS.length })}
         </p>
       </section>
 
@@ -303,28 +363,28 @@ export default function HowItWorks() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center lg:gap-10">
           <div>
             <span className="inline-flex items-center rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-              ขั้นตอนที่ {step + 1}
+              {t('ขั้นตอนที่ {n}', { n: step + 1 })}
             </span>
-            <h2 className="mt-3 text-2xl font-extrabold text-navy">{current.title}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted">{current.description}</p>
+            <h2 className="mt-3 text-2xl font-extrabold text-ink">{t(current.title)}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{t(current.description)}</p>
             <div className="mt-4 rounded-xl border border-border bg-skyblue-pale/60 p-4">
-              <p className="text-xs font-bold text-primary">การดำเนินการ</p>
-              <p className="mt-1 text-sm font-medium text-navy">{current.action}</p>
+              <p className="text-xs font-bold text-primary">{t('การดำเนินการ')}</p>
+              <p className="mt-1 text-sm font-medium text-ink">{t(current.action)}</p>
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {step > 0 && (
                 <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
-                  ขั้นตอนก่อนหน้า
+                  {t('ขั้นตอนก่อนหน้า')}
                 </Button>
               )}
               {isLast ? (
                 <Button variant="primary" onClick={() => navigate('/')}>
-                  เริ่มต้นใช้งาน
+                  {t('เริ่มต้นใช้งาน')}
                 </Button>
               ) : (
                 <Button variant="primary" onClick={() => setStep((s) => s + 1)}>
-                  ขั้นตอนถัดไป
+                  {t('ขั้นตอนถัดไป')}
                 </Button>
               )}
               <Button
@@ -333,14 +393,14 @@ export default function HowItWorks() {
                 onClick={() => navigate('/public/emergency-photo')}
                 icon={<PhoneCall className="size-4" />}
               >
-                ติดต่อเจ้าหน้าที่
+                {t('ติดต่อเจ้าหน้าที่')}
               </Button>
             </div>
           </div>
 
           <div
             key={step}
-            className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-3xl border border-border bg-white p-6 shadow-card animate-fade-in"
+            className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-3xl border border-border bg-surface p-6 shadow-card animate-fade-in"
           >
             <StepPreview step={step} />
           </div>
@@ -349,8 +409,8 @@ export default function HowItWorks() {
 
       <section className="bg-skyblue-pale/60 px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-xl font-bold text-navy sm:text-2xl">การเชื่อมต่อทุกฝ่ายในระบบ ResQ</h2>
-          <p className="mt-2 text-center text-sm text-muted">กดที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่าย</p>
+          <h2 className="text-center text-xl font-bold text-ink sm:text-2xl">{t('การเชื่อมต่อทุกฝ่ายในระบบ ResQ')}</h2>
+          <p className="mt-2 text-center text-sm text-muted">{t('กดที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่าย')}</p>
           <div className="mt-8">
             <ConnectionFlow />
           </div>

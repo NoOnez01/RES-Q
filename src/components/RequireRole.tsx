@@ -3,6 +3,11 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { LoadingState } from '@/components/States'
 import type { Role } from '@/lib/types'
+import { t, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'กำลังตรวจสอบสิทธิ์การเข้าถึง...': 'Checking access permissions...',
+})
 
 /**
  * Guards a dispatch/rescue/hospital-only route. Without this, App.tsx had no
@@ -26,7 +31,7 @@ export function RequireRole({ role, children }: { role: Role | Role[]; children:
   const location = useLocation()
 
   if (!authResolved) {
-    return <LoadingState label="กำลังตรวจสอบสิทธิ์การเข้าถึง..." />
+    return <LoadingState label={t('กำลังตรวจสอบสิทธิ์การเข้าถึง...')} />
   }
 
   const allowedRoles = Array.isArray(role) ? role : [role]

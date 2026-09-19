@@ -9,6 +9,18 @@ import { Input } from '@/components/ui/Field'
 import { useStore } from '@/lib/store'
 import { formatDateTime } from '@/lib/utils'
 import type { EmergencyCase, Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003': 'Search by case number, e.g. RQ-2026-003',
+  ไม่พบเคสที่ค้นหา: 'No matching case found',
+  'ไม่พบเคสที่ตรงกับ "{query}"': 'No case matches "{query}"',
+  ซ่อนรายละเอียดเพิ่มเติม: 'Hide more details',
+  แสดงรายละเอียดเพิ่มเติม: 'Show more details',
+  รายละเอียดเพิ่มเติม: 'More details',
+  'จำนวนขั้นตอนในไทม์ไลน์: {n} ขั้นตอน': 'Timeline steps: {n}',
+  'อัปเดตล่าสุด: {date}': 'Last updated: {date}',
+})
 
 function caseRouteForRole(role: Role | undefined, caseId: string): string {
   switch (role) {
@@ -51,6 +63,7 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
   const viewingRole = useStore((s) => s.viewingRole)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const t = useT()
 
   const effectiveRole = currentUser?.isAdmin && viewingRole ? viewingRole : (currentUser?.role ?? null)
 
@@ -82,14 +95,14 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003"
+                placeholder={t('ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003')}
                 className="pl-11"
               />
             </div>
           )}
           {visibleCases.length === 0 ? (
             trimmedQuery ? (
-              <EmptyState title="ไม่พบเคสที่ค้นหา" description={`ไม่พบเคสที่ตรงกับ "${query.trim()}"`} />
+              <EmptyState title={t('ไม่พบเคสที่ค้นหา')} description={t('ไม่พบเคสที่ตรงกับ "{query}"', { query: query.trim() })} />
             ) : (
               <EmptyState title={emptyTitle} description={emptyDescription} />
             )
@@ -110,22 +123,22 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
                         <button
                           type="button"
                           aria-expanded={expanded}
-                          aria-label={expanded ? 'ซ่อนรายละเอียดเพิ่มเติม' : 'แสดงรายละเอียดเพิ่มเติม'}
+                          aria-label={expanded ? t('ซ่อนรายละเอียดเพิ่มเติม') : t('แสดงรายละเอียดเพิ่มเติม')}
                           onClick={(e) => {
                             e.stopPropagation()
                             setExpandedId(expanded ? null : c.id)
                           }}
-                          className="inline-flex min-h-[48px] items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-navy transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30"
+                          className="inline-flex min-h-[48px] items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30"
                         >
-                          รายละเอียดเพิ่มเติม
+                          {t('รายละเอียดเพิ่มเติม')}
                           <ChevronDown className={clsx('size-4 transition-transform', expanded && 'rotate-180')} />
                         </button>
                       }
                     />
                     {expanded && (
-                      <div className="animate-fade-in-up rounded-xl border border-border bg-white p-4 text-sm text-muted">
-                        <p>จำนวนขั้นตอนในไทม์ไลน์: {c.timeline.length} ขั้นตอน</p>
-                        <p className="mt-1">อัปเดตล่าสุด: {formatDateTime(c.updatedAt)}</p>
+                      <div className="animate-fade-in-up rounded-xl border border-border bg-surface p-4 text-sm text-muted">
+                        <p>{t('จำนวนขั้นตอนในไทม์ไลน์: {n} ขั้นตอน', { n: c.timeline.length })}</p>
+                        <p className="mt-1">{t('อัปเดตล่าสุด: {date}', { date: formatDateTime(c.updatedAt) })}</p>
                       </div>
                     )}
                   </div>

@@ -11,6 +11,33 @@ import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/
 import { useStore } from '@/lib/store'
 import { fetchAllIdemUnits, estimateUnitDistanceKm, unitHasLevel, STAFF_CERTIFICATION_FIELDS, type IdemUnit } from '@/lib/idemUnits'
 import { VEHICLE_LEVEL_RANK, type VehicleLevel } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'ระยะทางโดยประมาณระดับจังหวัด': '(province-level estimate)',
+  ไม่มีข้อมูลรถพยาบาล: 'No ambulance data',
+  'กม.': 'km',
+  'ค้นหาหน่วยปฏิบัติการ (NDEMS)': 'Search units (NDEMS)',
+  ค้นหาหน่วยปฏิบัติการทั่วประเทศ: 'Search units nationwide',
+  'ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก':
+    'Unit directory from the NDEMS system — search by name or code, filter by province or vehicle level, and sort by estimated distance from the selected case',
+  'ค้นหาด้วยชื่อหน่วย รหัสหน่วย หรือจังหวัด': 'Search by unit name, unit code, or province',
+  'กรองตามระดับรถ (เลือกได้หลายระดับ)': 'Filter by vehicle level (multiple allowed)',
+  'กรองตามจังหวัด (ไม่บังคับ)': 'Filter by province (optional)',
+  พิมพ์ชื่อจังหวัดเพื่อค้นหา: 'Type a province name to search',
+  ไม่พบจังหวัดที่ค้นหา: 'No matching province found',
+  ทุกจังหวัด: 'All provinces',
+  'คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)': 'Estimate distance from a case (optional)',
+  ยังไม่มีเคสที่มีตำแหน่งให้อ้างอิง: 'No case with a location to reference yet',
+  'ไม่ระบุ (เรียงตามชื่อหน่วย)': 'Unspecified (sort by unit name)',
+  'กำลังโหลดทำเนียบหน่วยปฏิบัติการ...': 'Loading the unit directory...',
+  โหลดข้อมูลไม่สำเร็จ: 'Failed to load data',
+  'ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการจาก Supabase ได้ กรุณาลองใหม่อีกครั้ง': 'Could not load the unit directory from Supabase. Please try again.',
+  ไม่พบหน่วยปฏิบัติการที่ค้นหา: 'No matching units found',
+  ลองปรับคำค้นหาหรือตัวกรองระดับรถ: 'Try adjusting your search or vehicle-level filter',
+  'พบ {n} หน่วย': 'Found {n} units',
+  '— แสดง {n} หน่วยแรก': '— showing the first {n}',
+})
 
 const RESULT_LIMIT = 60
 
@@ -18,17 +45,18 @@ function UnitCard({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | n
   const staffCerts = STAFF_CERTIFICATION_FIELDS.map((f) => ({ ...f, count: unit[f.key] as number | null })).filter(
     (f) => f.count && f.count > 0,
   )
+  const t = useT()
 
   return (
     <Card className="flex flex-col gap-3 animate-fade-in-up">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-bold text-navy">{unit.unitName || unit.unitCode}</p>
+          <p className="truncate font-bold text-ink">{unit.unitName || unit.unitCode}</p>
           <p className="text-xs text-muted">{unit.unitCode}</p>
         </div>
         {distanceKm !== null && (
           <div className="flex shrink-0 items-center gap-1 rounded-full bg-skyblue-light px-2.5 py-1 text-xs font-bold text-primary">
-            <NavigationIcon className="size-3" />~{distanceKm < 10 ? distanceKm.toFixed(1) : Math.round(distanceKm)} กม.
+            <NavigationIcon className="size-3" />~{distanceKm < 10 ? distanceKm.toFixed(1) : Math.round(distanceKm)} {t('กม.')}
           </div>
         )}
       </div>
@@ -37,7 +65,7 @@ function UnitCard({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | n
         <p className="flex items-center gap-1.5 text-xs text-muted">
           <MapPin className="size-3.5 shrink-0" />
           {unit.province}
-          {distanceKm !== null && <span className="text-muted/70">(ระยะทางโดยประมาณระดับจังหวัด)</span>}
+          {distanceKm !== null && <span className="text-muted/70">{t('ระยะทางโดยประมาณระดับจังหวัด')}</span>}
         </p>
       )}
 
@@ -48,7 +76,7 @@ function UnitCard({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | n
             <VehicleLevelBadge key={lvl} level={lvl} />
           ))}
         {!unitHasLevel(unit, 'CLS') && !unitHasLevel(unit, 'ALS') && !unitHasLevel(unit, 'BLS') && (
-          <span className="text-xs text-muted">ไม่มีข้อมูลรถพยาบาล</span>
+          <span className="text-xs text-muted">{t('ไม่มีข้อมูลรถพยาบาล')}</span>
         )}
       </div>
 
@@ -57,7 +85,7 @@ function UnitCard({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | n
           <Users className="size-3.5 shrink-0 translate-y-0.5 text-primary" />
           {staffCerts.map((f) => (
             <span key={f.label}>
-              {f.label} <span className="font-bold text-navy">{f.count}</span>
+              {f.label} <span className="font-bold text-ink">{f.count}</span>
             </span>
           ))}
         </div>
@@ -78,6 +106,7 @@ export default function DispatchUnitSearch() {
   const [levelFilters, setLevelFilters] = useState<Set<VehicleLevel>>(new Set())
   const [provinceFilter, setProvinceFilter] = useState('')
   const [referenceCaseId, setReferenceCaseId] = useState(searchParams.get('caseId') ?? '')
+  const t = useT()
 
   useEffect(() => {
     let cancelled = false
@@ -155,15 +184,14 @@ export default function DispatchUnitSearch() {
   const visibleResults = results.slice(0, RESULT_LIMIT)
 
   return (
-    <AppShell variant="dashboard" title="ค้นหาหน่วยปฏิบัติการ (NDEMS)">
+    <AppShell variant="dashboard" title={t('ค้นหาหน่วยปฏิบัติการ (NDEMS)')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-navy">ค้นหาหน่วยปฏิบัติการทั่วประเทศ</h1>
+            <h1 className="text-xl font-bold text-ink">{t('ค้นหาหน่วยปฏิบัติการทั่วประเทศ')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ
-              และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก
+              {t('ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก')}
             </p>
           </div>
 
@@ -173,13 +201,13 @@ export default function DispatchUnitSearch() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="ค้นหาด้วยชื่อหน่วย รหัสหน่วย หรือจังหวัด"
+                placeholder={t('ค้นหาด้วยชื่อหน่วย รหัสหน่วย หรือจังหวัด')}
                 className="pl-11"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold text-navy">กรองตามระดับรถ (เลือกได้หลายระดับ)</p>
+              <p className="text-xs font-semibold text-ink">{t('กรองตามระดับรถ (เลือกได้หลายระดับ)')}</p>
               <div className="flex gap-2">
                 {VEHICLE_LEVEL_RANK.map((lvl) => (
                   <button
@@ -190,7 +218,7 @@ export default function DispatchUnitSearch() {
                       'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
                       levelFilters.has(lvl)
                         ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
-                        : 'border-border bg-white text-muted hover:border-primary/40',
+                        : 'border-border bg-surface text-muted hover:border-primary/40',
                     )}
                   >
                     {lvl}
@@ -200,21 +228,21 @@ export default function DispatchUnitSearch() {
             </div>
 
             <SearchableSelect
-              label="กรองตามจังหวัด (ไม่บังคับ)"
+              label={t('กรองตามจังหวัด (ไม่บังคับ)')}
               value={provinceFilter}
               onChange={setProvinceFilter}
-              placeholder="พิมพ์ชื่อจังหวัดเพื่อค้นหา"
-              emptyLabel="ไม่พบจังหวัดที่ค้นหา"
-              options={[{ value: '', label: 'ทุกจังหวัด' }, ...provinceOptions.map((p) => ({ value: p, label: p }))]}
+              placeholder={t('พิมพ์ชื่อจังหวัดเพื่อค้นหา')}
+              emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
+              options={[{ value: '', label: t('ทุกจังหวัด') }, ...provinceOptions.map((p) => ({ value: p, label: p }))]}
             />
 
             <Select
-              label="คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)"
+              label={t('คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)')}
               value={referenceCaseId}
               onChange={(e) => setReferenceCaseId(e.target.value)}
-              hint={casesWithLocation.length === 0 ? 'ยังไม่มีเคสที่มีตำแหน่งให้อ้างอิง' : undefined}
+              hint={casesWithLocation.length === 0 ? t('ยังไม่มีเคสที่มีตำแหน่งให้อ้างอิง') : undefined}
             >
-              <option value="">ไม่ระบุ (เรียงตามชื่อหน่วย)</option>
+              <option value="">{t('ไม่ระบุ (เรียงตามชื่อหน่วย)')}</option>
               {casesWithLocation.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.caseNumber} — {c.location?.address}
@@ -224,24 +252,24 @@ export default function DispatchUnitSearch() {
           </Card>
 
           {loading ? (
-            <LoadingState label="กำลังโหลดทำเนียบหน่วยปฏิบัติการ..." />
+            <LoadingState label={t('กำลังโหลดทำเนียบหน่วยปฏิบัติการ...')} />
           ) : loadError ? (
             <ErrorState
-              title="โหลดข้อมูลไม่สำเร็จ"
-              description="ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการจาก Supabase ได้ กรุณาลองใหม่อีกครั้ง"
+              title={t('โหลดข้อมูลไม่สำเร็จ')}
+              description={t('ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการจาก Supabase ได้ กรุณาลองใหม่อีกครั้ง')}
               onRetry={() => window.location.reload()}
             />
           ) : results.length === 0 ? (
             <EmptyState
               icon={<Building2 className="size-6" />}
-              title="ไม่พบหน่วยปฏิบัติการที่ค้นหา"
-              description="ลองปรับคำค้นหาหรือตัวกรองระดับรถ"
+              title={t('ไม่พบหน่วยปฏิบัติการที่ค้นหา')}
+              description={t('ลองปรับคำค้นหาหรือตัวกรองระดับรถ')}
             />
           ) : (
             <>
               <p className="text-xs text-muted">
-                พบ {results.length.toLocaleString('th-TH')} หน่วย
-                {results.length > RESULT_LIMIT && ` — แสดง ${RESULT_LIMIT} หน่วยแรก`}
+                {t('พบ {n} หน่วย', { n: results.length.toLocaleString('th-TH') })}
+                {results.length > RESULT_LIMIT && ` ${t('— แสดง {n} หน่วยแรก', { n: RESULT_LIMIT })}`}
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleResults.map(({ unit, distanceKm }) => (

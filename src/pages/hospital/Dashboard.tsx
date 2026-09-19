@@ -14,6 +14,43 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  แดชบอร์ดโรงพยาบาล: 'Hospital dashboard',
+  เปิดรับเคสแล้ว: 'Now accepting cases',
+  ปิดรับเคสชั่วคราวแล้ว: 'Temporarily not accepting cases',
+  โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม: 'The hospital is ready to receive more patients',
+  หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่: 'Rescue teams and the dispatch center will see this hospital as not ready for new cases',
+  ปฏิเสธเคสแล้ว: 'Case rejected',
+  ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว: 'The rescue team has been told to choose a different hospital',
+  เปิดรับเคส: 'Accepting cases',
+  ปิดรับเคสชั่วคราว: 'Not accepting cases',
+  หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้: 'Rescue teams and the dispatch center can send patients here',
+  ปิดรับเคส: 'Stop accepting',
+  ห้องฉุกเฉิน: 'Emergency room',
+  ทีมแพทย์: 'Medical team',
+  เตียงว่าง: 'Beds available',
+  '{n} เตียง': '{n} beds',
+  กำลังนำส่ง: 'In transit',
+  รอยืนยันรับผู้ป่วย: 'Awaiting patient confirmation',
+  เสร็จสิ้นแล้ว: 'Completed',
+  ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล: 'No patients sent to this hospital yet',
+  'เมื่อมีเคสเลือกส่งตัวมาที่โรงพยาบาล รายการจะแสดงที่นี่': 'Once a case selects this hospital, it will appear here',
+  ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้: 'No patients currently in transit',
+  ปฏิเสธเคส: 'Reject case',
+  รับเคส: 'Accept case',
+  ไม่มีผู้ป่วยรอการยืนยันรับตัว: 'No patients awaiting admission confirmation',
+  ยืนยันรับผู้ป่วย: 'Confirm patient admission',
+  ยังไม่มีเคสที่เสร็จสิ้น: 'No completed cases yet',
+  สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา: 'Severity distribution of incoming patients',
+  ยืนยันการปฏิเสธเคส: 'Confirm rejecting this case',
+  'คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่':
+    'Do you want to reject case {caseNumber}? The rescue team will be told to choose a different hospital.',
+  ยืนยันปฏิเสธ: 'Confirm rejection',
+  พร้อม: 'Ready',
+  ตึงมือ: 'Busy',
+})
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 
@@ -27,6 +64,7 @@ export default function HospitalDashboard() {
   const hospitalRejectCase = useStore((s) => s.hospitalRejectCase)
   const navigate = useNavigate()
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null)
+  const t = useT()
 
   // Same reasoning as rescue/Dashboard.tsx: a no-op for a real hospital
   // account (RLS already scoped it), but closes the gap for an admin whose
@@ -63,8 +101,8 @@ export default function HospitalDashboard() {
     const next = !hospitalAcceptingCases
     setHospitalAcceptingCases(next)
     toast({
-      title: next ? 'เปิดรับเคสแล้ว' : 'ปิดรับเคสชั่วคราวแล้ว',
-      message: next ? 'โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม' : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่',
+      title: next ? t('เปิดรับเคสแล้ว') : t('ปิดรับเคสชั่วคราวแล้ว'),
+      message: next ? t('โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม') : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'),
       tone: next ? 'success' : 'warning',
     })
   }
@@ -72,12 +110,12 @@ export default function HospitalDashboard() {
   function handleConfirmReject() {
     if (!rejectTargetId) return
     hospitalRejectCase(rejectTargetId)
-    toast({ title: 'ปฏิเสธเคสแล้ว', message: 'ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว', tone: 'warning' })
+    toast({ title: t('ปฏิเสธเคสแล้ว'), message: t('ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว'), tone: 'warning' })
     setRejectTargetId(null)
   }
 
   return (
-    <AppShell variant="dashboard" title="แดชบอร์ดโรงพยาบาล">
+    <AppShell variant="dashboard" title={t('แดชบอร์ดโรงพยาบาล')}>
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10">
@@ -90,31 +128,31 @@ export default function HospitalDashboard() {
                   <DoorClosed className="size-5 shrink-0 text-emergency" />
                 )}
                 <div>
-                  <p className="text-sm font-bold text-navy">
-                    {hospitalAcceptingCases ? 'เปิดรับเคส' : 'ปิดรับเคสชั่วคราว'}
+                  <p className="text-sm font-bold text-ink">
+                    {hospitalAcceptingCases ? t('เปิดรับเคส') : t('ปิดรับเคสชั่วคราว')}
                   </p>
                   <p className="text-xs text-muted">
                     {hospitalAcceptingCases
-                      ? 'หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้'
-                      : 'หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'}
+                      ? t('หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้')
+                      : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่')}
                   </p>
                 </div>
               </div>
               <Button size="sm" variant={hospitalAcceptingCases ? 'danger' : 'success'} onClick={handleToggleAccepting}>
-                {hospitalAcceptingCases ? 'ปิดรับเคส' : 'เปิดรับเคส'}
+                {hospitalAcceptingCases ? t('ปิดรับเคส') : t('เปิดรับเคส')}
               </Button>
             </div>
 
             <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6">
-              <ReadinessChip icon={<Building2 className="size-4" />} label="ห้องฉุกเฉิน" ready={erReady} />
-              <ReadinessChip icon={<Users className="size-4" />} label="ทีมแพทย์" ready={teamReady} />
+              <ReadinessChip icon={<Building2 className="size-4" />} label={t('ห้องฉุกเฉิน')} ready={erReady} />
+              <ReadinessChip icon={<Users className="size-4" />} label={t('ทีมแพทย์')} ready={teamReady} />
               <div className="flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-1.5 text-sm font-semibold text-navy">
-                    <BedDouble className="size-4 text-primary" /> เตียงว่าง
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                    <BedDouble className="size-4 text-primary" /> {t('เตียงว่าง')}
                   </span>
                   <span key={bedsRemaining} className="text-sm font-bold text-primary animate-count-pop">
-                    {bedsRemaining} เตียง
+                    {t('{n} เตียง', { n: bedsRemaining })}
                   </span>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-border">
@@ -129,7 +167,7 @@ export default function HospitalDashboard() {
 
           <StatBar>
             <StatItem
-              label="กำลังนำส่ง"
+              label={t('กำลังนำส่ง')}
               value={
                 <span key={transportingCases.length} className="inline-block animate-count-pop">
                   {transportingCases.length}
@@ -139,7 +177,7 @@ export default function HospitalDashboard() {
               tone="primary"
             />
             <StatItem
-              label="รอยืนยันรับผู้ป่วย"
+              label={t('รอยืนยันรับผู้ป่วย')}
               value={
                 <span key={arrivedCases.length} className="inline-block animate-count-pop">
                   {arrivedCases.length}
@@ -149,7 +187,7 @@ export default function HospitalDashboard() {
               tone="warning"
             />
             <StatItem
-              label="เสร็จสิ้นแล้ว"
+              label={t('เสร็จสิ้นแล้ว')}
               value={
                 <span key={doneCases.length} className="inline-block animate-count-pop">
                   {doneCases.length}
@@ -164,16 +202,16 @@ export default function HospitalDashboard() {
             <div className="mt-8">
               <EmptyState
                 icon={<Building2 className="size-6" />}
-                title="ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล"
-                description="เมื่อมีเคสเลือกส่งตัวมาที่โรงพยาบาล รายการจะแสดงที่นี่"
+                title={t('ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล')}
+                description={t('เมื่อมีเคสเลือกส่งตัวมาที่โรงพยาบาล รายการจะแสดงที่นี่')}
               />
             </div>
           ) : (
             <div className="mt-8 flex flex-col gap-8">
               <section>
-                <h2 className="mb-4 text-lg font-bold text-navy">กำลังนำส่ง</h2>
+                <h2 className="mb-4 text-lg font-bold text-ink">{t('กำลังนำส่ง')}</h2>
                 {transportingCases.length === 0 ? (
-                  <p className="text-sm text-muted">ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้</p>
+                  <p className="text-sm text-muted">{t('ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้')}</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {transportingCases.map((c, i) => (
@@ -196,7 +234,7 @@ export default function HospitalDashboard() {
                                   setRejectTargetId(c.id)
                                 }}
                               >
-                                ปฏิเสธเคส
+                                {t('ปฏิเสธเคส')}
                               </Button>
                               <Button
                                 size="sm"
@@ -205,7 +243,7 @@ export default function HospitalDashboard() {
                                   navigate(`/hospital/case/${c.id}`)
                                 }}
                               >
-                                รับเคส
+                                {t('รับเคส')}
                               </Button>
                             </div>
                           }
@@ -217,9 +255,9 @@ export default function HospitalDashboard() {
               </section>
 
               <section>
-                <h2 className="mb-4 text-lg font-bold text-navy">รอยืนยันรับผู้ป่วย</h2>
+                <h2 className="mb-4 text-lg font-bold text-ink">{t('รอยืนยันรับผู้ป่วย')}</h2>
                 {arrivedCases.length === 0 ? (
-                  <p className="text-sm text-muted">ไม่มีผู้ป่วยรอการยืนยันรับตัว</p>
+                  <p className="text-sm text-muted">{t('ไม่มีผู้ป่วยรอการยืนยันรับตัว')}</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {arrivedCases.map((c, i) => (
@@ -242,7 +280,7 @@ export default function HospitalDashboard() {
                                   setRejectTargetId(c.id)
                                 }}
                               >
-                                ปฏิเสธเคส
+                                {t('ปฏิเสธเคส')}
                               </Button>
                               <Button
                                 size="sm"
@@ -251,7 +289,7 @@ export default function HospitalDashboard() {
                                   navigate(`/hospital/case/${c.id}`)
                                 }}
                               >
-                                ยืนยันรับผู้ป่วย
+                                {t('ยืนยันรับผู้ป่วย')}
                               </Button>
                             </div>
                           }
@@ -263,9 +301,9 @@ export default function HospitalDashboard() {
               </section>
 
               <section>
-                <h2 className="mb-4 text-lg font-bold text-navy">เสร็จสิ้นแล้ว</h2>
+                <h2 className="mb-4 text-lg font-bold text-ink">{t('เสร็จสิ้นแล้ว')}</h2>
                 {doneCases.length === 0 ? (
-                  <p className="text-sm text-muted">ยังไม่มีเคสที่เสร็จสิ้น</p>
+                  <p className="text-sm text-muted">{t('ยังไม่มีเคสที่เสร็จสิ้น')}</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {doneCases.map((c, i) => (
@@ -285,7 +323,7 @@ export default function HospitalDashboard() {
 
           <div className="mt-8">
             <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title="สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา" cases={hospitalCases} />
+              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา')} cases={hospitalCases} />
             </Suspense>
           </div>
         </div>
@@ -293,9 +331,11 @@ export default function HospitalDashboard() {
 
       <ConfirmationModal
         open={!!rejectTargetId}
-        title="ยืนยันการปฏิเสธเคส"
-        message={`คุณต้องการปฏิเสธเคส ${rejectTargetId ? (cases[rejectTargetId]?.caseNumber ?? '') : ''} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่`}
-        confirmLabel="ยืนยันปฏิเสธ"
+        title={t('ยืนยันการปฏิเสธเคส')}
+        message={t('คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่', {
+          caseNumber: rejectTargetId ? (cases[rejectTargetId]?.caseNumber ?? '') : '',
+        })}
+        confirmLabel={t('ยืนยันปฏิเสธ')}
         tone="danger"
         onConfirm={handleConfirmReject}
         onCancel={() => setRejectTargetId(null)}
@@ -305,14 +345,15 @@ export default function HospitalDashboard() {
 }
 
 function ReadinessChip({ icon, label, ready }: { icon: React.ReactNode; label: string; ready: boolean }) {
+  const t = useT()
   return (
     <div className="flex flex-1 items-center justify-between gap-2">
-      <span className="flex items-center gap-1.5 text-sm font-semibold text-navy">
+      <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
         {icon} {label}
       </span>
       <span className={clsx('flex items-center gap-1.5 text-xs font-bold', ready ? 'text-success' : 'text-warning')}>
         {ready && <PulseRing tone="success" size="sm" />}
-        {ready ? 'พร้อม' : 'ตึงมือ'}
+        {ready ? t('พร้อม') : t('ตึงมือ')}
       </span>
     </div>
   )

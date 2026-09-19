@@ -7,6 +7,18 @@ import { supabase } from '@/lib/supabase'
 import { ensureSocialProfile } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import type { Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  'เชื่อมต่อ Google สำเร็จ': 'Google linked successfully',
+  เข้าสู่ระบบสำเร็จ: 'Logged in successfully',
+  'ยินดีต้อนรับ {name}': 'Welcome, {name}',
+  เข้าสู่ระบบ: 'Log in',
+  เข้าสู่ระบบไม่สำเร็จ: 'Login failed',
+  'ไม่สามารถยืนยันการเข้าสู่ระบบด้วย Google ได้ กรุณาลองอีกครั้ง': 'Could not confirm login with Google. Please try again.',
+  กลับไปเข้าสู่ระบบ: 'Back to login',
+  'กำลังเข้าสู่ระบบ...': 'Logging in...',
+})
 
 const ROLE_PATH: Record<Role, string> = {
   public: '/',
@@ -28,6 +40,7 @@ export default function AuthCallback() {
   const setUser = useStore((s) => s.setUser)
   const [failed, setFailed] = useState(false)
   const settledRef = useRef(false)
+  const t = useT()
 
   useEffect(() => {
     if (!supabase) {
@@ -53,10 +66,10 @@ export default function AuthCallback() {
         }
         setUser(profile)
         if (isLinking) {
-          toast({ title: 'เชื่อมต่อ Google สำเร็จ', tone: 'success' })
+          toast({ title: t('เชื่อมต่อ Google สำเร็จ'), tone: 'success' })
           navigate('/settings', { replace: true })
         } else {
-          toast({ title: 'เข้าสู่ระบบสำเร็จ', message: `ยินดีต้อนรับ ${profile.name}`, tone: 'success' })
+          toast({ title: t('เข้าสู่ระบบสำเร็จ'), message: t('ยินดีต้อนรับ {name}', { name: profile.name }), tone: 'success' })
           navigate(ROLE_PATH[profile.role], { replace: true })
         }
       } catch {
@@ -89,16 +102,16 @@ export default function AuthCallback() {
   }, [navigate, setUser])
 
   return (
-    <AppShell variant="flow" title="เข้าสู่ระบบ">
+    <AppShell variant="flow" title={t('เข้าสู่ระบบ')}>
       {failed ? (
         <ErrorState
-          title="เข้าสู่ระบบไม่สำเร็จ"
-          description="ไม่สามารถยืนยันการเข้าสู่ระบบด้วย Google ได้ กรุณาลองอีกครั้ง"
+          title={t('เข้าสู่ระบบไม่สำเร็จ')}
+          description={t('ไม่สามารถยืนยันการเข้าสู่ระบบด้วย Google ได้ กรุณาลองอีกครั้ง')}
           onRetry={() => navigate('/login')}
-          retryLabel="กลับไปเข้าสู่ระบบ"
+          retryLabel={t('กลับไปเข้าสู่ระบบ')}
         />
       ) : (
-        <LoadingState label="กำลังเข้าสู่ระบบ..." />
+        <LoadingState label={t('กำลังเข้าสู่ระบบ...')} />
       )}
     </AppShell>
   )

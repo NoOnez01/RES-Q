@@ -17,6 +17,41 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { AppUser, Role } from '@/lib/types'
 import { UserCheck, CheckCircle2, XCircle, ShieldCheck, ShieldOff, Crown } from 'lucide-react'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ตั้งเป็นแอดมินแล้ว: 'Made an admin',
+  ถอดสิทธิ์แอดมินแล้ว: 'Admin access removed',
+  ดำเนินการไม่สำเร็จ: 'Action failed',
+  อนุมัติบัญชีแล้ว: 'Account approved',
+  '{name} เข้าใช้งานได้แล้ว': '{name} can now log in',
+  อนุมัติไม่สำเร็จ: 'Approval failed',
+  ตั้งเป็นหัวหน้าหน่วยงานแล้ว: 'Made an org lead',
+  ถอดสิทธิ์หัวหน้าหน่วยงานแล้ว: 'Org lead access removed',
+  ปฏิเสธบัญชีแล้ว: 'Account rejected',
+  บัญชีรออนุมัติ: 'Pending accounts',
+  ไม่มีบัญชีรออนุมัติ: 'No pending accounts',
+  'คำขอสมัครสมาชิกใหม่จากหน่วยกู้ชีพ โรงพยาบาล หรือศูนย์สั่งการ จะแสดงที่นี่':
+    'New sign-up requests from rescue teams, hospitals, or dispatch centers will appear here',
+  ปฏิเสธ: 'Reject',
+  อนุมัติ: 'Approve',
+  'ตั้งเป็นหัวหน้าหน่วยงาน (อนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้เอง)': 'Make an org lead (can approve new members of the same org themselves)',
+  จัดการสิทธิ์แอดมิน: 'Manage admin access',
+  ยังไม่มีบัญชีที่อนุมัติแล้ว: 'No approved accounts yet',
+  'บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่':
+    'Approved dispatch, rescue team, or hospital accounts will appear here',
+  แอดมิน: 'Admin',
+  ถอดสิทธิ์แอดมิน: 'Remove admin access',
+  ตั้งเป็นแอดมิน: 'Make admin',
+  จัดการหัวหน้าหน่วยงาน: 'Manage org leads',
+  'ยังไม่มีบัญชีหน่วยกู้ชีพ/โรงพยาบาลที่อนุมัติแล้ว': 'No approved rescue team/hospital accounts yet',
+  บัญชีหน่วยกู้ชีพหรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่: 'Approved rescue team or hospital accounts will appear here',
+  หัวหน้าหน่วยงาน: 'Org lead',
+  ถอดสิทธิ์หัวหน้าหน่วยงาน: 'Remove org lead access',
+  ยืนยันการปฏิเสธบัญชี: 'Confirm rejecting this account',
+  'คุณต้องการปฏิเสธบัญชี "{name}" หรือไม่': 'Reject the account "{name}"?',
+  ยืนยันปฏิเสธ: 'Confirm rejection',
+})
 
 const ROLE_LABEL: Record<Role, string> = {
   public: 'ประชาชน',
@@ -47,6 +82,7 @@ export default function DispatchPendingApprovals() {
   }
   const [rejectTarget, setRejectTarget] = useState<AppUser | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const t = useT()
 
   async function reload() {
     setAccounts(await fetchPendingAccounts())
@@ -67,14 +103,14 @@ export default function DispatchPendingApprovals() {
     try {
       await setAdminStatus(user.id, isAdmin)
       toast({
-        title: isAdmin ? 'ตั้งเป็นแอดมินแล้ว' : 'ถอดสิทธิ์แอดมินแล้ว',
+        title: isAdmin ? t('ตั้งเป็นแอดมินแล้ว') : t('ถอดสิทธิ์แอดมินแล้ว'),
         message: user.name,
         tone: 'success',
       })
       await reloadStaff()
     } catch (err) {
       console.error('Action failed:', err)
-      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('ดำเนินการไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setAdminBusyId(null)
     }
@@ -84,12 +120,12 @@ export default function DispatchPendingApprovals() {
     setBusyId(user.id)
     try {
       await approveAccount(user.id, approveAsLead.has(user.id))
-      toast({ title: 'อนุมัติบัญชีแล้ว', message: `${user.name} เข้าใช้งานได้แล้ว`, tone: 'success' })
+      toast({ title: t('อนุมัติบัญชีแล้ว'), message: t('{name} เข้าใช้งานได้แล้ว', { name: user.name }), tone: 'success' })
       await reload()
       await reloadStaff()
     } catch (err) {
       console.error('Approve account failed:', err)
-      toast({ title: 'อนุมัติไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('อนุมัติไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setBusyId(null)
     }
@@ -109,14 +145,14 @@ export default function DispatchPendingApprovals() {
     try {
       await setOrgLeadStatus(user.id, isOrgLead)
       toast({
-        title: isOrgLead ? 'ตั้งเป็นหัวหน้าหน่วยงานแล้ว' : 'ถอดสิทธิ์หัวหน้าหน่วยงานแล้ว',
+        title: isOrgLead ? t('ตั้งเป็นหัวหน้าหน่วยงานแล้ว') : t('ถอดสิทธิ์หัวหน้าหน่วยงานแล้ว'),
         message: user.name,
         tone: 'success',
       })
       await reloadStaff()
     } catch (err) {
       console.error('Action failed:', err)
-      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('ดำเนินการไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setOrgLeadBusyId(null)
     }
@@ -127,11 +163,11 @@ export default function DispatchPendingApprovals() {
     setBusyId(rejectTarget.id)
     try {
       await rejectAccount(rejectTarget.id)
-      toast({ title: 'ปฏิเสธบัญชีแล้ว', tone: 'warning' })
+      toast({ title: t('ปฏิเสธบัญชีแล้ว'), tone: 'warning' })
       await reload()
     } catch (err) {
       console.error('Action failed:', err)
-      toast({ title: 'ดำเนินการไม่สำเร็จ', message: err instanceof Error ? err.message : undefined, tone: 'error' })
+      toast({ title: t('ดำเนินการไม่สำเร็จ'), message: err instanceof Error ? err.message : undefined, tone: 'error' })
     } finally {
       setBusyId(null)
       setRejectTarget(null)
@@ -139,7 +175,7 @@ export default function DispatchPendingApprovals() {
   }
 
   return (
-    <AppShell variant="dashboard" title="บัญชีรออนุมัติ">
+    <AppShell variant="dashboard" title={t('บัญชีรออนุมัติ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-4">
@@ -148,17 +184,17 @@ export default function DispatchPendingApprovals() {
           ) : accounts.length === 0 ? (
             <EmptyState
               icon={<UserCheck className="size-6" />}
-              title="ไม่มีบัญชีรออนุมัติ"
-              description="คำขอสมัครสมาชิกใหม่จากหน่วยกู้ชีพ โรงพยาบาล หรือศูนย์สั่งการ จะแสดงที่นี่"
+              title={t('ไม่มีบัญชีรออนุมัติ')}
+              description={t('คำขอสมัครสมาชิกใหม่จากหน่วยกู้ชีพ โรงพยาบาล หรือศูนย์สั่งการ จะแสดงที่นี่')}
             />
           ) : (
             accounts.map((user) => (
               <Card key={user.id} className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-bold text-navy">{user.name}</p>
+                    <p className="font-bold text-ink">{user.name}</p>
                     <p className="text-sm text-muted">
-                      {ROLE_LABEL[user.role]}
+                      {t(ROLE_LABEL[user.role])}
                       {orgName(user) && ` · ${orgName(user)}`}
                       {user.phone && ` · ${user.phone}`}
                     </p>
@@ -171,7 +207,7 @@ export default function DispatchPendingApprovals() {
                       disabled={busyId === user.id}
                       onClick={() => setRejectTarget(user)}
                     >
-                      ปฏิเสธ
+                      {t('ปฏิเสธ')}
                     </Button>
                     <Button
                       size="sm"
@@ -179,19 +215,19 @@ export default function DispatchPendingApprovals() {
                       loading={busyId === user.id}
                       onClick={() => handleApprove(user)}
                     >
-                      อนุมัติ
+                      {t('อนุมัติ')}
                     </Button>
                   </div>
                 </div>
                 {(user.role === 'rescue' || user.role === 'hospital') && (
-                  <label className="flex items-center gap-2 text-sm text-navy">
+                  <label className="flex items-center gap-2 text-sm text-ink">
                     <input
                       type="checkbox"
                       checked={approveAsLead.has(user.id)}
                       onChange={(e) => toggleApproveAsLead(user.id, e.target.checked)}
                       className="size-4 accent-primary"
                     />
-                    ตั้งเป็นหัวหน้าหน่วยงาน (อนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้เอง)
+                    {t('ตั้งเป็นหัวหน้าหน่วยงาน (อนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้เอง)')}
                   </label>
                 )}
               </Card>
@@ -201,25 +237,25 @@ export default function DispatchPendingApprovals() {
 
         {currentUser?.isAdmin && (
           <div className="mt-8 flex flex-col gap-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">จัดการสิทธิ์แอดมิน</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการสิทธิ์แอดมิน')}</h2>
             {staff === null ? (
               <LoadingState />
             ) : staff.length === 0 ? (
               <EmptyState
                 icon={<ShieldCheck className="size-6" />}
-                title="ยังไม่มีบัญชีที่อนุมัติแล้ว"
-                description="บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่"
+                title={t('ยังไม่มีบัญชีที่อนุมัติแล้ว')}
+                description={t('บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่')}
               />
             ) : (
               staff.map((user) => (
                 <Card key={user.id} className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-bold text-navy">
+                    <p className="font-bold text-ink">
                       {user.name}
-                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">แอดมิน</span>}
+                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">{t('แอดมิน')}</span>}
                     </p>
                     <p className="text-sm text-muted">
-                      {ROLE_LABEL[user.role]}
+                      {t(ROLE_LABEL[user.role])}
                       {orgName(user) && ` · ${orgName(user)}`}
                     </p>
                   </div>
@@ -232,7 +268,7 @@ export default function DispatchPendingApprovals() {
                       disabled={user.id === currentUser.id}
                       onClick={() => handleSetAdmin(user, false)}
                     >
-                      ถอดสิทธิ์แอดมิน
+                      {t('ถอดสิทธิ์แอดมิน')}
                     </Button>
                   ) : (
                     <Button
@@ -241,7 +277,7 @@ export default function DispatchPendingApprovals() {
                       loading={adminBusyId === user.id}
                       onClick={() => handleSetAdmin(user, true)}
                     >
-                      ตั้งเป็นแอดมิน
+                      {t('ตั้งเป็นแอดมิน')}
                     </Button>
                   )}
                 </Card>
@@ -252,7 +288,7 @@ export default function DispatchPendingApprovals() {
 
         {canManageOrgLeads && (
           <div className="mt-8 flex flex-col gap-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">จัดการหัวหน้าหน่วยงาน</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการหัวหน้าหน่วยงาน')}</h2>
             {staff === null ? (
               <LoadingState />
             ) : (
@@ -261,19 +297,19 @@ export default function DispatchPendingApprovals() {
                 return orgStaff.length === 0 ? (
                   <EmptyState
                     icon={<Crown className="size-6" />}
-                    title="ยังไม่มีบัญชีหน่วยกู้ชีพ/โรงพยาบาลที่อนุมัติแล้ว"
-                    description="บัญชีหน่วยกู้ชีพหรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่"
+                    title={t('ยังไม่มีบัญชีหน่วยกู้ชีพ/โรงพยาบาลที่อนุมัติแล้ว')}
+                    description={t('บัญชีหน่วยกู้ชีพหรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่')}
                   />
                 ) : (
                   orgStaff.map((user) => (
                     <Card key={user.id} className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="font-bold text-navy">
+                        <p className="font-bold text-ink">
                           {user.name}
-                          {user.isOrgLead && <span className="ml-2 text-xs font-bold text-primary">หัวหน้าหน่วยงาน</span>}
+                          {user.isOrgLead && <span className="ml-2 text-xs font-bold text-primary">{t('หัวหน้าหน่วยงาน')}</span>}
                         </p>
                         <p className="text-sm text-muted">
-                          {ROLE_LABEL[user.role]}
+                          {t(ROLE_LABEL[user.role])}
                           {orgName(user) && ` · ${orgName(user)}`}
                         </p>
                       </div>
@@ -286,7 +322,7 @@ export default function DispatchPendingApprovals() {
                           disabled={user.id === currentUser?.id}
                           onClick={() => handleSetOrgLead(user, false)}
                         >
-                          ถอดสิทธิ์หัวหน้าหน่วยงาน
+                          {t('ถอดสิทธิ์หัวหน้าหน่วยงาน')}
                         </Button>
                       ) : (
                         <Button
@@ -295,7 +331,7 @@ export default function DispatchPendingApprovals() {
                           loading={orgLeadBusyId === user.id}
                           onClick={() => handleSetOrgLead(user, true)}
                         >
-                          ตั้งเป็นหัวหน้าหน่วยงาน
+                          {t('ตั้งเป็นหัวหน้าหน่วยงาน')}
                         </Button>
                       )}
                     </Card>
@@ -309,9 +345,9 @@ export default function DispatchPendingApprovals() {
 
       <ConfirmationModal
         open={!!rejectTarget}
-        title="ยืนยันการปฏิเสธบัญชี"
-        message={`คุณต้องการปฏิเสธบัญชี "${rejectTarget?.name}" หรือไม่`}
-        confirmLabel="ยืนยันปฏิเสธ"
+        title={t('ยืนยันการปฏิเสธบัญชี')}
+        message={t('คุณต้องการปฏิเสธบัญชี "{name}" หรือไม่', { name: rejectTarget?.name ?? '' })}
+        confirmLabel={t('ยืนยันปฏิเสธ')}
         tone="danger"
         onConfirm={handleReject}
         onCancel={() => setRejectTarget(null)}

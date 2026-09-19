@@ -5,6 +5,20 @@ import { AppShell } from '@/components/layout/AppShell'
 import { RoleCard } from '@/components/RoleCard'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import type { Role } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  เลือกบทบาทผู้ใช้งาน: 'Choose your role',
+  'เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ': 'Choose which role you want to use in ResQ',
+  ประชาชน: 'Public',
+  ขอความช่วยเหลือฉุกเฉินและติดตามเคส: 'Request emergency help and track your case',
+  'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
+  รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ: 'Take reports and assign rescue teams',
+  หน่วยกู้ชีพ: 'Rescue team',
+  รับเคสและนำส่งผู้ป่วย: 'Accept cases and transport patients',
+  โรงพยาบาล: 'Hospital',
+  รับข้อมูลและยืนยันการรับผู้ป่วย: 'Receive case data and confirm patient admission',
+})
 
 const ROLES: { role: Role; icon: JSX.Element; title: string; description: string; name: string; path: string }[] = [
   {
@@ -44,6 +58,7 @@ const ROLES: { role: Role; icon: JSX.Element; title: string; description: string
 export default function RoleSelection() {
   const navigate = useNavigate()
   const [loadingRole, setLoadingRole] = useState<Role | null>(null)
+  const t = useT()
 
   // Roles are real accounts now (see the auth rewrite) -- this page no
   // longer fabricates a session on the spot, it just routes to the right
@@ -60,11 +75,11 @@ export default function RoleSelection() {
   }
 
   return (
-    <AppShell variant="public" title="เลือกบทบาทผู้ใช้งาน">
+    <AppShell variant="public" title={t('เลือกบทบาทผู้ใช้งาน')}>
       <div className="relative">
         <AnimatedBackground variant="auth" />
         <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
-          <p className="text-sm text-muted">เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ</p>
+          <p className="text-sm text-muted">{t('เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ')}</p>
           <div className="mt-6 flex flex-col gap-3">
             {ROLES.map((item, i) => (
               <div
@@ -74,8 +89,8 @@ export default function RoleSelection() {
               >
                 <RoleCard
                   icon={item.icon}
-                  title={item.title}
-                  description={item.description}
+                  title={t(item.title)}
+                  description={t(item.description)}
                   onClick={() => handleSelect(item)}
                   className={loadingRole === item.role ? 'opacity-60' : undefined}
                 />

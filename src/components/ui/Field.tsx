@@ -2,6 +2,11 @@ import { forwardRef, useEffect, useRef, useState } from 'react'
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import clsx from 'clsx'
 import { AlertCircle, ChevronDown } from 'lucide-react'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ไม่พบตัวเลือกที่ค้นหา: 'No matching option found',
+})
 
 interface FieldShellProps {
   label?: string
@@ -15,7 +20,7 @@ export function FieldShell({ label, hint, error, required, children }: FieldShel
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-semibold text-navy">
+        <label className="text-sm font-semibold text-ink">
           {label}
           {required && <span className="text-emergency ml-0.5">*</span>}
         </label>
@@ -32,7 +37,7 @@ export function FieldShell({ label, hint, error, required, children }: FieldShel
 }
 
 const baseFieldClasses =
-  'w-full rounded-xl border bg-white px-4 py-3 text-[15px] text-navy placeholder:text-muted/70 transition-colors focus:outline-none focus:ring-4 focus:ring-primary/15'
+  'w-full rounded-xl border bg-surface px-4 py-3 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus:ring-4 focus:ring-primary/15'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -155,9 +160,11 @@ export function SearchableSelect({
   onChange,
   options,
   placeholder,
-  emptyLabel = 'ไม่พบตัวเลือกที่ค้นหา',
+  emptyLabel,
   className,
 }: SearchableSelectProps) {
+  const t = useT()
+  const resolvedEmptyLabel = emptyLabel ?? t('ไม่พบตัวเลือกที่ค้นหา')
   const normalized: SearchableSelectOption[] = options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o))
   const labelForValue = (v: string) => normalized.find((o) => o.value === v)?.label ?? v
 
@@ -236,10 +243,10 @@ export function SearchableSelect({
         {open && (
           <div
             role="listbox"
-            className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-white py-1 shadow-card-lg"
+            className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-card-lg"
           >
             {filtered.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-muted">{emptyLabel}</p>
+              <p className="px-4 py-3 text-sm text-muted">{resolvedEmptyLabel}</p>
             ) : (
               <>
                 {visible.map((opt) => (
@@ -251,7 +258,7 @@ export function SearchableSelect({
                     onClick={() => selectOption(opt)}
                     className={clsx(
                       'block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-skyblue-light',
-                      opt.value === value ? 'bg-skyblue-pale font-semibold text-primary' : 'text-navy',
+                      opt.value === value ? 'bg-skyblue-pale font-semibold text-primary' : 'text-ink',
                     )}
                   >
                     {opt.label}

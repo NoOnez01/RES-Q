@@ -23,8 +23,8 @@ const variantClasses: Record<Variant, string> = {
   secondary:
     'bg-skyblue-light text-primary hover:bg-primary/10 active:bg-primary/15 disabled:opacity-50',
   outline:
-    'bg-white text-navy border border-border hover:border-primary hover:text-primary active:bg-skyblue-pale disabled:opacity-50',
-  ghost: 'bg-transparent text-navy hover:bg-skyblue-light active:bg-skyblue-light/80 disabled:opacity-50',
+    'bg-surface text-ink border border-border hover:border-primary hover:text-primary active:bg-skyblue-pale disabled:opacity-50',
+  ghost: 'bg-transparent text-ink hover:bg-skyblue-light active:bg-skyblue-light/80 disabled:opacity-50',
   danger:
     'bg-emergency text-white hover:bg-emergency-dark active:bg-emergency-dark shadow-card disabled:bg-emergency/40',
   success:

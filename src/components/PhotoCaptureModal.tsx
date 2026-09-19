@@ -3,6 +3,17 @@ import { createPortal } from 'react-dom'
 import { Camera, CameraOff, SwitchCamera, X } from 'lucide-react'
 import { Button } from './ui/Button'
 import type { PhotoCategory } from '@/lib/types'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ปิด: 'Close',
+  'รูปที่ {step} จาก {total}': 'Photo {step} of {total}',
+  'กำลังเปิดกล้อง...': 'Opening camera...',
+  ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง: 'No camera found, or camera access was not granted',
+  'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
+  ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน: 'Close and upload a photo from the device instead',
+  ถ่ายรูป: 'Take photo',
+})
 
 export interface PhotoSlotConfig {
   key: PhotoCategory
@@ -32,6 +43,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
   const [status, setStatus] = useState<'idle' | 'starting' | 'ready' | 'unavailable'>('idle')
   const [flash, setFlash] = useState(false)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
+  const t = useT()
 
   useEffect(() => {
     if (!open) return
@@ -49,7 +61,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
           audio: false,
         })
         if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop())
+          stream.getTracks().forEach((track) => track.stop())
           return
         }
         streamRef.current = stream
@@ -66,7 +78,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
     void start()
     return () => {
       cancelled = true
-      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((track) => track.stop())
       streamRef.current = null
       setStatus('idle')
     }
@@ -104,7 +116,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
       <div role="dialog" aria-modal="true" className="relative w-full max-w-sm animate-scale-in">
         <button
           onClick={onClose}
-          aria-label="ปิด"
+          aria-label={t('ปิด')}
           className="absolute -top-11 right-0 flex size-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
         >
           <X className="size-5" />
@@ -112,7 +124,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
 
         <div className="mb-3 text-center text-white">
           <p className="text-xs font-bold text-white/60">
-            รูปที่ {stepIndex} จาก {totalSteps}
+            {t('รูปที่ {step} จาก {total}', { step: stepIndex, total: totalSteps })}
           </p>
           <p className="mt-1 text-lg font-bold">{slot.label}</p>
           <p className="mt-0.5 text-sm text-white/70">{slot.hint}</p>
@@ -131,14 +143,14 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
             {(status === 'idle' || status === 'starting') && (
               <div className="flex size-full flex-col items-center justify-center gap-3 text-white/70">
                 <Camera className="size-10 animate-pulse" />
-                <p className="text-sm">กำลังเปิดกล้อง...</p>
+                <p className="text-sm">{t('กำลังเปิดกล้อง...')}</p>
               </div>
             )}
 
             {status === 'unavailable' && (
               <div className="flex size-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-navy to-primary/80 text-white/85 p-6 text-center">
                 <CameraOff className="size-10" />
-                <p className="text-sm font-medium">ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง</p>
+                <p className="text-sm font-medium">{t('ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง')}</p>
               </div>
             )}
 
@@ -146,7 +158,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
               <button
                 type="button"
                 onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
-                aria-label="สลับกล้องหน้า/หลัง"
+                aria-label={t('สลับกล้องหน้า/หลัง')}
                 className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
               >
                 <SwitchCamera className="size-5" />
@@ -163,7 +175,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
           <div className="flex justify-center bg-navy p-3">
             {status === 'unavailable' ? (
               <Button variant="secondary" size="lg" fullWidth onClick={onClose}>
-                ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน
+                {t('ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน')}
               </Button>
             ) : (
               <Button
@@ -174,7 +186,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
                 disabled={status !== 'ready'}
                 icon={<Camera className="size-5" />}
               >
-                ถ่ายรูป
+                {t('ถ่ายรูป')}
               </Button>
             )}
           </div>
