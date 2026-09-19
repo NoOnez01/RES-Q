@@ -333,7 +333,7 @@ export const useStore = create<ResQState>()(
       caseSeq: 0,
       hydratedDemo: false,
 
-      theme: 'system',
+      theme: 'light',
       setTheme: (theme) => set({ theme }),
       language: 'th',
       setLanguage: (language) => set({ language }),
