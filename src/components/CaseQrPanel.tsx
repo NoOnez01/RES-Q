@@ -30,6 +30,9 @@ export function CaseQrPanel({ url }: { url: string }) {
 
   useEffect(() => {
     let cancelled = false
+    // impeccable-disable-next-line design-system-color -- QR modules need
+    // genuine max-contrast black/white to stay scannable, not theme tokens
+    // that shift with light/dark mode.
     QRCode.toDataURL(url, { width: 220, margin: 1, color: { dark: '#0B1F3A', light: '#FFFFFF' } })
       .then((dataUrl) => {
         if (!cancelled) setQrDataUrl(dataUrl)
@@ -52,6 +55,9 @@ export function CaseQrPanel({ url }: { url: string }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
+        // impeccable-disable-next-line design-system-color -- this is a
+        // separate native Picture-in-Picture document, outside the app's
+        // Tailwind theme/dark-mode reach (see the doc comment above).
         background: '#ffffff',
         fontFamily: 'system-ui, sans-serif',
       })
@@ -63,7 +69,7 @@ export function CaseQrPanel({ url }: { url: string }) {
 
       const caption = pipWindow.document.createElement('p')
       caption.textContent = t('สแกนเพื่อติดตามสถานะเคส')
-      Object.assign(caption.style, { marginTop: '12px', fontSize: '13px', color: '#5b6b7c' })
+      Object.assign(caption.style, { marginTop: '12px', fontSize: '13px', color: '#5b6b7c' }) // impeccable-disable-line design-system-color -- PiP document, see above
 
       body.append(img, caption)
     } catch {

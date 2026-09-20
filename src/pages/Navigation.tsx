@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
@@ -19,6 +19,7 @@ import { toast } from '@/lib/toast'
 import { clamp, estimateEtaMin, haversineKm, formatDateTime } from '@/lib/utils'
 import { pointAlongRoute } from '@/lib/routing'
 import { useLiveRoute } from '@/lib/useLiveRoute'
+import { useSimulatedProgress } from '@/lib/useSimulatedProgress'
 import type { GeoLocation } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -68,8 +69,6 @@ export default function NavigationPage() {
   const addPatientUpdate = useStore((s) => s.addPatientUpdate)
   const t = useT()
 
-  const [pct, setPct] = useState(c?.rescueEnRoutePct ?? 0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [updateNote, setUpdateNote] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
 
@@ -99,28 +98,17 @@ export default function NavigationPage() {
     rerouteThresholdKm: REROUTE_THRESHOLD_KM,
   })
 
-  useEffect(() => {
-    if (!c || !id || !isNavigable || !base || !target || gpsMode) return
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setPct(c.rescueEnRoutePct)
-    const step = 100 / 18
-    intervalRef.current = setInterval(() => {
-      setPct((prev) => clamp(prev + step, 0, 100))
-    }, 700)
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isNavigable, gpsMode])
-
-  useEffect(() => {
-    if (!id || !isNavigable || gpsMode) return
-    updateRescueProgress(id, Math.round(pct))
-    if (pct >= 100 && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [pct, id, isNavigable, gpsMode, updateRescueProgress])
+  // Simulated-mode progress animation (see lib/useSimulatedProgress.ts) --
+  // the counterpart to useLiveRoute above, active only while GPS mode is
+  // off, so the two "where is the rescue unit" sources are each a single
+  // self-contained hook rather than effects scattered across the component
+  // and each individually gated by `gpsMode`.
+  const pct = useSimulatedProgress({
+    active: isNavigable && !gpsMode && !!base && !!target,
+    caseId: c && isNavigable ? id : undefined,
+    initialPct: c?.rescueEnRoutePct ?? 0,
+    onProgress: updateRescueProgress,
+  })
 
   if (!id || !c) {
     return (

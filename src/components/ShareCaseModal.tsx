@@ -34,6 +34,9 @@ export function ShareCaseModal({ open, url, onClose, title, description }: Share
   useEffect(() => {
     if (!open) return
     let cancelled = false
+    // impeccable-disable-next-line design-system-color -- QR modules need
+    // genuine max-contrast black/white to stay scannable, not theme tokens
+    // that shift with light/dark mode.
     QRCode.toDataURL(url, { width: 240, margin: 1, color: { dark: '#0B1F3A', light: '#FFFFFF' } })
       .then((dataUrl) => {
         if (!cancelled) setQrDataUrl(dataUrl)
