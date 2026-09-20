@@ -75,6 +75,10 @@ export default function RescueCallReporter() {
     if (c?.rescueCallStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
     toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
+    // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
+    // why (a new closure every render from useT()); this toast only ever
+    // fires once per call anyway (guarded by hasShownEndedRef above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c?.rescueCallStatus])
 
   useEffect(() => {

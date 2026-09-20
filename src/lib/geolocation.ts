@@ -1,6 +1,15 @@
+import type { GeoLocation } from './types'
+
 export interface Coords {
   lat: number
   lng: number
+}
+
+/** Coords (a bare lat/lng, e.g. from getCurrentPosition/watchPosition) has
+ * no address, unlike GeoLocation -- this pads it with an empty one for
+ * callers (like routing.ts's fetchRoute) that only ever read lat/lng. */
+export function toGeoLocation(coords: Coords): GeoLocation {
+  return { ...coords, address: '' }
 }
 
 export class GeolocationError extends Error {

@@ -8,6 +8,7 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { MapPanel } from '@/components/MapPanel'
 import type { MapPin as MapPinT } from '@/components/MapPanel'
 import { ETAWidget } from '@/components/ETAWidget'
@@ -16,8 +17,8 @@ import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { clamp, estimateEtaMin, haversineKm, formatDateTime } from '@/lib/utils'
-import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
-import { watchPosition, type Coords } from '@/lib/geolocation'
+import { pointAlongRoute } from '@/lib/routing'
+import { useLiveRoute } from '@/lib/useLiveRoute'
 import type { GeoLocation } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -71,20 +72,12 @@ export default function NavigationPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [updateNote, setUpdateNote] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
-  const [route, setRoute] = useState<RouteResult | null>(null)
-  const lastRouteOriginRef = useRef<Coords | null>(null)
-  const routeRequestIdRef = useRef(0)
 
   // Real device GPS is opt-in (defaults to the existing simulated progress
   // animation) -- most demo/training runs aren't an actual vehicle moving,
   // so simulated stays the default and this only takes over once someone
   // explicitly asks for it.
   const [gpsMode, setGpsMode] = useState(false)
-  const [gpsPos, setGpsPos] = useState<Coords | null>(null)
-  // Raw (untranslated) message from GeolocationError -- see lib/geolocation.ts
-  // -- translated at render time rather than inside the watch effect, so
-  // that effect never needs `t` (a new closure every render) in its deps.
-  const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
 
   const isEnRoute = c?.status === 'rescue-en-route'
   const isTransporting = c?.status === 'transporting'
@@ -94,35 +87,17 @@ export default function NavigationPage() {
   const target: GeoLocation | null = isEnRoute ? c?.location ?? null : isTransporting ? c?.selectedHospital?.location ?? null : null
   const destinationLabel = isEnRoute ? t('จุดเกิดเหตุ') : isTransporting ? c?.selectedHospital?.name ?? t('โรงพยาบาล') : ''
   const arriveButtonLabel = isEnRoute ? t('ถึงจุดเกิดเหตุแล้ว') : t('ถึงโรงพยาบาลแล้ว')
-  // The point routing should originate from: the device's real GPS fix once
-  // GPS mode has one, the rescue team's fixed base otherwise. Switching
-  // this value is what drives the route effect below to re-fetch for
-  // whichever mode is active, including on toggling between them.
-  const routeOrigin: Coords | null = gpsMode ? gpsPos : base
 
-  // Real road route + ETA (traffic-aware via Longdo when configured, see
-  // lib/routing.ts) for whichever origin is active. Re-fetched only once
-  // the origin has moved meaningfully -- always true the first time; in GPS
-  // mode this throttles re-fetching against a live position that can update
-  // many times a second. Applied via a monotonic request id rather than the
-  // usual effect-cleanup `cancelled` flag: gpsPos changing on every fix
-  // would re-run this effect (and so run the previous effect's cleanup) far
-  // more often than an actual new request even starts, which would
-  // otherwise discard real in-flight responses before they could land.
-  useEffect(() => {
-    if (!isNavigable || !routeOrigin || !target) {
-      setRoute(null)
-      lastRouteOriginRef.current = null
-      return
-    }
-    const last = lastRouteOriginRef.current
-    if (last && haversineKm(last, routeOrigin) < REROUTE_THRESHOLD_KM) return
-    lastRouteOriginRef.current = routeOrigin
-    const requestId = ++routeRequestIdRef.current
-    void fetchRoute({ ...routeOrigin, address: '' }, target).then((r) => {
-      if (routeRequestIdRef.current === requestId) setRoute(r)
-    })
-  }, [isNavigable, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng])
+  // Route + live GPS tracking (see lib/useLiveRoute.ts) -- origin is the
+  // device's real position in GPS mode, the rescue team's fixed base
+  // otherwise, switching cleanly between the two as gpsMode toggles.
+  const { route, gpsPos, gpsErrorMessage } = useLiveRoute({
+    gpsMode,
+    active: isNavigable,
+    simulatedOrigin: base,
+    target,
+    rerouteThresholdKm: REROUTE_THRESHOLD_KM,
+  })
 
   useEffect(() => {
     if (!c || !id || !isNavigable || !base || !target || gpsMode) return
@@ -146,30 +121,6 @@ export default function NavigationPage() {
       intervalRef.current = null
     }
   }, [pct, id, isNavigable, gpsMode, updateRescueProgress])
-
-  // Live device position while GPS mode is on -- stops watching (and
-  // clears any stale fix) the moment it's switched off or navigation ends.
-  // Deliberately has no `t` dependency: `useT()` returns a new closure every
-  // render, and `setGpsPos` below triggers a render on every raw GPS fix --
-  // depending on `t` here would tear down and recreate the actual
-  // `navigator.geolocation` subscription on every single fix. The error
-  // message is kept untranslated in state and translated only at render.
-  useEffect(() => {
-    if (!gpsMode || !isNavigable) {
-      setGpsPos(null)
-      setGpsErrorMessage(null)
-      return
-    }
-    setGpsErrorMessage(null)
-    const stop = watchPosition(
-      (pos) => {
-        setGpsPos(pos)
-        setGpsErrorMessage(null)
-      },
-      (err) => setGpsErrorMessage(err.message),
-    )
-    return stop
-  }, [gpsMode, isNavigable])
 
   if (!id || !c) {
     return (
@@ -270,23 +221,15 @@ export default function NavigationPage() {
                 {t('กำลังติดตามตำแหน่ง')}
               </div>
             )}
-            <div className="ml-auto flex rounded-full border border-border bg-surface p-0.5 text-xs font-semibold shadow-card">
-              {(
-                [
-                  [false, t('จำลองการเดินทาง')],
-                  [true, t('ใช้ GPS จริง')],
-                ] as const
-              ).map(([mode, label]) => (
-                <button
-                  key={String(mode)}
-                  type="button"
-                  onClick={() => setGpsMode(mode)}
-                  className={clsx('rounded-full px-3 py-1.5 transition-colors', gpsMode === mode ? 'bg-primary text-white' : 'text-muted hover:text-ink')}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              className="ml-auto"
+              value={gpsMode ? 'gps' : 'simulated'}
+              onChange={(mode) => setGpsMode(mode === 'gps')}
+              options={[
+                { value: 'simulated', label: t('จำลองการเดินทาง') },
+                { value: 'gps', label: t('ใช้ GPS จริง') },
+              ]}
+            />
           </div>
 
           {gpsMode && gpsErrorMessage && (

@@ -67,6 +67,10 @@ export default function Contact1669() {
     if (c?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
     toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
+    // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
+    // why (a new closure every render from useT()); this toast only ever
+    // fires once per call anyway (guarded by hasShownEndedRef above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c?.callStatus])
 
   // Once the call ends -- from either side -- return to the case's own

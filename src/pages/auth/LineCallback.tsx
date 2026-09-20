@@ -95,6 +95,11 @@ export default function LineCallback() {
     }
 
     void run()
+    // `t` intentionally omitted -- this effect consumes the one-time LINE
+    // OAuth callback code exactly once; re-running it on every render
+    // (which a new `t` closure from useT() would force) risks re-processing
+    // an already-consumed code instead of running the login flow once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, navigate, setUser])
 
   return (

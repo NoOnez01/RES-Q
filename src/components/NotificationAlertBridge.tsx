@@ -197,6 +197,12 @@ export function NotificationAlertBridge() {
       playHandoffSound(h)
       void showNativeNotification(h.title, h.message)
     }
+    // `t` intentionally omitted -- it's a new closure every render (see
+    // lib/i18n.ts's useT), and including it would re-run this whole
+    // dedup-by-ref-set effect on every render instead of only when the
+    // underlying data changes. A language switch not immediately relabeling
+    // an already-queued alert is an acceptable tradeoff for that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, cases, currentUser])
 
   const activeAlert = alertQueue[0] ?? null

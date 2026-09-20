@@ -141,6 +141,10 @@ export default function Call1669() {
     } else if (!selfHungUpRef.current) {
       toast({ title: t('เจ้าหน้าที่วางสายแล้ว'), message: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
     }
+    // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
+    // why (a new closure every render from useT()); this toast only ever
+    // fires once per call anyway (guarded by hasShownEndedRef above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCase?.callStatus])
 
   // Once the call ends -- from either side -- move on automatically instead

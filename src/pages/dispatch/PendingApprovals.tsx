@@ -96,6 +96,12 @@ export default function DispatchPendingApprovals() {
   useEffect(() => {
     void reload()
     void reloadStaff()
+    // `reload`/`reloadStaff` intentionally omitted -- they're plain
+    // functions redeclared every render (not wrapped in useCallback), and
+    // both call setState, so including them would re-run this effect after
+    // every fetch it triggers -- an infinite refetch loop, not just a
+    // missed update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.isAdmin, currentUser?.isOrgLead])
 
   async function handleSetAdmin(user: AppUser, isAdmin: boolean) {

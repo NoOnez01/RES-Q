@@ -112,7 +112,7 @@ export async function fetchOrgs(): Promise<{ rescueTeams: RescueTeam[]; hospital
   let vehicleRows: RescueVehicleRow[]
   let hospitalRows: HospitalRow[]
   try {
-    ;[teamRows, vehicleRows, hospitalRows] = await Promise.all([
+    [teamRows, vehicleRows, hospitalRows] = await Promise.all([
       fetchAllRows<RescueTeamRow>('rescue_teams'),
       fetchAllRows<RescueVehicleRow>('rescue_vehicles'),
       fetchAllRows<HospitalRow>('hospitals'),

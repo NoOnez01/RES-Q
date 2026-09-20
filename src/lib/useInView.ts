@@ -22,6 +22,12 @@ export function useInView<T extends HTMLElement>(options?: IntersectionObserverI
     )
     observer.observe(el)
     return () => observer.disconnect()
+    // `options` intentionally omitted -- callers typically pass an inline
+    // object literal, which would have a new identity every render and
+    // tear down/recreate the observer constantly instead of running once
+    // on mount (this hook already disconnects itself after first
+    // intersection, so it isn't meant to react to options changing anyway).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return [ref, inView] as const

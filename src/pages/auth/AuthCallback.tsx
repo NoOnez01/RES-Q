@@ -99,6 +99,11 @@ export default function AuthCallback() {
       sub.subscription.unsubscribe()
       window.clearTimeout(timeout)
     }
+    // `t` intentionally omitted -- this effect subscribes to Supabase auth
+    // state once on mount; re-running it on every render (which a new `t`
+    // closure from useT() would force) would resubscribe and re-arm the
+    // timeout repeatedly instead of running the callback flow exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, setUser])
 
   return (

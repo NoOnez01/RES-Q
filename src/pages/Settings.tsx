@@ -23,6 +23,7 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { GoogleIcon, LineIcon } from '@/components/icons/SocialIcons'
 import { useStore } from '@/lib/store'
@@ -302,56 +303,22 @@ export default function Settings() {
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t('โหมดการแสดงผล')}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {THEME_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTheme(opt.value)}
-                  aria-pressed={theme === opt.value}
-                  className={
-                    theme === opt.value
-                      ? 'flex flex-col items-center gap-1.5 rounded-xl border-2 border-primary bg-skyblue-light px-2 py-3 text-primary transition-all'
-                      : 'flex flex-col items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-2 py-3 text-muted transition-all hover:border-primary/40'
-                  }
-                >
-                  <opt.icon className="size-5" />
-                  <span className="text-xs font-semibold">{opt.label}</span>
-                </button>
-              ))}
-            </div>
+            <SegmentedControl variant="card" value={theme} onChange={setTheme} options={THEME_OPTIONS} />
           </div>
 
           <div className="space-y-2">
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
               <Languages className="size-3.5" /> {t('ภาษา')}
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setLanguage('th')}
-                aria-pressed={language === 'th'}
-                className={
-                  language === 'th'
-                    ? 'rounded-xl border-2 border-primary bg-skyblue-light px-3 py-2.5 text-sm font-semibold text-primary transition-all'
-                    : 'rounded-xl border-2 border-border bg-surface px-3 py-2.5 text-sm font-semibold text-muted transition-all hover:border-primary/40'
-                }
-              >
-                ไทย
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                aria-pressed={language === 'en'}
-                className={
-                  language === 'en'
-                    ? 'rounded-xl border-2 border-primary bg-skyblue-light px-3 py-2.5 text-sm font-semibold text-primary transition-all'
-                    : 'rounded-xl border-2 border-border bg-surface px-3 py-2.5 text-sm font-semibold text-muted transition-all hover:border-primary/40'
-                }
-              >
-                English
-              </button>
-            </div>
+            <SegmentedControl
+              variant="card"
+              value={language}
+              onChange={setLanguage}
+              options={[
+                { value: 'th', label: 'ไทย' },
+                { value: 'en', label: 'English' },
+              ]}
+            />
           </div>
         </Card>
 

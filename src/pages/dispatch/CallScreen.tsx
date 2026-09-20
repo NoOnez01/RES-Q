@@ -96,6 +96,10 @@ export default function DispatchCallScreen() {
     toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
     const timer = setTimeout(() => navigate('/dispatch/incoming-call'), 1200)
     return () => clearTimeout(timer)
+    // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
+    // why (a new closure every render from useT()); this toast only ever
+    // fires once per call anyway (guarded by hasNavigatedAway above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emergencyCase?.callStatus, navigate])
 
   if (!id || !emergencyCase) {

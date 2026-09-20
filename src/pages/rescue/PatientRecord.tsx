@@ -131,6 +131,50 @@ function SectionHeader({ index, title }: { index: number; title: string }) {
   )
 }
 
+/** Shared "pick one of N" grid for this page's plain title-only option
+ * lists (AVPU responsiveness, GCS eye/verbal/motor) -- all four use the
+ * same active/inactive color logic, just at two different sizes (AVPU is
+ * the primary triage control; the three GCS sub-scores are secondary,
+ * stacked, and deliberately more compact). Not used for
+ * HEMORRHAGE_CLASS_OPTIONS below, which needs its own title+description
+ * layout and a different active-state treatment. */
+function OptionButtonGrid<V>({
+  options,
+  value,
+  onChange,
+  columns,
+  size = 'md',
+}: {
+  options: { value: V; title: string }[]
+  value: V | undefined
+  onChange: (value: V) => void
+  columns: string
+  size?: 'md' | 'sm'
+}) {
+  const t = useT()
+  return (
+    <div className={clsx('grid gap-2', columns)}>
+      {options.map((opt) => (
+        <button
+          key={String(opt.value)}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          className={clsx(
+            'border font-semibold transition-colors',
+            size === 'md' ? 'rounded-xl px-3 py-2.5 text-sm' : 'rounded-lg px-2.5 py-1.5 text-xs',
+            value === opt.value
+              ? 'border-primary bg-primary text-white'
+              : 'border-border bg-surface text-ink hover:border-primary hover:text-primary',
+          )}
+        >
+          {t(opt.title)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 const emptyVitals: VitalSigns = {
   bloodPressure: '',
   pulse: '',
@@ -458,23 +502,12 @@ export default function RescuePatientRecord() {
             <p className="text-xs text-muted">
               {t('ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น การตอบสนองของลูกตา การเคลื่อนไหว')}
             </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {RESPONSIVENESS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPrimarySurvey((p) => ({ ...p, responsiveness: opt.value }))}
-                  className={clsx(
-                    'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
-                    primarySurvey.responsiveness === opt.value
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-surface text-ink hover:border-primary hover:text-primary',
-                  )}
-                >
-                  {t(opt.title)}
-                </button>
-              ))}
-            </div>
+            <OptionButtonGrid
+              options={RESPONSIVENESS_OPTIONS}
+              value={primarySurvey.responsiveness}
+              onChange={(v) => setPrimarySurvey((p) => ({ ...p, responsiveness: v }))}
+              columns="grid-cols-2 sm:grid-cols-4"
+            />
           </div>
 
           {PRIMARY_SURVEY_FIELDS.slice(1).map((f) => (
@@ -533,23 +566,13 @@ export default function RescuePatientRecord() {
             ).map(([label, options, current, setValue]) => (
               <div key={label} className="flex flex-col gap-1.5">
                 <p className="text-xs font-medium text-muted">{t(label)}</p>
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                  {options.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setValue(opt.value as never)}
-                      className={clsx(
-                        'rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                        current === opt.value
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-border bg-surface text-ink hover:border-primary hover:text-primary',
-                      )}
-                    >
-                      {t(opt.title)}
-                    </button>
-                  ))}
-                </div>
+                <OptionButtonGrid
+                  options={options}
+                  value={current}
+                  onChange={(v) => setValue(v as never)}
+                  columns="grid-cols-2 sm:grid-cols-3"
+                  size="sm"
+                />
               </div>
             ))}
           </div>
