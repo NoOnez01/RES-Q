@@ -34,7 +34,14 @@ registerTranslations({
   จำลองการเดินทาง: 'Simulated',
   'ใช้ GPS จริง': 'My GPS',
   'กำลังค้นหาตำแหน่ง GPS...': 'Finding your GPS location...',
-  'ไม่สามารถใช้ตำแหน่ง GPS ได้': "Couldn't get your GPS location",
+  // The four possible messages GeolocationError can carry (see
+  // lib/geolocation.ts) -- registered here so the raw `err.message` string
+  // it throws can be translated directly wherever it's caught, instead of
+  // each caller re-describing its own (necessarily coarser) version.
+  อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง: 'This device does not support location detection',
+  'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่': 'Finding your location took too long, please try again',
+  กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ: 'Please allow location access',
+  ไม่สามารถระบุตำแหน่งได้ในขณะนี้: 'Unable to determine your location right now',
 })
 
 /** Within this distance of the target, the "arrived" button becomes
@@ -65,6 +72,8 @@ export default function NavigationPage() {
   const [updateNote, setUpdateNote] = useState('')
   const [updateLoading, setUpdateLoading] = useState(false)
   const [route, setRoute] = useState<RouteResult | null>(null)
+  const lastRouteOriginRef = useRef<Coords | null>(null)
+  const routeRequestIdRef = useRef(0)
 
   // Real device GPS is opt-in (defaults to the existing simulated progress
   // animation) -- most demo/training runs aren't an actual vehicle moving,
@@ -72,9 +81,10 @@ export default function NavigationPage() {
   // explicitly asks for it.
   const [gpsMode, setGpsMode] = useState(false)
   const [gpsPos, setGpsPos] = useState<Coords | null>(null)
-  const [gpsError, setGpsError] = useState<string | null>(null)
-  const [gpsRoute, setGpsRoute] = useState<RouteResult | null>(null)
-  const lastRouteFetchPosRef = useRef<Coords | null>(null)
+  // Raw (untranslated) message from GeolocationError -- see lib/geolocation.ts
+  // -- translated at render time rather than inside the watch effect, so
+  // that effect never needs `t` (a new closure every render) in its deps.
+  const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
 
   const isEnRoute = c?.status === 'rescue-en-route'
   const isTransporting = c?.status === 'transporting'
@@ -84,26 +94,35 @@ export default function NavigationPage() {
   const target: GeoLocation | null = isEnRoute ? c?.location ?? null : isTransporting ? c?.selectedHospital?.location ?? null : null
   const destinationLabel = isEnRoute ? t('จุดเกิดเหตุ') : isTransporting ? c?.selectedHospital?.name ?? t('โรงพยาบาล') : ''
   const arriveButtonLabel = isEnRoute ? t('ถึงจุดเกิดเหตุแล้ว') : t('ถึงโรงพยาบาลแล้ว')
+  // The point routing should originate from: the device's real GPS fix once
+  // GPS mode has one, the rescue team's fixed base otherwise. Switching
+  // this value is what drives the route effect below to re-fetch for
+  // whichever mode is active, including on toggling between them.
+  const routeOrigin: Coords | null = gpsMode ? gpsPos : base
 
-  // Real road route + typical-speed ETA (see lib/routing.ts) for whichever
-  // leg is currently active. Silently stays null -- and every value below
-  // falls back to the old straight-line estimate -- if the routing request
-  // fails (no key needed; OSRM's public server is called directly).
+  // Real road route + ETA (traffic-aware via Longdo when configured, see
+  // lib/routing.ts) for whichever origin is active. Re-fetched only once
+  // the origin has moved meaningfully -- always true the first time; in GPS
+  // mode this throttles re-fetching against a live position that can update
+  // many times a second. Applied via a monotonic request id rather than the
+  // usual effect-cleanup `cancelled` flag: gpsPos changing on every fix
+  // would re-run this effect (and so run the previous effect's cleanup) far
+  // more often than an actual new request even starts, which would
+  // otherwise discard real in-flight responses before they could land.
   useEffect(() => {
-    if (!isNavigable || !base || !target) {
+    if (!isNavigable || !routeOrigin || !target) {
       setRoute(null)
+      lastRouteOriginRef.current = null
       return
     }
-    let cancelled = false
-    setRoute(null)
-    void fetchRoute(base, target).then((r) => {
-      if (!cancelled) setRoute(r)
+    const last = lastRouteOriginRef.current
+    if (last && haversineKm(last, routeOrigin) < REROUTE_THRESHOLD_KM) return
+    lastRouteOriginRef.current = routeOrigin
+    const requestId = ++routeRequestIdRef.current
+    void fetchRoute({ ...routeOrigin, address: '' }, target).then((r) => {
+      if (routeRequestIdRef.current === requestId) setRoute(r)
     })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNavigable, base?.lat, base?.lng, target?.lat, target?.lng])
+  }, [isNavigable, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng])
 
   useEffect(() => {
     if (!c || !id || !isNavigable || !base || !target || gpsMode) return
@@ -128,49 +147,29 @@ export default function NavigationPage() {
     }
   }, [pct, id, isNavigable, gpsMode, updateRescueProgress])
 
-  // Live device position while GPS mode is on -- stops watching (and clears
-  // any stale fix/route) the moment it's switched off or navigation ends.
+  // Live device position while GPS mode is on -- stops watching (and
+  // clears any stale fix) the moment it's switched off or navigation ends.
+  // Deliberately has no `t` dependency: `useT()` returns a new closure every
+  // render, and `setGpsPos` below triggers a render on every raw GPS fix --
+  // depending on `t` here would tear down and recreate the actual
+  // `navigator.geolocation` subscription on every single fix. The error
+  // message is kept untranslated in state and translated only at render.
   useEffect(() => {
     if (!gpsMode || !isNavigable) {
       setGpsPos(null)
-      setGpsError(null)
-      setGpsRoute(null)
-      lastRouteFetchPosRef.current = null
+      setGpsErrorMessage(null)
       return
     }
-    setGpsError(null)
+    setGpsErrorMessage(null)
     const stop = watchPosition(
       (pos) => {
         setGpsPos(pos)
-        setGpsError(null)
+        setGpsErrorMessage(null)
       },
-      (err) => {
-        const reasonLabel =
-          err.reason === 'denied'
-            ? t('กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ')
-            : t('ไม่สามารถใช้ตำแหน่ง GPS ได้')
-        setGpsError(reasonLabel)
-      },
+      (err) => setGpsErrorMessage(err.message),
     )
     return stop
-  }, [gpsMode, isNavigable, t])
-
-  // Real road route + traffic-aware ETA from wherever the device actually
-  // is right now, re-requested only once it's moved meaningfully -- not on
-  // every single GPS fix, which can fire many times a second.
-  useEffect(() => {
-    if (!gpsMode || !gpsPos || !target) return
-    const last = lastRouteFetchPosRef.current
-    if (last && haversineKm(last, gpsPos) < REROUTE_THRESHOLD_KM) return
-    lastRouteFetchPosRef.current = gpsPos
-    let cancelled = false
-    void fetchRoute({ ...gpsPos, address: '' }, target).then((r) => {
-      if (!cancelled) setGpsRoute(r)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [gpsMode, gpsPos, target])
+  }, [gpsMode, isNavigable])
 
   if (!id || !c) {
     return (
@@ -219,7 +218,6 @@ export default function NavigationPage() {
   // to the simulated point only for the brief moment before the first GPS
   // fix comes back, so the map/pin never has nothing to show.
   const livePos = gpsMode && gpsPos ? gpsPos : simulatedPos
-  const activeRoute = gpsMode ? gpsRoute : route
 
   const pins: MapPinT[] = [
     { id: 'rescue', lat: livePos.lat, lng: livePos.lng, label: t('หน่วยกู้ชีพ'), kind: 'rescue' },
@@ -229,8 +227,8 @@ export default function NavigationPage() {
   // Real road distance + road-network ETA when available; the old
   // as-the-crow-flies estimate otherwise (straight-line from the real GPS
   // fix in GPS mode, from the simulated point in simulated mode).
-  const distanceKm = activeRoute ? activeRoute.distanceKm : haversineKm(livePos, target)
-  const etaMin = activeRoute ? activeRoute.durationMin : estimateEtaMin(distanceKm)
+  const distanceKm = route ? route.distanceKm : haversineKm(livePos, target)
+  const etaMin = route ? route.durationMin : estimateEtaMin(distanceKm)
   // Simulated mode "arrives" when the fake progress timer completes; GPS
   // mode arrives based on actual proximity to the target. Either way,
   // reaching this state only enables the button below -- confirming is
@@ -273,39 +271,35 @@ export default function NavigationPage() {
               </div>
             )}
             <div className="ml-auto flex rounded-full border border-border bg-surface p-0.5 text-xs font-semibold shadow-card">
-              <button
-                type="button"
-                onClick={() => setGpsMode(false)}
-                className={clsx('rounded-full px-3 py-1.5 transition-colors', !gpsMode ? 'bg-primary text-white' : 'text-muted hover:text-ink')}
-              >
-                {t('จำลองการเดินทาง')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setGpsMode(true)}
-                className={clsx('rounded-full px-3 py-1.5 transition-colors', gpsMode ? 'bg-primary text-white' : 'text-muted hover:text-ink')}
-              >
-                {t('ใช้ GPS จริง')}
-              </button>
+              {(
+                [
+                  [false, t('จำลองการเดินทาง')],
+                  [true, t('ใช้ GPS จริง')],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={String(mode)}
+                  type="button"
+                  onClick={() => setGpsMode(mode)}
+                  className={clsx('rounded-full px-3 py-1.5 transition-colors', gpsMode === mode ? 'bg-primary text-white' : 'text-muted hover:text-ink')}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {gpsMode && gpsError && (
-            <p className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">{gpsError}</p>
+          {gpsMode && gpsErrorMessage && (
+            <p className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">{t(gpsErrorMessage)}</p>
           )}
-          {gpsMode && !gpsError && !gpsPos && (
+          {gpsMode && !gpsErrorMessage && !gpsPos && (
             <p className="rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted">{t('กำลังค้นหาตำแหน่ง GPS...')}</p>
           )}
 
-          <ETAWidget
-            etaMin={etaMin}
-            distanceKm={distanceKm}
-            progressPct={gpsMode ? undefined : Math.round(pct)}
-            routeProvider={activeRoute?.provider}
-          />
+          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={gpsMode ? undefined : Math.round(pct)} routeProvider={route?.provider} />
 
           <Card className="!p-0 overflow-hidden">
-            <MapPanel pins={pins} showRoute routePoints={activeRoute?.points} height="360px" />
+            <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
           </Card>
 
           <Card className="flex items-center justify-center gap-2 py-4 text-center">
@@ -313,16 +307,14 @@ export default function NavigationPage() {
               <span className="flex items-center gap-2 font-semibold text-success">
                 <CheckCircle2 className="size-5" /> {t('ถึง{destination}แล้ว', { destination: destinationLabel })}
               </span>
-            ) : gpsMode ? (
-              <span className="flex items-center gap-2 font-semibold text-primary">
-                <Loader2 className="size-5 animate-spin-slow" /> {t('กำลังเดินทาง...')}
-              </span>
             ) : (
               <span className="flex items-center gap-2 font-semibold text-primary">
-                <Loader2 className="size-5 animate-spin-slow" /> {t('กำลังเดินทาง...')}{' '}
-                <span key={Math.round(pct)} className="inline-block animate-count-pop tabular-nums">
-                  {Math.round(pct)}%
-                </span>
+                <Loader2 className="size-5 animate-spin-slow" /> {t('กำลังเดินทาง...')}
+                {!gpsMode && (
+                  <span key={Math.round(pct)} className="inline-block animate-count-pop tabular-nums">
+                    {Math.round(pct)}%
+                  </span>
+                )}
               </span>
             )}
           </Card>
