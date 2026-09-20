@@ -35,6 +35,7 @@ registerTranslations({
 })
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
+const ResponseTimeSummary = lazy(() => import('@/components/ResponseTimeSummary'))
 
 const IN_PROGRESS_STATUSES = [
   'rescue-assigned',
@@ -227,7 +228,10 @@ export default function DispatchDashboard() {
             )}
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Suspense fallback={<ChartCardSkeleton />}>
+              <ResponseTimeSummary cases={allCases} />
+            </Suspense>
             <Suspense fallback={<ChartCardSkeleton />}>
               <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเคส')} cases={allCases} />
             </Suspense>
