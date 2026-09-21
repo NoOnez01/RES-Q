@@ -600,12 +600,26 @@ export const useStore = create<ResQState>()(
           const c = s.cases[caseId]
           if (!c) return {}
           const { severity, injuryDescription, ...incident } = data
-          const updated: EmergencyCase = {
+          const withData: EmergencyCase = {
             ...c,
             incidentDetails: { ...incident, callbackPhone: c.reporterPhone ?? '' },
             assessment: { severity, injuryDescription, assessedAt: Date.now() },
             updatedAt: Date.now(),
           }
+          // A case reaching this page should already be 'received' (that's
+          // what gates the dashboard/case-detail button that leads here),
+          // but this is also reused to edit an existing assessment on a
+          // case that's since moved further along -- so only ever advance
+          // status forward to 'received' if it's currently earlier than
+          // that, never regress an in-progress case being re-assessed.
+          // Without this, a case that somehow reached this form before its
+          // own status caught up to 'received' (e.g. a direct link) would
+          // get real assessment data saved while staying stuck at an
+          // earlier status forever -- every "find rescue team" action is
+          // gated on status === 'received', so it would permanently hide
+          // with no way to proceed.
+          const updated =
+            statusMeta(c.status).order < statusMeta('received').order ? pushStatus(withData, 'received') : withData
           return { cases: { ...s.cases, [caseId]: updated } }
         })
         const c = get().cases[caseId]
