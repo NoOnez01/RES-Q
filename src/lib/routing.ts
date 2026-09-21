@@ -224,7 +224,10 @@ export function fetchRoute(origin: GeoLocation, destination: GeoLocation, signal
     routeCache.set(key, entry)
   }
 
-  if (!signal) {
+  if (!signal || entry.settled) {
+    // Already resolved (or no signal to begin with) -- nothing left to
+    // ever cancel, so skip the refcounting bookkeeping entirely for what's
+    // the common case once a route's been fetched at least once.
     entry.pinned = true
     return entry.promise
   }

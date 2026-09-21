@@ -173,6 +173,10 @@ export default function NavigationPage() {
   // reaching this state only enables the button below -- confirming is
   // still a manual tap.
   const arrived = gpsMode ? !!gpsPos && haversineKm(gpsPos, target) <= ARRIVAL_RADIUS_KM : pct >= 100
+  // The simulated percentage only means anything in simulated mode -- GPS
+  // mode has no equivalent "how far along" number, so this is undefined
+  // there rather than each display site re-deciding that on its own.
+  const displayPct = gpsMode ? undefined : Math.round(pct)
 
   function handleArrive() {
     if (!id) return
@@ -227,7 +231,7 @@ export default function NavigationPage() {
             <p className="rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted">{t('กำลังค้นหาตำแหน่ง GPS...')}</p>
           )}
 
-          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={gpsMode ? undefined : Math.round(pct)} routeProvider={route?.provider} />
+          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={displayPct} routeProvider={route?.provider} />
 
           <Card className="!p-0 overflow-hidden">
             <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
@@ -241,9 +245,9 @@ export default function NavigationPage() {
             ) : (
               <span className="flex items-center gap-2 font-semibold text-primary">
                 <Loader2 className="size-5 animate-spin-slow" /> {t('กำลังเดินทาง...')}
-                {!gpsMode && (
-                  <span key={Math.round(pct)} className="inline-block animate-count-pop tabular-nums">
-                    {Math.round(pct)}%
+                {displayPct !== undefined && (
+                  <span key={displayPct} className="inline-block animate-count-pop tabular-nums">
+                    {displayPct}%
                   </span>
                 )}
               </span>

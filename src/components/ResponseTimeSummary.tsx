@@ -1,6 +1,6 @@
 import { Timer, Siren, Truck, ClipboardCheck } from 'lucide-react'
 import { Card } from './ui/Card'
-import { StatItem } from './DashboardCard'
+import { StatBar, StatItem } from './DashboardCard'
 import type { CaseStatus, EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -24,14 +24,17 @@ function timestampFor(c: EmergencyCase, status: CaseStatus): number | undefined 
  * that skipped a step (e.g. closed with advice, no dispatch), silently
  * doesn't count rather than skewing the average with a partial duration. */
 function avgMinutesBetween(cases: EmergencyCase[], fromStatus: CaseStatus, toStatus: CaseStatus): number | null {
-  const durationsMs: number[] = []
+  let sumMs = 0
+  let count = 0
   for (const c of cases) {
     const from = timestampFor(c, fromStatus)
     const to = timestampFor(c, toStatus)
-    if (from != null && to != null && to >= from) durationsMs.push(to - from)
+    if (from != null && to != null && to >= from) {
+      sumMs += to - from
+      count++
+    }
   }
-  if (durationsMs.length === 0) return null
-  return durationsMs.reduce((sum, d) => sum + d, 0) / durationsMs.length / 60000
+  return count === 0 ? null : sumMs / count / 60000
 }
 
 /**
@@ -51,7 +54,7 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
   const responseMin = avgMinutesBetween(cases, 'rescue-assigned', 'rescue-arrived')
   const transportMin = avgMinutesBetween(cases, 'transporting', 'hospital-arrived')
   const completedCount = cases.filter((c) => c.status === 'completed').length
-  const sampleSize = [dispatchMin, responseMin, transportMin].filter((v) => v != null).length
+  const hasSample = dispatchMin != null || responseMin != null || transportMin != null
 
   return (
     <Card className="flex flex-col gap-3">
@@ -61,12 +64,12 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
           {t('สรุปเวลาตอบสนองการช่วยเหลือ')}
         </h2>
         <p className="mt-0.5 text-xs text-muted">
-          {sampleSize > 0
+          {hasSample
             ? t('ค่าเฉลี่ยจากเคสที่มีข้อมูลครบ {n} เคส', { n: completedCount })
             : t('ยังไม่มีข้อมูลเวลาเพียงพอสำหรับสรุปผล')}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <StatBar>
         <StatItem
           tone="primary"
           icon={<Siren className="size-5" />}
@@ -91,7 +94,7 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
           label={t('เคสที่เสร็จสิ้นทั้งหมด')}
           value={completedCount}
         />
-      </div>
+      </StatBar>
     </Card>
   )
 }
