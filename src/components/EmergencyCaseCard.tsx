@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Users, Clock, ChevronRight, Ambulance } from 'lucide-react'
+import { MapPin, Users, Clock, ChevronRight, Ambulance, AlertTriangle } from 'lucide-react'
 import clsx from 'clsx'
 import type { EmergencyCase } from '@/lib/types'
 import { statusMeta } from '@/lib/types'
 import { SeverityBadge } from './SeverityBadge'
 import { StatusBadge } from './StatusBadge'
 import { formatDateTime } from '@/lib/utils'
+import { checkCaseConsistency } from '@/lib/caseHealth'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -16,6 +17,18 @@ registerTranslations({
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   'ผู้ป่วย {n} คน': '{n} patient(s)',
   ดูรายละเอียดเคส: 'View case details',
+  // Consistency-check messages from lib/caseHealth.ts -- registered here
+  // since this card is the one place they're actually shown to a user.
+  'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"':
+    'Severity has been assessed, but the case status hasn’t reached "Received" yet',
+  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
+    'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
+  'เลือกโรงพยาบาลแล้ว แต่สถานะเคสยังไม่ถึง "กำลังนำส่งโรงพยาบาล"':
+    'A hospital is selected, but the case status hasn’t reached "Transporting" yet',
+  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
+    'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
+  'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
+  ข้อมูลเคสไม่สอดคล้องกัน: 'Case data is inconsistent',
 })
 
 type RescueResponseColor = 'yellow' | 'green' | 'red'
@@ -49,23 +62,43 @@ export function EmergencyCaseCard({
   // Received but nobody has assessed it yet — the case a dispatcher must act on first.
   const isNew = c.status === 'received' && !c.assessment
   const rescueColor = rescueResponseColor(c)
+  // A case whose status hasn't caught up to data it already has (see
+  // lib/caseHealth.ts) -- e.g. the exact bug fixed in
+  // submitDispatcherAssessment, where an assessment saved but status never
+  // advanced, silently hiding whatever action should come next. Flagged
+  // distinctly (amber, not the "isNew" emergency-red) since this isn't a
+  // fresh case needing triage, it's an existing case stuck in a state a
+  // dispatcher needs to notice and go fix.
+  const issues = checkCaseConsistency(c)
+  const hasIssues = issues.length > 0
   const t = useT()
 
   return (
     <div
       className={clsx(
-        'rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg',
+        'relative rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg',
         isCompleted && 'border-success/30 bg-success/[0.04]',
         isNew && 'border-emergency/40 bg-emergency/[0.035] ring-1 ring-emergency/15',
-        !isCompleted && !isNew && 'border-border bg-surface',
+        hasIssues && !isCompleted && !isNew && 'border-warning/50 bg-warning/[0.04] ring-1 ring-warning/20',
+        !isCompleted && !isNew && !hasIssues && 'border-border bg-surface',
       )}
     >
+      {hasIssues && (
+        <span
+          role="alert"
+          title={issues.map((i) => t(i.message)).join(' · ')}
+          aria-label={t('ข้อมูลเคสไม่สอดคล้องกัน')}
+          className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full border-2 border-surface bg-warning text-white shadow-card"
+        >
+          <AlertTriangle className="size-3.5" />
+        </span>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p
             className={clsx(
               'font-mono text-sm font-bold',
-              isCompleted ? 'text-success' : isNew ? 'text-emergency-dark' : 'text-primary',
+              isCompleted ? 'text-success' : isNew ? 'text-emergency-dark' : hasIssues ? 'text-warning' : 'text-primary',
             )}
           >
             {c.caseNumber}

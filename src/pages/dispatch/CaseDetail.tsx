@@ -46,9 +46,22 @@ import type { VehicleLevel, RescueTeam } from '@/lib/types'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Textarea, Input, SearchableSelect } from '@/components/ui/Field'
 import { THAILAND_PROVINCE_COORDS } from '@/lib/thailandProvinces'
+import { checkCaseConsistency } from '@/lib/caseHealth'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  ข้อมูลเคสไม่สอดคล้องกัน: 'Case data is inconsistent',
+  'เคสนี้มีข้อมูลไม่สอดคล้องกับสถานะปัจจุบัน อาจทำให้ไม่เห็นขั้นตอนถัดไป — ลองแก้ไขข้อมูลที่เกี่ยวข้องอีกครั้ง':
+    'This case has data that doesn’t match its current status, which may be hiding the next action — try re-submitting the relevant form',
+  'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"':
+    'Severity has been assessed, but the case status hasn’t reached "Received" yet',
+  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
+    'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
+  'เลือกโรงพยาบาลแล้ว แต่สถานะเคสยังไม่ถึง "กำลังนำส่งโรงพยาบาล"':
+    'A hospital is selected, but the case status hasn’t reached "Transporting" yet',
+  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
+    'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
+  'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
   รู้สึกตัวดี: 'Conscious',
   หมดสติ: 'Unconscious',
   ไม่ทราบ: 'Unknown',
@@ -231,6 +244,7 @@ export default function DispatchCaseDetail() {
   const details = c.incidentDetails
   const selectedTeam = recommendation.ranked.find((r) => r.team.id === selectedTeamId)?.team ?? null
   const supportTeam = includeSupport && recommendation.needsSupport ? recommendation.support?.team ?? null : null
+  const healthIssues = checkCaseConsistency(c)
 
   function handleStartFinding() {
     setFindingLoading(true)
@@ -377,6 +391,23 @@ export default function DispatchCaseDetail() {
           </Button>
         </div>
       </div>
+
+      {healthIssues.length > 0 && (
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/40 bg-warning/[0.06] p-4">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+          <div className="min-w-0">
+            <p className="font-bold text-ink">{t('ข้อมูลเคสไม่สอดคล้องกัน')}</p>
+            <p className="mt-0.5 text-sm text-muted">
+              {t('เคสนี้มีข้อมูลไม่สอดคล้องกับสถานะปัจจุบัน อาจทำให้ไม่เห็นขั้นตอนถัดไป — ลองแก้ไขข้อมูลที่เกี่ยวข้องอีกครั้ง')}
+            </p>
+            <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-ink">
+              {healthIssues.map((issue) => (
+                <li key={issue.key}>{t(issue.message)}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
