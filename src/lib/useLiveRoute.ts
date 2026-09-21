@@ -19,12 +19,16 @@ export interface LiveRouteState {
  * Tracks a route to `target` from either a fixed `simulatedOrigin` or, when
  * `gpsMode` is on, the device's real live GPS position -- re-fetching the
  * route only once the active origin has moved past `rerouteThresholdKm`,
- * not on every raw GPS fix (which can arrive many times a second). Applies
- * each response via a monotonic request id rather than the usual
- * effect-cleanup `cancelled` flag: a live GPS fix changing on every tick
- * would re-run the fetch effect (and so its cleanup) far more often than an
- * actual new request even starts, which would otherwise discard real
- * in-flight responses before they could land.
+ * not on every raw GPS fix (which can arrive many times a second).
+ *
+ * Applies each response via a monotonic request id, *and* aborts the
+ * previous in-flight request (via lib/routing.ts's reference-counted
+ * cancellation) at the exact moment a new one actually supersedes it --
+ * deliberately not via this effect's own cleanup function, which would
+ * fire on every single GPS fix (most of which don't cross the reroute
+ * threshold and so don't start a new request at all). Tying cancellation
+ * to that would abort a request that's still the one we want, right after
+ * starting it.
  *
  * Extracted out of Navigation.tsx (the first consumer) as its own hook
  * rather than page-local state, since "route from wherever I actually am
@@ -55,6 +59,7 @@ export function useLiveRoute({
   const [route, setRoute] = useState<RouteResult | null>(null)
   const lastRouteOriginRef = useRef<Coords | null>(null)
   const routeRequestIdRef = useRef(0)
+  const activeControllerRef = useRef<AbortController | null>(null)
 
   const routeOrigin: Coords | null = gpsMode ? gpsPos : simulatedOrigin
 
@@ -79,17 +84,38 @@ export function useLiveRoute({
     if (!active || !routeOrigin || !target) {
       setRoute(null)
       lastRouteOriginRef.current = null
+      activeControllerRef.current?.abort()
+      activeControllerRef.current = null
       return
     }
     const last = lastRouteOriginRef.current
     if (last && haversineKm(last, routeOrigin) < rerouteThresholdKm) return
     lastRouteOriginRef.current = routeOrigin
+
+    // A genuinely new request supersedes whatever was previously in
+    // flight -- abort that one now, right as it's actually being replaced
+    // (see the hook doc comment for why this isn't done via effect
+    // cleanup instead).
+    activeControllerRef.current?.abort()
+    const controller = new AbortController()
+    activeControllerRef.current = controller
+
     const requestId = ++routeRequestIdRef.current
-    void fetchRoute(toGeoLocation(routeOrigin), target).then((r) => {
+    void fetchRoute(toGeoLocation(routeOrigin), target, controller.signal).then((r) => {
       if (routeRequestIdRef.current === requestId) setRoute(r)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng, rerouteThresholdKm])
+
+  // Unmount-only cleanup -- separate from the per-run logic above so a
+  // component unmounting mid-request still cancels it, without that
+  // cleanup function also firing (and wrongly aborting a still-wanted
+  // request) on every ordinary re-run of the effect above.
+  useEffect(() => {
+    return () => {
+      activeControllerRef.current?.abort()
+    }
+  }, [])
 
   return { route, gpsPos, gpsErrorMessage }
 }

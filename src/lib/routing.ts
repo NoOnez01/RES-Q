@@ -59,7 +59,7 @@ interface LongdoGeoJsonResponse {
   features?: LongdoRouteFeature[]
 }
 
-async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
+async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
   const key = import.meta.env.VITE_LONGDO_MAP_KEY
   if (!key) return null
 
@@ -75,7 +75,7 @@ async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocatio
   })
 
   try {
-    const res = await fetch(`${LONGDO_ROUTE_URL}?${params}`, { signal: AbortSignal.timeout(8000) })
+    const res = await fetch(`${LONGDO_ROUTE_URL}?${params}`, { signal })
     if (!res.ok) return null
     const data = (await res.json()) as LongdoGeoJsonResponse
     const features = data.features
@@ -141,19 +141,9 @@ function decodePolyline(encoded: string): [number, number][] {
   return points
 }
 
-// One in-memory cache entry per origin/destination pair (rounded to ~11m
-// precision) for this tab's lifetime -- the map re-renders/polls far more
-// often than a rescue vehicle's route meaningfully changes, and this is a
-// shared public server other users rely on too.
-const routeCache = new Map<string, Promise<RouteResult | null>>()
-function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
-  const r = (n: number) => n.toFixed(4)
-  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}`
-}
-
-function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
+function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
   const url = `${OSRM_BASE_URL}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=polyline`
-  return fetch(url, { signal: AbortSignal.timeout(8000) })
+  return fetch(url, { signal })
     .then((res) => (res.ok ? (res.json() as Promise<OsrmResponse>) : null))
     .then((data) => {
       const route = data?.code === 'Ok' ? data.routes?.[0] : undefined
@@ -168,6 +158,36 @@ function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation): Prom
     .catch(() => null)
 }
 
+// One in-memory cache entry per origin/destination pair (rounded to ~11m
+// precision) for this tab's lifetime -- the map re-renders/polls far more
+// often than a rescue vehicle's route meaningfully changes, and this is a
+// shared public server other users rely on too.
+//
+// Cancellation is reference-counted rather than tied to any single caller,
+// because the promise above is shared: two components requesting the exact
+// same origin/destination pair get the *same* in-flight request, not two
+// independent ones. If caller A's AbortSignal fired and simply aborted the
+// underlying fetch, caller B (still waiting on the identical promise) would
+// lose its result too. `refCount` only reaches zero -- and only then
+// actually aborts the shared request -- once every caller that passed a
+// signal for this key has backed off; a caller with no signal (or the
+// route.data.length === 0 / caller already has a result) `pin`s the entry
+// so it's never cancelled underneath it.
+interface RouteCacheEntry {
+  promise: Promise<RouteResult | null>
+  controller: AbortController
+  refCount: number
+  pinned: boolean
+  settled: boolean
+}
+const routeCache = new Map<string, RouteCacheEntry>()
+function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
+  const r = (n: number) => n.toFixed(4)
+  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}`
+}
+
+const ROUTE_TIMEOUT_MS = 8000
+
 /**
  * Real driving route between two points. Prefers Longdo Map (live Thailand
  * traffic) when VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
@@ -176,16 +196,52 @@ function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation): Prom
  * fail, so every caller can fall back further to its own straight-line
  * estimate -- this is an enhancement over that baseline, not a hard
  * dependency.
+ *
+ * `signal`, if passed, lets a caller give up on this specific request (e.g.
+ * a live GPS position that's moved on to a newer one before the old
+ * request even answered) -- see the reference-counting note above for why
+ * that doesn't simply abort the underlying fetch out from under any other
+ * caller sharing the same cached request.
  */
-export function fetchRoute(origin: GeoLocation, destination: GeoLocation): Promise<RouteResult | null> {
+export function fetchRoute(origin: GeoLocation, destination: GeoLocation, signal?: AbortSignal): Promise<RouteResult | null> {
   const key = cacheKey(origin, destination)
-  const cached = routeCache.get(key)
-  if (cached) return cached
+  let entry = routeCache.get(key)
 
-  const promise = fetchRouteFromLongdo(origin, destination).then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination))
+  if (!entry) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS)
+    // Captured by the closure below rather than re-looked-up by `key` --
+    // if this exact entry gets cancelled+evicted and a fresh one created
+    // for the same key before this settles, a by-key lookup would mark the
+    // *new* entry settled instead, based on the *old* request's timing.
+    const promise = fetchRouteFromLongdo(origin, destination, controller.signal)
+      .then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination, controller.signal))
+      .finally(() => {
+        clearTimeout(timeout)
+        entry!.settled = true
+      })
+    entry = { promise, controller, refCount: 0, pinned: false, settled: false }
+    routeCache.set(key, entry)
+  }
 
-  routeCache.set(key, promise)
-  return promise
+  if (!signal) {
+    entry.pinned = true
+    return entry.promise
+  }
+
+  const current = entry
+  current.refCount++
+  const onAbort = () => {
+    current.refCount--
+    if (current.refCount <= 0 && !current.pinned && !current.settled) {
+      current.controller.abort()
+      if (routeCache.get(key) === current) routeCache.delete(key)
+    }
+  }
+  if (signal.aborted) onAbort()
+  else signal.addEventListener('abort', onAbort, { once: true })
+
+  return entry.promise
 }
 
 /**
