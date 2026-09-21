@@ -23,8 +23,6 @@ registerTranslations({
     'Severity has been assessed, but the case status hasn’t reached "Received" yet',
   'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
     'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
-  'เลือกโรงพยาบาลแล้ว แต่สถานะเคสยังไม่ถึง "กำลังนำส่งโรงพยาบาล"':
-    'A hospital is selected, but the case status hasn’t reached "Transporting" yet',
   'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
     'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
   'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
@@ -37,6 +35,15 @@ const RESCUE_RESPONSE_STYLE: Record<RescueResponseColor, { classes: string; labe
   yellow: { classes: 'bg-warning text-white border-warning/40', label: 'รอหน่วยกู้ชีพตอบรับ' },
   green: { classes: 'bg-success text-white border-success/40', label: 'หน่วยกู้ชีพตอบรับแล้ว' },
   red: { classes: 'bg-emergency text-white border-emergency/40', label: 'หน่วยกู้ชีพปฏิเสธเคส' },
+}
+
+type CardTone = 'completed' | 'new' | 'warning' | 'default'
+
+const CARD_TONE_STYLE: Record<CardTone, { card: string; caseNumber: string }> = {
+  completed: { card: 'border-success/30 bg-success/[0.04]', caseNumber: 'text-success' },
+  new: { card: 'border-emergency/40 bg-emergency/[0.035] ring-1 ring-emergency/15', caseNumber: 'text-emergency-dark' },
+  warning: { card: 'border-warning/50 bg-warning/[0.04] ring-1 ring-warning/20', caseNumber: 'text-warning' },
+  default: { card: 'border-border bg-surface', caseNumber: 'text-primary' },
 }
 
 /** Sent to a team (yellow) -> accepted (green) or rejected, back to searching (red). */
@@ -71,18 +78,11 @@ export function EmergencyCaseCard({
   // dispatcher needs to notice and go fix.
   const issues = checkCaseConsistency(c)
   const hasIssues = issues.length > 0
+  const tone: CardTone = isCompleted ? 'completed' : isNew ? 'new' : hasIssues ? 'warning' : 'default'
   const t = useT()
 
   return (
-    <div
-      className={clsx(
-        'relative rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg',
-        isCompleted && 'border-success/30 bg-success/[0.04]',
-        isNew && 'border-emergency/40 bg-emergency/[0.035] ring-1 ring-emergency/15',
-        hasIssues && !isCompleted && !isNew && 'border-warning/50 bg-warning/[0.04] ring-1 ring-warning/20',
-        !isCompleted && !isNew && !hasIssues && 'border-border bg-surface',
-      )}
-    >
+    <div className={clsx('relative rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg', CARD_TONE_STYLE[tone].card)}>
       {hasIssues && (
         <span
           role="alert"
@@ -95,14 +95,7 @@ export function EmergencyCaseCard({
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p
-            className={clsx(
-              'font-mono text-sm font-bold',
-              isCompleted ? 'text-success' : isNew ? 'text-emergency-dark' : hasIssues ? 'text-warning' : 'text-primary',
-            )}
-          >
-            {c.caseNumber}
-          </p>
+          <p className={clsx('font-mono text-sm font-bold', CARD_TONE_STYLE[tone].caseNumber)}>{c.caseNumber}</p>
           <p className="mt-1 font-semibold text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -269,7 +269,6 @@ interface ResQState {
   /** A follow-up note on the patient's condition after the initial record
    * -- syncs in real time to dispatch/hospital like the rest of the case. */
   addPatientUpdate: (caseId: string, note: string) => void
-  selectHospital: (caseId: string, hospital: Hospital) => void
   /** Single entry point for how the hospital leg gets decided -- a normal
    * pick, or a documented refusal (see HospitalDecision). Sets
    * `selectedHospital` too when a hospital is included, and for
@@ -860,22 +859,6 @@ export const useStore = create<ResQState>()(
           title: t('อัปเดตอาการผู้ป่วย'),
           message: t('เคส {caseNumber}: {note}', { caseNumber: c?.caseNumber ?? '', note: note ?? '' }),
           tone: 'info',
-        })
-      },
-
-      selectHospital: (caseId, hospital) => {
-        set((s) => {
-          const c = s.cases[caseId]
-          if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, selectedHospital: hospital, updatedAt: Date.now() } } }
-        })
-        const c = get().cases[caseId]
-        notify(set, {
-          audience: 'hospital',
-          caseId,
-          title: t('มีผู้ป่วยกำลังนำส่ง'),
-          message: t('เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c?.caseNumber ?? '' }),
-          tone: 'emergency',
         })
       },
 

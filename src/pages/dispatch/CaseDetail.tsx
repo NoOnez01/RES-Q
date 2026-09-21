@@ -57,8 +57,6 @@ registerTranslations({
     'Severity has been assessed, but the case status hasn’t reached "Received" yet',
   'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
     'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
-  'เลือกโรงพยาบาลแล้ว แต่สถานะเคสยังไม่ถึง "กำลังนำส่งโรงพยาบาล"':
-    'A hospital is selected, but the case status hasn’t reached "Transporting" yet',
   'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
     'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
   'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
@@ -402,7 +400,7 @@ export default function DispatchCaseDetail() {
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-ink">
               {healthIssues.map((issue) => (
-                <li key={issue.key}>{t(issue.message)}</li>
+                <li key={issue.message}>{t(issue.message)}</li>
               ))}
             </ul>
           </div>

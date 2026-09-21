@@ -49,8 +49,9 @@ export interface HandoffAlert {
  * -> โรงพยาบาล, and a rejection bouncing a case back to 1669 — each need to
  * alert whichever role the case just landed on (or landed back on). Mirrors
  * the same case fields the relevant store actions (submitReport,
- * assignRescueTeam, rescueRejectCase, selectHospital) transition, so a case
- * is "actionable for this role" independent of who or which tab moved it.
+ * assignRescueTeam, rescueRejectCase, recordHospitalDecision) transition, so
+ * a case is "actionable for this role" independent of who or which tab moved
+ * it.
  */
 function handoffsFor(
   role: Role | 'public',

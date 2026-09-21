@@ -5,10 +5,9 @@ import type { EmergencyCase } from './types'
  * that's actually been recorded on it -- see checkCaseConsistency below for
  * what "inconsistency" means here. */
 export interface CaseIssue {
-  /** Stable id for React keys / dedup, not shown to users. */
-  key: string
-  /** Thai source string (already registered as a translation key by
-   * whichever component renders it -- see components/CaseHealthBadge.tsx). */
+  /** Thai source string, already registered as a translation key by
+   * whichever component renders it. Distinct per check, so it doubles as
+   * the React list key. */
   message: string
 }
 
@@ -39,21 +38,26 @@ export function checkCaseConsistency(c: EmergencyCase): CaseIssue[] {
   const currentOrder = order(c.status)
 
   if (c.assessment && currentOrder < order('received')) {
-    issues.push({ key: 'assessment-ahead', message: 'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"' })
+    issues.push({ message: 'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"' })
   }
   if (c.assignedRescueTeam && currentOrder < order('rescue-assigned')) {
-    issues.push({ key: 'team-ahead', message: 'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"' })
+    issues.push({ message: 'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"' })
   }
-  if (c.selectedHospital && currentOrder < order('transporting')) {
-    issues.push({ key: 'hospital-ahead', message: 'เลือกโรงพยาบาลแล้ว แต่สถานะเคสยังไม่ถึง "กำลังนำส่งโรงพยาบาล"' })
-  }
+  // NOT selectedHospital-ahead-of-transporting: that's normal, expected
+  // state, not a stuck case. recordHospitalDecision sets `selectedHospital`
+  // while status stays at 'assisted'; startTransport is a distinct, later
+  // action a rescue crew takes explicitly from its own screen (see
+  // rescue/CaseDetail.tsx's "Start Transport" button, gated on exactly
+  // `status === 'assisted' && c.selectedHospital`). Flagging that gap here
+  // would put a false "inconsistent data" warning on every ordinary case
+  // between hospital selection and transport start.
   if (c.patientInfo && currentOrder < order('rescue-arrived')) {
-    issues.push({ key: 'patient-info-ahead', message: 'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"' })
+    issues.push({ message: 'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"' })
   }
   // The reverse direction: a case dispatch has already received should have
   // the incident details that step is supposed to capture.
   if (currentOrder >= order('received') && !c.incidentDetails) {
-    issues.push({ key: 'missing-incident-details', message: 'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์' })
+    issues.push({ message: 'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์' })
   }
 
   return issues
