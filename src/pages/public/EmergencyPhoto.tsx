@@ -468,7 +468,7 @@ export default function EmergencyPhoto() {
                 </span>
               )}
             </div>
-            <AudioRecorder label={t('กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์')} onSave={handleSaveAudio} />
+            <AudioRecorder label={t('กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์')} onSave={handleSaveAudio} resetAfterSave />
             {uploadingAudio && <p className="text-xs font-medium text-primary">{t('กำลังอัปโหลดเสียง...')}</p>}
             {audioRecordings.length > 0 && (
               <div className="flex flex-col gap-2">

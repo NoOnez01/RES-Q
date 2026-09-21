@@ -192,7 +192,11 @@ export default function CaseTracking() {
         {storedCase === undefined && remoteStatus === 'loading' ? (
           <LoadingState label={t('กำลังค้นหาเคส...')} />
         ) : (
-          <ErrorState title={t('ไม่พบเคสนี้')} description={t('เคสอาจถูกลบหรือรหัสไม่ถูกต้อง')} />
+          <ErrorState
+            title={t('ไม่พบเคสนี้')}
+            description={t('เคสอาจถูกลบหรือรหัสไม่ถูกต้อง')}
+            onRetry={() => setRemoteStatus('idle')}
+          />
         )}
       </AppShell>
     )

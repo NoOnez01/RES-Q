@@ -18,9 +18,17 @@ registerTranslations({
 export function AudioRecorder({
   label,
   onSave,
+  resetAfterSave = false,
 }: {
   label?: string
   onSave?: (blob: Blob, seconds: number) => void
+  /** For a caller that renders its own persisted list of saved recordings
+   * elsewhere on the page (see EmergencyPhoto.tsx): skip this widget's own
+   * play/discard preview after a save, since that list is already the
+   * single place recordings are played back or removed from the case --
+   * showing it here too duplicated the just-saved clip, and this widget's
+   * own "discard" only ever cleared its local preview, never the save. */
+  resetAfterSave?: boolean
 }) {
   const t = useT()
   const resolvedLabel = label ?? t('บันทึกเสียงบันทึกเพิ่มเติม')
@@ -45,9 +53,10 @@ export function AudioRecorder({
       recorder.ondataavailable = (e) => chunksRef.current.push(e.data)
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        setAudioUrl(URL.createObjectURL(blob))
         stream.getTracks().forEach((track) => track.stop())
         onSave?.(blob, secondsRef.current)
+        if (resetAfterSave) setSeconds(0)
+        else setAudioUrl(URL.createObjectURL(blob))
       }
       recorder.start()
       mediaRecorderRef.current = recorder
