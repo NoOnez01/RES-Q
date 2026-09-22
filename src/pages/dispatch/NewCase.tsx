@@ -18,55 +18,50 @@ import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
 import type { Severity } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
-// This page's Thai copy already has an "(English)" gloss baked into most
-// strings -- rather than strip that (changing what Thai users currently
-// see), each key below is the exact original bilingual string, so Thai mode
-// is untouched and English mode gets just the clean English half.
 registerTranslations({
-  'มีสติ (Conscious)': 'Conscious',
-  'ไม่มีสติ (Unconscious)': 'Unconscious',
-  'ไม่ทราบ (Unknown)': 'Unknown',
-  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น (Please select an incident type)': 'Please select an incident type',
-  'กรุณาระบุจุดเกิดเหตุ (Please specify the incident location)': 'Please specify the incident location',
-  'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน (Please enter at least 1 patient)': 'Please enter at least 1 patient',
-  'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย (Please select the consciousness level)': 'Please select the consciousness level',
-  'กรุณาเลือกระดับความรุนแรง (Please select a severity level)': 'Please select a severity level',
-  'กรุณาระบุลักษณะการบาดเจ็บ (Please describe the injury)': 'Please describe the injury',
-  'บันทึกเคสใหม่แล้ว (Case logged)': 'Case logged',
-  'เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว (Case ready to search for rescue units)': 'Case ready to search for rescue units',
-  'บันทึกเคสใหม่ (New Case)': 'New Case',
-  'บันทึกเคสที่รับแจ้งทางโทรศัพท์ (Log a Phone-In Case)': 'Log a Phone-In Case',
+  'มีสติ': 'Conscious',
+  'ไม่มีสติ': 'Unconscious',
+  'ไม่ทราบ': 'Unknown',
+  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น': 'Please select an incident type',
+  'กรุณาระบุจุดเกิดเหตุ': 'Please specify the incident location',
+  'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน': 'Please enter at least 1 patient',
+  'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย': 'Please select the consciousness level',
+  'กรุณาเลือกระดับความรุนแรง': 'Please select a severity level',
+  'กรุณาระบุลักษณะการบาดเจ็บ': 'Please describe the injury',
+  'บันทึกเคสใหม่แล้ว': 'Case logged',
+  'เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว': 'Case ready to search for rescue units',
+  'บันทึกเคสใหม่': 'Log new case',
+  'บันทึกเคสที่รับแจ้งทางโทรศัพท์': 'Log a Phone-In Case',
   'สำหรับเหตุที่รับแจ้งโดยตรง ไม่ได้ผ่านแอปประชาชน — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ':
     'For incidents reported directly, not through the citizen app — fill in details from the conversation with the reporter',
-  'ข้อมูลผู้แจ้งเหตุ (Reporter Information)': 'Reporter Information',
-  'ชื่อผู้แจ้งเหตุ (Reporter Name)': 'Reporter Name',
-  'เบอร์ติดต่อกลับ (Callback Phone)': 'Callback Phone',
-  'ไม่บังคับ — กรอกไว้หากติดต่อกลับได้ (Optional — fill in if a callback number is available)':
+  'ข้อมูลผู้แจ้งเหตุ': 'Reporter Information',
+  'ชื่อผู้แจ้งเหตุ': 'Reporter Name',
+  'เบอร์ติดต่อกลับ': 'Callback number',
+  'ไม่บังคับ — กรอกไว้หากติดต่อกลับได้':
     'Optional — fill in if a callback number is available',
-  'เหตุการณ์ที่เกิดขึ้น (Incident Type)': 'Incident Type',
+  'เหตุการณ์ที่เกิดขึ้น': 'Incident Type',
   'พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์': 'Type a search term or CBD code to select an incident type',
   ไม่พบประเภทเหตุการณ์ที่ค้นหา: 'No matching incident type found',
-  'จุดเกิดเหตุ (Incident Location)': 'Incident Location',
-  'ปักหมุดตำแหน่งบนแผนที่ (Pin location on map)': 'Pin location on map',
-  'จำนวนผู้ป่วย (Number of Patients)': 'Number of Patients',
-  'ผู้ป่วยยังมีสติหรือไม่ (Is the Patient Conscious?)': 'Is the Patient Conscious?',
-  'เลือกระดับความรู้สึกตัว (Select consciousness level)': 'Select consciousness level',
-  'หมายเหตุเพิ่มเติม (Additional Notes)': 'Additional Notes',
+  'จุดเกิดเหตุ': 'Incident location',
+  'ปักหมุดตำแหน่งบนแผนที่': 'Pin location on map',
+  'จำนวนผู้ป่วย': 'Number of patients',
+  'ผู้ป่วยยังมีสติหรือไม่': 'Is the patient conscious?',
+  'เลือกระดับความรู้สึกตัว': 'Select consciousness level',
+  'หมายเหตุเพิ่มเติม': 'Additional notes',
   พิมพ์หรือพูดเพื่อบันทึก: 'Type or speak to record',
-  'ไม่บังคับ (Optional)': 'Optional',
-  'ระดับความรุนแรง (Severity Level)': 'Severity Level',
-  'ลักษณะการบาดเจ็บ (Injury Description)': 'Injury Description',
-  '{cur}/{max} ตัวอักษร (characters)': '{cur}/{max} characters',
-  'บันทึกเคสใหม่ (Log Case)': 'Log Case',
-  'ยกเลิก (Cancel)': 'Cancel',
+  'ไม่บังคับ': 'Optional',
+  'ระดับความรุนแรง': 'Severity Level',
+  'ลักษณะการบาดเจ็บ': 'Nature of injury',
+  '{cur}/{max} ตัวอักษร': '{cur}/{max} characters',
+  'ยกเลิก': 'Cancel',
 })
 
 type Conscious = '' | 'conscious' | 'unconscious' | 'unknown'
 
 const CONSCIOUS_LABEL: Record<Exclude<Conscious, ''>, string> = {
-  conscious: 'มีสติ (Conscious)',
-  unconscious: 'ไม่มีสติ (Unconscious)',
-  unknown: 'ไม่ทราบ (Unknown)',
+  conscious: 'มีสติ',
+  unconscious: 'ไม่มีสติ',
+  unknown: 'ไม่ทราบ',
 }
 
 const INJURY_SOFT_LIMIT = 500
@@ -101,15 +96,15 @@ export default function DispatchNewCase() {
 
   function handleSubmit() {
     const errs: Record<string, string> = {}
-    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น (Please select an incident type)')
-    if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ (Please specify the incident location)')
+    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น')
+    if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ')
     const countNum = Number(patientCount)
     if (!patientCount.trim() || Number.isNaN(countNum) || countNum < 1) {
-      errs.patientCount = t('กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน (Please enter at least 1 patient)')
+      errs.patientCount = t('กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน')
     }
-    if (!conscious) errs.conscious = t('กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย (Please select the consciousness level)')
-    if (!severity) errs.severity = t('กรุณาเลือกระดับความรุนแรง (Please select a severity level)')
-    if (!injuryDescription.trim()) errs.injuryDescription = t('กรุณาระบุลักษณะการบาดเจ็บ (Please describe the injury)')
+    if (!conscious) errs.conscious = t('กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย')
+    if (!severity) errs.severity = t('กรุณาเลือกระดับความรุนแรง')
+    if (!injuryDescription.trim()) errs.injuryDescription = t('กรุณาระบุลักษณะการบาดเจ็บ')
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
       setHighlight(true)
@@ -135,8 +130,8 @@ export default function DispatchNewCase() {
       })
       setSubmitting(false)
       toast({
-        title: t('บันทึกเคสใหม่แล้ว (Case logged)'),
-        message: t('เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว (Case ready to search for rescue units)'),
+        title: t('บันทึกเคสใหม่แล้ว'),
+        message: t('เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว'),
         tone: 'success',
       })
       navigate(`/dispatch/case/${id}`)
@@ -152,32 +147,32 @@ export default function DispatchNewCase() {
   }
 
   return (
-    <AppShell variant="dashboard" title={t('บันทึกเคสใหม่ (New Case)')}>
+    <AppShell variant="dashboard" title={t('บันทึกเคสใหม่')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('บันทึกเคสที่รับแจ้งทางโทรศัพท์ (Log a Phone-In Case)')}</h1>
+            <h1 className="text-xl font-bold text-ink">{t('บันทึกเคสที่รับแจ้งทางโทรศัพท์')}</h1>
             <p className="mt-1.5 text-sm text-muted">
               {t('สำหรับเหตุที่รับแจ้งโดยตรง ไม่ได้ผ่านแอปประชาชน — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ')}
             </p>
           </div>
 
           <Card className="space-y-3">
-            <h2 className="text-sm font-bold text-ink">{t('ข้อมูลผู้แจ้งเหตุ (Reporter Information)')}</h2>
+            <h2 className="text-sm font-bold text-ink">{t('ข้อมูลผู้แจ้งเหตุ')}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Input label={t('ชื่อผู้แจ้งเหตุ (Reporter Name)')} value={reporterName} onChange={(e) => setReporterName(e.target.value)} />
+              <Input label={t('ชื่อผู้แจ้งเหตุ')} value={reporterName} onChange={(e) => setReporterName(e.target.value)} />
               <Input
-                label={t('เบอร์ติดต่อกลับ (Callback Phone)')}
+                label={t('เบอร์ติดต่อกลับ')}
                 value={reporterPhone}
                 onChange={(e) => setReporterPhone(e.target.value)}
               />
             </div>
-            <p className="text-xs text-muted">{t('ไม่บังคับ — กรอกไว้หากติดต่อกลับได้ (Optional — fill in if a callback number is available)')}</p>
+            <p className="text-xs text-muted">{t('ไม่บังคับ — กรอกไว้หากติดต่อกลับได้')}</p>
           </Card>
 
           <SearchableSelect
-            label={t('เหตุการณ์ที่เกิดขึ้น (Incident Type)')}
+            label={t('เหตุการณ์ที่เกิดขึ้น')}
             required
             value={incidentType}
             error={errors.incidentType}
@@ -190,7 +185,7 @@ export default function DispatchNewCase() {
 
           <div className="flex flex-col gap-2">
             <Textarea
-              label={t('จุดเกิดเหตุ (Incident Location)')}
+              label={t('จุดเกิดเหตุ')}
               required
               rows={2}
               value={location}
@@ -199,7 +194,7 @@ export default function DispatchNewCase() {
               className={clsx(highlight && errors.location && 'animate-pulse')}
             />
             <Button variant="outline" size="sm" icon={<MapPin className="size-4" />} onClick={() => setShowMap((v) => !v)}>
-              {t('ปักหมุดตำแหน่งบนแผนที่ (Pin location on map)')}
+              {t('ปักหมุดตำแหน่งบนแผนที่')}
             </Button>
             {showMap && (
               <MapPanel pins={[incidentPin]} center={[incidentPin.lat, incidentPin.lng]} height="200px" onPickLocation={handlePickOnMap} />
@@ -207,7 +202,7 @@ export default function DispatchNewCase() {
           </div>
 
           <Input
-            label={t('จำนวนผู้ป่วย (Number of Patients)')}
+            label={t('จำนวนผู้ป่วย')}
             type="number"
             min={1}
             required
@@ -218,28 +213,28 @@ export default function DispatchNewCase() {
           />
 
           <Select
-            label={t('ผู้ป่วยยังมีสติหรือไม่ (Is the Patient Conscious?)')}
+            label={t('ผู้ป่วยยังมีสติหรือไม่')}
             required
             value={conscious}
             error={errors.conscious}
             onChange={(e) => setConscious(e.target.value as Conscious)}
             className={clsx(highlight && errors.conscious && 'animate-pulse')}
           >
-            <option value="">{t('เลือกระดับความรู้สึกตัว (Select consciousness level)')}</option>
+            <option value="">{t('เลือกระดับความรู้สึกตัว')}</option>
             <option value="conscious">{t(CONSCIOUS_LABEL.conscious)}</option>
             <option value="unconscious">{t(CONSCIOUS_LABEL.unconscious)}</option>
             <option value="unknown">{t(CONSCIOUS_LABEL.unknown)}</option>
           </Select>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-ink">{t('หมายเหตุเพิ่มเติม (Additional Notes)')}</label>
+            <label className="text-sm font-semibold text-ink">{t('หมายเหตุเพิ่มเติม')}</label>
             <SpeechToTextPanel value={notes} onChange={setNotes} label={t('พิมพ์หรือพูดเพื่อบันทึก')} />
-            <p className="text-xs text-muted">{t('ไม่บังคับ (Optional)')}</p>
+            <p className="text-xs text-muted">{t('ไม่บังคับ')}</p>
           </div>
 
           <Card className={clsx('flex flex-col gap-2 transition-all', highlight && errors.severity && 'animate-pulse')}>
             <label className="text-sm font-semibold text-ink">
-              {t('ระดับความรุนแรง (Severity Level)')}<span className="ml-0.5 text-emergency">*</span>
+              {t('ระดับความรุนแรง')}<span className="ml-0.5 text-emergency">*</span>
             </label>
             <div className="flex flex-col gap-2.5">
               {SEVERITY_OPTIONS.map((opt) => (
@@ -261,7 +256,7 @@ export default function DispatchNewCase() {
             <div className="flex items-center gap-1.5">
               <Activity className="size-4 text-primary" />
               <label className="text-sm font-semibold text-ink">
-                {t('ลักษณะการบาดเจ็บ (Injury Description)')}<span className="ml-0.5 text-emergency">*</span>
+                {t('ลักษณะการบาดเจ็บ')}<span className="ml-0.5 text-emergency">*</span>
               </label>
             </div>
             <SpeechToTextPanel
@@ -272,7 +267,7 @@ export default function DispatchNewCase() {
               textareaClassName={clsx(highlight && errors.injuryDescription && 'animate-pulse')}
             />
             <p className="self-end text-xs text-muted">
-              {t('{cur}/{max} ตัวอักษร (characters)', { cur: injuryDescription.length, max: INJURY_SOFT_LIMIT })}
+              {t('{cur}/{max} ตัวอักษร', { cur: injuryDescription.length, max: INJURY_SOFT_LIMIT })}
             </p>
           </Card>
 
@@ -285,10 +280,10 @@ export default function DispatchNewCase() {
               loading={submitting}
               onClick={handleSubmit}
             >
-              {t('บันทึกเคสใหม่ (Log Case)')}
+              {t('บันทึกเคสใหม่')}
             </Button>
             <Button variant="outline" size="lg" fullWidth disabled={submitting} onClick={() => navigate('/dispatch/dashboard')}>
-              {t('ยกเลิก (Cancel)')}
+              {t('ยกเลิก')}
             </Button>
           </div>
         </div>

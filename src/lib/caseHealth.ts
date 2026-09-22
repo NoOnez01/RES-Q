@@ -54,9 +54,15 @@ export function checkCaseConsistency(c: EmergencyCase): CaseIssue[] {
   if (c.patientInfo && currentOrder < order('rescue-arrived')) {
     issues.push({ message: 'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"' })
   }
-  // The reverse direction: a case dispatch has already received should have
-  // the incident details that step is supposed to capture.
-  if (currentOrder >= order('received') && !c.incidentDetails) {
+  // The reverse direction: a case dispatch has already moved past should
+  // have the incident details that step is supposed to capture. Strictly
+  // greater, not >= -- a case freshly AT 'received' with no incidentDetails
+  // yet is the normal "new, untriaged" resting state every case passes
+  // through (see EmergencyCaseCard's `isNew`), not an inconsistency.
+  // submitDispatcherAssessment sets incidentDetails and advances status
+  // past 'received' together, so anything further along that's still
+  // missing it really is stuck.
+  if (currentOrder > order('received') && !c.incidentDetails) {
     issues.push({ message: 'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์' })
   }
 
