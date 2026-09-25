@@ -9,7 +9,7 @@ import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
-import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
+import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -33,8 +33,6 @@ registerTranslations({
   รูปภาพแนบ: 'Attached photos',
   'แนบรูปภาพแล้ว {n} รูป': '{n} photo(s) attached',
   ไม่มีรูปภาพแนบ: 'No photos attached',
-  'เจ้าหน้าที่ 1669': 'Responder 1669',
-  'กำลังเชื่อมต่อวิดีโอ...': 'Connecting video...',
   รอเจ้าหน้าที่รับสาย: 'Waiting for a responder to answer',
   ยกเลิกการโทร: 'Cancel call',
   เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
@@ -76,12 +74,7 @@ export default function Call1669() {
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
-    activeCaseId,
-    'caller',
-    callIsLive,
-  )
-  const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
+  const call = useLiveKitCall(activeCaseId, 'dispatch', callIsLive)
 
   useEffect(() => {
     return () => {
@@ -291,19 +284,7 @@ export default function Call1669() {
 
           {callIsLive && (
             <>
-              <VideoCallPanel
-                localStream={localStream}
-                remoteStream={remoteStream}
-                cameraState={cameraState}
-                connectionState={connectionState}
-                remoteLabel={t('เจ้าหน้าที่ 1669')}
-                remoteWaitingLabel={remoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอเจ้าหน้าที่รับสาย')}
-                cameraOn={cameraOn}
-                onToggleCamera={() => setCameraOn((v) => !v)}
-                micOn={micOn}
-                onToggleMic={() => setMicOn((v) => !v)}
-                onSwitchCamera={switchCamera}
-              />
+              <VideoCallPanel call={call} emergencyCase={activeCase} waitingLabel={t('รอเจ้าหน้าที่รับสาย')} />
               {activeCase.callStatus === 'connecting' ? (
                 <Button variant="outline" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
                   {t('ยกเลิกการโทร')}

@@ -17,7 +17,7 @@ import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { ErrorState, LoadingState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
-import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
+import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
@@ -95,9 +95,9 @@ export default function CaseTracking() {
   const isRemoteOnly = !storedCase && !!remoteCase
 
   // Rescue calling the reporter directly -- a separate call relationship
-  // from the citizen/rescue-to-1669 calls (Contact1669.tsx), using its own
-  // webrtc room key so it can't collide with one already in progress on the
-  // plain case id. Only meaningful for a live-synced case (isRemoteOnly is a
+  // from the citizen/rescue-to-1669 calls (Contact1669.tsx), in its own
+  // LiveKit room so it can't collide with one already in progress on the
+  // case's 1669 room. Only meaningful for a live-synced case (isRemoteOnly is a
   // read-only snapshot with no session to answer from), same gating as the
   // "ติดต่อ 1669" button below.
   const answerRescueCall = useStore((s) => s.answerRescueCall)
@@ -107,16 +107,7 @@ export default function CaseTracking() {
   const rescueCallActive = !isRemoteOnly && activeCase?.rescueCallStatus === 'in-call'
   const rescueCallIsLive = rescueCallRinging || rescueCallActive
   const rescueCallIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const {
-    localStream: rescueLocalStream,
-    remoteStream: rescueRemoteStream,
-    cameraState: rescueCameraState,
-    remoteJoined: rescueRemoteJoined,
-    connectionState: rescueConnectionState,
-    switchCamera: rescueSwitchCamera,
-  } = useWebRTCCall(activeCase ? `${activeCase.id}-rescue-citizen` : null, 'callee', rescueCallIsLive)
-  const { cameraOn: rescueCameraOn, setCameraOn: setRescueCameraOn, micOn: rescueMicOn, setMicOn: setRescueMicOn } =
-    useMediaToggle(rescueLocalStream)
+  const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', rescueCallIsLive)
 
   useEffect(() => {
     if (rescueCallActive && activeCase && !rescueCallIntervalRef.current) {
@@ -283,19 +274,7 @@ export default function CaseTracking() {
             // reporter): staff controls when the call is actually finished,
             // not a citizen who may be distressed or acting on impulse.
             <div className="animate-fade-in-up">
-              <VideoCallPanel
-                localStream={rescueLocalStream}
-                remoteStream={rescueRemoteStream}
-                cameraState={rescueCameraState}
-                connectionState={rescueConnectionState}
-                remoteLabel={t('หน่วยกู้ชีพ')}
-                remoteWaitingLabel={rescueRemoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอหน่วยกู้ชีพเปิดกล้อง')}
-                cameraOn={rescueCameraOn}
-                onToggleCamera={() => setRescueCameraOn((v) => !v)}
-                micOn={rescueMicOn}
-                onToggleMic={() => setRescueMicOn((v) => !v)}
-                onSwitchCamera={rescueSwitchCamera}
-              />
+              <VideoCallPanel call={rescueCall} emergencyCase={activeCase} waitingLabel={t('รอหน่วยกู้ชีพเปิดกล้อง')} />
             </div>
           )}
 

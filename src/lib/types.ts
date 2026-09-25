@@ -401,6 +401,10 @@ export interface EmergencyCase {
    * on the same case. Rescue is always the caller, the reporter the callee. */
   rescueCallStatus?: CallStatus
   rescueCallDurationSec?: number
+  /** Dispatcher pulling the assigned rescue crew into an in-progress 1669
+   * call (same LiveKit room, so it becomes three-way). 'ringing' until a
+   * crew member accepts; cleared whenever that 1669 call ends. */
+  rescueCallInvite?: { status: 'ringing' | 'joined'; invitedAt: number }
   incidentDetails: IncidentDetails | null
   assessment: DispatcherAssessment | null
   patientInfo: PatientInfo | null

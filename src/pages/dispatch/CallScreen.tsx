@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { PhoneOff, MapPin, User } from 'lucide-react'
+import { PhoneOff, MapPin, User, Ambulance, UserPlus } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -9,7 +9,7 @@ import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
+import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -24,7 +24,6 @@ registerTranslations({
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   หน่วยกู้ชีพ: 'Rescue team',
   ผู้แจ้งเหตุ: 'Reporter',
-  'กำลังเชื่อมต่อวิดีโอ...': 'Connecting video...',
   รอหน่วยกู้ชีพเปิดกล้อง: "Waiting for the rescue team to turn on their camera",
   รอผู้แจ้งเหตุเปิดกล้อง: "Waiting for the reporter to turn on their camera",
   วางสาย: 'Hang up',
@@ -32,6 +31,13 @@ registerTranslations({
   ต้องการวางสายและออกจากหน้านี้หรือไม่: 'Hang up and leave this screen?',
   วางสายและออก: 'Hang up and leave',
   คุยต่อ: 'Keep talking',
+  ดึงหน่วยกู้ชีพเข้าสาย: 'Bring the rescue team into this call',
+  'ให้ {team} ได้ยินผู้แจ้งเหตุโดยตรง': 'Let {team} hear the reporter directly',
+  เชิญเข้าสาย: 'Invite to call',
+  'กำลังเรียก {team}...': 'Calling {team}...',
+  'รอหน่วยกู้ชีพกดเข้าร่วม': 'Waiting for the rescue team to join',
+  '{team} กำลังเข้าร่วมสาย...': '{team} is joining the call...',
+  ยกเลิก: 'Cancel',
 })
 
 export default function DispatchCallScreen() {
@@ -39,24 +45,19 @@ export default function DispatchCallScreen() {
   const navigate = useNavigate()
   const emergencyCase = useStore((s) => (id ? s.cases[id] : undefined))
   const setCallStatus = useStore((s) => s.setCallStatus)
+  const inviteRescueToCall = useStore((s) => s.inviteRescueToCall)
+  const clearRescueCallInvite = useStore((s) => s.clearRescueCallInvite)
   const hasNavigatedAway = useRef(false)
   const t = useT()
 
   const isActive = emergencyCase?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
-    id ?? null,
-    'callee',
-    isActive,
-  )
-  const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
+  const call = useLiveKitCall(id ?? null, 'dispatch', isActive)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   // This screen has no back button (showBack={false} below) so a stray tap
   // can't hang up -- but the browser/Android back gesture still can, and
   // silently dropping a live emergency call was the actual bug report: an
-  // accidental back-navigation ended the call with no warning, and the pc
-  // torn down by unmounting left nothing to "retry" back into (see the
-  // hasOffered/restartIce fix in useWebRTCCall.ts for that second half).
+  // accidental back-navigation ended the call with no warning.
   // Traps ONE back-press per mount: push a dummy history entry now, and
   // treat popstate while still on a live call as "confirm before leaving"
   // rather than letting it through.
@@ -115,6 +116,15 @@ export default function DispatchCallScreen() {
     setCallStatus(id, 'ended')
   }
 
+  // Only a citizen's call can be made three-way -- when rescue itself is
+  // the one calling in, they're already on the line. Keyed off who's
+  // actually in the room rather than the invite's own status, so a crew
+  // that dropped out without pressing "leave" can simply be invited again.
+  const team = emergencyCase.assignedRescueTeam
+  const rescueInCall = call.remotes.some((p) => p.role === 'rescue')
+  const canPullInRescue = isActive && !!team && emergencyCase.activeCallerRole !== 'rescue' && !rescueInCall
+  const invite = emergencyCase.rescueCallInvite
+
   return (
     <AppShell variant="flow" title={t('กำลังสนทนา')} showBack={false}>
       <div className="relative">
@@ -143,28 +153,43 @@ export default function DispatchCallScreen() {
           </Card>
 
           <VideoCallPanel
-            localStream={localStream}
-            remoteStream={remoteStream}
-            cameraState={cameraState}
-            connectionState={connectionState}
-            remoteLabel={
-              emergencyCase.activeCallerRole === 'rescue'
-                ? (emergencyCase.assignedRescueTeam?.name ?? t('หน่วยกู้ชีพ'))
-                : (emergencyCase.reporterName ?? t('ผู้แจ้งเหตุ'))
+            call={call}
+            emergencyCase={emergencyCase}
+            waitingLabel={
+              emergencyCase.activeCallerRole === 'rescue' ? t('รอหน่วยกู้ชีพเปิดกล้อง') : t('รอผู้แจ้งเหตุเปิดกล้อง')
             }
-            remoteWaitingLabel={
-              remoteJoined
-                ? t('กำลังเชื่อมต่อวิดีโอ...')
-                : emergencyCase.activeCallerRole === 'rescue'
-                  ? t('รอหน่วยกู้ชีพเปิดกล้อง')
-                  : t('รอผู้แจ้งเหตุเปิดกล้อง')
-            }
-            cameraOn={cameraOn}
-            onToggleCamera={() => setCameraOn((v) => !v)}
-            micOn={micOn}
-            onToggleMic={() => setMicOn((v) => !v)}
-            onSwitchCamera={switchCamera}
           />
+
+          {canPullInRescue && team && (
+            <Card className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Ambulance className="size-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">
+                    {!invite
+                      ? t('ดึงหน่วยกู้ชีพเข้าสาย')
+                      : invite.status === 'ringing'
+                        ? t('กำลังเรียก {team}...', { team: team.name })
+                        : t('{team} กำลังเข้าร่วมสาย...', { team: team.name })}
+                  </p>
+                  {invite?.status !== 'joined' && (
+                    <p className="truncate text-xs text-muted">
+                      {invite ? t('รอหน่วยกู้ชีพกดเข้าร่วม') : t('ให้ {team} ได้ยินผู้แจ้งเหตุโดยตรง', { team: team.name })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {invite ? (
+                <Button variant="outline" size="sm" onClick={() => clearRescueCallInvite(id)}>
+                  {t('ยกเลิก')}
+                </Button>
+              ) : (
+                <Button size="sm" icon={<UserPlus className="size-4" />} onClick={() => inviteRescueToCall(id)}>
+                  {t('เชิญเข้าสาย')}
+                </Button>
+              )}
+            </Card>
+          )}
 
           <Button
             variant="danger"

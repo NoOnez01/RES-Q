@@ -217,6 +217,12 @@ interface ResQState {
   setRescueCallStatus: (caseId: string, status: CallStatus) => void
   answerRescueCall: (caseId: string) => void
   tickRescueCallDuration: (caseId: string) => void
+  // Dispatcher pulling the assigned rescue crew into a live 1669 call (see
+  // EmergencyCase.rescueCallInvite). Clearing is both "dispatcher cancels
+  // the ring" and "the crew leaves the call".
+  inviteRescueToCall: (caseId: string) => void
+  acceptRescueCallInvite: (caseId: string) => void
+  clearRescueCallInvite: (caseId: string) => void
   // Phone is entered on the photo step now, alongside the photos; the
   // report itself finalizes once the call ends. Incident details are
   // 1669's job (see submitDispatcherAssessment), not the caller's.
@@ -507,6 +513,8 @@ export const useStore = create<ResQState>()(
           if (!c) return {}
           const updated = { ...c, callStatus: status, updatedAt: Date.now() }
           if (status === 'connecting' && callerRole) updated.activeCallerRole = callerRole
+          // A crew invite only makes sense while that call is live.
+          if (status !== 'in-call') updated.rescueCallInvite = undefined
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
@@ -555,11 +563,42 @@ export const useStore = create<ResQState>()(
           }
         }),
 
+      inviteRescueToCall: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c || c.callStatus !== 'in-call' || !c.assignedRescueTeam) return {}
+          return {
+            cases: {
+              ...s.cases,
+              [caseId]: { ...c, rescueCallInvite: { status: 'ringing', invitedAt: Date.now() }, updatedAt: Date.now() },
+            },
+          }
+        }),
+
+      acceptRescueCallInvite: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c?.rescueCallInvite || c.callStatus !== 'in-call') return {}
+          return {
+            cases: {
+              ...s.cases,
+              [caseId]: { ...c, rescueCallInvite: { ...c.rescueCallInvite, status: 'joined' }, updatedAt: Date.now() },
+            },
+          }
+        }),
+
+      clearRescueCallInvite: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c?.rescueCallInvite) return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallInvite: undefined, updatedAt: Date.now() } } }
+        }),
+
       finishCall: (caseId) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = pushStatus({ ...c, callStatus: 'ended' }, 'called-1669')
+          const updated = pushStatus({ ...c, callStatus: 'ended', rescueCallInvite: undefined }, 'called-1669')
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 

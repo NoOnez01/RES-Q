@@ -9,7 +9,7 @@ import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
+import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { useT } from '@/lib/i18n'
@@ -42,12 +42,7 @@ export default function Contact1669() {
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const callIsLive = c?.callStatus === 'connecting' || c?.callStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
-    caseId ?? null,
-    'caller',
-    !!callIsLive,
-  )
-  const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
+  const call = useLiveKitCall(caseId ?? null, 'dispatch', !!callIsLive)
 
   useEffect(() => {
     if (c?.callStatus === 'in-call' && !intervalRef.current && caseId) {
@@ -146,19 +141,7 @@ export default function Contact1669() {
 
           {callIsLive && (
             <>
-              <VideoCallPanel
-                localStream={localStream}
-                remoteStream={remoteStream}
-                cameraState={cameraState}
-                connectionState={connectionState}
-                remoteLabel={t('เจ้าหน้าที่ 1669')}
-                remoteWaitingLabel={remoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอเจ้าหน้าที่รับสาย')}
-                cameraOn={cameraOn}
-                onToggleCamera={() => setCameraOn((v) => !v)}
-                micOn={micOn}
-                onToggleMic={() => setMicOn((v) => !v)}
-                onSwitchCamera={switchCamera}
-              />
+              <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอเจ้าหน้าที่รับสาย')} />
               {isRescue || c.callStatus === 'connecting' ? (
                 <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
                   {isRescue ? t('วางสาย') : t('ยกเลิกการโทร')}

@@ -9,7 +9,7 @@ import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { useWebRTCCall, useMediaToggle } from '@/lib/useWebRTCCall'
+import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -21,7 +21,6 @@ registerTranslations({
   ผู้แจ้งเหตุ: 'Reporter',
   'เคส {caseNumber}': 'Case {caseNumber}',
   'กำลังโทร... รอผู้แจ้งเหตุรับสาย': 'Calling... waiting for the reporter to answer',
-  'กำลังเชื่อมต่อวิดีโอ...': 'Connecting video...',
   รอผู้แจ้งเหตุรับสาย: 'Waiting for the reporter to answer',
   วางสาย: 'Hang up',
 })
@@ -50,12 +49,7 @@ export default function RescueCallReporter() {
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const callIsLive = c?.rescueCallStatus === 'connecting' || c?.rescueCallStatus === 'in-call'
-  const { localStream, remoteStream, cameraState, remoteJoined, connectionState, switchCamera } = useWebRTCCall(
-    id ? `${id}-rescue-citizen` : null,
-    'caller',
-    !!callIsLive,
-  )
-  const { cameraOn, setCameraOn, micOn, setMicOn } = useMediaToggle(localStream)
+  const call = useLiveKitCall(id ?? null, 'rescue-citizen', !!callIsLive)
 
   useEffect(() => {
     if (c?.rescueCallStatus === 'in-call' && !intervalRef.current && id) {
@@ -149,19 +143,7 @@ export default function RescueCallReporter() {
 
           {callIsLive && (
             <>
-              <VideoCallPanel
-                localStream={localStream}
-                remoteStream={remoteStream}
-                cameraState={cameraState}
-                connectionState={connectionState}
-                remoteLabel={c.reporterName ?? t('ผู้แจ้งเหตุ')}
-                remoteWaitingLabel={remoteJoined ? t('กำลังเชื่อมต่อวิดีโอ...') : t('รอผู้แจ้งเหตุรับสาย')}
-                cameraOn={cameraOn}
-                onToggleCamera={() => setCameraOn((v) => !v)}
-                micOn={micOn}
-                onToggleMic={() => setMicOn((v) => !v)}
-                onSwitchCamera={switchCamera}
-              />
+              <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอผู้แจ้งเหตุรับสาย')} />
               <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
                 {t('วางสาย')}
               </Button>

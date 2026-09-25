@@ -4,27 +4,28 @@ import { Button } from './ui/Button'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  สายเรียกเข้าใหม่: 'New incoming call',
-  'เคส {caseNumber} กำลังโทรเข้า': 'Case {caseNumber} is calling',
-  รับสาย: 'Answer',
   ซ่อนการแจ้งเตือนสายนี้: 'Hide this call alert',
   ปิด: 'Close',
 })
 
 /**
- * The ringtone in CallRingtoneBridge is audible from any page, but until now
- * nothing told a dispatcher *which* case was calling unless they happened to
- * already be on /dispatch/incoming-call -- someone on the dashboard or a
- * case detail page just heard a ring with no on-screen indication. This is
- * the visual half: a persistent (non-auto-dismissing) alert that follows the
- * ring itself, so answering is one click from wherever they are.
+ * The ringtone in CallRingtoneBridge is audible from any page, but on its
+ * own nothing told someone *which* case was calling unless they happened to
+ * be on the right screen already. This is the visual half: a persistent
+ * (non-auto-dismissing) alert that follows the ring itself, so answering is
+ * one click from wherever they are -- a new 1669 call for dispatch, or an
+ * invite into one for a rescue crew.
  */
 export function IncomingCallAlert({
-  caseNumber,
+  title,
+  message,
+  answerLabel,
   onAnswer,
   onDismiss,
 }: {
-  caseNumber: string
+  title: string
+  message: string
+  answerLabel: string
   onAnswer: () => void
   onDismiss: () => void
 }) {
@@ -40,11 +41,11 @@ export function IncomingCallAlert({
           <span className="relative inline-flex size-2.5 rounded-full bg-white" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold">{t('สายเรียกเข้าใหม่')}</p>
-          <p className="truncate text-xs text-white/85">{t('เคส {caseNumber} กำลังโทรเข้า', { caseNumber })}</p>
+          <p className="text-sm font-bold">{title}</p>
+          <p className="truncate text-xs text-white/85">{message}</p>
         </div>
         <Button size="sm" variant="secondary" icon={<PhoneCall className="size-4" />} onClick={onAnswer}>
-          {t('รับสาย')}
+          {answerLabel}
         </Button>
         <button
           onClick={onDismiss}
