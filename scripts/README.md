@@ -169,3 +169,25 @@ approximation, always labeled as such in the UI — never presented as the
 unit's exact position). This is a read-only reference lookup, separate from
 the app's own rescue-team assignment flow (`src/lib/rescueAssignment.ts`),
 which still only assigns from `rescueTeams` registered directly in ResQ.
+
+# Road graph for A* routing (OpenStreetMap → `public/graphs/`)
+
+`build-road-graph.mjs` builds the road network the app's own A* router
+(`src/lib/astar/`) runs on: Chiang Mai's drivable roads from OpenStreetMap,
+split into intersection-to-intersection segments with each road's class,
+free-flow speed (its `maxspeed` tag, else a default for the road class) and
+one-way rules, written as a compact binary file the browser loads on demand.
+
+```
+node scripts/build-road-graph.mjs            # download from Overpass + build
+node scripts/build-road-graph.mjs --cached   # rebuild from the last download
+```
+
+- Covers the bounding box in `REGION` (keep it in sync with
+  `src/lib/astar/region.ts`). Routes with either end outside it use Longdo's
+  / OSRM's routing instead.
+- Downloading can take several minutes — public Overpass servers are busy;
+  the script tries each mirror in turn. The raw download is kept in
+  `scripts/.cache/` (git-ignored) so `--cached` rebuilds instantly.
+- Commit the new `public/graphs/chiang-mai.bin` after rebuilding. Road data
+  © OpenStreetMap contributors (ODbL); the map shows the attribution.

@@ -1,4 +1,5 @@
 import { haversineKm } from './utils'
+import { routeWithAStar } from './astar'
 import type { GeoLocation } from './types'
 
 export interface RouteResult {
@@ -11,7 +12,10 @@ export interface RouteResult {
   durationMin: number
   /** Which routing service actually produced this result -- lets the UI say
    * "live traffic" only when that's true (see ETAWidget). */
-  provider: 'longdo' | 'osrm'
+  provider: 'astar' | 'longdo' | 'osrm'
+  /** For 'astar': which traffic data weighted most of the route (see
+   * lib/astar/router.ts). */
+  traffic?: 'real-time' | 'predicted' | 'none'
 }
 
 interface OsrmResponse {
@@ -187,10 +191,35 @@ function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
 }
 
 const ROUTE_TIMEOUT_MS = 8000
+// A*'s own budget, before falling back: its first route on a device also
+// downloads the ~3 MB road graph, which a slow phone connection shouldn't
+// be allowed to spend the whole budget on (the download carries on in the
+// worker, so the next route has it).
+const ASTAR_TIMEOUT_MS = 6000
+
+function fetchRouteFromAStar(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS)
+  const onAbort = () => controller.abort()
+  signal.addEventListener('abort', onAbort, { once: true })
+  return routeWithAStar(origin, destination, controller.signal)
+    .then((r): RouteResult | null =>
+      r && r.points.length >= 2
+        ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'astar', traffic: r.traffic }
+        : null,
+    )
+    .finally(() => {
+      clearTimeout(timeout)
+      signal.removeEventListener('abort', onAbort)
+    })
+}
 
 /**
- * Real driving route between two points. Prefers Longdo Map (live Thailand
- * traffic) when VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
+ * Real driving route between two points. Inside the prebuilt road graph's
+ * region (Chiang Mai), the app's own A* router finds the fastest path with
+ * Longdo traffic as the road weights (lib/astar/). Otherwise -- or if that
+ * fails -- prefers Longdo Map's route service (live Thailand traffic) when
+ * VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
  * (free, keyless, typical-speed only) if there's no key or the Longdo
  * request fails for any reason. Returns null (never throws) only if both
  * fail, so every caller can fall back further to its own straight-line
@@ -209,12 +238,13 @@ export function fetchRoute(origin: GeoLocation, destination: GeoLocation, signal
 
   if (!entry) {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS)
+    const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS + ROUTE_TIMEOUT_MS)
     // Captured by the closure below rather than re-looked-up by `key` --
     // if this exact entry gets cancelled+evicted and a fresh one created
     // for the same key before this settles, a by-key lookup would mark the
     // *new* entry settled instead, based on the *old* request's timing.
-    const promise = fetchRouteFromLongdo(origin, destination, controller.signal)
+    const promise = fetchRouteFromAStar(origin, destination, controller.signal)
+      .then((astar) => astar ?? fetchRouteFromLongdo(origin, destination, controller.signal))
       .then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination, controller.signal))
       .finally(() => {
         clearTimeout(timeout)

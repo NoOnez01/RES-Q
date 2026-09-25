@@ -34,3 +34,6 @@ supabase/.temp/
 scripts/.env
 __pycache__/
 *.pyc
+
+# Raw OSM download cached by scripts/build-road-graph.mjs (--cached rebuilds from it).
+scripts/.cache/

@@ -6,6 +6,9 @@ registerTranslations({
   เวลาโดยประมาณถึงจุดหมาย: 'Estimated time to destination',
   'เส้นทางเร็วที่สุด (ทราฟฟิกสด)': 'Fastest route (live traffic)',
   เส้นทางจริงตามถนน: 'Real road route',
+  'A* · ทราฟฟิกสด': 'A* · live traffic',
+  'A* · ทราฟฟิกคาดการณ์': 'A* · predicted traffic',
+  'A* · ความเร็วโดยประมาณ': 'A* · estimated speeds',
   นาที: 'min',
   'ระยะทาง {km} กม.': 'Distance {km} km',
 })
@@ -15,6 +18,7 @@ export function ETAWidget({
   distanceKm,
   progressPct,
   routeProvider,
+  routeTraffic,
   className,
 }: {
   etaMin: number
@@ -24,8 +28,11 @@ export function ETAWidget({
    * 'longdo' means the ETA reflects live Thailand traffic, 'osrm' means a
    * real road route but typical-speed only, and undefined means neither
    * loaded yet (still a straight-line estimate). Shown as two different
-   * badges so the label never overclaims what data backs the number. */
-  routeProvider?: 'longdo' | 'osrm'
+   * badges so the label never overclaims what data backs the number.
+   * 'astar' is the app's own router (lib/astar/), labelled with the traffic
+   * data it actually used (routeTraffic). */
+  routeProvider?: 'astar' | 'longdo' | 'osrm'
+  routeTraffic?: 'real-time' | 'predicted' | 'none'
   className?: string
 }) {
   const t = useT()
@@ -44,6 +51,15 @@ export function ETAWidget({
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <p className="text-xs text-muted">{t('เวลาโดยประมาณถึงจุดหมาย')}</p>
+          {routeProvider === 'astar' && (
+            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
+              {routeTraffic === 'real-time'
+                ? t('A* · ทราฟฟิกสด')
+                : routeTraffic === 'predicted'
+                  ? t('A* · ทราฟฟิกคาดการณ์')
+                  : t('A* · ความเร็วโดยประมาณ')}
+            </span>
+          )}
           {routeProvider === 'longdo' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
               {t('เส้นทางเร็วที่สุด (ทราฟฟิกสด)')}

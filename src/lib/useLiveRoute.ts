@@ -114,6 +114,11 @@ export function useLiveRoute({
   useEffect(() => {
     return () => {
       activeControllerRef.current?.abort()
+      // The cancelled request never delivered, so its origin mustn't count
+      // as "already routed" -- otherwise a remount that keeps these refs
+      // (React StrictMode's dev double-mount) skips requesting again and is
+      // left with no route at all.
+      lastRouteOriginRef.current = null
     }
   }, [])
 

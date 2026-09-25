@@ -45,6 +45,8 @@ Unlike a generic CAD/dispatch tool or a plain group chat, ResQ is role-scoped en
 - Signature capture required when a family declines transport or declines the nearest hospital, for severity 1–2 cases.
 - Account linking: a single profile can carry email/password, Google, and/or LINE as interchangeable sign-in methods.
 - Coin system (supabase-coin-system.sql): a citizen earns an admin-set number of coins when staff complete a case they reported, then redeems them for rewards or donates them to partner foundations. Admins manage coins per case, foundations, rewards, and redemption requests (/manage-coins). Balances are a server-written ledger — clients can't award or spend coins except through the database functions.
+- Routing: inside Chiang Mai the app runs its own A* search (src/lib/astar/, in a Web Worker) over an OpenStreetMap road graph (scripts/build-road-graph.mjs), with road travel times weighted by Longdo traffic speeds (real-time where Longdo has probe data, otherwise its time-of-day prediction), looked up lazily for the main roads a candidate route uses. Elsewhere, or if that fails, Longdo's route service, then OSRM. The ETA badge names the source and whether the traffic data was live, predicted, or estimated.
+- Known constraint: the free Longdo key is rate-limited (a burst of ~80 traffic lookups triggers "Too many requests"); A* caps lookups per route, shares them for 10 minutes, and pauses lookups after a rate-limit reply, routing on the congestion measured so far.
 - Known technical constraint: the production JS bundle exceeds the default 500kB chunk-size warning (not yet code-split); not currently a functional issue.
 
 ## Brand Commitments

@@ -231,7 +231,7 @@ export default function NavigationPage() {
             <p className="rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted">{t('กำลังค้นหาตำแหน่ง GPS...')}</p>
           )}
 
-          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={displayPct} routeProvider={route?.provider} />
+          <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={displayPct} routeProvider={route?.provider} routeTraffic={route?.traffic} />
 
           <Card className="!p-0 overflow-hidden">
             <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
