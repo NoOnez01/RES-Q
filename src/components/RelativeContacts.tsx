@@ -12,9 +12,9 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   เบอร์โทรศัพท์ไม่ถูกต้อง: 'Invalid phone number',
-  เพิ่มเบอร์ญาติผู้ป่วยแล้ว: "Patient's family contact added",
-  เบอร์ญาติผู้ป่วย: "Patient's family contacts",
-  เพิ่มเบอร์: 'Add contact',
+  เพิ่มเบอร์ติดต่อญาติผู้ป่วยแล้ว: "Patient's family contact added",
+  เบอร์ติดต่อญาติผู้ป่วย: "Patient's family contacts",
+  เพิ่มเบอร์ติดต่อ: 'Add contact',
   ยังไม่มีเบอร์ติดต่อญาติผู้ป่วย: "No family contact numbers yet",
   ไม่ระบุชื่อ: 'No name given',
   'เพิ่มโดย {role}': 'Added by {role}',
@@ -47,7 +47,7 @@ export function RelativeContacts({ caseId, contacts }: { caseId: string; contact
       return
     }
     addRelativeContact(caseId, phone.trim(), name.trim() || undefined)
-    toast({ title: t('เพิ่มเบอร์ญาติผู้ป่วยแล้ว'), tone: 'success' })
+    toast({ title: t('เพิ่มเบอร์ติดต่อญาติผู้ป่วยแล้ว'), tone: 'success' })
     setName('')
     setPhone('')
     setError(undefined)
@@ -58,11 +58,11 @@ export function RelativeContacts({ caseId, contacts }: { caseId: string; contact
     <Card className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 font-bold text-ink">
-          <Users className="size-4 text-primary" /> {t('เบอร์ญาติผู้ป่วย')}
+          <Users className="size-4 text-primary" /> {t('เบอร์ติดต่อญาติผู้ป่วย')}
         </h3>
         {!adding && (
           <Button variant="outline" size="sm" icon={<Plus className="size-3.5" />} onClick={() => setAdding(true)}>
-            {t('เพิ่มเบอร์')}
+            {t('เพิ่มเบอร์ติดต่อ')}
           </Button>
         )}
       </div>

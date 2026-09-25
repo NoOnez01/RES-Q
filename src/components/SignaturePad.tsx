@@ -6,7 +6,7 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   ลงชื่อรับทราบ: 'Sign to acknowledge',
   ล้าง: 'Clear',
-  เซ็นชื่อด้วยนิ้วหรือเมาส์ในกรอบนี้: 'Sign with your finger or mouse in this box',
+  ลงลายมือชื่อด้วยนิ้วหรือเมาส์ภายในกรอบนี้: 'Sign with your finger or mouse in this box',
 })
 
 /**
@@ -121,7 +121,7 @@ export function SignaturePad({
         />
         {!hasStroke && (
           <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted">
-            {t('เซ็นชื่อด้วยนิ้วหรือเมาส์ในกรอบนี้')}
+            {t('ลงลายมือชื่อด้วยนิ้วหรือเมาส์ภายในกรอบนี้')}
           </p>
         )}
       </div>

@@ -14,15 +14,15 @@ import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  'สายสนทนากับศูนย์ 1669': 'Call with Center 1669',
-  'เคส {caseNumber}': 'Case {caseNumber}',
-  'สนทนาร่วมกับศูนย์ 1669 และผู้แจ้งเหตุ': 'On the call with Center 1669 and the reporter',
-  'รอเจ้าหน้าที่ 1669': 'Waiting for 1669',
+  'การสนทนากับศูนย์สั่งการ 1669': 'Call with Center 1669',
+  'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
+  'สนทนาร่วมกับศูนย์สั่งการ 1669 และผู้แจ้งเหตุ': 'On the call with Center 1669 and the reporter',
+  'รอเจ้าหน้าที่ศูนย์สั่งการ 1669': 'Waiting for 1669',
   ออกจากสาย: 'Leave call',
   การโทรสิ้นสุดแล้ว: 'The call has ended',
   ไม่มีสายที่เชิญเข้าร่วม: 'No call to join',
-  'สายนี้สิ้นสุดแล้ว หรือศูนย์ 1669 ยกเลิกการเชิญ': 'This call has ended, or Center 1669 cancelled the invite',
-  กลับไปที่เคส: 'Back to case',
+  'การสนทนานี้สิ้นสุดแล้ว หรือศูนย์สั่งการ 1669 ยกเลิกการเชิญ': 'This call has ended, or Center 1669 cancelled the invite',
+  กลับไปยังรายละเอียดเหตุ: 'Back to case details',
 })
 
 /**
@@ -76,12 +76,12 @@ export default function RescueJoinCall() {
 
   if (!id || !c || !active) {
     return (
-      <AppShell variant="flow" title={t('สายสนทนากับศูนย์ 1669')} showBack onBack={() => navigate(id ? `/rescue/case/${id}` : '/rescue/dashboard')}>
+      <AppShell variant="flow" title={t('การสนทนากับศูนย์สั่งการ 1669')} showBack onBack={() => navigate(id ? `/rescue/case/${id}` : '/rescue/dashboard')}>
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <p className="font-semibold text-ink">{t('ไม่มีสายที่เชิญเข้าร่วม')}</p>
-          <p className="text-sm text-muted">{t('สายนี้สิ้นสุดแล้ว หรือศูนย์ 1669 ยกเลิกการเชิญ')}</p>
+          <p className="text-sm text-muted">{t('การสนทนานี้สิ้นสุดแล้ว หรือศูนย์สั่งการ 1669 ยกเลิกการเชิญ')}</p>
           <Button variant="outline" size="sm" onClick={() => navigate(id ? `/rescue/case/${id}` : '/rescue/dashboard')}>
-            {t('กลับไปที่เคส')}
+            {t('กลับไปยังรายละเอียดเหตุ')}
           </Button>
         </div>
       </AppShell>
@@ -89,23 +89,23 @@ export default function RescueJoinCall() {
   }
 
   return (
-    <AppShell variant="flow" title={t('สายสนทนากับศูนย์ 1669')} showBack onBack={handleLeave}>
+    <AppShell variant="flow" title={t('การสนทนากับศูนย์สั่งการ 1669')} showBack onBack={handleLeave}>
       <div className="relative">
         <AnimatedBackground variant="call" />
         <div className="relative z-10 flex flex-col gap-5 pb-8">
           <Card className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="flex items-center gap-1.5 font-semibold text-ink">
               <Users className="size-4 text-primary" />
-              {t('เคส {caseNumber}', { caseNumber: c.caseNumber })}
+              {t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
               <PulseRing tone="success" size="sm" />
               {formatDuration(c.callDurationSec)}
             </span>
-            <p className="w-full text-xs text-muted">{t('สนทนาร่วมกับศูนย์ 1669 และผู้แจ้งเหตุ')}</p>
+            <p className="w-full text-xs text-muted">{t('สนทนาร่วมกับศูนย์สั่งการ 1669 และผู้แจ้งเหตุ')}</p>
           </Card>
 
-          <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอเจ้าหน้าที่ 1669')} />
+          <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอเจ้าหน้าที่ศูนย์สั่งการ 1669')} />
 
           <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleLeave}>
             {t('ออกจากสาย')}

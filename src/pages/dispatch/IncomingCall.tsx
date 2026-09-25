@@ -13,17 +13,17 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   สายเรียกเข้า: 'Incoming calls',
-  กำลังรับฟังสายเรียกเข้าแบบเรียลไทม์: 'Listening for incoming calls in real time',
+  ระบบกำลังรอรับสายเรียกเข้า: 'Waiting for incoming calls',
   ไม่มีสายเรียกเข้าขณะนี้: 'No incoming calls right now',
-  สายเรียกเข้าใหม่จะปรากฏที่นี่โดยอัตโนมัติ: 'New incoming calls will appear here automatically',
+  สายเรียกเข้าใหม่จะแสดงที่นี่โดยอัตโนมัติ: 'New incoming calls will appear here automatically',
   สายเรียกเข้าใหม่: 'New incoming call',
   กำลังสนทนา: 'In conversation',
   รับสาย: 'Answer',
-  เข้าสู่หน้าสาย: 'Go to call screen',
-  'กำลังโทรเข้า รอรับสาย': 'Calling in, waiting to be answered',
+  ไปยังหน้าการสนทนา: 'Go to call screen',
+  'สายเรียกเข้า รอการรับสาย': 'Incoming call, waiting to be answered',
   กำลังสนทนากับผู้แจ้งเหตุ: 'In conversation with the reporter',
   รับสายแล้ว: 'Call answered',
-  'กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}': 'Now talking with the reporter, case {caseNumber}',
+  'กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}': 'Now talking with the reporter, case {caseNumber}',
 })
 
 export default function IncomingCall() {
@@ -46,7 +46,7 @@ export default function IncomingCall() {
 
   function handleAnswer(caseId: string, caseNumber: string) {
     answerCall(caseId)
-    toast({ title: t('รับสายแล้ว'), message: t('กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}', { caseNumber }), tone: 'success' })
+    toast({ title: t('รับสายแล้ว'), message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber }), tone: 'success' })
     navigate(`/dispatch/call/${caseId}`)
   }
 
@@ -57,13 +57,13 @@ export default function IncomingCall() {
         <div className="relative z-10">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
             <PulseRing tone="success" size="sm" />
-            {t('กำลังรับฟังสายเรียกเข้าแบบเรียลไทม์')}
+            {t('ระบบกำลังรอรับสายเรียกเข้า')}
           </div>
 
           {incomingCases.length === 0 ? (
             <EmptyState
               title={t('ไม่มีสายเรียกเข้าขณะนี้')}
-              description={t('สายเรียกเข้าใหม่จะปรากฏที่นี่โดยอัตโนมัติ')}
+              description={t('สายเรียกเข้าใหม่จะแสดงที่นี่โดยอัตโนมัติ')}
             />
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -105,14 +105,14 @@ export default function IncomingCall() {
                               navigate(`/dispatch/call/${c.id}`)
                             }}
                           >
-                            {t('เข้าสู่หน้าสาย')}
+                            {t('ไปยังหน้าการสนทนา')}
                           </Button>
                         )
                       }
                     />
                     <p className="mt-2 flex items-center gap-1.5 px-1 text-xs font-medium text-muted">
                       <Phone className="size-3.5" />
-                      {ringing ? t('กำลังโทรเข้า รอรับสาย') : t('กำลังสนทนากับผู้แจ้งเหตุ')}
+                      {ringing ? t('สายเรียกเข้า รอการรับสาย') : t('กำลังสนทนากับผู้แจ้งเหตุ')}
                     </p>
                   </div>
                 )

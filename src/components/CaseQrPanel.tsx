@@ -6,12 +6,12 @@ import { Button } from './ui/Button'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  'QR Code ติดตามเคส': 'Case tracking QR code',
-  สแกนเพื่อติดตามสถานะเคส: 'Scan to track case status',
-  สแกนเพื่อติดตามเคสนี้: 'Scan to track this case',
-  'QR Code สำหรับติดตามเคส': 'QR code for tracking the case',
-  'กำลังสร้าง QR...': 'Generating QR...',
-  'เปิดหน้าลอย QR': 'Open floating QR window',
+  'QR Code ติดตามสถานะเหตุ': 'Case tracking QR code',
+  สแกนเพื่อติดตามสถานะเหตุ: 'Scan to track case status',
+  สแกนเพื่อติดตามเหตุนี้: 'Scan to track this case',
+  'QR Code สำหรับติดตามเหตุ': 'QR code for tracking the case',
+  'กำลังสร้าง QR Code...': 'Generating QR code...',
+  'แสดง QR Code แบบหน้าต่างลอย': 'Show QR code in a floating window',
 })
 
 /**
@@ -64,11 +64,11 @@ export function CaseQrPanel({ url }: { url: string }) {
 
       const img = pipWindow.document.createElement('img')
       img.src = qrDataUrl
-      img.alt = t('QR Code ติดตามเคส')
+      img.alt = t('QR Code ติดตามสถานะเหตุ')
       Object.assign(img.style, { width: '220px', height: '220px', borderRadius: '16px' })
 
       const caption = pipWindow.document.createElement('p')
-      caption.textContent = t('สแกนเพื่อติดตามสถานะเคส')
+      caption.textContent = t('สแกนเพื่อติดตามสถานะเหตุ')
       Object.assign(caption.style, { marginTop: '12px', fontSize: '13px', color: '#5b6b7c' }) // impeccable-disable-line design-system-color -- PiP document, see above
 
       body.append(img, caption)
@@ -82,13 +82,13 @@ export function CaseQrPanel({ url }: { url: string }) {
     <Card className="flex flex-col items-center gap-3 text-center">
       <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
         <QrCode className="size-4 text-primary" />
-        {t('สแกนเพื่อติดตามเคสนี้')}
+        {t('สแกนเพื่อติดตามเหตุนี้')}
       </p>
       {qrDataUrl ? (
-        <img src={qrDataUrl} alt={t('QR Code สำหรับติดตามเคส')} className="size-40 rounded-2xl border border-border" />
+        <img src={qrDataUrl} alt={t('QR Code สำหรับติดตามเหตุ')} className="size-40 rounded-2xl border border-border" />
       ) : (
         <div className="flex size-40 items-center justify-center rounded-2xl border border-border bg-skyblue-pale/50 text-xs text-muted">
-          {t('กำลังสร้าง QR...')}
+          {t('กำลังสร้าง QR Code...')}
         </div>
       )}
       {pipSupported && (
@@ -99,7 +99,7 @@ export function CaseQrPanel({ url }: { url: string }) {
           onClick={openFloatingWindow}
           disabled={!qrDataUrl}
         >
-          {t('เปิดหน้าลอย QR')}
+          {t('แสดง QR Code แบบหน้าต่างลอย')}
         </Button>
       )}
     </Card>

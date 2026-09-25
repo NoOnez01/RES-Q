@@ -24,13 +24,13 @@ registerTranslations({
   'มีสติ': 'Conscious',
   'ไม่มีสติ': 'Unconscious',
   'ไม่ทราบ': 'Unknown',
-  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น': 'Please select an incident type',
+  กรุณาเลือกประเภทเหตุการณ์: 'Please select an incident type',
   'กรุณาระบุจุดเกิดเหตุ': 'Please specify the incident location',
   'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน': 'Please enter at least 1 patient',
   'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย': 'Please select the consciousness level',
   'กรุณาเลือกระดับความรุนแรง': 'Please select a severity level',
   'กรุณาระบุลักษณะการบาดเจ็บ': 'Please describe the injury',
-  'เหตุการณ์ที่เกิดขึ้น': 'Incident Type',
+  ประเภทเหตุการณ์: 'Incident type',
   'พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์': 'Type a search term or CBD code to select an incident type',
   ไม่พบประเภทเหตุการณ์ที่ค้นหา: 'No matching incident type found',
   'จุดเกิดเหตุ': 'Incident location',
@@ -46,22 +46,22 @@ registerTranslations({
   '{cur}/{max} ตัวอักษร': '{cur}/{max} characters',
   'ยกเลิก': 'Cancel',
   'กรอกรายละเอียดเหตุการณ์': 'Fill in incident details',
-  'ไม่พบเคสนี้': 'Case not found',
-  'เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ':
+  ไม่พบเหตุนี้: 'Case not found',
+  เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ:
     'This case may have been deleted or does not exist',
   'รายละเอียดเหตุการณ์และการประเมิน': 'Incident Details & Assessment',
-  'เคส {caseNumber} — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ พร้อมประเมินระดับความรุนแรง':
+  'เหตุหมายเลข {caseNumber}: กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ และประเมินระดับความรุนแรง':
     "Case {caseNumber} — fill in details from the conversation with the reporter, and assess severity",
   'ข้อมูลจากผู้แจ้งเหตุ': 'Reporter Information',
   'ยังไม่ระบุเบอร์ติดต่อกลับ': 'No callback number provided',
   'รูปภาพที่แนบ ({n})': 'Attached photos ({n})',
   ภาพจุดเกิดเหตุ: 'Scene photo',
-  'ตำแหน่งที่ตรวจพบโดยประมาณจาก GPS ผู้แจ้ง ตรวจสอบและแก้ไขได้':
+  'ตำแหน่งโดยประมาณจาก GPS ของผู้แจ้งเหตุ กรุณาตรวจสอบและแก้ไขหากไม่ถูกต้อง':
     'Approximate GPS location — verify and edit as needed',
-  'ผู้แจ้งเหตุระบุว่า: {label} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป': 'The reporter said: {label} — editable if the photos suggest otherwise',
-  'แก้ไขข้อมูลแล้ว': 'Changes saved',
+  'ผู้แจ้งเหตุระบุว่า: {label} (แก้ไขได้หากประเมินจากภาพแล้วแตกต่างออกไป)': 'The reporter said: {label} — editable if the photos suggest otherwise',
+  บันทึกการแก้ไขแล้ว: 'Changes saved',
   'บันทึกรายละเอียดและการประเมินแล้ว': 'Details & assessment saved',
-  'เคส {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว': 'Case {caseNumber} is ready to search for rescue units',
+  'เหตุหมายเลข {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว': 'Case {caseNumber} is ready to search for rescue units',
   'บันทึกการแก้ไข': 'Save Changes',
   'บันทึกรายละเอียดและการประเมิน': 'Save Details & Assessment',
 })
@@ -108,8 +108,8 @@ export default function DispatchEmergencyAssessment() {
     return (
       <AppShell variant="dashboard" title={t('กรอกรายละเอียดเหตุการณ์')}>
         <ErrorState
-          title={t('ไม่พบเคสนี้')}
-          description={t('เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
+          title={t('ไม่พบเหตุนี้')}
+          description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
         />
       </AppShell>
     )
@@ -125,7 +125,7 @@ export default function DispatchEmergencyAssessment() {
   function handleSubmit() {
     if (!id || !c) return
     const errs: Record<string, string> = {}
-    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น')
+    if (!incidentType) errs.incidentType = t('กรุณาเลือกประเภทเหตุการณ์')
     if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ')
     const countNum = Number(patientCount)
     if (!patientCount.trim() || Number.isNaN(countNum) || countNum < 1) {
@@ -158,8 +158,8 @@ export default function DispatchEmergencyAssessment() {
       })
       setSubmitting(false)
       toast({
-        title: isEditing ? t('แก้ไขข้อมูลแล้ว') : t('บันทึกรายละเอียดและการประเมินแล้ว'),
-        message: t('เคส {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว', { caseNumber: c.caseNumber }),
+        title: isEditing ? t('บันทึกการแก้ไขแล้ว') : t('บันทึกรายละเอียดและการประเมินแล้ว'),
+        message: t('เหตุหมายเลข {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว', { caseNumber: c.caseNumber }),
         tone: 'success',
       })
       navigate(`/dispatch/case/${id}`)
@@ -182,7 +182,7 @@ export default function DispatchEmergencyAssessment() {
           <div>
             <h1 className="text-xl font-bold text-ink">{t('รายละเอียดเหตุการณ์และการประเมิน')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {t('เคส {caseNumber} — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ พร้อมประเมินระดับความรุนแรง', { caseNumber: c.caseNumber })}
+              {t('เหตุหมายเลข {caseNumber}: กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ และประเมินระดับความรุนแรง', { caseNumber: c.caseNumber })}
             </p>
           </div>
 
@@ -212,7 +212,7 @@ export default function DispatchEmergencyAssessment() {
           </Card>
 
           <SearchableSelect
-            label={t('เหตุการณ์ที่เกิดขึ้น')}
+            label={t('ประเภทเหตุการณ์')}
             required
             value={incidentType}
             error={errors.incidentType}
@@ -226,7 +226,7 @@ export default function DispatchEmergencyAssessment() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 text-xs text-muted">
               <PulseRing tone="primary" size="sm" />
-              <span>{t('ตำแหน่งที่ตรวจพบโดยประมาณจาก GPS ผู้แจ้ง ตรวจสอบและแก้ไขได้')}</span>
+              <span>{t('ตำแหน่งโดยประมาณจาก GPS ของผู้แจ้งเหตุ กรุณาตรวจสอบและแก้ไขหากไม่ถูกต้อง')}</span>
             </div>
             <Textarea
               label={t('จุดเกิดเหตุ')}
@@ -263,7 +263,7 @@ export default function DispatchEmergencyAssessment() {
             error={errors.conscious}
             hint={
               !errors.conscious && c.reporterConsciousness
-                ? t('ผู้แจ้งเหตุระบุว่า: {label} — แก้ไขได้หากประเมินจากภาพแล้วต่างออกไป', { label: t(CONSCIOUS_LABEL[c.reporterConsciousness]) })
+                ? t('ผู้แจ้งเหตุระบุว่า: {label} (แก้ไขได้หากประเมินจากภาพแล้วแตกต่างออกไป)', { label: t(CONSCIOUS_LABEL[c.reporterConsciousness]) })
                 : undefined
             }
             onChange={(e) => setConscious(e.target.value as Conscious)}

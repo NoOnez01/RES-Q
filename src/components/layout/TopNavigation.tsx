@@ -11,7 +11,7 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   วิธีการใช้งาน: 'How it works',
-  ฟีเจอร์: 'Features',
+  คุณสมบัติของระบบ: 'Features',
   ติดต่อเรา: 'Contact us',
   ข้อมูลส่วนตัว: 'Profile',
   ออกจากระบบ: 'Log out',
@@ -33,7 +33,7 @@ interface TopNavigationProps {
 const PUBLIC_NAV_LINKS = [
   { label: 'หน้าหลัก', href: '/' },
   { label: 'วิธีการใช้งาน', href: '/how-it-works' },
-  { label: 'ฟีเจอร์', href: '/#features' },
+  { label: 'คุณสมบัติของระบบ', href: '/#features' },
   { label: 'ติดต่อเรา', href: '/#contact' },
 ]
 

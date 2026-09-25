@@ -17,17 +17,17 @@ import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  แดชบอร์ดโรงพยาบาล: 'Hospital dashboard',
-  เปิดรับเคสแล้ว: 'Now accepting cases',
-  ปิดรับเคสชั่วคราวแล้ว: 'Temporarily not accepting cases',
+  ภาพรวมโรงพยาบาล: 'Hospital overview',
+  เปิดรับผู้ป่วยแล้ว: 'Now accepting patients',
+  ปิดรับผู้ป่วยชั่วคราวแล้ว: 'Temporarily not accepting patients',
   โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม: 'The hospital is ready to receive more patients',
-  หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่: 'Rescue teams and the dispatch center will see this hospital as not ready for new cases',
-  ปฏิเสธเคสแล้ว: 'Case rejected',
+  หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับผู้ป่วยใหม่: 'Rescue teams and the dispatch center will see this hospital as not ready for new patients',
+  ปฏิเสธการรับผู้ป่วยแล้ว: 'Patient declined',
   ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว: 'The rescue team has been told to choose a different hospital',
-  เปิดรับเคส: 'Accepting cases',
-  ปิดรับเคสชั่วคราว: 'Not accepting cases',
+  เปิดรับผู้ป่วย: 'Accepting patients',
+  ปิดรับผู้ป่วยชั่วคราว: 'Not accepting patients',
   หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้: 'Rescue teams and the dispatch center can send patients here',
-  ปิดรับเคส: 'Stop accepting',
+  ปิดรับผู้ป่วย: 'Stop accepting',
   ห้องฉุกเฉิน: 'Emergency room',
   ทีมแพทย์: 'Medical team',
   เตียงว่าง: 'Beds available',
@@ -36,20 +36,20 @@ registerTranslations({
   รอยืนยันรับผู้ป่วย: 'Awaiting patient confirmation',
   เสร็จสิ้นแล้ว: 'Completed',
   ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล: 'No patients sent to this hospital yet',
-  'เมื่อมีเคสเลือกส่งตัวมาที่โรงพยาบาล รายการจะแสดงที่นี่': 'Once a case selects this hospital, it will appear here',
+  'เมื่อมีการเลือกนำส่งผู้ป่วยมายังโรงพยาบาลนี้ รายการจะแสดงที่นี่': 'Once a case selects this hospital, it will appear here',
   ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้: 'No patients currently in transit',
-  ปฏิเสธเคส: 'Reject case',
-  รับเคส: 'Accept case',
+  ปฏิเสธการรับผู้ป่วย: 'Decline patient',
+  รับผู้ป่วย: 'Accept patient',
   ไม่มีผู้ป่วยรอการยืนยันรับตัว: 'No patients awaiting admission confirmation',
   ยืนยันรับผู้ป่วย: 'Confirm patient admission',
-  ยังไม่มีเคสที่เสร็จสิ้น: 'No completed cases yet',
+  ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น: 'No completed cases yet',
   สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา: 'Severity distribution of incoming patients',
-  ยืนยันการปฏิเสธเคส: 'Confirm rejecting this case',
-  'คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่':
-    'Do you want to reject case {caseNumber}? The rescue team will be told to choose a different hospital.',
-  ยืนยันปฏิเสธ: 'Confirm rejection',
+  ยืนยันการปฏิเสธการรับผู้ป่วย: 'Confirm declining this patient',
+  'ต้องการปฏิเสธการรับผู้ป่วยจากเหตุหมายเลข {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่':
+    'Decline the patient from case {caseNumber}? The rescue team will be told to choose a different hospital.',
+  ยืนยันการปฏิเสธ: 'Confirm rejection',
   พร้อม: 'Ready',
-  ตึงมือ: 'Busy',
+  ภาระงานสูง: 'Busy',
 })
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
@@ -101,8 +101,8 @@ export default function HospitalDashboard() {
     const next = !hospitalAcceptingCases
     setHospitalAcceptingCases(next)
     toast({
-      title: next ? t('เปิดรับเคสแล้ว') : t('ปิดรับเคสชั่วคราวแล้ว'),
-      message: next ? t('โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม') : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่'),
+      title: next ? t('เปิดรับผู้ป่วยแล้ว') : t('ปิดรับผู้ป่วยชั่วคราวแล้ว'),
+      message: next ? t('โรงพยาบาลพร้อมรับผู้ป่วยเพิ่มเติม') : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับผู้ป่วยใหม่'),
       tone: next ? 'success' : 'warning',
     })
   }
@@ -110,12 +110,12 @@ export default function HospitalDashboard() {
   function handleConfirmReject() {
     if (!rejectTargetId) return
     hospitalRejectCase(rejectTargetId)
-    toast({ title: t('ปฏิเสธเคสแล้ว'), message: t('ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว'), tone: 'warning' })
+    toast({ title: t('ปฏิเสธการรับผู้ป่วยแล้ว'), message: t('ระบบแจ้งหน่วยกู้ชีพให้เลือกโรงพยาบาลใหม่แล้ว'), tone: 'warning' })
     setRejectTargetId(null)
   }
 
   return (
-    <AppShell variant="dashboard" title={t('แดชบอร์ดโรงพยาบาล')}>
+    <AppShell variant="dashboard" title={t('ภาพรวมโรงพยาบาล')}>
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10">
@@ -129,17 +129,17 @@ export default function HospitalDashboard() {
                 )}
                 <div>
                   <p className="text-sm font-bold text-ink">
-                    {hospitalAcceptingCases ? t('เปิดรับเคส') : t('ปิดรับเคสชั่วคราว')}
+                    {hospitalAcceptingCases ? t('เปิดรับผู้ป่วย') : t('ปิดรับผู้ป่วยชั่วคราว')}
                   </p>
                   <p className="text-xs text-muted">
                     {hospitalAcceptingCases
                       ? t('หน่วยกู้ชีพและศูนย์สั่งการสามารถส่งผู้ป่วยมาที่นี่ได้')
-                      : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับเคสใหม่')}
+                      : t('หน่วยกู้ชีพและศูนย์สั่งการจะเห็นว่าโรงพยาบาลนี้ไม่พร้อมรับผู้ป่วยใหม่')}
                   </p>
                 </div>
               </div>
               <Button size="sm" variant={hospitalAcceptingCases ? 'danger' : 'success'} onClick={handleToggleAccepting}>
-                {hospitalAcceptingCases ? t('ปิดรับเคส') : t('เปิดรับเคส')}
+                {hospitalAcceptingCases ? t('ปิดรับผู้ป่วย') : t('เปิดรับผู้ป่วย')}
               </Button>
             </div>
 
@@ -203,7 +203,7 @@ export default function HospitalDashboard() {
               <EmptyState
                 icon={<Building2 className="size-6" />}
                 title={t('ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล')}
-                description={t('เมื่อมีเคสเลือกส่งตัวมาที่โรงพยาบาล รายการจะแสดงที่นี่')}
+                description={t('เมื่อมีการเลือกนำส่งผู้ป่วยมายังโรงพยาบาลนี้ รายการจะแสดงที่นี่')}
               />
             </div>
           ) : (
@@ -234,7 +234,7 @@ export default function HospitalDashboard() {
                                   setRejectTargetId(c.id)
                                 }}
                               >
-                                {t('ปฏิเสธเคส')}
+                                {t('ปฏิเสธการรับผู้ป่วย')}
                               </Button>
                               <Button
                                 size="sm"
@@ -243,7 +243,7 @@ export default function HospitalDashboard() {
                                   navigate(`/hospital/case/${c.id}`)
                                 }}
                               >
-                                {t('รับเคส')}
+                                {t('รับผู้ป่วย')}
                               </Button>
                             </div>
                           }
@@ -280,7 +280,7 @@ export default function HospitalDashboard() {
                                   setRejectTargetId(c.id)
                                 }}
                               >
-                                {t('ปฏิเสธเคส')}
+                                {t('ปฏิเสธการรับผู้ป่วย')}
                               </Button>
                               <Button
                                 size="sm"
@@ -303,7 +303,7 @@ export default function HospitalDashboard() {
               <section>
                 <h2 className="mb-4 text-lg font-bold text-ink">{t('เสร็จสิ้นแล้ว')}</h2>
                 {doneCases.length === 0 ? (
-                  <p className="text-sm text-muted">{t('ยังไม่มีเคสที่เสร็จสิ้น')}</p>
+                  <p className="text-sm text-muted">{t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')}</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {doneCases.map((c, i) => (
@@ -331,11 +331,11 @@ export default function HospitalDashboard() {
 
       <ConfirmationModal
         open={!!rejectTargetId}
-        title={t('ยืนยันการปฏิเสธเคส')}
-        message={t('คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่', {
+        title={t('ยืนยันการปฏิเสธการรับผู้ป่วย')}
+        message={t('ต้องการปฏิเสธการรับผู้ป่วยจากเหตุหมายเลข {caseNumber} หรือไม่ ระบบจะแจ้งให้หน่วยกู้ชีพเลือกโรงพยาบาลใหม่', {
           caseNumber: rejectTargetId ? (cases[rejectTargetId]?.caseNumber ?? '') : '',
         })}
-        confirmLabel={t('ยืนยันปฏิเสธ')}
+        confirmLabel={t('ยืนยันการปฏิเสธ')}
         tone="danger"
         onConfirm={handleConfirmReject}
         onCancel={() => setRejectTargetId(null)}
@@ -353,7 +353,7 @@ function ReadinessChip({ icon, label, ready }: { icon: React.ReactNode; label: s
       </span>
       <span className={clsx('flex items-center gap-1.5 text-xs font-bold', ready ? 'text-success' : 'text-warning')}>
         {ready && <PulseRing tone="success" size="sm" />}
-        {ready ? t('พร้อม') : t('ตึงมือ')}
+        {ready ? t('พร้อม') : t('ภาระงานสูง')}
       </span>
     </div>
   )

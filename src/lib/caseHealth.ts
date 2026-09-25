@@ -38,10 +38,10 @@ export function checkCaseConsistency(c: EmergencyCase): CaseIssue[] {
   const currentOrder = order(c.status)
 
   if (c.assessment && currentOrder < order('received')) {
-    issues.push({ message: 'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"' })
+    issues.push({ message: 'มีการประเมินความรุนแรงแล้ว แต่สถานะของเหตุยังไม่เป็น "รับแจ้งเหตุแล้ว"' })
   }
   if (c.assignedRescueTeam && currentOrder < order('rescue-assigned')) {
-    issues.push({ message: 'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"' })
+    issues.push({ message: 'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะของเหตุยังไม่เป็น "มอบหมายหน่วยกู้ชีพแล้ว"' })
   }
   // NOT selectedHospital-ahead-of-transporting: that's normal, expected
   // state, not a stuck case. recordHospitalDecision sets `selectedHospital`
@@ -52,7 +52,7 @@ export function checkCaseConsistency(c: EmergencyCase): CaseIssue[] {
   // would put a false "inconsistent data" warning on every ordinary case
   // between hospital selection and transport start.
   if (c.patientInfo && currentOrder < order('rescue-arrived')) {
-    issues.push({ message: 'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"' })
+    issues.push({ message: 'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะของเหตุยังไม่เป็น "ถึงจุดเกิดเหตุแล้ว"' })
   }
   // The reverse direction: a case dispatch has already moved past should
   // have the incident details that step is supposed to capture. Strictly
@@ -63,7 +63,7 @@ export function checkCaseConsistency(c: EmergencyCase): CaseIssue[] {
   // past 'received' together, so anything further along that's still
   // missing it really is stuck.
   if (currentOrder > order('received') && !c.incidentDetails) {
-    issues.push({ message: 'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์' })
+    issues.push({ message: 'รับแจ้งเหตุแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์' })
   }
 
   return issues

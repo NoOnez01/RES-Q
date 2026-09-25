@@ -14,24 +14,24 @@ import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  แดชบอร์ดศูนย์สั่งการ: 'Dispatch dashboard',
-  เคสใหม่รอดำเนินการ: 'New cases pending',
+  ภาพรวมศูนย์สั่งการ: 'Dispatch overview',
+  เหตุใหม่รอดำเนินการ: 'New cases pending',
   กำลังค้นหาหน่วยกู้ชีพ: 'Finding a rescue team',
   หน่วยกู้ชีพกำลังปฏิบัติงาน: 'Rescue teams active',
   เสร็จสิ้นวันนี้: 'Completed today',
-  เคสทั้งหมด: 'Total cases',
-  บันทึกเคสใหม่: 'Log new case',
+  เหตุทั้งหมด: 'Total cases',
+  บันทึกเหตุใหม่: 'Log new case',
   บัญชีรออนุมัติ: 'Pending accounts',
   ประเมินหน่วยกู้ชีพ: 'Rate rescue teams',
   'ค้นหาหน่วยปฏิบัติการ (NDEMS)': 'Search units (NDEMS)',
   ดูสายเรียกเข้าทั้งหมด: 'View all incoming calls',
-  ยังไม่มีเคสในระบบ: 'No cases yet',
-  เคสใหม่จะปรากฏที่นี่โดยอัตโนมัติ: 'New cases will appear here automatically',
+  ยังไม่มีเหตุในระบบ: 'No cases yet',
+  เหตุใหม่จะแสดงที่นี่โดยอัตโนมัติ: 'New cases will appear here automatically',
   เริ่มค้นหาหน่วยกู้ชีพ: 'Start finding a rescue team',
   กรอกรายละเอียดเหตุการณ์: 'Fill in incident details',
   เริ่มค้นหาหน่วยกู้ชีพแล้ว: 'Started finding a rescue team',
-  'เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
-  สัดส่วนระดับความรุนแรงของเคส: 'Case severity distribution',
+  'เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
+  สัดส่วนระดับความรุนแรงของเหตุ: 'Case severity distribution',
 })
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
@@ -86,19 +86,19 @@ export default function DispatchDashboard() {
     startFindingRescue(caseId)
     toast({
       title: t('เริ่มค้นหาหน่วยกู้ชีพแล้ว'),
-      message: t('เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber }),
+      message: t('เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber }),
       tone: 'info',
     })
   }
 
   return (
-    <AppShell variant="dashboard" title={t('แดชบอร์ดศูนย์สั่งการ')}>
+    <AppShell variant="dashboard" title={t('ภาพรวมศูนย์สั่งการ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
           <StatBar>
             <StatItem
-              label={t('เคสใหม่รอดำเนินการ')}
+              label={t('เหตุใหม่รอดำเนินการ')}
               value={
                 <span key={newCount} className="inline-block animate-count-pop">
                   {newCount}
@@ -140,11 +140,11 @@ export default function DispatchDashboard() {
           </StatBar>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-ink">{t('เคสทั้งหมด')}</h2>
+            <h2 className="text-lg font-bold text-ink">{t('เหตุทั้งหมด')}</h2>
             <div className="flex flex-wrap gap-2">
               <Link to="/dispatch/new-case">
                 <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
-                  {t('บันทึกเคสใหม่')}
+                  {t('บันทึกเหตุใหม่')}
                 </Button>
               </Link>
               <Link to="/dispatch/pending-approvals">
@@ -172,7 +172,7 @@ export default function DispatchDashboard() {
 
           <div className="mt-4">
             {activeCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเคสในระบบ')} description={t('เคสใหม่จะปรากฏที่นี่โดยอัตโนมัติ')} />
+              <EmptyState title={t('ยังไม่มีเหตุในระบบ')} description={t('เหตุใหม่จะแสดงที่นี่โดยอัตโนมัติ')} />
             ) : (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {activeCases.map((c, index) => {
@@ -233,7 +233,7 @@ export default function DispatchDashboard() {
               <ResponseTimeSummary cases={allCases} />
             </Suspense>
             <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเคส')} cases={allCases} />
+              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุ')} cases={allCases} />
             </Suspense>
           </div>
         </div>

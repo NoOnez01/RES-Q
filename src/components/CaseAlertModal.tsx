@@ -7,7 +7,7 @@ import type { HandoffAlert } from './NotificationAlertBridge'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  'มีเคสอื่นรออีก {count} รายการ': '{count} more case(s) waiting',
+  'มีเหตุอื่นรอดำเนินการอีก {count} รายการ': '{count} more case(s) waiting',
   ปิด: 'Close',
   ดูรายละเอียด: 'View details',
 })
@@ -75,7 +75,7 @@ export function CaseAlertModal({
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{alert.message}</p>
         {queueCount > 1 && (
-          <p className="mt-3 text-xs font-medium text-muted">{t('มีเคสอื่นรออีก {count} รายการ', { count: queueCount - 1 })}</p>
+          <p className="mt-3 text-xs font-medium text-muted">{t('มีเหตุอื่นรอดำเนินการอีก {count} รายการ', { count: queueCount - 1 })}</p>
         )}
         <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
           <Button variant="outline" fullWidth onClick={onDismiss} className="sm:flex-1">

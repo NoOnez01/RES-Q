@@ -12,15 +12,15 @@ registerTranslations({
   ค้นหาโรงพยาบาล: 'Search hospitals',
   ไม่พบโรงพยาบาลที่ค้นหา: 'No matching hospital found',
   ลองค้นหาด้วยชื่ออื่น: 'Try a different search term',
-  แนะนำที่สุด: 'Best match',
-  ห้องฉุกเฉินพร้อมรับ: 'ER available',
+  เหมาะสมที่สุด: 'Best match',
+  ห้องฉุกเฉินพร้อมรับผู้ป่วย: 'ER ready for patients',
   ห้องฉุกเฉินเต็ม: 'ER full',
   'เตียงว่าง {n}': '{n} beds available',
   '{km} กม. · {eta} นาที': '{km} km · {eta} min',
   โรงพยาบาลนี้: 'this hospital',
-  'ห้องฉุกเฉินของ{name}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?': "{name}'s emergency room is currently full. Confirm you still want to select this hospital?",
+  'ขณะนี้ห้องฉุกเฉินของ{name}เต็ม ต้องการเลือกโรงพยาบาลนี้หรือไม่': "{name}'s emergency room is currently full. Confirm you still want to select this hospital?",
   ยืนยันเลือกโรงพยาบาลนี้: 'Confirm this hospital',
-  เลือกที่อื่นแทน: 'Choose a different one',
+  เลือกโรงพยาบาลอื่น: 'Choose another hospital',
 })
 
 export function HospitalSelector({
@@ -93,7 +93,7 @@ export function HospitalSelector({
                 )}
                 {isTop && (
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
-                    {t('แนะนำที่สุด')}
+                    {t('เหมาะสมที่สุด')}
                   </span>
                 )}
                 <div className="flex items-start gap-3 pr-8">
@@ -118,7 +118,7 @@ export function HospitalSelector({
                       h.erAvailable ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted',
                     )}
                   >
-                    {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับ') : t('ห้องฉุกเฉินเต็ม')}
+                    {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับผู้ป่วย') : t('ห้องฉุกเฉินเต็ม')}
                   </span>
                   <span className="flex items-center gap-1 rounded-full bg-skyblue-pale px-2.5 py-1 font-semibold text-primary">
                     <BedDouble className="size-3.5" /> {t('เตียงว่าง {n}', { n: h.bedsAvailable })}
@@ -148,11 +148,11 @@ export function HospitalSelector({
       <ConfirmationModal
         open={!!pendingFullErHospital}
         title={t('ห้องฉุกเฉินเต็ม')}
-        message={t('ห้องฉุกเฉินของ{name}เต็มในขณะนี้ ยืนยันว่าต้องการเลือกโรงพยาบาลนี้หรือไม่?', {
+        message={t('ขณะนี้ห้องฉุกเฉินของ{name}เต็ม ต้องการเลือกโรงพยาบาลนี้หรือไม่', {
           name: pendingFullErHospital?.name ?? t('โรงพยาบาลนี้'),
         })}
         confirmLabel={t('ยืนยันเลือกโรงพยาบาลนี้')}
-        cancelLabel={t('เลือกที่อื่นแทน')}
+        cancelLabel={t('เลือกโรงพยาบาลอื่น')}
         tone="danger"
         icon={<AlertTriangle className="size-5" />}
         onConfirm={() => {

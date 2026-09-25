@@ -7,12 +7,12 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ปิด: 'Close',
-  'รูปที่ {step} จาก {total}': 'Photo {step} of {total}',
+  'ภาพที่ {step} จาก {total}': 'Photo {step} of {total}',
   'กำลังเปิดกล้อง...': 'Opening camera...',
   ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง: 'No camera found, or camera access was not granted',
   'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
-  ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน: 'Close and upload a photo from the device instead',
-  ถ่ายรูป: 'Take photo',
+  ปิดหน้าต่างและอัปโหลดภาพจากอุปกรณ์แทน: 'Close and upload a photo from the device instead',
+  ถ่ายภาพ: 'Take photo',
 })
 
 export interface PhotoSlotConfig {
@@ -124,7 +124,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
 
         <div className="mb-3 text-center text-white">
           <p className="text-xs font-bold text-white/60">
-            {t('รูปที่ {step} จาก {total}', { step: stepIndex, total: totalSteps })}
+            {t('ภาพที่ {step} จาก {total}', { step: stepIndex, total: totalSteps })}
           </p>
           <p className="mt-1 text-lg font-bold">{slot.label}</p>
           <p className="mt-0.5 text-sm text-white/70">{slot.hint}</p>
@@ -175,7 +175,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
           <div className="flex justify-center bg-navy p-3">
             {status === 'unavailable' ? (
               <Button variant="secondary" size="lg" fullWidth onClick={onClose}>
-                {t('ปิดแล้วอัปโหลดรูปจากอุปกรณ์แทน')}
+                {t('ปิดหน้าต่างและอัปโหลดภาพจากอุปกรณ์แทน')}
               </Button>
             ) : (
               <Button
@@ -186,7 +186,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
                 disabled={status !== 'ready'}
                 icon={<Camera className="size-5" />}
               >
-                {t('ถ่ายรูป')}
+                {t('ถ่ายภาพ')}
               </Button>
             )}
           </div>

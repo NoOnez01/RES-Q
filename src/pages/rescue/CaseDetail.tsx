@@ -31,35 +31,35 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   เดินทาง: 'En route',
-  ถึงที่เกิดเหตุ: 'Arrived at scene',
+  ถึงจุดเกิดเหตุ: 'Arrived at scene',
   บันทึกข้อมูล: 'Record data',
   เลือกโรงพยาบาล: 'Select a hospital',
   นำส่ง: 'Transport',
   เสร็จสิ้น: 'Completed',
-  ความคืบหน้าของเคส: 'Case progress',
+  ความคืบหน้าการช่วยเหลือ: 'Case progress',
   ความคืบหน้าการปฏิบัติงาน: 'Response progress',
   'ผู้ป่วย {n} คน': '{n} patient(s)',
-  รายละเอียดเคส: 'Case details',
-  ไม่พบเคสนี้: 'Case not found',
-  เคสอาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
-  กลับแดชบอร์ด: 'Back to dashboard',
-  รับเคสแล้ว: 'Case accepted',
+  รายละเอียดเหตุ: 'Case details',
+  ไม่พบเหตุนี้: 'Case not found',
+  เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
+  กลับไปหน้าภาพรวม: 'Back to overview',
+  รับเหตุแล้ว: 'Case accepted',
   เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที: 'You can start heading to the scene right away',
-  ปฏิเสธเคสแล้ว: 'Case rejected',
+  ปฏิเสธการรับผู้ป่วยแล้ว: 'Patient declined',
   ระบบกำลังค้นหาหน่วยกู้ชีพใหม่: 'Now finding a new rescue team',
   เริ่มนำส่งโรงพยาบาล: 'Started transport to hospital',
   กำลังนำทางไปยังโรงพยาบาลที่เลือก: 'Now navigating to the selected hospital',
   'เลือกรถ/ทีมที่รับผิดชอบแล้ว': 'Responding vehicle/crew selected',
   '{unit} · {n} คน': '{unit} · {n} people',
-  สร้างใบเคสไม่สำเร็จ: 'Failed to generate the case sheet',
-  'กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)': 'Please try again (an internet connection is needed the first time)',
-  บันทึกอัปเดตอาการแล้ว: 'Condition update saved',
-  ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที: 'The dispatch center and hospital will see this update right away',
+  สร้างใบสรุปเหตุไม่สำเร็จ: 'Failed to generate the case sheet',
+  'กรุณาลองใหม่อีกครั้ง (การใช้งานครั้งแรกต้องเชื่อมต่ออินเทอร์เน็ต)': 'Please try again (an internet connection is needed the first time)',
+  บันทึกอาการล่าสุดแล้ว: 'Condition update saved',
+  ศูนย์สั่งการและโรงพยาบาลจะได้รับข้อมูลนี้ทันที: 'The dispatch center and hospital will see this update right away',
   จุดเกิดเหตุ: 'Incident location',
   รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
-  'ติดต่อ 1669': 'Contact 1669',
+  'ติดต่อศูนย์สั่งการ 1669': 'Contact Dispatch Center 1669',
   โทรหาผู้แจ้งเหตุ: 'Call the reporter',
-  'ออกใบเคส (PDF)': 'Export case sheet (PDF)',
+  'ออกใบสรุปเหตุ (PDF)': 'Export case sheet (PDF)',
   รายละเอียดเหตุการณ์: 'Incident details',
   '{n} คน': '{n} people',
   หน่วยกู้ชีพที่รับผิดชอบ: 'Assigned rescue team',
@@ -67,31 +67,31 @@ registerTranslations({
   'ทะเบียน {plate}': 'plate {plate}',
   'คนขับ: {name}': 'Driver: {name}',
   'เลือกรถ/ทีมที่รับผิดชอบ': 'Choose the responding vehicle/crew',
-  จำนวนทีมที่ออกปฏิบัติงานจริง: 'Actual crew size deployed',
-  'ยืนยันเลือกรถ/ทีม': 'Confirm vehicle/crew selection',
+  จำนวนเจ้าหน้าที่ที่ออกปฏิบัติงานจริง: 'Actual crew size deployed',
+  'ยืนยันการเลือกรถ/ทีม': 'Confirm vehicle/crew selection',
   ยกเลิก: 'Cancel',
-  อัปเดตอาการผู้ป่วย: "Update patient's condition",
+  รายงานอาการผู้ป่วย: "Update patient's condition",
   'มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)': 'Any change in condition? (type or speak)',
-  บันทึกอัปเดต: 'Save update',
+  บันทึกอาการ: 'Save update',
   โรงพยาบาลที่เลือก: 'Selected hospital',
-  ไทม์ไลน์เคส: 'Case timeline',
-  รับเคส: 'Accept case',
-  ปฏิเสธเคส: 'Reject case',
+  ลำดับเหตุการณ์: 'Case timeline',
+  รับเหตุ: 'Accept case',
+  ปฏิเสธเหตุ: 'Reject case',
   เริ่มนำทางไปยังจุดเกิดเหตุ: 'Start navigating to the scene',
   ถึงจุดเกิดเหตุแล้ว: 'Arrived at the scene',
   บันทึกข้อมูลผู้ป่วย: 'Record patient data',
-  'กำลังนำส่ง — ดูเส้นทาง': 'In transit — view route',
+  'กำลังนำส่ง (ดูเส้นทาง)': 'In transit — view route',
   ส่งมอบผู้ป่วยให้โรงพยาบาลเรียบร้อยแล้ว: 'Patient handed off to the hospital',
-  'อัปเดตล่าสุด {date}': 'Last updated {date}',
-  ยืนยันการรับเคส: 'Confirm accepting case',
-  'คุณต้องการรับเคส {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุใช่หรือไม่': 'Accept case {caseNumber} and start heading to the scene?',
-  ยืนยันรับเคส: 'Confirm accept',
-  ยืนยันการปฏิเสธเคส: 'Confirm rejecting this case',
-  'คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน': 'Reject case {caseNumber}? The system will find another rescue team instead.',
-  ยืนยันปฏิเสธ: 'Confirm rejection',
+  'ปรับปรุงล่าสุด {date}': 'Last updated {date}',
+  ยืนยันการรับเหตุ: 'Confirm accepting case',
+  'ต้องการรับเหตุหมายเลข {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุหรือไม่': 'Accept case {caseNumber} and start heading to the scene?',
+  ยืนยันรับเหตุ: 'Confirm accept',
+  ยืนยันการปฏิเสธการรับผู้ป่วย: 'Confirm declining this patient',
+  'ต้องการปฏิเสธเหตุหมายเลข {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน': 'Reject case {caseNumber}? The system will find another rescue team instead.',
+  ยืนยันการปฏิเสธ: 'Confirm rejection',
 })
 
-const WORKFLOW_STEPS = ['เดินทาง', 'ถึงที่เกิดเหตุ', 'บันทึกข้อมูล', 'เลือกโรงพยาบาล', 'นำส่ง', 'เสร็จสิ้น']
+const WORKFLOW_STEPS = ['เดินทาง', 'ถึงจุดเกิดเหตุ', 'บันทึกข้อมูล', 'เลือกโรงพยาบาล', 'นำส่ง', 'เสร็จสิ้น']
 
 function workflowStepIndex(status: CaseStatus, hasHospital: boolean): number {
   switch (status) {
@@ -117,7 +117,7 @@ function WorkflowStepper({ status, hasHospital }: { status: CaseStatus; hasHospi
   const currentIndex = workflowStepIndex(status, hasHospital)
   const t = useT()
   return (
-    <div className="flex items-start" role="list" aria-label={t('ความคืบหน้าของเคส')}>
+    <div className="flex items-start" role="list" aria-label={t('ความคืบหน้าการช่วยเหลือ')}>
       {WORKFLOW_STEPS.map((label, i) => {
         const done = i < currentIndex
         const current = i === currentIndex
@@ -176,12 +176,12 @@ export default function RescueCaseDetail() {
 
   if (!id || !c) {
     return (
-      <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
+      <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
         <ErrorState
-          title={t('ไม่พบเคสนี้')}
-          description={t('เคสอาจถูกลบหรือไม่มีอยู่ในระบบ')}
+          title={t('ไม่พบเหตุนี้')}
+          description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
           onRetry={() => navigate('/rescue/dashboard')}
-          retryLabel={t('กลับแดชบอร์ด')}
+          retryLabel={t('กลับไปหน้าภาพรวม')}
         />
       </AppShell>
     )
@@ -193,7 +193,7 @@ export default function RescueCaseDetail() {
       rescueAcceptCase(c!.id)
       setLoading(false)
       setConfirmOpen(null)
-      toast({ title: t('รับเคสแล้ว'), message: t('เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที'), tone: 'success' })
+      toast({ title: t('รับเหตุแล้ว'), message: t('เริ่มเดินทางไปยังจุดเกิดเหตุได้ทันที'), tone: 'success' })
     }, 500)
   }
 
@@ -203,7 +203,7 @@ export default function RescueCaseDetail() {
       rescueRejectCase(c!.id)
       setLoading(false)
       setConfirmOpen(null)
-      toast({ title: t('ปฏิเสธเคสแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่'), tone: 'info' })
+      toast({ title: t('ปฏิเสธการรับผู้ป่วยแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่'), tone: 'info' })
       navigate('/rescue/dashboard')
     }, 500)
   }
@@ -236,7 +236,7 @@ export default function RescueCaseDetail() {
     try {
       await generateCaseSheetPdf(c)
     } catch {
-      toast({ title: t('สร้างใบเคสไม่สำเร็จ'), message: t('กรุณาลองใหม่อีกครั้ง (ต้องมีสัญญาณอินเทอร์เน็ตในการโหลดครั้งแรก)'), tone: 'error' })
+      toast({ title: t('สร้างใบสรุปเหตุไม่สำเร็จ'), message: t('กรุณาลองใหม่อีกครั้ง (การใช้งานครั้งแรกต้องเชื่อมต่ออินเทอร์เน็ต)'), tone: 'error' })
     } finally {
       setExportingPdf(false)
     }
@@ -249,7 +249,7 @@ export default function RescueCaseDetail() {
       addPatientUpdate(c!.id, updateNote.trim())
       setUpdateNote('')
       setUpdateLoading(false)
-      toast({ title: t('บันทึกอัปเดตอาการแล้ว'), message: t('ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที'), tone: 'success' })
+      toast({ title: t('บันทึกอาการล่าสุดแล้ว'), message: t('ศูนย์สั่งการและโรงพยาบาลจะได้รับข้อมูลนี้ทันที'), tone: 'success' })
     }, 400)
   }
 
@@ -270,7 +270,7 @@ export default function RescueCaseDetail() {
   }
 
   return (
-    <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
+    <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-5">
@@ -294,7 +294,7 @@ export default function RescueCaseDetail() {
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/contact-1669/${c.id}`)}
                 >
-                  {t('ติดต่อ 1669')}
+                  {t('ติดต่อศูนย์สั่งการ 1669')}
                 </Button>
                 <Button
                   variant="outline"
@@ -307,7 +307,7 @@ export default function RescueCaseDetail() {
               </>
             )}
             <Button variant="outline" size="sm" icon={<FileDown className="size-4" />} loading={exportingPdf} onClick={handleExportPdf}>
-              {t('ออกใบเคส (PDF)')}
+              {t('ออกใบสรุปเหตุ (PDF)')}
             </Button>
           </div>
         </Card>
@@ -395,7 +395,7 @@ export default function RescueCaseDetail() {
                   {pendingVehicleId && (
                     <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3">
                       <Input
-                        label={t('จำนวนทีมที่ออกปฏิบัติงานจริง')}
+                        label={t('จำนวนเจ้าหน้าที่ที่ออกปฏิบัติงานจริง')}
                         type="number"
                         min={1}
                         value={crewCount}
@@ -403,7 +403,7 @@ export default function RescueCaseDetail() {
                       />
                       <div className="flex gap-2">
                         <Button fullWidth onClick={handleConfirmVehicle} disabled={!crewCount.trim()}>
-                          {t('ยืนยันเลือกรถ/ทีม')}
+                          {t('ยืนยันการเลือกรถ/ทีม')}
                         </Button>
                         <Button variant="outline" onClick={() => setPendingVehicleId(null)}>
                           {t('ยกเลิก')}
@@ -422,7 +422,7 @@ export default function RescueCaseDetail() {
             <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />
             {c.status !== 'completed' && (
               <Card className="space-y-3">
-                <h3 className="font-bold text-ink">{t('อัปเดตอาการผู้ป่วย')}</h3>
+                <h3 className="font-bold text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
                 <SpeechToTextPanel
                   value={updateNote}
                   onChange={setUpdateNote}
@@ -435,7 +435,7 @@ export default function RescueCaseDetail() {
                   disabled={!updateNote.trim()}
                   onClick={handleAddUpdate}
                 >
-                  {t('บันทึกอัปเดต')}
+                  {t('บันทึกอาการ')}
                 </Button>
               </Card>
             )}
@@ -451,7 +451,7 @@ export default function RescueCaseDetail() {
         )}
 
         <Card>
-          <h3 className="mb-3 font-bold text-ink">{t('ไทม์ไลน์เคส')}</h3>
+          <h3 className="mb-3 font-bold text-ink">{t('ลำดับเหตุการณ์')}</h3>
           <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
         </Card>
 
@@ -459,10 +459,10 @@ export default function RescueCaseDetail() {
           {c.status === 'rescue-assigned' && (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button variant="primary" size="lg" fullWidth onClick={() => setConfirmOpen('accept')}>
-                {t('รับเคส')}
+                {t('รับเหตุ')}
               </Button>
               <Button variant="outline" fullWidth onClick={() => setConfirmOpen('reject')}>
-                {t('ปฏิเสธเคส')}
+                {t('ปฏิเสธเหตุ')}
               </Button>
             </div>
           )}
@@ -499,7 +499,7 @@ export default function RescueCaseDetail() {
 
           {c.status === 'transporting' && (
             <Button variant="primary" fullWidth size="lg" icon={<NavigationIcon className="size-5" />} onClick={() => navigate(`/navigation/${c.id}`)}>
-              {t('กำลังนำส่ง — ดูเส้นทาง')}
+              {t('กำลังนำส่ง (ดูเส้นทาง)')}
             </Button>
           )}
 
@@ -510,25 +510,25 @@ export default function RescueCaseDetail() {
             </div>
           )}
 
-          <p className="text-center text-xs text-muted">{t('อัปเดตล่าสุด {date}', { date: formatDateTime(c.updatedAt) })}</p>
+          <p className="text-center text-xs text-muted">{t('ปรับปรุงล่าสุด {date}', { date: formatDateTime(c.updatedAt) })}</p>
         </Card>
         </div>
       </div>
 
       <ConfirmationModal
         open={confirmOpen === 'accept'}
-        title={t('ยืนยันการรับเคส')}
-        message={t('คุณต้องการรับเคส {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุใช่หรือไม่', { caseNumber: c.caseNumber })}
-        confirmLabel={t('ยืนยันรับเคส')}
+        title={t('ยืนยันการรับเหตุ')}
+        message={t('ต้องการรับเหตุหมายเลข {caseNumber} และเริ่มเดินทางไปยังจุดเกิดเหตุหรือไม่', { caseNumber: c.caseNumber })}
+        confirmLabel={t('ยืนยันรับเหตุ')}
         onConfirm={handleAccept}
         onCancel={() => setConfirmOpen(null)}
         confirmLoading={loading}
       />
       <ConfirmationModal
         open={confirmOpen === 'reject'}
-        title={t('ยืนยันการปฏิเสธเคส')}
-        message={t('คุณต้องการปฏิเสธเคส {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน', { caseNumber: c.caseNumber })}
-        confirmLabel={t('ยืนยันปฏิเสธ')}
+        title={t('ยืนยันการปฏิเสธการรับผู้ป่วย')}
+        message={t('ต้องการปฏิเสธเหตุหมายเลข {caseNumber} หรือไม่ ระบบจะค้นหาหน่วยกู้ชีพอื่นแทน', { caseNumber: c.caseNumber })}
+        confirmLabel={t('ยืนยันการปฏิเสธ')}
         tone="danger"
         onConfirm={handleReject}
         onCancel={() => setConfirmOpen(null)}

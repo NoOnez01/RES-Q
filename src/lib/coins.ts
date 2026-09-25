@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 import { registerTranslations } from './i18n'
 
 registerTranslations({
-  'ไม่พบเซสชันของคุณ กรุณาลองใหม่อีกครั้ง': 'Your session was not found. Please try again.',
+  'ไม่พบข้อมูลการเข้าใช้งานของคุณ กรุณาลองใหม่อีกครั้ง': 'Your session was not found. Please try again.',
   เหรียญของคุณไม่พอ: "You don't have enough coins",
   จำนวนเหรียญไม่ถูกต้อง: 'Invalid number of coins',
   ไม่พบมูลนิธินี้แล้ว: 'This foundation is no longer available',
@@ -85,7 +85,7 @@ function client() {
 /** The functions raise a short code as the error message; these are what a
  * citizen/admin should read instead. */
 const ERROR_MESSAGES: Record<string, string> = {
-  not_signed_in: 'ไม่พบเซสชันของคุณ กรุณาลองใหม่อีกครั้ง',
+  not_signed_in: 'ไม่พบข้อมูลการเข้าใช้งานของคุณ กรุณาลองใหม่อีกครั้ง',
   insufficient_coins: 'เหรียญของคุณไม่พอ',
   invalid_amount: 'จำนวนเหรียญไม่ถูกต้อง',
   foundation_not_found: 'ไม่พบมูลนิธินี้แล้ว',

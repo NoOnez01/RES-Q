@@ -21,13 +21,13 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
-  รายละเอียดเคส: 'Case details',
-  ไม่พบเคสนี้: 'Case not found',
-  เคสที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่ในระบบ: "The case you're looking for may have been deleted or does not exist",
+  รายละเอียดเหตุ: 'Case details',
+  ไม่พบเหตุนี้: 'Case not found',
+  เหตุที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่ในระบบ: "The case you're looking for may have been deleted or does not exist",
   ยืนยันรับผู้ป่วยเรียบร้อยแล้ว: 'Patient admission confirmed',
-  ปิดเคสเรียบร้อยแล้ว: 'Case closed',
-  'เคส {caseNumber}': 'Case {caseNumber}',
-  กำลังเตรียมข้อมูลเคสสำหรับขั้นตอนถัดไป: 'Preparing case data for the next step',
+  ปิดเหตุเรียบร้อยแล้ว: 'Case closed',
+  'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
+  กำลังเตรียมข้อมูลสำหรับขั้นตอนถัดไป: 'Preparing case data for the next step',
   รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
   รายละเอียดเหตุการณ์: 'Incident details',
   'ผู้ป่วย {n} คน': '{n} patient(s)',
@@ -37,7 +37,7 @@ registerTranslations({
   ชื่อหน่วย: 'Team name',
   ยานพาหนะ: 'Vehicle',
   เบอร์ติดต่อ: 'Contact number',
-  ไทม์ไลน์การดำเนินการ: 'Response timeline',
+  ลำดับการดำเนินการ: 'Response timeline',
   เตรียมทีมรักษา: 'Prepare care team',
   ทำเครื่องหมายเมื่อทีมแพทย์เตรียมพร้อมรับผู้ป่วย: 'Mark this once the medical team is ready to receive the patient',
   ทำเครื่องหมายว่าทีมแพทย์เตรียมพร้อม: 'Mark the medical team as ready',
@@ -48,14 +48,14 @@ registerTranslations({
   ยืนยันรับผู้ป่วย: 'Confirm patient admission',
   กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว: 'The emergency response process is complete',
   รับผู้ป่วยเรียบร้อยแล้ว: 'Patient admitted',
-  ปิดเคสเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์: 'Close the case once the emergency response is complete',
-  ปิดเคส: 'Close case',
-  เคสเสร็จสิ้นแล้ว: 'Case completed',
+  ปิดเหตุเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์: 'Close the case once the emergency response is complete',
+  ปิดเหตุ: 'Close case',
+  ดำเนินการเสร็จสิ้นแล้ว: 'Case completed',
   ยังไม่มีผู้ป่วยถึงโรงพยาบาล: 'No patient has arrived at the hospital yet',
   ระบบจะแจ้งเตือนเมื่อผู้ป่วยถึงโรงพยาบาลของท่าน: 'You will be notified when a patient arrives at your hospital',
   ยืนยันการรับผู้ป่วย: 'Confirm patient admission',
   กรุณายืนยันว่าโรงพยาบาลได้รับตัวผู้ป่วยเรียบร้อยแล้ว: 'Please confirm that the hospital has admitted the patient',
-  'ยืนยันการปิดเคสนี้ กระบวนการช่วยเหลือฉุกเฉินจะถือว่าเสร็จสมบูรณ์': 'Confirm closing this case — the emergency response will be marked complete',
+  'ยืนยันการปิดเหตุนี้ กระบวนการช่วยเหลือฉุกเฉินจะถือว่าเสร็จสมบูรณ์': 'Confirm closing this case — the emergency response will be marked complete',
 })
 
 export default function HospitalCaseDetail() {
@@ -81,8 +81,8 @@ export default function HospitalCaseDetail() {
 
   if (!id || !c) {
     return (
-      <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
-        <ErrorState title={t('ไม่พบเคสนี้')} description={t('เคสที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่ในระบบ')} />
+      <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
+        <ErrorState title={t('ไม่พบเหตุนี้')} description={t('เหตุที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่ในระบบ')} />
       </AppShell>
     )
   }
@@ -105,14 +105,14 @@ export default function HospitalCaseDetail() {
       setCloseLoading(false)
       setCloseOpen(false)
       setJustClosed(true)
-      toast({ title: t('ปิดเคสเรียบร้อยแล้ว'), tone: 'success' })
+      toast({ title: t('ปิดเหตุเรียบร้อยแล้ว'), tone: 'success' })
     }, 700)
   }
 
   const arrivedNotYet = !['hospital-arrived', 'hospital-received', 'completed'].includes(c.status)
 
   return (
-    <AppShell variant="dashboard" title={t('เคส {caseNumber}', { caseNumber: c.caseNumber })}>
+    <AppShell variant="dashboard" title={t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}>
       <div className="relative">
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10 flex flex-col gap-5">
@@ -126,7 +126,7 @@ export default function HospitalCaseDetail() {
             </span>
             <div>
               <p className="font-bold text-ink">{t('ยืนยันรับผู้ป่วยเรียบร้อยแล้ว')}</p>
-              <p className="text-sm text-muted">{t('กำลังเตรียมข้อมูลเคสสำหรับขั้นตอนถัดไป')}</p>
+              <p className="text-sm text-muted">{t('กำลังเตรียมข้อมูลสำหรับขั้นตอนถัดไป')}</p>
             </div>
           </div>
         )}
@@ -207,7 +207,7 @@ export default function HospitalCaseDetail() {
         )}
 
         <Card>
-          <h3 className="mb-4 font-bold text-ink">{t('ไทม์ไลน์การดำเนินการ')}</h3>
+          <h3 className="mb-4 font-bold text-ink">{t('ลำดับการดำเนินการ')}</h3>
           <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
         </Card>
 
@@ -254,14 +254,14 @@ export default function HospitalCaseDetail() {
 
         {c.status === 'hospital-received' &&
           (justClosed ? (
-            <SuccessState title={t('ปิดเคสเรียบร้อยแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')} />
+            <SuccessState title={t('ปิดเหตุเรียบร้อยแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')} />
           ) : (
             <Card className="flex flex-col items-start gap-3 border-primary/30 bg-skyblue-pale sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-bold text-ink">{t('รับผู้ป่วยเรียบร้อยแล้ว')}</p>
-                <p className="text-sm text-muted">{t('ปิดเคสเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')}</p>
+                <p className="text-sm text-muted">{t('ปิดเหตุเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')}</p>
               </div>
-              <Button onClick={() => setCloseOpen(true)}>{t('ปิดเคส')}</Button>
+              <Button onClick={() => setCloseOpen(true)}>{t('ปิดเหตุ')}</Button>
             </Card>
           ))}
 
@@ -273,7 +273,7 @@ export default function HospitalCaseDetail() {
               </span>
             )}
             <SuccessState
-              title={justClosed ? t('ปิดเคสเรียบร้อยแล้ว') : t('เคสเสร็จสิ้นแล้ว')}
+              title={justClosed ? t('ปิดเหตุเรียบร้อยแล้ว') : t('ดำเนินการเสร็จสิ้นแล้ว')}
               description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')}
             />
           </div>
@@ -303,9 +303,9 @@ export default function HospitalCaseDetail() {
 
       <ConfirmationModal
         open={closeOpen}
-        title={t('ปิดเคส')}
-        message={t('ยืนยันการปิดเคสนี้ กระบวนการช่วยเหลือฉุกเฉินจะถือว่าเสร็จสมบูรณ์')}
-        confirmLabel={t('ปิดเคส')}
+        title={t('ปิดเหตุ')}
+        message={t('ยืนยันการปิดเหตุนี้ กระบวนการช่วยเหลือฉุกเฉินจะถือว่าเสร็จสมบูรณ์')}
+        confirmLabel={t('ปิดเหตุ')}
         confirmLoading={closeLoading}
         onConfirm={handleCompleteCase}
         onCancel={() => setCloseOpen(false)}

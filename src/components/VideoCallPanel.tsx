@@ -15,9 +15,9 @@ registerTranslations({
   'ตรวจสอบสัญญาณอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง': 'Check your internet connection and try again',
   'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
   ไมโครโฟนเปิด: 'Mic on',
-  ปิดไมโครโฟน: 'Mic off',
+  ไมโครโฟนปิด: 'Mic off',
   กล้องเปิด: 'Camera on',
-  ปิดกล้อง: 'Camera off',
+  กล้องปิด: 'Camera off',
   แตะเพื่อเปิดเสียง: 'Tap to turn on sound',
   'เจ้าหน้าที่ 1669': 'Responder 1669',
   หน่วยกู้ชีพ: 'Rescue team',
@@ -181,7 +181,7 @@ export function VideoCallPanel({
           )}
         >
           {call.micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-          {call.micOn ? t('ไมโครโฟนเปิด') : t('ปิดไมโครโฟน')}
+          {call.micOn ? t('ไมโครโฟนเปิด') : t('ไมโครโฟนปิด')}
         </button>
         <button
           onClick={call.toggleCamera}
@@ -193,7 +193,7 @@ export function VideoCallPanel({
           )}
         >
           {call.cameraOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
-          {call.cameraOn ? t('กล้องเปิด') : t('ปิดกล้อง')}
+          {call.cameraOn ? t('กล้องเปิด') : t('กล้องปิด')}
         </button>
       </div>
 

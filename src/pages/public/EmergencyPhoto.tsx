@@ -38,31 +38,31 @@ registerTranslations({
   อัปโหลดรูปภาพไม่สำเร็จ: 'Failed to upload photo',
   บันทึกเสียงแล้ว: 'Audio saved',
   อัปโหลดเสียงไม่สำเร็จ: 'Failed to upload audio',
-  ถ่ายรูปจุดเกิดเหตุ: 'Photograph the scene',
+  ถ่ายภาพจุดเกิดเหตุ: 'Photograph the scene',
   'กำลังเตรียมข้อมูล...': 'Preparing...',
-  'กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน': 'Tap to start, then follow each step',
+  'แตะ "เริ่มถ่ายภาพ" แล้วถ่ายตามหัวข้อทีละขั้นตอน': 'Tap to start, then follow each step',
   'รูปภาพ: {n}/{total}': 'Photos: {n}/{total}',
   ข้ามขั้นตอนนี้: 'Skip this step',
   'กำลังค้นหาตำแหน่ง...': 'Locating...',
   'สัญญาณ GPS พร้อมใช้งาน': 'GPS signal ready',
   ใช้ตำแหน่งโดยประมาณ: 'Using an approximate location',
   ผู้ป่วยยังมีสติหรือไม่: 'Is the patient conscious?',
-  'ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น': 'Helps Center 1669 assess severity faster',
+  'ช่วยให้ศูนย์สั่งการ 1669 ประเมินความรุนแรงได้รวดเร็วขึ้น': 'Helps Center 1669 assess severity faster',
   เลือกระดับความรู้สึกตัว: 'Select consciousness level',
   ถ่ายใหม่: 'Retake',
-  ถ่าย: 'Take photo',
+  ถ่ายภาพ: 'Take photo',
   เริ่มถ่ายภาพ: 'Start taking photos',
   ถ่ายภาพต่อ: 'Continue taking photos',
   ถ่ายภาพใหม่ทั้งหมด: 'Retake all photos',
   'กำลังอัปโหลดรูปภาพ...': 'Uploading photo...',
-  หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย: 'Or upload a photo from your device instead',
+  หรืออัปโหลดภาพจากอุปกรณ์แทน: 'Or upload a photo from your device instead',
   'บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)': 'Record audio describing the incident (if any)',
   'เสียง: {n}': 'Audio: {n}',
-  กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์: 'Tap to start recording audio describing the situation',
+  แตะเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์: 'Tap to start recording audio describing the situation',
   'กำลังอัปโหลดเสียง...': 'Uploading audio...',
-  'ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง':
+  'กรุณาถ่ายภาพเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย และไม่เข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง':
     'Only take photos when you are somewhere safe — do not approach the scene if there is any risk',
-  'ไปต่อเพื่อโทร 1669': 'Continue to call 1669',
+  'ดำเนินการต่อเพื่อโทร 1669': 'Continue to call 1669',
 })
 
 const CONSCIOUSNESS_LABEL: Record<Consciousness, string> = {
@@ -292,7 +292,7 @@ export default function EmergencyPhoto() {
 
   if (!caseId || !activeCase) {
     return (
-      <AppShell variant="flow" title={t('ถ่ายรูปจุดเกิดเหตุ')} showBack>
+      <AppShell variant="flow" title={t('ถ่ายภาพจุดเกิดเหตุ')} showBack>
         <div className="py-16 text-center text-sm text-muted">{t('กำลังเตรียมข้อมูล...')}</div>
       </AppShell>
     )
@@ -301,15 +301,15 @@ export default function EmergencyPhoto() {
   const audioRecordings = activeCase.audioRecordings ?? []
 
   return (
-    <AppShell variant="flow" title={t('ถ่ายรูปจุดเกิดเหตุ')} showBack onBack={handleBack}>
+    <AppShell variant="flow" title={t('ถ่ายภาพจุดเกิดเหตุ')} showBack onBack={handleBack}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 
         <div className="relative z-10 flex flex-col gap-5 pb-28">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h1 className="text-xl font-bold text-ink">{t('ถ่ายรูปจุดเกิดเหตุ')}</h1>
-              <p className="mt-1.5 text-sm text-muted">{t('กดเริ่มถ่ายภาพ แล้วทำตามหัวข้อทีละขั้นตอน')}</p>
+              <h1 className="text-xl font-bold text-ink">{t('ถ่ายภาพจุดเกิดเหตุ')}</h1>
+              <p className="mt-1.5 text-sm text-muted">{t('แตะ "เริ่มถ่ายภาพ" แล้วถ่ายตามหัวข้อทีละขั้นตอน')}</p>
             </div>
             <span
               key={filledCount}
@@ -354,7 +354,7 @@ export default function EmergencyPhoto() {
               required
               value={consciousness}
               error={consciousnessError}
-              hint={t('ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น')}
+              hint={t('ช่วยให้ศูนย์สั่งการ 1669 ประเมินความรุนแรงได้รวดเร็วขึ้น')}
               onChange={(e) => {
                 setConsciousnessInput(e.target.value as Consciousness)
                 if (consciousnessError) setConsciousnessError(undefined)
@@ -392,7 +392,7 @@ export default function EmergencyPhoto() {
                   </p>
                   <p className="truncate text-xs text-muted">{t(slot.hint)}</p>
                 </div>
-                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? t('ถ่ายใหม่') : t('ถ่าย')}</span>
+                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? t('ถ่ายใหม่') : t('ถ่ายภาพ')}</span>
               </button>
             ))}
           </div>
@@ -420,7 +420,7 @@ export default function EmergencyPhoto() {
                   className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
                   <Upload className="size-3.5" />
-                  {t('หรืออัปโหลดรูปจากอุปกรณ์แทนการถ่าย')}
+                  {t('หรืออัปโหลดภาพจากอุปกรณ์แทน')}
                 </button>
               </>
             )}
@@ -435,7 +435,7 @@ export default function EmergencyPhoto() {
                 </span>
               )}
             </div>
-            <AudioRecorder label={t('กดเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์')} onSave={handleSaveAudio} resetAfterSave />
+            <AudioRecorder label={t('แตะเพื่อเริ่มบันทึกเสียงอธิบายสถานการณ์')} onSave={handleSaveAudio} resetAfterSave />
             {uploadingAudio && <p className="text-xs font-medium text-primary">{t('กำลังอัปโหลดเสียง...')}</p>}
             {audioRecordings.length > 0 && (
               <div className="flex flex-col gap-2">
@@ -453,7 +453,7 @@ export default function EmergencyPhoto() {
           <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
             <ShieldAlert className="mt-0.5 size-5 shrink-0 animate-pulse text-warning" />
             <p className="text-sm font-medium text-ink">
-              {t('ถ่ายรูปเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย อย่าเข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง')}
+              {t('กรุณาถ่ายภาพเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย และไม่เข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง')}
             </p>
           </div>
         </div>
@@ -462,7 +462,7 @@ export default function EmergencyPhoto() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <Button variant="primary" size="lg" fullWidth loading={submitting} onClick={proceed}>
-            {t('ไปต่อเพื่อโทร 1669')}
+            {t('ดำเนินการต่อเพื่อโทร 1669')}
           </Button>
         </div>
       </div>

@@ -15,10 +15,10 @@ import {
 import { registerTranslations } from './i18n'
 
 registerTranslations({
-  แดชบอร์ด: 'Dashboard',
+  ภาพรวม: 'Overview',
   สายเรียกเข้า: 'Incoming calls',
-  เคสปัจจุบัน: 'Current cases',
-  ประวัติเคส: 'Case history',
+  เหตุปัจจุบัน: 'Current cases',
+  ประวัติเหตุ: 'Case history',
   อนุมัติสมาชิกหน่วยงาน: 'Approve org members',
   การแจ้งเตือน: 'Notifications',
   ตั้งค่า: 'Settings',
@@ -43,27 +43,27 @@ export function navItemsForRole(role: Role | null, isOrgLead = false): NavItem[]
   switch (role) {
     case 'dispatch':
       return [
-        { label: 'แดชบอร์ด', path: '/dispatch/dashboard', icon: LayoutDashboard },
+        { label: 'ภาพรวม', path: '/dispatch/dashboard', icon: LayoutDashboard },
         { label: 'สายเรียกเข้า', path: '/dispatch/incoming-call', icon: PhoneIncoming },
-        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
-        { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        { label: 'เหตุปัจจุบัน', path: '/current-cases', icon: ListChecks },
+        { label: 'ประวัติเหตุ', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
       ]
     case 'rescue':
       return [
-        { label: 'แดชบอร์ด', path: '/rescue/dashboard', icon: Ambulance },
-        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
-        { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        { label: 'ภาพรวม', path: '/rescue/dashboard', icon: Ambulance },
+        { label: 'เหตุปัจจุบัน', path: '/current-cases', icon: ListChecks },
+        { label: 'ประวัติเหตุ', path: '/case-history', icon: History },
         ...(isOrgLead ? [{ label: 'อนุมัติสมาชิกหน่วยงาน', path: '/org-approvals', icon: UserCheck }] : []),
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
       ]
     case 'hospital':
       return [
-        { label: 'แดชบอร์ด', path: '/hospital/dashboard', icon: Building2 },
-        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
-        { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        { label: 'ภาพรวม', path: '/hospital/dashboard', icon: Building2 },
+        { label: 'เหตุปัจจุบัน', path: '/current-cases', icon: ListChecks },
+        { label: 'ประวัติเหตุ', path: '/case-history', icon: History },
         ...(isOrgLead ? [{ label: 'อนุมัติสมาชิกหน่วยงาน', path: '/org-approvals', icon: UserCheck }] : []),
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
@@ -71,8 +71,8 @@ export function navItemsForRole(role: Role | null, isOrgLead = false): NavItem[]
     default:
       return [
         { label: 'หน้าหลัก', path: '/', icon: Home },
-        { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
-        { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        { label: 'เหตุปัจจุบัน', path: '/current-cases', icon: ListChecks },
+        { label: 'ประวัติเหตุ', path: '/case-history', icon: History },
         { label: 'เหรียญ', path: '/coins', icon: Coins },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },

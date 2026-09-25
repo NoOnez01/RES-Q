@@ -34,44 +34,44 @@ import { t, registerTranslations } from './i18n'
 
 registerTranslations({
   เริ่มการขอความช่วยเหลือ: 'Help request started',
-  'สร้างเคส {caseNumber} เรียบร้อยแล้ว': 'Case {caseNumber} has been created',
-  หน่วยกู้ชีพบันทึกเคสที่พบเอง: 'Rescue team logged a self-discovered case',
-  '{teamName} พบเหตุและบันทึกเคส {caseNumber} ด้วยตนเอง': '{teamName} discovered the incident and logged case {caseNumber} themselves',
-  มีเคสฉุกเฉินใหม่: 'New emergency case',
-  'เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอเจ้าหน้าที่กรอกรายละเอียดและประเมิน':
+  'สร้างรายการแจ้งเหตุหมายเลข {caseNumber} เรียบร้อยแล้ว': 'Case {caseNumber} has been created',
+  หน่วยกู้ชีพบันทึกเหตุที่พบด้วยตนเอง: 'Rescue team logged a self-discovered case',
+  '{teamName} พบเหตุและบันทึกเหตุหมายเลข {caseNumber} ด้วยตนเอง': '{teamName} discovered the incident and logged case {caseNumber} themselves',
+  มีเหตุฉุกเฉินใหม่: 'New emergency case',
+  'เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอเจ้าหน้าที่กรอกรายละเอียดและประเมินความรุนแรง':
     'Case {caseNumber} has been submitted, awaiting dispatch to fill in details and assess',
   เจ้าหน้าที่ประเมินระดับความรุนแรงแล้ว: 'Dispatch has assessed the severity',
-  'เคส {caseNumber} ได้รับการประเมินจากศูนย์ 1669 แล้ว': 'Case {caseNumber} has been assessed by the 1669 center',
-  ได้รับมอบหมายเคสใหม่: 'New case assigned to you',
-  'คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส': 'You have been assigned case {caseNumber}, please confirm acceptance',
+  'เหตุหมายเลข {caseNumber} ได้รับการประเมินจากศูนย์สั่งการ 1669 แล้ว': 'Case {caseNumber} has been assessed by the 1669 center',
+  ได้รับมอบหมายเหตุใหม่: 'New case assigned to you',
+  'คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ': 'You have been assigned case {caseNumber}, please confirm acceptance',
   มอบหมายหน่วยกู้ชีพแล้ว: 'Rescue team assigned',
-  'หน่วยกู้ชีพ {teamName} ได้รับมอบหมายเคสของคุณแล้ว': 'Rescue team {teamName} has been assigned to your case',
+  'หน่วยกู้ชีพ {teamName} ได้รับมอบหมายให้ช่วยเหลือคุณแล้ว': 'Rescue team {teamName} has been assigned to your case',
   ได้รับมอบหมายเป็นหน่วยสนับสนุน: 'Assigned as a support unit',
-  'เคส {caseNumber} ต้องการอุปกรณ์เฉพาะทางจากหน่วยของคุณ': 'Case {caseNumber} needs specialized equipment from your team',
+  'เหตุหมายเลข {caseNumber} ต้องการอุปกรณ์เฉพาะทางจากหน่วยของคุณ': 'Case {caseNumber} needs specialized equipment from your team',
   เพิ่มหน่วยสนับสนุนแล้ว: 'Support unit added',
-  'หน่วยกู้ชีพ {teamName} เข้าร่วมช่วยเหลือเคสของคุณ': 'Rescue team {teamName} has joined to help with your case',
+  'หน่วยกู้ชีพ {teamName} เข้าร่วมให้การช่วยเหลือ': 'Rescue team {teamName} has joined to help with your case',
   หน่วยกู้ชีพเสนอปรับระดับความรุนแรง: 'Rescue team proposed a severity change',
-  'เคส {caseNumber}: หน่วยกู้ชีพประเมินจากที่เกิดเหตุแล้วเสนอปรับระดับความรุนแรง กรุณายืนยัน':
+  'เหตุหมายเลข {caseNumber}: หน่วยกู้ชีพประเมิน ณ จุดเกิดเหตุและเสนอปรับระดับความรุนแรง กรุณาพิจารณายืนยัน':
     'Case {caseNumber}: the rescue team assessed the scene and proposed a severity change, please confirm',
-  หน่วยกู้ชีพรับเคสแล้ว: 'Rescue team accepted the case',
+  หน่วยกู้ชีพรับเหตุแล้ว: 'Rescue team accepted the case',
   '{teamName} กำลังเดินทางไปยังจุดเกิดเหตุ': '{teamName} is en route to the scene',
   หน่วยกู้ชีพ: 'Rescue team',
   หน่วยกู้ชีพกำลังเดินทาง: 'Rescue team en route',
-  หน่วยกู้ชีพตอบรับเคสของคุณแล้วและกำลังเดินทางมา: 'The rescue team has accepted your case and is on the way',
+  หน่วยกู้ชีพตอบรับแล้วและกำลังเดินทางไปยังจุดเกิดเหตุ: 'The rescue team has accepted and is on the way to the scene',
   หน่วยกู้ชีพถึงจุดเกิดเหตุแล้ว: 'Rescue team arrived at the scene',
-  หน่วยกู้ชีพถึงที่เกิดเหตุและกำลังเข้าช่วยเหลือ: 'The rescue team has arrived at the scene and is providing assistance',
-  อัปเดตอาการผู้ป่วย: 'Patient condition update',
-  'เคส {caseNumber}: {note}': 'Case {caseNumber}: {note}',
+  หน่วยกู้ชีพถึงจุดเกิดเหตุและกำลังให้การช่วยเหลือ: 'The rescue team has arrived at the scene and is providing assistance',
+  รายงานอาการผู้ป่วย: 'Patient condition update',
+  'เหตุหมายเลข {caseNumber}: {note}': 'Case {caseNumber}: {note}',
   มีผู้ป่วยกำลังนำส่ง: 'A patient is being transported',
-  'เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา': 'Case {caseNumber} selected your hospital for transfer, please prepare the treatment team',
-  เคสเสร็จสิ้น: 'Case completed',
-  'เคส {caseNumber}: ญาติไม่ประสงค์ส่งโรงพยาบาล': 'Case {caseNumber}: family declined hospital transfer',
+  'เหตุหมายเลข {caseNumber} จะนำส่งผู้ป่วยมายังโรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา': 'Case {caseNumber} is transporting a patient to your hospital. Please prepare the treatment team.',
+  การช่วยเหลือเสร็จสิ้น: 'Case completed',
+  'เหตุหมายเลข {caseNumber}: ญาติไม่ประสงค์นำส่งโรงพยาบาล': 'Case {caseNumber}: family declined hospital transfer',
   กำลังนำส่งโรงพยาบาล: 'Transporting to hospital',
   หน่วยกู้ชีพกำลังนำส่งผู้ป่วยไปยังโรงพยาบาลที่เลือก: 'The rescue team is transporting the patient to the selected hospital',
   ผู้ป่วยถึงโรงพยาบาลแล้ว: 'Patient has arrived at the hospital',
-  'เคส {caseNumber} ถึงโรงพยาบาลแล้ว กรุณายืนยันการรับผู้ป่วย': 'Case {caseNumber} has arrived at the hospital, please confirm patient receipt',
-  โรงพยาบาลปฏิเสธเคส: 'Hospital declined the case',
-  'เคส {caseNumber} ถูกปฏิเสธ กรุณาเลือกโรงพยาบาลใหม่': 'Case {caseNumber} was declined, please select a new hospital',
+  'ผู้ป่วยจากเหตุหมายเลข {caseNumber} ถึงโรงพยาบาลแล้ว กรุณายืนยันการรับผู้ป่วย': 'The patient from case {caseNumber} has arrived at the hospital. Please confirm receiving the patient.',
+  โรงพยาบาลปฏิเสธการรับผู้ป่วย: 'Hospital declined the patient',
+  'โรงพยาบาลปฏิเสธการรับผู้ป่วยจากเหตุหมายเลข {caseNumber} กรุณาเลือกโรงพยาบาลใหม่': 'The hospital declined the patient from case {caseNumber}. Please select another hospital.',
   โรงพยาบาลรับผู้ป่วยแล้ว: 'Hospital admitted patient',
   โรงพยาบาลยืนยันการรับตัวผู้ป่วยเรียบร้อยแล้ว: 'The hospital has confirmed receiving the patient',
   กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว: 'The emergency response process is complete',
@@ -375,7 +375,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId: c.id,
           title: t('เริ่มการขอความช่วยเหลือ'),
-          message: t('สร้างเคส {caseNumber} เรียบร้อยแล้ว', { caseNumber: c.caseNumber }),
+          message: t('สร้างรายการแจ้งเหตุหมายเลข {caseNumber} เรียบร้อยแล้ว', { caseNumber: c.caseNumber }),
           tone: 'info',
         })
         return c.id
@@ -385,7 +385,7 @@ export const useStore = create<ResQState>()(
         const seq = get().caseSeq + 1
         const { incidentType, location, patientCount, conscious, notes, severity, injuryDescription, reporterName, reporterPhone } = input
         let c = makeNewCase(seq, reporterName, reporterPhone)
-        c = pushStatus(c, 'received', 'บันทึกเคสโดยศูนย์สั่งการ 1669 (รับแจ้งเหตุทางโทรศัพท์ ไม่ผ่านแอปประชาชน)')
+        c = pushStatus(c, 'received', 'ศูนย์สั่งการ 1669 บันทึกเหตุที่รับแจ้งทางโทรศัพท์ (ไม่ผ่านแอปพลิเคชัน)')
         c = {
           ...c,
           location,
@@ -401,7 +401,7 @@ export const useStore = create<ResQState>()(
         const seq = get().caseSeq + 1
         const { incidentType, location, patientCount, conscious, notes, severity, injuryDescription, team } = input
         let c = makeNewCase(seq)
-        c = pushStatus(c, 'received', 'พบเหตุโดยหน่วยกู้ชีพเอง (ไม่ผ่านศูนย์สั่งการ)')
+        c = pushStatus(c, 'received', 'หน่วยกู้ชีพพบเหตุด้วยตนเอง (ไม่ผ่านศูนย์สั่งการ)')
         c = pushStatus(c, 'finding-rescue')
         c = { ...c, assignedRescueTeam: team }
         c = pushStatus(c, 'rescue-assigned')
@@ -419,8 +419,8 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'dispatch',
           caseId: c.id,
-          title: t('หน่วยกู้ชีพบันทึกเคสที่พบเอง'),
-          message: t('{teamName} พบเหตุและบันทึกเคส {caseNumber} ด้วยตนเอง', { teamName: team.name, caseNumber: c.caseNumber }),
+          title: t('หน่วยกู้ชีพบันทึกเหตุที่พบด้วยตนเอง'),
+          message: t('{teamName} พบเหตุและบันทึกเหตุหมายเลข {caseNumber} ด้วยตนเอง', { teamName: team.name, caseNumber: c.caseNumber }),
           tone: 'warning',
         })
         return c.id
@@ -632,8 +632,8 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'dispatch',
           caseId,
-          title: t('มีเคสฉุกเฉินใหม่'),
-          message: t('เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอเจ้าหน้าที่กรอกรายละเอียดและประเมิน', { caseNumber: c?.caseNumber ?? '' }),
+          title: t('มีเหตุฉุกเฉินใหม่'),
+          message: t('เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอเจ้าหน้าที่กรอกรายละเอียดและประเมินความรุนแรง', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'emergency',
         })
       },
@@ -670,7 +670,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId,
           title: t('เจ้าหน้าที่ประเมินระดับความรุนแรงแล้ว'),
-          message: t('เคส {caseNumber} ได้รับการประเมินจากศูนย์ 1669 แล้ว', { caseNumber: c?.caseNumber ?? '' }),
+          message: t('เหตุหมายเลข {caseNumber} ได้รับการประเมินจากศูนย์สั่งการ 1669 แล้ว', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'info',
         })
       },
@@ -696,15 +696,15 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'rescue',
           caseId,
-          title: t('ได้รับมอบหมายเคสใหม่'),
-          message: t('คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส', { caseNumber: c?.caseNumber ?? '' }),
+          title: t('ได้รับมอบหมายเหตุใหม่'),
+          message: t('คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'warning',
         })
         notify(set, {
           audience: 'public',
           caseId,
           title: t('มอบหมายหน่วยกู้ชีพแล้ว'),
-          message: t('หน่วยกู้ชีพ {teamName} ได้รับมอบหมายเคสของคุณแล้ว', { teamName: team.name }),
+          message: t('หน่วยกู้ชีพ {teamName} ได้รับมอบหมายให้ช่วยเหลือคุณแล้ว', { teamName: team.name }),
           tone: 'success',
         })
       },
@@ -720,14 +720,14 @@ export const useStore = create<ResQState>()(
           audience: 'rescue',
           caseId,
           title: t('ได้รับมอบหมายเป็นหน่วยสนับสนุน'),
-          message: t('เคส {caseNumber} ต้องการอุปกรณ์เฉพาะทางจากหน่วยของคุณ', { caseNumber: c?.caseNumber ?? '' }),
+          message: t('เหตุหมายเลข {caseNumber} ต้องการอุปกรณ์เฉพาะทางจากหน่วยของคุณ', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'warning',
         })
         notify(set, {
           audience: 'public',
           caseId,
           title: t('เพิ่มหน่วยสนับสนุนแล้ว'),
-          message: t('หน่วยกู้ชีพ {teamName} เข้าร่วมช่วยเหลือเคสของคุณ', { teamName: team.name }),
+          message: t('หน่วยกู้ชีพ {teamName} เข้าร่วมให้การช่วยเหลือ', { teamName: team.name }),
           tone: 'info',
         })
       },
@@ -744,7 +744,7 @@ export const useStore = create<ResQState>()(
           audience: 'dispatch',
           caseId,
           title: t('หน่วยกู้ชีพเสนอปรับระดับความรุนแรง'),
-          message: t('เคส {caseNumber}: หน่วยกู้ชีพประเมินจากที่เกิดเหตุแล้วเสนอปรับระดับความรุนแรง กรุณายืนยัน', { caseNumber: c?.caseNumber ?? '' }),
+          message: t('เหตุหมายเลข {caseNumber}: หน่วยกู้ชีพประเมิน ณ จุดเกิดเหตุและเสนอปรับระดับความรุนแรง กรุณาพิจารณายืนยัน', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'warning',
         })
       },
@@ -803,7 +803,7 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'dispatch',
           caseId,
-          title: t('หน่วยกู้ชีพรับเคสแล้ว'),
+          title: t('หน่วยกู้ชีพรับเหตุแล้ว'),
           message: t('{teamName} กำลังเดินทางไปยังจุดเกิดเหตุ', { teamName: c?.assignedRescueTeam?.name ?? t('หน่วยกู้ชีพ') }),
           tone: 'success',
         })
@@ -811,7 +811,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId,
           title: t('หน่วยกู้ชีพกำลังเดินทาง'),
-          message: t('หน่วยกู้ชีพตอบรับเคสของคุณแล้วและกำลังเดินทางมา'),
+          message: t('หน่วยกู้ชีพตอบรับแล้วและกำลังเดินทางไปยังจุดเกิดเหตุ'),
           tone: 'success',
         })
       },
@@ -827,7 +827,7 @@ export const useStore = create<ResQState>()(
             supportingRescueTeam: null,
             rescueRejectedAt: Date.now(),
           }
-          return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ชีพปฏิเสธเคส ระบบกำลังค้นหาหน่วยใหม่') } }
+          return { cases: { ...s.cases, [caseId]: pushStatus(reverted, 'finding-rescue', 'หน่วยกู้ชีพปฏิเสธการรับเหตุ ระบบกำลังค้นหาหน่วยใหม่') } }
         }),
 
       assignVehicle: (caseId, vehicle, crewCount) =>
@@ -860,7 +860,7 @@ export const useStore = create<ResQState>()(
           audience: 'public',
           caseId,
           title: t('หน่วยกู้ชีพถึงจุดเกิดเหตุแล้ว'),
-          message: t('หน่วยกู้ชีพถึงที่เกิดเหตุและกำลังเข้าช่วยเหลือ'),
+          message: t('หน่วยกู้ชีพถึงจุดเกิดเหตุและกำลังให้การช่วยเหลือ'),
           tone: 'success',
         })
       },
@@ -893,15 +893,15 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'dispatch',
           caseId,
-          title: t('อัปเดตอาการผู้ป่วย'),
-          message: t('เคส {caseNumber}: {note}', { caseNumber: c?.caseNumber ?? '', note: note ?? '' }),
+          title: t('รายงานอาการผู้ป่วย'),
+          message: t('เหตุหมายเลข {caseNumber}: {note}', { caseNumber: c?.caseNumber ?? '', note: note ?? '' }),
           tone: 'info',
         })
         notify(set, {
           audience: 'hospital',
           caseId,
-          title: t('อัปเดตอาการผู้ป่วย'),
-          message: t('เคส {caseNumber}: {note}', { caseNumber: c?.caseNumber ?? '', note: note ?? '' }),
+          title: t('รายงานอาการผู้ป่วย'),
+          message: t('เหตุหมายเลข {caseNumber}: {note}', { caseNumber: c?.caseNumber ?? '', note: note ?? '' }),
           tone: 'info',
         })
       },
@@ -920,7 +920,7 @@ export const useStore = create<ResQState>()(
             updated = pushStatus(
               { ...updated, closedWithoutDispatch: true },
               'completed',
-              'ญาติไม่ประสงค์ส่งโรงพยาบาล',
+              'ญาติไม่ประสงค์นำส่งโรงพยาบาล',
             )
           }
           return { cases: { ...s.cases, [caseId]: updated } }
@@ -930,8 +930,8 @@ export const useStore = create<ResQState>()(
           notify(set, {
             audience: 'all',
             caseId,
-            title: t('เคสเสร็จสิ้น'),
-            message: t('เคส {caseNumber}: ญาติไม่ประสงค์ส่งโรงพยาบาล', { caseNumber: c?.caseNumber ?? '' }),
+            title: t('การช่วยเหลือเสร็จสิ้น'),
+            message: t('เหตุหมายเลข {caseNumber}: ญาติไม่ประสงค์นำส่งโรงพยาบาล', { caseNumber: c?.caseNumber ?? '' }),
             tone: 'info',
           })
         } else if (input.hospital) {
@@ -939,7 +939,7 @@ export const useStore = create<ResQState>()(
             audience: 'hospital',
             caseId,
             title: t('มีผู้ป่วยกำลังนำส่ง'),
-            message: t('เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c?.caseNumber ?? '' }),
+            message: t('เหตุหมายเลข {caseNumber} จะนำส่งผู้ป่วยมายังโรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c?.caseNumber ?? '' }),
             tone: 'emergency',
           })
         }
@@ -971,7 +971,7 @@ export const useStore = create<ResQState>()(
           audience: 'hospital',
           caseId,
           title: t('ผู้ป่วยถึงโรงพยาบาลแล้ว'),
-          message: t('เคส {caseNumber} ถึงโรงพยาบาลแล้ว กรุณายืนยันการรับผู้ป่วย', { caseNumber: c?.caseNumber ?? '' }),
+          message: t('ผู้ป่วยจากเหตุหมายเลข {caseNumber} ถึงโรงพยาบาลแล้ว กรุณายืนยันการรับผู้ป่วย', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'warning',
         })
       },
@@ -986,7 +986,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: pushStatus(reverted, 'assisted', 'โรงพยาบาลปฏิเสธเคส กรุณาเลือกโรงพยาบาลใหม่'),
+              [caseId]: pushStatus(reverted, 'assisted', 'โรงพยาบาลปฏิเสธการรับผู้ป่วย กรุณาเลือกโรงพยาบาลใหม่'),
             },
           }
         })
@@ -994,8 +994,8 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'rescue',
           caseId,
-          title: t('โรงพยาบาลปฏิเสธเคส'),
-          message: t('เคส {caseNumber} ถูกปฏิเสธ กรุณาเลือกโรงพยาบาลใหม่', { caseNumber: c?.caseNumber ?? '' }),
+          title: t('โรงพยาบาลปฏิเสธการรับผู้ป่วย'),
+          message: t('โรงพยาบาลปฏิเสธการรับผู้ป่วยจากเหตุหมายเลข {caseNumber} กรุณาเลือกโรงพยาบาลใหม่', { caseNumber: c?.caseNumber ?? '' }),
           tone: 'warning',
         })
       },
@@ -1025,7 +1025,7 @@ export const useStore = create<ResQState>()(
         notify(set, {
           audience: 'all',
           caseId,
-          title: t('เคสเสร็จสิ้น'),
+          title: t('การช่วยเหลือเสร็จสิ้น'),
           message: opts?.reason ?? t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว'),
           tone: 'success',
         })

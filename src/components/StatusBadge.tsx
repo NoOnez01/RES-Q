@@ -7,8 +7,8 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ติดต่อเจ้าหน้าที่แล้ว: 'Contacted responders',
-  ถ่ายรูปจุดเกิดเหตุแล้ว: 'Photographed the scene',
-  'ติดต่อ 1669 แล้ว': 'Contacted 1669',
+  ถ่ายภาพจุดเกิดเหตุแล้ว: 'Photographed the scene',
+  'ติดต่อศูนย์ 1669 แล้ว': 'Contacted 1669',
   รับแจ้งเหตุแล้ว: 'Report received',
   กำลังค้นหาหน่วยกู้ชีพ: 'Finding a rescue team',
   มอบหมายหน่วยกู้ชีพแล้ว: 'Rescue team assigned',
@@ -20,7 +20,7 @@ registerTranslations({
   โรงพยาบาลรับผู้ป่วยแล้ว: 'Hospital admitted patient',
   เสร็จสิ้น: 'Completed',
   ประชาชน: 'Public',
-  'ศูนย์ 1669': 'Center 1669',
+  'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
   หน่วยกู้ชีพ: 'Rescue team',
   โรงพยาบาล: 'Hospital',
   ระบบ: 'System',

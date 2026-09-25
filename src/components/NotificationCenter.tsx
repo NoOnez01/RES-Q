@@ -8,7 +8,7 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ยังไม่มีการแจ้งเตือน: 'No notifications yet',
-  การแจ้งเตือนเกี่ยวกับเคสจะแสดงที่นี่: 'Case-related notifications will appear here',
+  การแจ้งเตือนเกี่ยวกับเหตุจะแสดงที่นี่: 'Case-related notifications will appear here',
 })
 
 const toneConfig: Record<AppNotification['tone'], { icon: React.ElementType; classes: string }> = {
@@ -29,7 +29,7 @@ export function NotificationCenter({
 }) {
   const t = useT()
   if (notifications.length === 0) {
-    return <EmptyState icon={<Bell className="size-6" />} title={t('ยังไม่มีการแจ้งเตือน')} description={t('การแจ้งเตือนเกี่ยวกับเคสจะแสดงที่นี่')} />
+    return <EmptyState icon={<Bell className="size-6" />} title={t('ยังไม่มีการแจ้งเตือน')} description={t('การแจ้งเตือนเกี่ยวกับเหตุจะแสดงที่นี่')} />
   }
 
   return (

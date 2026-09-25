@@ -33,25 +33,25 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   ติดต่อเจ้าหน้าที่: 'Contact responders',
   เริ่มต้นการขอความช่วยเหลือได้อย่างรวดเร็ว: 'Start requesting help quickly',
-  'กดปุ่มเดียว ระบบพาไปยังขั้นตอนแจ้งเหตุทันที': 'One tap takes you straight into the report flow',
-  ถ่ายรูปจุดเกิดเหตุ: 'Photograph the scene',
-  ส่งข้อมูลภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์: 'Send photos to help responders assess the situation',
-  ถ่ายรูปหรือข้ามขั้นตอนนี้ได้ทันที: 'Take a photo or skip this step',
+  'แตะปุ่มเดียว ระบบจะนำไปสู่ขั้นตอนการแจ้งเหตุทันที': 'One tap takes you straight into the report flow',
+  ถ่ายภาพจุดเกิดเหตุ: 'Photograph the scene',
+  ส่งภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์: 'Send photos to help responders assess the situation',
+  'ถ่ายภาพ หรือข้ามขั้นตอนนี้ได้': 'Take a photo or skip this step',
   'โทร 1669': 'Call 1669',
-  เชื่อมต่อศูนย์รับแจ้งเหตุการแพทย์ฉุกเฉิน: 'Connect to the emergency medical dispatch center',
+  เชื่อมต่อศูนย์รับแจ้งเหตุและสั่งการการแพทย์ฉุกเฉิน: 'Connect to the emergency medical dispatch center',
   'สายด่วนการแพทย์ฉุกเฉินพร้อมรับสายตลอด 24 ชั่วโมง': 'The emergency medical hotline is staffed 24 hours a day',
-  ติดตามสถานะเคส: 'Track case status',
+  ติดตามสถานะการช่วยเหลือ: 'Track the response',
   ดูความคืบหน้าตั้งแต่รับแจ้งเหตุจนเสร็จสิ้น: 'See progress from the report through to completion',
-  อัปเดตสถานะอัตโนมัติทุกขั้นตอนแบบเรียลไทม์: 'Every stage updates automatically, in real time',
+  แสดงสถานะทุกขั้นตอนโดยอัตโนมัติตามเวลาจริง: 'Every stage updates automatically, in real time',
   บุคคลทั่วไป: 'Public',
-  'แจ้งเหตุ ถ่ายรูป และติดตามสถานะการช่วยเหลือ': 'Reports incidents, takes photos, and tracks help status',
-  'ศูนย์ 1669': 'Center 1669',
+  'แจ้งเหตุ ถ่ายภาพ และติดตามสถานะการช่วยเหลือ': 'Reports incidents, takes photos, and tracks help status',
+  'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
   'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ': 'Takes reports, assesses severity, and assigns rescue teams',
   หน่วยกู้ชีพ: 'Rescue team',
   'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล': 'Travels to help, records the patient condition, and transports to hospital',
   โรงพยาบาล: 'Hospital',
   เตรียมทีมรักษาและยืนยันการรับผู้ป่วย: 'Prepares the care team and confirms patient admission',
-  'เร็วๆ นี้': 'Coming soon',
+  'เร็ว ๆ นี้': 'Coming soon',
   ระบบออกแบบเพื่อการประสานงานฉุกเฉิน: 'Built for emergency coordination',
   มีการแบ่งสิทธิ์ตามบทบาทผู้ใช้งาน: 'Access is scoped by user role',
   ข้อมูลผู้ป่วยควรได้รับการปกป้อง: 'Patient data is meant to be protected',
@@ -59,8 +59,8 @@ registerTranslations({
   ออกแบบให้ใช้งานง่ายบนมือถือ: 'Designed to be easy to use on mobile',
   '{label}: ดูรายละเอียด': '{label}: view details',
   เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย: 'Connecting every step of emergency help, fast and safely',
-  'พร้อมช่วยเหลือ 24 ชม.': 'Available 24/7',
-  'ติดตามสถานะแบบ Real-time': 'Real-time status tracking',
+  'พร้อมให้ความช่วยเหลือตลอด 24 ชั่วโมง': 'Available 24/7',
+  ติดตามสถานะตามเวลาจริง: 'Real-time status tracking',
   เข้าสู่ระบบ: 'Log in',
   สมัครสมาชิก: 'Sign up',
   ดูวิธีการใช้งาน: 'How it works',
@@ -68,10 +68,10 @@ registerTranslations({
   'ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน': 'From the first report to the final follow-up, everyone sees the same data',
   เริ่มต้นใช้งานทันที: 'Get started now',
   ดูรายละเอียดทั้งหมด: 'See all the details',
-  'กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ': 'Tap a point to see details · Simulated data for this prototype',
+  'แตะที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับระบบต้นแบบ': 'Tap a point to see details · Simulated data for this prototype',
   ความปลอดภัยและความน่าเชื่อถือ: 'Security & trust',
   ติดต่อเรา: 'Contact us',
-  'สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)':
+  'สอบถามหรือติดต่อทีมงาน ResQ ได้ทางช่องทางด้านล่าง (กรณีเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบน)':
     'Reach the ResQ team through the channels below (for an actual emergency, please use the "Contact responders" button above instead)',
   ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
   'ดูหน้าทั้งหมด (สำหรับนักพัฒนา)': 'View all pages (for developers)',
@@ -85,28 +85,28 @@ const FEATURES = [
     icon: <PhoneCall className="size-5" />,
     title: 'ติดต่อเจ้าหน้าที่',
     description: 'เริ่มต้นการขอความช่วยเหลือได้อย่างรวดเร็ว',
-    extra: 'กดปุ่มเดียว ระบบพาไปยังขั้นตอนแจ้งเหตุทันที',
+    extra: 'แตะปุ่มเดียว ระบบจะนำไปสู่ขั้นตอนการแจ้งเหตุทันที',
   },
   {
     id: 'photo',
     icon: <Camera className="size-5" />,
-    title: 'ถ่ายรูปจุดเกิดเหตุ',
-    description: 'ส่งข้อมูลภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์',
-    extra: 'ถ่ายรูปหรือข้ามขั้นตอนนี้ได้ทันที',
+    title: 'ถ่ายภาพจุดเกิดเหตุ',
+    description: 'ส่งภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์',
+    extra: 'ถ่ายภาพ หรือข้ามขั้นตอนนี้ได้',
   },
   {
     id: 'call1669',
     icon: <PhoneIncoming className="size-5" />,
     title: 'โทร 1669',
-    description: 'เชื่อมต่อศูนย์รับแจ้งเหตุการแพทย์ฉุกเฉิน',
+    description: 'เชื่อมต่อศูนย์รับแจ้งเหตุและสั่งการการแพทย์ฉุกเฉิน',
     extra: 'สายด่วนการแพทย์ฉุกเฉินพร้อมรับสายตลอด 24 ชั่วโมง',
   },
   {
     id: 'tracking',
     icon: <Activity className="size-5" />,
-    title: 'ติดตามสถานะเคส',
+    title: 'ติดตามสถานะการช่วยเหลือ',
     description: 'ดูความคืบหน้าตั้งแต่รับแจ้งเหตุจนเสร็จสิ้น',
-    extra: 'อัปเดตสถานะอัตโนมัติทุกขั้นตอนแบบเรียลไทม์',
+    extra: 'แสดงสถานะทุกขั้นตอนโดยอัตโนมัติตามเวลาจริง',
   },
 ] as const
 
@@ -115,12 +115,12 @@ const CONNECTION_NODES = [
     key: 'public',
     label: 'บุคคลทั่วไป',
     icon: <Users className="size-5" />,
-    detail: 'แจ้งเหตุ ถ่ายรูป และติดตามสถานะการช่วยเหลือ',
+    detail: 'แจ้งเหตุ ถ่ายภาพ และติดตามสถานะการช่วยเหลือ',
     count: 7,
   },
   {
     key: 'center',
-    label: 'ศูนย์ 1669',
+    label: 'ศูนย์สั่งการ 1669',
     icon: <PhoneCall className="size-5" />,
     detail: 'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ',
     count: 24,
@@ -142,7 +142,7 @@ const CONNECTION_NODES = [
 ] as const
 
 // `href: null` means the real account doesn't exist yet -- shows as a
-// disabled "เร็วๆ นี้" chip instead of linking somewhere fake. Fill in the
+// disabled "เร็ว ๆ นี้" chip instead of linking somewhere fake. Fill in the
 // real LINE OA / Facebook Page link here once it exists.
 const CONTACT_LINKS: { key: string; label: string; href: string | null; icon: ReactNode }[] = [
   { key: 'line', label: 'LINE Official', href: null, icon: <MessageCircle className="size-5" /> },
@@ -339,7 +339,7 @@ function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[numb
           <img src={FAVICON_URL} alt="" className="relative size-14 sm:size-16 lg:size-[72px]" />
         </div>
       </div>
-      <p className="text-center text-xs text-muted">{t('กดที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับต้นแบบ')}</p>
+      <p className="text-center text-xs text-muted">{t('แตะที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับระบบต้นแบบ')}</p>
     </div>
   )
 }
@@ -399,11 +399,11 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 lg:justify-start">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                 <Clock className="size-4 text-primary" />
-                {t('พร้อมช่วยเหลือ 24 ชม.')}
+                {t('พร้อมให้ความช่วยเหลือตลอด 24 ชั่วโมง')}
               </span>
               <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
                 <Activity className="size-4 text-primary" />
-                {t('ติดตามสถานะแบบ Real-time')}
+                {t('ติดตามสถานะตามเวลาจริง')}
               </span>
             </div>
 
@@ -489,7 +489,7 @@ export default function Home() {
           <Reveal>
             <h2 className="text-xl font-bold text-ink sm:text-2xl">{t('ติดต่อเรา')}</h2>
             <p className="mt-2 text-sm text-muted">
-              {t('สอบถามหรือติดต่อทีมงาน ResQ ได้ผ่านช่องทางด้านล่าง (สำหรับเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบนแทน)')}
+              {t('สอบถามหรือติดต่อทีมงาน ResQ ได้ทางช่องทางด้านล่าง (กรณีเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบน)')}
             </p>
           </Reveal>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -513,7 +513,7 @@ export default function Home() {
                 >
                   {link.icon}
                   {link.label}
-                  <span className="text-xs font-normal">({t('เร็วๆ นี้')})</span>
+                  <span className="text-xs font-normal">({t('เร็ว ๆ นี้')})</span>
                 </span>
               ),
             )}

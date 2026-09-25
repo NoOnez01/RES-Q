@@ -63,11 +63,11 @@ export type Severity = 1 | 2 | 3 | 4 | 5
 // Uses the standard ESI (Emergency Severity Index) English terms directly,
 // since those are what Thai EMS/hospital staff are trained on.
 export const SEVERITY_LABEL: Record<Severity, string> = {
-  1: 'ระดับ 1: Resuscitation',
-  2: 'ระดับ 2: Emergency',
-  3: 'ระดับ 3: Urgent',
-  4: 'ระดับ 4: Less-Urgent',
-  5: 'ระดับ 5: Non-Urgent',
+  1: 'ระดับ 1: วิกฤต (Resuscitation)',
+  2: 'ระดับ 2: ฉุกเฉิน (Emergency)',
+  3: 'ระดับ 3: เร่งด่วน (Urgent)',
+  4: 'ระดับ 4: ไม่เร่งด่วน (Less-Urgent)',
+  5: 'ระดับ 5: ทั่วไป (Non-Urgent)',
 }
 
 // Thai ESI-scale terminology already used in Thai EMS/hospital triage --
@@ -108,16 +108,16 @@ export interface CaseStatusMeta {
   key: CaseStatus
   order: number
   label: string
-  org: 'ประชาชน' | 'ศูนย์ 1669' | 'หน่วยกู้ชีพ' | 'โรงพยาบาล' | 'ระบบ'
+  org: 'ประชาชน' | 'ศูนย์สั่งการ 1669' | 'หน่วยกู้ชีพ' | 'โรงพยาบาล' | 'ระบบ'
 }
 
 export const CASE_STATUS_FLOW: CaseStatusMeta[] = [
   { key: 'contacted', order: 1, label: 'ติดต่อเจ้าหน้าที่แล้ว', org: 'ประชาชน' },
-  { key: 'photos-taken', order: 2, label: 'ถ่ายรูปจุดเกิดเหตุแล้ว', org: 'ประชาชน' },
-  { key: 'called-1669', order: 3, label: 'ติดต่อ 1669 แล้ว', org: 'ประชาชน' },
-  { key: 'received', order: 4, label: 'รับแจ้งเหตุแล้ว', org: 'ศูนย์ 1669' },
-  { key: 'finding-rescue', order: 5, label: 'กำลังค้นหาหน่วยกู้ชีพ', org: 'ศูนย์ 1669' },
-  { key: 'rescue-assigned', order: 6, label: 'มอบหมายหน่วยกู้ชีพแล้ว', org: 'ศูนย์ 1669' },
+  { key: 'photos-taken', order: 2, label: 'ถ่ายภาพจุดเกิดเหตุแล้ว', org: 'ประชาชน' },
+  { key: 'called-1669', order: 3, label: 'ติดต่อศูนย์ 1669 แล้ว', org: 'ประชาชน' },
+  { key: 'received', order: 4, label: 'รับแจ้งเหตุแล้ว', org: 'ศูนย์สั่งการ 1669' },
+  { key: 'finding-rescue', order: 5, label: 'กำลังค้นหาหน่วยกู้ชีพ', org: 'ศูนย์สั่งการ 1669' },
+  { key: 'rescue-assigned', order: 6, label: 'มอบหมายหน่วยกู้ชีพแล้ว', org: 'ศูนย์สั่งการ 1669' },
   { key: 'rescue-en-route', order: 7, label: 'หน่วยกู้ชีพกำลังเดินทาง', org: 'หน่วยกู้ชีพ' },
   { key: 'rescue-arrived', order: 8, label: 'ถึงจุดเกิดเหตุแล้ว', org: 'หน่วยกู้ชีพ' },
   { key: 'assisted', order: 9, label: 'เข้าช่วยเหลือแล้ว', org: 'หน่วยกู้ชีพ' },

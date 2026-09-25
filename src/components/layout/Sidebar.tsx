@@ -8,7 +8,7 @@ import type { Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  โหมดผู้ดูแล: 'Admin mode',
+  โหมดผู้ดูแลระบบ: 'Admin mode',
   ออกจากมุมมองนี้: 'Exit this view',
   บทบาทปัจจุบัน: 'Current role',
   แก้ไขข้อมูลส่วนตัว: 'Edit profile',
@@ -39,7 +39,7 @@ export function Sidebar({ items, role, viewingAs, onExitView }: SidebarProps) {
         <div className="flex items-center justify-between gap-2 bg-primary/10 px-4 py-2.5">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-primary">
             <ShieldAlert className="size-3.5 shrink-0" />
-            {t('โหมดผู้ดูแล')}: {t(roleLabel(viewingAs))}
+            {t('โหมดผู้ดูแลระบบ')}: {t(roleLabel(viewingAs))}
           </p>
           <button
             onClick={onExitView}

@@ -37,13 +37,13 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   จัดการระบบเหรียญ: 'Manage coin system',
-  'เฉพาะแอดมินเท่านั้นที่จัดการระบบเหรียญได้': 'Only admins can manage the coin system',
+  เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการระบบเหรียญได้: 'Only admins can manage the coin system',
   ไม่มีสิทธิ์เข้าถึงหน้านี้: 'No access to this page',
   'ระบบเหรียญต้องเชื่อมต่อฐานข้อมูล': 'The coin system needs a database connection',
-  เหรียญต่อเคส: 'Coins per case',
-  'ประชาชนได้รับเหรียญเมื่อเคสที่แจ้งเสร็จสิ้น (มีผลกับเคสที่เสร็จสิ้นหลังจากนี้)':
+  จำนวนเหรียญต่อเหตุ: 'Coins per case',
+  'ประชาชนจะได้รับเหรียญเมื่อเหตุที่แจ้งดำเนินการเสร็จสิ้น (มีผลกับเหตุที่เสร็จสิ้นหลังจากนี้)':
     'Citizens earn coins when a case they reported is completed (applies to cases completed from now on)',
-  'บันทึกจำนวนเหรียญต่อเคสแล้ว': 'Coins per case saved',
+  บันทึกจำนวนเหรียญต่อเหตุแล้ว: 'Coins per case saved',
   บันทึก: 'Save',
   ยกเลิก: 'Cancel',
   แก้ไข: 'Edit',
@@ -62,13 +62,13 @@ registerTranslations({
   'เพิ่มมูลนิธิแรกได้ที่ปุ่มด้านบน': 'Add the first foundation using the button above',
   'ได้รับบริจาคแล้ว {n} เหรียญ': '{n} coins donated so far',
   ยืนยันการลบมูลนิธิ: 'Confirm removing this foundation',
-  'ต้องการลบ "{name}" หรือไม่ ประชาชนจะบริจาคให้มูลนิธินี้ไม่ได้อีก แต่ประวัติการบริจาคเดิมยังอยู่':
+  'ต้องการลบ "{name}" หรือไม่ ประชาชนจะไม่สามารถบริจาคให้มูลนิธินี้ได้อีก แต่ประวัติการบริจาคเดิมจะยังคงอยู่':
     'Remove "{name}"? Citizens can no longer donate to it, but past donations stay in their history.',
   รายการของรางวัล: 'Rewards',
   เพิ่มของรางวัล: 'Add reward',
   ชื่อของรางวัล: 'Reward name',
   'ราคา (เหรียญ)': 'Cost (coins)',
-  'จำนวนคงเหลือ (เว้นว่าง = ไม่จำกัด)': 'Stock (leave blank = unlimited)',
+  'จำนวนคงเหลือ (เว้นว่างหากไม่จำกัดจำนวน)': 'Stock (leave blank = unlimited)',
   'กรุณากรอกชื่อของรางวัลและราคาที่มากกว่า 0': 'Please enter a reward name and a cost above 0',
   บันทึกข้อมูลของรางวัลแล้ว: 'Reward saved',
   เพิ่มของรางวัลแล้ว: 'Reward added',
@@ -78,19 +78,19 @@ registerTranslations({
   '{cost} เหรียญ · เหลือ {n} ชิ้น': '{cost} coins · {n} left',
   '{cost} เหรียญ · ไม่จำกัดจำนวน': '{cost} coins · unlimited',
   ยืนยันการลบของรางวัล: 'Confirm removing this reward',
-  'ต้องการลบ "{name}" หรือไม่ คำขอแลกที่มีอยู่แล้วจะไม่ถูกยกเลิก':
+  'ต้องการลบ "{name}" หรือไม่ คำขอแลกที่ส่งมาก่อนหน้านี้จะไม่ถูกยกเลิก':
     'Remove "{name}"? Existing requests for it are not cancelled.',
   คำขอแลกของรางวัล: 'Reward requests',
   ยังไม่มีคำขอแลกของรางวัล: 'No reward requests yet',
   รอดำเนินการ: 'Pending',
-  ส่งแล้ว: 'Delivered',
+  จัดส่งแล้ว: 'Delivered',
   'ยกเลิก (คืนเหรียญแล้ว)': 'Cancelled (coins refunded)',
-  'ส่งของแล้ว': 'Mark delivered',
+  ยืนยันการจัดส่ง: 'Mark delivered',
   'ยกเลิกและคืนเหรียญ': 'Cancel & refund',
-  'บันทึกว่าส่งของแล้ว': 'Marked as delivered',
+  บันทึกการจัดส่งแล้ว: 'Marked as delivered',
   'ยกเลิกคำขอและคืนเหรียญแล้ว': 'Request cancelled and coins refunded',
   ยืนยันยกเลิกคำขอ: 'Confirm cancelling this request',
-  'ยกเลิกคำขอแลก "{name}" ของ {contact} หรือไม่ ระบบจะคืน {cost} เหรียญให้ผู้แลก':
+  'ต้องการยกเลิกคำขอแลก "{name}" ของ {contact} หรือไม่ ระบบจะคืน {cost} เหรียญให้ผู้ขอแลก':
     'Cancel the "{name}" request from {contact}? {cost} coins will be refunded to them.',
   'ยกเลิกคำขอ': 'Cancel request',
   '{name} · {phone}': '{name} · {phone}',
@@ -102,7 +102,7 @@ const EMPTY_REWARD = { name: '', description: '', cost: '', stock: '' }
 
 const REDEMPTION_STATUS: Record<Redemption['status'], { label: string; className: string }> = {
   pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning' },
-  fulfilled: { label: 'ส่งแล้ว', className: 'bg-success/10 text-success' },
+  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success' },
   cancelled: { label: 'ยกเลิก (คืนเหรียญแล้ว)', className: 'bg-bg text-muted' },
 }
 
@@ -212,7 +212,7 @@ function RewardForm({ initial, onCancel, onSaved }: { initial: Reward | null; on
           onChange={(e) => setForm({ ...form, cost: e.target.value })}
         />
         <Input
-          label={t('จำนวนคงเหลือ (เว้นว่าง = ไม่จำกัด)')}
+          label={t('จำนวนคงเหลือ (เว้นว่างหากไม่จำกัดจำนวน)')}
           type="number"
           min={0}
           value={form.stock}
@@ -281,7 +281,7 @@ export default function ManageCoins() {
   if (!isAdmin) {
     return (
       <AppShell variant="dashboard" title={t('จัดการระบบเหรียญ')}>
-        <ErrorState title={t('ไม่มีสิทธิ์เข้าถึงหน้านี้')} description={t('เฉพาะแอดมินเท่านั้นที่จัดการระบบเหรียญได้')} />
+        <ErrorState title={t('ไม่มีสิทธิ์เข้าถึงหน้านี้')} description={t('เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการระบบเหรียญได้')} />
       </AppShell>
     )
   }
@@ -292,7 +292,7 @@ export default function ManageCoins() {
     setSavingSettings(true)
     try {
       await updateCoinsPerCase(n)
-      toast({ title: t('บันทึกจำนวนเหรียญต่อเคสแล้ว'), tone: 'success' })
+      toast({ title: t('บันทึกจำนวนเหรียญต่อเหตุแล้ว'), tone: 'success' })
       await load()
     } catch {
       toast({ title: t('บันทึกไม่สำเร็จ'), tone: 'error' })
@@ -337,11 +337,11 @@ export default function ManageCoins() {
     body = (
       <div className="flex flex-col gap-8">
         <section className="flex flex-col gap-3">
-          <SectionHeading icon={Settings2} title={t('เหรียญต่อเคส')} />
+          <SectionHeading icon={Settings2} title={t('จำนวนเหรียญต่อเหตุ')} />
           <Card className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="sm:w-48">
               <Input
-                label={t('เหรียญต่อเคส')}
+                label={t('จำนวนเหรียญต่อเหตุ')}
                 type="number"
                 min={0}
                 value={coinsPerCase}
@@ -358,7 +358,7 @@ export default function ManageCoins() {
               {t('บันทึก')}
             </Button>
             <p className="text-sm text-muted sm:flex-1 sm:self-center">
-              {t('ประชาชนได้รับเหรียญเมื่อเคสที่แจ้งเสร็จสิ้น (มีผลกับเคสที่เสร็จสิ้นหลังจากนี้)')}
+              {t('ประชาชนจะได้รับเหรียญเมื่อเหตุที่แจ้งดำเนินการเสร็จสิ้น (มีผลกับเหตุที่เสร็จสิ้นหลังจากนี้)')}
             </p>
           </Card>
         </section>
@@ -390,9 +390,9 @@ export default function ManageCoins() {
                     <Button
                       size="sm"
                       disabled={busy}
-                      onClick={() => void run(() => setRedemptionStatus(r.id, 'fulfilled'), 'บันทึกว่าส่งของแล้ว')}
+                      onClick={() => void run(() => setRedemptionStatus(r.id, 'fulfilled'), 'บันทึกการจัดส่งแล้ว')}
                     >
-                      {t('ส่งของแล้ว')}
+                      {t('ยืนยันการจัดส่ง')}
                     </Button>
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => setCancelTarget(r)}>
                       {t('ยกเลิกและคืนเหรียญ')}
@@ -501,7 +501,7 @@ export default function ManageCoins() {
       <ConfirmationModal
         open={!!removeFoundationTarget}
         title={t('ยืนยันการลบมูลนิธิ')}
-        message={t('ต้องการลบ "{name}" หรือไม่ ประชาชนจะบริจาคให้มูลนิธินี้ไม่ได้อีก แต่ประวัติการบริจาคเดิมยังอยู่', {
+        message={t('ต้องการลบ "{name}" หรือไม่ ประชาชนจะไม่สามารถบริจาคให้มูลนิธินี้ได้อีก แต่ประวัติการบริจาคเดิมจะยังคงอยู่', {
           name: removeFoundationTarget?.name ?? '',
         })}
         confirmLabel={t('ยืนยันลบ')}
@@ -516,7 +516,7 @@ export default function ManageCoins() {
       <ConfirmationModal
         open={!!removeRewardTarget}
         title={t('ยืนยันการลบของรางวัล')}
-        message={t('ต้องการลบ "{name}" หรือไม่ คำขอแลกที่มีอยู่แล้วจะไม่ถูกยกเลิก', { name: removeRewardTarget?.name ?? '' })}
+        message={t('ต้องการลบ "{name}" หรือไม่ คำขอแลกที่ส่งมาก่อนหน้านี้จะไม่ถูกยกเลิก', { name: removeRewardTarget?.name ?? '' })}
         confirmLabel={t('ยืนยันลบ')}
         tone="danger"
         confirmLoading={busy}
@@ -529,7 +529,7 @@ export default function ManageCoins() {
       <ConfirmationModal
         open={!!cancelTarget}
         title={t('ยืนยันยกเลิกคำขอ')}
-        message={t('ยกเลิกคำขอแลก "{name}" ของ {contact} หรือไม่ ระบบจะคืน {cost} เหรียญให้ผู้แลก', {
+        message={t('ต้องการยกเลิกคำขอแลก "{name}" ของ {contact} หรือไม่ ระบบจะคืน {cost} เหรียญให้ผู้ขอแลก', {
           name: cancelTarget?.rewardName ?? '',
           contact: cancelTarget?.contactName ?? '',
           cost: (cancelTarget?.cost ?? 0).toLocaleString(),

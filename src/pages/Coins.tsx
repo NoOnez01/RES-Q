@@ -35,8 +35,8 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   เหรียญของฉัน: 'My coins',
   'ระบบเหรียญต้องเชื่อมต่อฐานข้อมูล': 'The coin system needs a database connection',
-  'ได้รับ {n} เหรียญ ทุกครั้งที่เคสที่คุณแจ้งเสร็จสิ้น': 'Earn {n} coins every time a case you reported is completed',
-  'คุณยังไม่ได้เข้าสู่ระบบ เหรียญจะเก็บไว้กับอุปกรณ์นี้': "You're not logged in — your coins are kept on this device",
+  'รับ {n} เหรียญ ทุกครั้งที่เหตุที่คุณแจ้งดำเนินการเสร็จสิ้น': 'Earn {n} coins every time a case you reported is completed',
+  'คุณยังไม่ได้เข้าสู่ระบบ เหรียญจะถูกเก็บไว้ในอุปกรณ์นี้เท่านั้น': "You're not logged in — your coins are kept on this device only",
   แลกของรางวัล: 'Rewards',
   บริจาค: 'Donate',
   ประวัติ: 'History',
@@ -45,13 +45,13 @@ registerTranslations({
   'เหลือ {n} ชิ้น': '{n} left',
   หมดแล้ว: 'Out of stock',
   แลก: 'Redeem',
-  'ขาดอีก {n} เหรียญ': '{n} more coins needed',
+  'ต้องการอีก {n} เหรียญ': '{n} more coins needed',
   ยังไม่มีมูลนิธิที่ร่วมโครงการ: 'No partner foundations yet',
   'มูลนิธิที่ร่วมโครงการจะแสดงที่นี่': 'Partner foundations will appear here',
   'ได้รับบริจาคแล้ว {n} เหรียญ': '{n} coins donated so far',
   ยังไม่มีประวัติเหรียญ: 'No coin history yet',
-  'คุณจะได้รับเหรียญเมื่อเคสที่คุณแจ้งเสร็จสิ้น': "You'll earn coins when a case you reported is completed",
-  'ได้รับจากเคส {caseId}': 'Earned on case {caseId}',
+  คุณจะได้รับเหรียญเมื่อเหตุที่คุณแจ้งดำเนินการเสร็จสิ้น: "You'll earn coins when a case you reported is completed",
+  'ได้รับจากเหตุหมายเลข {caseId}': 'Earned on case {caseId}',
   'แลก {name}': 'Redeemed {name}',
   'บริจาคให้ {name}': 'Donated to {name}',
   'คืนเหรียญ {name}': 'Refund for {name}',
@@ -59,18 +59,18 @@ registerTranslations({
   มูลนิธิ: 'Foundation',
   คำขอแลกของรางวัล: 'Reward requests',
   รอดำเนินการ: 'Pending',
-  ส่งแล้ว: 'Delivered',
+  จัดส่งแล้ว: 'Delivered',
   'ยกเลิก (คืนเหรียญแล้ว)': 'Cancelled (coins refunded)',
   'ใช้ {cost} เหรียญ เจ้าหน้าที่จะติดต่อกลับเพื่อจัดส่งของรางวัล': 'Uses {cost} coins. Staff will contact you to deliver the reward.',
   ชื่อผู้รับ: 'Recipient name',
   เบอร์โทรศัพท์: 'Phone number',
   เบอร์โทรศัพท์ไม่ถูกต้อง: 'Invalid phone number',
   กรุณากรอกชื่อผู้รับ: 'Please enter the recipient name',
-  ยืนยันแลก: 'Confirm',
-  'แลกของรางวัลแล้ว เจ้าหน้าที่จะติดต่อกลับ': 'Reward redeemed — staff will contact you',
+  ยืนยันการแลก: 'Confirm',
+  'แลกของรางวัลเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับเพื่อจัดส่ง': 'Reward redeemed — staff will contact you',
   'คุณมี {n} เหรียญ': 'You have {n} coins',
   จำนวนเหรียญ: 'Number of coins',
-  ยืนยันบริจาค: 'Confirm donation',
+  ยืนยันการบริจาค: 'Confirm donation',
   ทั้งหมด: 'All',
   'ขอบคุณที่ร่วมบริจาค {n} เหรียญ': 'Thank you for donating {n} coins',
 })
@@ -89,7 +89,7 @@ interface WalletData {
 
 const REDEMPTION_STATUS: Record<RedemptionStatus, { label: string; className: string }> = {
   pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning' },
-  fulfilled: { label: 'ส่งแล้ว', className: 'bg-success/10 text-success' },
+  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success' },
   cancelled: { label: 'ยกเลิก (คืนเหรียญแล้ว)', className: 'bg-bg text-muted' },
 }
 
@@ -171,7 +171,7 @@ export default function Coins() {
     setSubmitting(true)
     try {
       await redeemReward(redeemTarget.id, contactName.trim(), contactPhone.trim())
-      toast({ title: t('แลกของรางวัลแล้ว เจ้าหน้าที่จะติดต่อกลับ'), tone: 'success' })
+      toast({ title: t('แลกของรางวัลเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับเพื่อจัดส่ง'), tone: 'success' })
       setRedeemTarget(null)
       await load()
     } catch (err) {
@@ -211,7 +211,7 @@ export default function Coins() {
     const reward = (entry.rewardId && rewardName.get(entry.rewardId)) || t('ของรางวัล')
     switch (entry.kind) {
       case 'case_reward':
-        return t('ได้รับจากเคส {caseId}', { caseId: entry.caseId ?? '' })
+        return t('ได้รับจากเหตุหมายเลข {caseId}', { caseId: entry.caseId ?? '' })
       case 'redeem':
         return t('แลก {name}', { name: reward })
       case 'refund':
@@ -240,9 +240,9 @@ export default function Coins() {
             {data.balance.toLocaleString()}
           </p>
           {data.coinsPerCase > 0 && (
-            <p className="text-sm text-muted">{t('ได้รับ {n} เหรียญ ทุกครั้งที่เคสที่คุณแจ้งเสร็จสิ้น', { n: data.coinsPerCase })}</p>
+            <p className="text-sm text-muted">{t('รับ {n} เหรียญ ทุกครั้งที่เหตุที่คุณแจ้งดำเนินการเสร็จสิ้น', { n: data.coinsPerCase })}</p>
           )}
-          {!loggedIn && <p className="text-xs text-muted">{t('คุณยังไม่ได้เข้าสู่ระบบ เหรียญจะเก็บไว้กับอุปกรณ์นี้')}</p>}
+          {!loggedIn && <p className="text-xs text-muted">{t('คุณยังไม่ได้เข้าสู่ระบบ เหรียญจะถูกเก็บไว้ในอุปกรณ์นี้เท่านั้น')}</p>}
         </Card>
 
         <SegmentedControl<Tab>
@@ -275,7 +275,7 @@ export default function Coins() {
                         {soldOut ? t('หมดแล้ว') : reward.stock !== null ? t('เหลือ {n} ชิ้น', { n: reward.stock }) : ''}
                       </span>
                       {!soldOut && short > 0 ? (
-                        <span className="text-xs font-medium text-muted">{t('ขาดอีก {n} เหรียญ', { n: short.toLocaleString() })}</span>
+                        <span className="text-xs font-medium text-muted">{t('ต้องการอีก {n} เหรียญ', { n: short.toLocaleString() })}</span>
                       ) : (
                         <Button size="sm" disabled={soldOut} onClick={() => openRedeem(reward)}>
                           {t('แลก')}
@@ -329,7 +329,7 @@ export default function Coins() {
               </section>
             )}
             {data.ledger.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีประวัติเหรียญ')} description={t('คุณจะได้รับเหรียญเมื่อเคสที่คุณแจ้งเสร็จสิ้น')} icon={<History className="size-6" />} />
+              <EmptyState title={t('ยังไม่มีประวัติเหรียญ')} description={t('คุณจะได้รับเหรียญเมื่อเหตุที่คุณแจ้งดำเนินการเสร็จสิ้น')} icon={<History className="size-6" />} />
             ) : (
               <section className="flex flex-col gap-2">
                 {data.ledger.map((entry) => {
@@ -374,7 +374,7 @@ export default function Coins() {
         open={!!redeemTarget}
         title={t('แลก {name}', { name: redeemTarget?.name ?? '' })}
         message={t('ใช้ {cost} เหรียญ เจ้าหน้าที่จะติดต่อกลับเพื่อจัดส่งของรางวัล', { cost: (redeemTarget?.cost ?? 0).toLocaleString() })}
-        confirmLabel={t('ยืนยันแลก')}
+        confirmLabel={t('ยืนยันการแลก')}
         confirmLoading={submitting}
         onConfirm={() => void confirmRedeem()}
         onCancel={() => setRedeemTarget(null)}
@@ -401,7 +401,7 @@ export default function Coins() {
         open={!!donateTarget}
         title={t('บริจาคให้ {name}', { name: donateTarget?.name ?? '' })}
         message={t('คุณมี {n} เหรียญ', { n: (data?.balance ?? 0).toLocaleString() })}
-        confirmLabel={t('ยืนยันบริจาค')}
+        confirmLabel={t('ยืนยันการบริจาค')}
         confirmLoading={submitting}
         onConfirm={() => void confirmDonate()}
         onCancel={() => setDonateTarget(null)}

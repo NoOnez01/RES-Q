@@ -19,15 +19,15 @@ registerTranslations({
     'Your report has been queued at the dispatch center. A responder will contact you as soon as possible.',
   เจ้าหน้าที่วางสายแล้ว: 'The responder ended the call',
   การโทรสิ้นสุดแล้ว: 'The call has ended',
-  'ติดต่อศูนย์ 1669': 'Contact Center 1669',
-  ไม่พบข้อมูลเคส: 'Case not found',
+  'ติดต่อศูนย์สั่งการ 1669': 'Contact Dispatch Center 1669',
+  ไม่พบข้อมูลเหตุ: 'Case not found',
   กรุณาโทรแจ้งเหตุเพื่อให้เจ้าหน้าที่ประสานความช่วยเหลือ: 'Please call to report the incident so a responder can coordinate help',
   'สายด่วนการแพทย์ฉุกเฉิน 1669': 'Emergency medical hotline 1669',
-  'กำลังโทร... รอเจ้าหน้าที่รับสาย': 'Calling... waiting for a responder to answer',
-  'หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกเรื่องแจ้งเหตุของคุณให้อัตโนมัติ':
+  'กำลังโทรออก รอเจ้าหน้าที่รับสาย': 'Calling... waiting for a responder to answer',
+  'หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ':
     "If no one answers within {sec} seconds, your report will be logged automatically",
   'เจ้าหน้าที่รับสายแล้ว กำลังสนทนา': 'The responder has answered, call in progress',
-  หมายเลขเคส: 'Case number',
+  หมายเลขเหตุ: 'Case number',
   ตำแหน่ง: 'Location',
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   รูปภาพแนบ: 'Attached photos',
@@ -36,10 +36,10 @@ registerTranslations({
   รอเจ้าหน้าที่รับสาย: 'Waiting for a responder to answer',
   ยกเลิกการโทร: 'Cancel call',
   เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
-  'โทรเสร็จแล้ว ไปต่อ': 'Call finished, continue',
+  'สิ้นสุดการโทร ดำเนินการต่อ': 'End call and continue',
   'โทร 1669': 'Call 1669',
   'ยืนยันการโทร 1669': 'Confirm calling 1669',
-  'ยืนยันโทร 1669': 'Confirm call to 1669',
+  โทรออก: 'Call now',
   ยกเลิก: 'Cancel',
 })
 
@@ -198,8 +198,8 @@ export default function Call1669() {
 
   if (!activeCase) {
     return (
-      <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack>
-        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
+      <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเหตุ')}</div>
       </AppShell>
     )
   }
@@ -209,13 +209,13 @@ export default function Call1669() {
   const isCallActive = activeCase.callStatus === 'connecting' || activeCase.callStatus === 'in-call'
 
   return (
-    <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack>
+    <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack>
       <div className="relative">
         <AnimatedBackground variant="call" />
 
         <div className="relative z-10 flex flex-col gap-5 pb-28">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('ติดต่อศูนย์ 1669')}</h1>
+            <h1 className="text-xl font-bold text-ink">{t('ติดต่อศูนย์สั่งการ 1669')}</h1>
             <p className="mt-1.5 text-sm text-muted">{t('กรุณาโทรแจ้งเหตุเพื่อให้เจ้าหน้าที่ประสานความช่วยเหลือ')}</p>
           </div>
 
@@ -249,9 +249,9 @@ export default function Call1669() {
             <p className="text-sm font-semibold text-ink">{t('สายด่วนการแพทย์ฉุกเฉิน 1669')}</p>
             {activeCase.callStatus === 'connecting' && (
               <>
-                <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทร... รอเจ้าหน้าที่รับสาย')}</p>
+                <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}</p>
                 <p className="text-xs text-muted">
-                  {t('หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกเรื่องแจ้งเหตุของคุณให้อัตโนมัติ', { sec: RING_TIMEOUT_MS / 1000 })}
+                  {t('หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ', { sec: RING_TIMEOUT_MS / 1000 })}
                 </p>
               </>
             )}
@@ -262,7 +262,7 @@ export default function Call1669() {
 
           <Card className="flex flex-col gap-2.5 text-sm">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted">{t('หมายเลขเคส')}</span>
+              <span className="text-muted">{t('หมายเลขเหตุ')}</span>
               <span className="font-semibold text-ink">{activeCase.caseNumber}</span>
             </div>
             <div className="flex items-start justify-between gap-2">
@@ -305,7 +305,7 @@ export default function Call1669() {
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {canProceed ? (
             <Button variant="primary" size="lg" fullWidth onClick={handleProceed}>
-              {t('โทรเสร็จแล้ว ไปต่อ')}
+              {t('สิ้นสุดการโทร ดำเนินการต่อ')}
             </Button>
           ) : (
             <Button
@@ -326,7 +326,7 @@ export default function Call1669() {
       <ConfirmationModal
         open={confirmOpen}
         title={t('ยืนยันการโทร 1669')}
-        confirmLabel={t('ยืนยันโทร 1669')}
+        confirmLabel={t('โทรออก')}
         cancelLabel={t('ยกเลิก')}
         onConfirm={handleConfirmCall}
         onCancel={() => setConfirmOpen(false)}

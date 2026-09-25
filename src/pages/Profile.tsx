@@ -20,18 +20,18 @@ registerTranslations({
   ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
   กรุณาเข้าสู่ระบบเพื่อแก้ไขข้อมูลส่วนตัว: 'Please log in to edit your profile',
   กรุณาเลือกไฟล์รูปภาพ: 'Please select an image file',
-  'อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน': 'Profile photo uploaded — tap "Save changes" to confirm',
+  'อัปโหลดรูปประจำตัวแล้ว กรุณาแตะ "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน': 'Profile photo uploaded — tap "Save changes" to confirm',
   อัปโหลดรูปไม่สำเร็จ: 'Failed to upload photo',
   'กรุณากรอกชื่อ-นามสกุล': 'Please enter your full name',
   บันทึกข้อมูลส่วนตัวแล้ว: 'Profile saved',
   บันทึกไม่สำเร็จ: 'Failed to save',
-  เปลี่ยนรูปโปรไฟล์: 'Change profile photo',
-  แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์: 'Tap the photo to change it',
+  เปลี่ยนรูปประจำตัว: 'Change profile photo',
+  แตะที่รูปเพื่อเปลี่ยนรูปประจำตัว: 'Tap the photo to change it',
   สถิติของฉัน: 'My stats',
-  ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ: 'View an overview and trends for cases related to you',
+  ดูภาพรวมและแนวโน้มของเหตุที่เกี่ยวข้องกับคุณ: 'View an overview and trends for cases related to you',
   แก้ไขข้อมูลส่วนตัว: 'Edit profile',
   บทบาท: 'Role',
-  แอดมิน: 'Admin',
+  ผู้ดูแลระบบ: 'Admin',
   'ชื่อ-นามสกุล': 'Full name',
   ชื่อเล่น: 'Nickname',
   เบอร์ติดต่อ: 'Contact number',
@@ -39,7 +39,7 @@ registerTranslations({
   'อายุ {n} ปี': '{n} years old',
   ข้อมูลทางการแพทย์: 'Medical information',
   ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น: 'Used only to help in an emergency',
-  กรุ๊ปเลือด: 'Blood type',
+  หมู่เลือด: 'Blood type',
   'ไม่ทราบ / ไม่ระบุ': 'Unknown / not specified',
   โรคประจำตัว: 'Chronic conditions',
   'เช่น เบาหวาน ความดันโลหิตสูง หอบหืด': 'e.g. diabetes, hypertension, asthma',
@@ -105,7 +105,7 @@ export default function Profile() {
     try {
       const url = await uploadAvatar(currentUser.id, file, file.type === 'image/png' ? 'image/png' : 'image/jpeg')
       setAvatarUrl(url)
-      toast({ title: t('อัปโหลดรูปโปรไฟล์แล้ว กด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน'), tone: 'success' })
+      toast({ title: t('อัปโหลดรูปประจำตัวแล้ว กรุณาแตะ "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน'), tone: 'success' })
     } catch (err) {
       const message = err instanceof Error ? err.message : undefined
       toast({ title: t('อัปโหลดรูปไม่สำเร็จ'), message, tone: 'error' })
@@ -153,7 +153,7 @@ export default function Profile() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="group relative size-24 shrink-0 overflow-hidden rounded-full border-4 border-skyblue-pale bg-skyblue-pale"
-              aria-label={t('เปลี่ยนรูปโปรไฟล์')}
+              aria-label={t('เปลี่ยนรูปประจำตัว')}
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="size-full object-cover" />
@@ -169,7 +169,7 @@ export default function Profile() {
               </span>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-            <p className="text-xs text-muted">{t('แตะรูปเพื่อเปลี่ยนรูปโปรไฟล์')}</p>
+            <p className="text-xs text-muted">{t('แตะที่รูปเพื่อเปลี่ยนรูปประจำตัว')}</p>
           </Card>
 
           <Link to="/personal-stats">
@@ -179,7 +179,7 @@ export default function Profile() {
               </div>
               <div className="flex-1">
                 <p className="font-bold text-ink">{t('สถิติของฉัน')}</p>
-                <p className="text-xs text-muted">{t('ดูภาพรวมและแนวโน้มเคสที่เกี่ยวข้องกับคุณ')}</p>
+                <p className="text-xs text-muted">{t('ดูภาพรวมและแนวโน้มของเหตุที่เกี่ยวข้องกับคุณ')}</p>
               </div>
               <ChevronRight className="size-5 shrink-0 text-muted" />
             </Card>
@@ -195,7 +195,7 @@ export default function Profile() {
               <p className="font-semibold text-ink">
                 {t(roleLabel(currentUser.role))}
                 {orgName && ` · ${orgName}`}
-                {currentUser.isAdmin && ` · ${t('แอดมิน')}`}
+                {currentUser.isAdmin && ` · ${t('ผู้ดูแลระบบ')}`}
               </p>
             </div>
 
@@ -215,7 +215,7 @@ export default function Profile() {
           <Card className="space-y-4 animate-fade-in-up">
             <h3 className="font-bold text-ink">{t('ข้อมูลทางการแพทย์')}</h3>
             <p className="text-xs text-muted">{t('ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น')}</p>
-            <Select label={t('กรุ๊ปเลือด')} value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
+            <Select label={t('หมู่เลือด')} value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
               <option value="">{t('ไม่ทราบ / ไม่ระบุ')}</option>
               {BLOOD_TYPES.map((bt) => (
                 <option key={bt} value={bt}>

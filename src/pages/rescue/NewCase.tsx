@@ -23,13 +23,13 @@ registerTranslations({
   'มีสติ': 'Conscious',
   'ไม่มีสติ': 'Unconscious',
   'ไม่ทราบ': 'Unknown',
-  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น': 'Please select an incident type',
+  กรุณาเลือกประเภทเหตุการณ์: 'Please select an incident type',
   'กรุณาระบุจุดเกิดเหตุ': 'Please specify the incident location',
   'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน': 'Please enter at least 1 patient',
   'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย': 'Please select the consciousness level',
   'กรุณาเลือกระดับความรุนแรง': 'Please select a severity level',
   'กรุณาระบุลักษณะการบาดเจ็บ': 'Please describe the injury',
-  'เหตุการณ์ที่เกิดขึ้น': 'Incident Type',
+  ประเภทเหตุการณ์: 'Incident type',
   'พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์': 'Type a search term or CBD code to select an incident type',
   ไม่พบประเภทเหตุการณ์ที่ค้นหา: 'No matching incident type found',
   'จุดเกิดเหตุ': 'Incident location',
@@ -46,15 +46,15 @@ registerTranslations({
   'ยกเลิก': 'Cancel',
   'พบเหตุด้วยตนเอง': 'Found incident myself',
   'ไม่พบหน่วยกู้ชีพของคุณ': 'Your team could not be found',
-  "บัญชีของคุณยังไม่ได้ผูกกับหน่วยกู้ชีพ กรุณาติดต่อผู้ดูแลระบบ":
+  'บัญชีของคุณยังไม่ได้เชื่อมโยงกับหน่วยกู้ชีพ กรุณาติดต่อผู้ดูแลระบบ':
     "Your account isn't linked to a rescue team yet — contact an administrator",
-  'บันทึกเคสแล้ว': 'Case logged',
-  'เคสถูกสร้างและมอบหมายให้หน่วยของคุณโดยอัตโนมัติ': 'Case created and assigned to your team',
+  บันทึกเหตุแล้ว: 'Case logged',
+  สร้างรายการเหตุและมอบหมายให้หน่วยของคุณโดยอัตโนมัติแล้ว: 'Case created and assigned to your team',
   'บันทึกเหตุที่พบด้วยตนเอง': 'Log an Incident You Found',
-  'สำหรับเหตุที่หน่วยของคุณพบเองระหว่างปฏิบัติงาน โดยไม่มีการแจ้งเหตุหรือมอบหมายจากศูนย์สั่งการมาก่อน — ระบบจะสร้างเคสและมอบหมายให้หน่วย':
+  'สำหรับเหตุที่หน่วยของคุณพบเองระหว่างปฏิบัติงาน โดยไม่มีการแจ้งเหตุหรือมอบหมายจากศูนย์สั่งการ ระบบจะสร้างรายการเหตุและมอบหมายให้หน่วยของคุณ':
     "For incidents your team finds on its own during operations, with no prior report or assignment from dispatch — the system will create a case and assign it to",
   'ทันที': 'immediately',
-  'บันทึกเคสและมอบหมายให้หน่วยของฉัน': 'Log Case & Assign to My Team',
+  บันทึกเหตุและมอบหมายให้หน่วยของฉัน: 'Log Case & Assign to My Team',
 })
 
 type Conscious = '' | 'conscious' | 'unconscious' | 'unknown'
@@ -96,7 +96,7 @@ export default function RescueNewCase() {
         <ErrorState
           title={t('ไม่พบหน่วยกู้ชีพของคุณ')}
           description={t(
-            "บัญชีของคุณยังไม่ได้ผูกกับหน่วยกู้ชีพ กรุณาติดต่อผู้ดูแลระบบ",
+            "บัญชีของคุณยังไม่ได้เชื่อมโยงกับหน่วยกู้ชีพ กรุณาติดต่อผู้ดูแลระบบ",
           )}
         />
       </AppShell>
@@ -112,7 +112,7 @@ export default function RescueNewCase() {
 
   function handleSubmit() {
     const errs: Record<string, string> = {}
-    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น')
+    if (!incidentType) errs.incidentType = t('กรุณาเลือกประเภทเหตุการณ์')
     if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ')
     const countNum = Number(patientCount)
     if (!patientCount.trim() || Number.isNaN(countNum) || countNum < 1) {
@@ -145,8 +145,8 @@ export default function RescueNewCase() {
       })
       setSubmitting(false)
       toast({
-        title: t('บันทึกเคสแล้ว'),
-        message: t('เคสถูกสร้างและมอบหมายให้หน่วยของคุณโดยอัตโนมัติ'),
+        title: t('บันทึกเหตุแล้ว'),
+        message: t('สร้างรายการเหตุและมอบหมายให้หน่วยของคุณโดยอัตโนมัติแล้ว'),
         tone: 'success',
       })
       navigate(`/rescue/case/${id}`)
@@ -169,13 +169,13 @@ export default function RescueNewCase() {
           <div>
             <h1 className="text-xl font-bold text-ink">{t('บันทึกเหตุที่พบด้วยตนเอง')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {t('สำหรับเหตุที่หน่วยของคุณพบเองระหว่างปฏิบัติงาน โดยไม่มีการแจ้งเหตุหรือมอบหมายจากศูนย์สั่งการมาก่อน — ระบบจะสร้างเคสและมอบหมายให้หน่วย')}{' '}
+              {t('สำหรับเหตุที่หน่วยของคุณพบเองระหว่างปฏิบัติงาน โดยไม่มีการแจ้งเหตุหรือมอบหมายจากศูนย์สั่งการ ระบบจะสร้างรายการเหตุและมอบหมายให้หน่วยของคุณ')}{' '}
               <span className="font-semibold text-ink">{myTeam.name}</span> {t('ทันที')}
             </p>
           </div>
 
           <SearchableSelect
-            label={t('เหตุการณ์ที่เกิดขึ้น')}
+            label={t('ประเภทเหตุการณ์')}
             required
             value={incidentType}
             error={errors.incidentType}
@@ -283,7 +283,7 @@ export default function RescueNewCase() {
               loading={submitting}
               onClick={handleSubmit}
             >
-              {t('บันทึกเคสและมอบหมายให้หน่วยของฉัน')}
+              {t('บันทึกเหตุและมอบหมายให้หน่วยของฉัน')}
             </Button>
             <Button variant="outline" size="lg" fullWidth disabled={submitting} onClick={() => navigate('/rescue/dashboard')}>
               {t('ยกเลิก')}

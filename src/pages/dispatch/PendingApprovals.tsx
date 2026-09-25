@@ -20,14 +20,14 @@ import { UserCheck, CheckCircle2, XCircle, ShieldCheck, ShieldOff, Crown } from 
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  ตั้งเป็นแอดมินแล้ว: 'Made an admin',
-  ถอดสิทธิ์แอดมินแล้ว: 'Admin access removed',
+  กำหนดเป็นผู้ดูแลระบบแล้ว: 'Made an admin',
+  ยกเลิกสิทธิ์ผู้ดูแลระบบแล้ว: 'Admin access removed',
   ดำเนินการไม่สำเร็จ: 'Action failed',
   อนุมัติบัญชีแล้ว: 'Account approved',
   '{name} เข้าใช้งานได้แล้ว': '{name} can now log in',
   อนุมัติไม่สำเร็จ: 'Approval failed',
-  ตั้งเป็นหัวหน้าหน่วยงานแล้ว: 'Made an org lead',
-  ถอดสิทธิ์หัวหน้าหน่วยงานแล้ว: 'Org lead access removed',
+  กำหนดเป็นหัวหน้าหน่วยงานแล้ว: 'Made an org lead',
+  ยกเลิกสิทธิ์หัวหน้าหน่วยงานแล้ว: 'Org lead access removed',
   ปฏิเสธบัญชีแล้ว: 'Account rejected',
   บัญชีรออนุมัติ: 'Pending accounts',
   ไม่มีบัญชีรออนุมัติ: 'No pending accounts',
@@ -35,22 +35,22 @@ registerTranslations({
     'New sign-up requests from rescue teams, hospitals, or dispatch centers will appear here',
   ปฏิเสธ: 'Reject',
   อนุมัติ: 'Approve',
-  'ตั้งเป็นหัวหน้าหน่วยงาน (อนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้เอง)': 'Make an org lead (can approve new members of the same org themselves)',
-  จัดการสิทธิ์แอดมิน: 'Manage admin access',
+  'กำหนดเป็นหัวหน้าหน่วยงาน (สามารถอนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้)': 'Make an org lead (can approve new members of the same org themselves)',
+  จัดการสิทธิ์ผู้ดูแลระบบ: 'Manage admin access',
   ยังไม่มีบัญชีที่อนุมัติแล้ว: 'No approved accounts yet',
   'บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่':
     'Approved dispatch, rescue team, or hospital accounts will appear here',
-  แอดมิน: 'Admin',
-  ถอดสิทธิ์แอดมิน: 'Remove admin access',
-  ตั้งเป็นแอดมิน: 'Make admin',
+  ผู้ดูแลระบบ: 'Admin',
+  ยกเลิกสิทธิ์ผู้ดูแลระบบ: 'Remove admin access',
+  กำหนดเป็นผู้ดูแลระบบ: 'Make admin',
   จัดการหัวหน้าหน่วยงาน: 'Manage org leads',
   'ยังไม่มีบัญชีหน่วยกู้ชีพ/โรงพยาบาลที่อนุมัติแล้ว': 'No approved rescue team/hospital accounts yet',
   บัญชีหน่วยกู้ชีพหรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่: 'Approved rescue team or hospital accounts will appear here',
   หัวหน้าหน่วยงาน: 'Org lead',
-  ถอดสิทธิ์หัวหน้าหน่วยงาน: 'Remove org lead access',
+  ยกเลิกสิทธิ์หัวหน้าหน่วยงาน: 'Remove org lead access',
   ยืนยันการปฏิเสธบัญชี: 'Confirm rejecting this account',
   'คุณต้องการปฏิเสธบัญชี "{name}" หรือไม่': 'Reject the account "{name}"?',
-  ยืนยันปฏิเสธ: 'Confirm rejection',
+  ยืนยันการปฏิเสธ: 'Confirm rejection',
 })
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -109,7 +109,7 @@ export default function DispatchPendingApprovals() {
     try {
       await setAdminStatus(user.id, isAdmin)
       toast({
-        title: isAdmin ? t('ตั้งเป็นแอดมินแล้ว') : t('ถอดสิทธิ์แอดมินแล้ว'),
+        title: isAdmin ? t('กำหนดเป็นผู้ดูแลระบบแล้ว') : t('ยกเลิกสิทธิ์ผู้ดูแลระบบแล้ว'),
         message: user.name,
         tone: 'success',
       })
@@ -151,7 +151,7 @@ export default function DispatchPendingApprovals() {
     try {
       await setOrgLeadStatus(user.id, isOrgLead)
       toast({
-        title: isOrgLead ? t('ตั้งเป็นหัวหน้าหน่วยงานแล้ว') : t('ถอดสิทธิ์หัวหน้าหน่วยงานแล้ว'),
+        title: isOrgLead ? t('กำหนดเป็นหัวหน้าหน่วยงานแล้ว') : t('ยกเลิกสิทธิ์หัวหน้าหน่วยงานแล้ว'),
         message: user.name,
         tone: 'success',
       })
@@ -233,7 +233,7 @@ export default function DispatchPendingApprovals() {
                       onChange={(e) => toggleApproveAsLead(user.id, e.target.checked)}
                       className="size-4 accent-primary"
                     />
-                    {t('ตั้งเป็นหัวหน้าหน่วยงาน (อนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้เอง)')}
+                    {t('กำหนดเป็นหัวหน้าหน่วยงาน (สามารถอนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้)')}
                   </label>
                 )}
               </Card>
@@ -243,7 +243,7 @@ export default function DispatchPendingApprovals() {
 
         {currentUser?.isAdmin && (
           <div className="mt-8 flex flex-col gap-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการสิทธิ์แอดมิน')}</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการสิทธิ์ผู้ดูแลระบบ')}</h2>
             {staff === null ? (
               <LoadingState />
             ) : staff.length === 0 ? (
@@ -258,7 +258,7 @@ export default function DispatchPendingApprovals() {
                   <div>
                     <p className="font-bold text-ink">
                       {user.name}
-                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">{t('แอดมิน')}</span>}
+                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">{t('ผู้ดูแลระบบ')}</span>}
                     </p>
                     <p className="text-sm text-muted">
                       {t(ROLE_LABEL[user.role])}
@@ -274,7 +274,7 @@ export default function DispatchPendingApprovals() {
                       disabled={user.id === currentUser.id}
                       onClick={() => handleSetAdmin(user, false)}
                     >
-                      {t('ถอดสิทธิ์แอดมิน')}
+                      {t('ยกเลิกสิทธิ์ผู้ดูแลระบบ')}
                     </Button>
                   ) : (
                     <Button
@@ -283,7 +283,7 @@ export default function DispatchPendingApprovals() {
                       loading={adminBusyId === user.id}
                       onClick={() => handleSetAdmin(user, true)}
                     >
-                      {t('ตั้งเป็นแอดมิน')}
+                      {t('กำหนดเป็นผู้ดูแลระบบ')}
                     </Button>
                   )}
                 </Card>
@@ -328,7 +328,7 @@ export default function DispatchPendingApprovals() {
                           disabled={user.id === currentUser?.id}
                           onClick={() => handleSetOrgLead(user, false)}
                         >
-                          {t('ถอดสิทธิ์หัวหน้าหน่วยงาน')}
+                          {t('ยกเลิกสิทธิ์หัวหน้าหน่วยงาน')}
                         </Button>
                       ) : (
                         <Button
@@ -337,7 +337,7 @@ export default function DispatchPendingApprovals() {
                           loading={orgLeadBusyId === user.id}
                           onClick={() => handleSetOrgLead(user, true)}
                         >
-                          {t('ตั้งเป็นหัวหน้าหน่วยงาน')}
+                          {t('กำหนดเป็นหัวหน้าหน่วยงาน')}
                         </Button>
                       )}
                     </Card>
@@ -353,7 +353,7 @@ export default function DispatchPendingApprovals() {
         open={!!rejectTarget}
         title={t('ยืนยันการปฏิเสธบัญชี')}
         message={t('คุณต้องการปฏิเสธบัญชี "{name}" หรือไม่', { name: rejectTarget?.name ?? '' })}
-        confirmLabel={t('ยืนยันปฏิเสธ')}
+        confirmLabel={t('ยืนยันการปฏิเสธ')}
         tone="danger"
         onConfirm={handleReject}
         onCancel={() => setRejectTarget(null)}

@@ -29,21 +29,21 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   'คุณได้รับ {n} เหรียญจากการแจ้งเหตุครั้งนี้': 'You earned {n} coins for this report',
   ดูเหรียญของฉัน: 'View my coins',
-  ติดตามเคส: 'Track case',
-  'กำลังค้นหาเคส...': 'Looking up the case...',
-  ไม่พบเคสนี้: 'Case not found',
-  เคสอาจถูกลบหรือรหัสไม่ถูกต้อง: 'This case may have been deleted, or the code is incorrect',
+  ติดตามการช่วยเหลือ: 'Track response',
+  'กำลังค้นหาข้อมูลเหตุ...': 'Looking up the case...',
+  ไม่พบเหตุนี้: 'Case not found',
+  'ข้อมูลเหตุอาจถูกลบ หรือรหัสไม่ถูกต้อง': 'This case may have been deleted, or the code is incorrect',
   หน่วยกู้ชีพกำลังโทรหาคุณ: 'The rescue team is calling you',
   ปฏิเสธ: 'Reject',
   รับสาย: 'Answer',
-  'เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ': 'Case complete — thank you for using ResQ',
+  'การช่วยเหลือเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ': 'Response complete — thank you for using ResQ',
   ขอบคุณสำหรับความคิดเห็นของท่าน: 'Thank you for your feedback',
-  แชร์ให้ญาติติดตามสถานะ: 'Share so family can track status',
-  'ติดต่อ 1669': 'Contact 1669',
+  ส่งต่อให้ญาติติดตามสถานะ: 'Share so family can track status',
+  'ติดต่อศูนย์สั่งการ 1669': 'Contact Dispatch Center 1669',
   หน่วยกู้ชีพที่รับผิดชอบ: 'Assigned rescue team',
   'คนขับ {driver} · ทะเบียน {plate} · สังกัด {unit}': 'Driver {driver} · plate {plate} · unit {unit}',
-  'คาดว่าถึงในอีกประมาณ {n} นาที': 'Estimated arrival in about {n} min',
-  'กำลังเดินทาง {n}%': '{n}% en route',
+  'คาดว่าจะถึงในอีกประมาณ {n} นาที': 'Estimated arrival in about {n} min',
+  'เดินทางแล้ว {n}%': '{n}% en route',
   โรงพยาบาลปลายทาง: 'Destination hospital',
   ขั้นตอนการดำเนินการ: 'Progress',
   รูปภาพที่แนบ: 'Attached photos',
@@ -102,7 +102,7 @@ export default function CaseTracking() {
   // LiveKit room so it can't collide with one already in progress on the
   // case's 1669 room. Only meaningful for a live-synced case (isRemoteOnly is a
   // read-only snapshot with no session to answer from), same gating as the
-  // "ติดต่อ 1669" button below.
+  // "ติดต่อศูนย์สั่งการ 1669" button below.
   const answerRescueCall = useStore((s) => s.answerRescueCall)
   const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
   const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
@@ -202,13 +202,13 @@ export default function CaseTracking() {
 
   if (!activeCase) {
     return (
-      <AppShell variant="flow" title={t('ติดตามเคส')} showBack onBack={() => navigate('/')}>
+      <AppShell variant="flow" title={t('ติดตามการช่วยเหลือ')} showBack onBack={() => navigate('/')}>
         {storedCase === undefined && remoteStatus === 'loading' ? (
-          <LoadingState label={t('กำลังค้นหาเคส...')} />
+          <LoadingState label={t('กำลังค้นหาข้อมูลเหตุ...')} />
         ) : (
           <ErrorState
-            title={t('ไม่พบเคสนี้')}
-            description={t('เคสอาจถูกลบหรือรหัสไม่ถูกต้อง')}
+            title={t('ไม่พบเหตุนี้')}
+            description={t('ข้อมูลเหตุอาจถูกลบ หรือรหัสไม่ถูกต้อง')}
             onRetry={() => setRemoteStatus('idle')}
           />
         )}
@@ -265,7 +265,7 @@ export default function CaseTracking() {
       : []
 
   return (
-    <AppShell variant="flow" title={t('ติดตามเคส')} showBack onBack={() => navigate('/')}>
+    <AppShell variant="flow" title={t('ติดตามการช่วยเหลือ')} showBack onBack={() => navigate('/')}>
       <div className="relative">
         <AnimatedBackground variant="emergency" />
 
@@ -304,7 +304,7 @@ export default function CaseTracking() {
           {activeCase.status === 'completed' && (
             <div className="flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 animate-fade-in-up">
               <CheckCircle2 className="size-6 shrink-0 text-success" />
-              <p className="text-sm font-semibold text-ink">{t('เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ')}</p>
+              <p className="text-sm font-semibold text-ink">{t('การช่วยเหลือเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ')}</p>
             </div>
           )}
 
@@ -349,7 +349,7 @@ export default function CaseTracking() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
-                {t('แชร์ให้ญาติติดตามสถานะ')}
+                {t('ส่งต่อให้ญาติติดตามสถานะ')}
               </Button>
               {!isRemoteOnly && !isCompleted && id && (
                 <Button
@@ -358,7 +358,7 @@ export default function CaseTracking() {
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/contact-1669/${id}`)}
                 >
-                  {t('ติดต่อ 1669')}
+                  {t('ติดต่อศูนย์สั่งการ 1669')}
                 </Button>
               )}
             </div>
@@ -388,14 +388,14 @@ export default function CaseTracking() {
                 <div className="flex flex-col gap-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-                      {t('คาดว่าถึงในอีกประมาณ {n} นาที', { n: etaMin })}
+                      {t('คาดว่าจะถึงในอีกประมาณ {n} นาที', { n: etaMin })}
                     </span>
                     <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                      {t('กำลังเดินทาง {n}%', { n: Math.round(activeCase.rescueEnRoutePct) })}
+                      {t('เดินทางแล้ว {n}%', { n: Math.round(activeCase.rescueEnRoutePct) })}
                     </span>
                     {route && (
                       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                        {t('เส้นทางจริงตามถนน')}
+                        {t('เส้นทางตามถนนจริง')}
                       </span>
                     )}
                   </div>

@@ -3,11 +3,11 @@ import clsx from 'clsx'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  เวลาโดยประมาณถึงจุดหมาย: 'Estimated time to destination',
-  'เส้นทางเร็วที่สุด (ทราฟฟิกสด)': 'Fastest route (live traffic)',
-  เส้นทางจริงตามถนน: 'Real road route',
-  'A* · ทราฟฟิกสด': 'A* · live traffic',
-  'A* · ทราฟฟิกคาดการณ์': 'A* · predicted traffic',
+  เวลาที่คาดว่าจะถึงจุดหมาย: 'Estimated time to destination',
+  เส้นทางที่เร็วที่สุดตามสภาพจราจร: 'Fastest route for current traffic',
+  เส้นทางตามถนนจริง: 'Real road route',
+  'A* · สภาพจราจรปัจจุบัน': 'A* · live traffic',
+  'A* · สภาพจราจรคาดการณ์': 'A* · predicted traffic',
   'A* · ความเร็วโดยประมาณ': 'A* · estimated speeds',
   นาที: 'min',
   'ระยะทาง {km} กม.': 'Distance {km} km',
@@ -50,24 +50,24 @@ export function ETAWidget({
       </div>
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <p className="text-xs text-muted">{t('เวลาโดยประมาณถึงจุดหมาย')}</p>
+          <p className="text-xs text-muted">{t('เวลาที่คาดว่าจะถึงจุดหมาย')}</p>
           {routeProvider === 'astar' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
               {routeTraffic === 'real-time'
-                ? t('A* · ทราฟฟิกสด')
+                ? t('A* · สภาพจราจรปัจจุบัน')
                 : routeTraffic === 'predicted'
-                  ? t('A* · ทราฟฟิกคาดการณ์')
+                  ? t('A* · สภาพจราจรคาดการณ์')
                   : t('A* · ความเร็วโดยประมาณ')}
             </span>
           )}
           {routeProvider === 'longdo' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              {t('เส้นทางเร็วที่สุด (ทราฟฟิกสด)')}
+              {t('เส้นทางที่เร็วที่สุดตามสภาพจราจร')}
             </span>
           )}
           {routeProvider === 'osrm' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              {t('เส้นทางจริงตามถนน')}
+              {t('เส้นทางตามถนนจริง')}
             </span>
           )}
         </div>

@@ -22,24 +22,24 @@ registerTranslations({
   'มีสติ': 'Conscious',
   'ไม่มีสติ': 'Unconscious',
   'ไม่ทราบ': 'Unknown',
-  'กรุณาเลือกเหตุการณ์ที่เกิดขึ้น': 'Please select an incident type',
+  กรุณาเลือกประเภทเหตุการณ์: 'Please select an incident type',
   'กรุณาระบุจุดเกิดเหตุ': 'Please specify the incident location',
   'กรุณาระบุจำนวนผู้ป่วยอย่างน้อย 1 คน': 'Please enter at least 1 patient',
   'กรุณาเลือกระดับความรู้สึกตัวของผู้ป่วย': 'Please select the consciousness level',
   'กรุณาเลือกระดับความรุนแรง': 'Please select a severity level',
   'กรุณาระบุลักษณะการบาดเจ็บ': 'Please describe the injury',
-  'บันทึกเคสใหม่แล้ว': 'Case logged',
-  'เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว': 'Case ready to search for rescue units',
-  'บันทึกเคสใหม่': 'Log new case',
-  'บันทึกเคสที่รับแจ้งทางโทรศัพท์': 'Log a Phone-In Case',
-  'สำหรับเหตุที่รับแจ้งโดยตรง ไม่ได้ผ่านแอปประชาชน — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ':
+  บันทึกเหตุใหม่แล้ว: 'Case logged',
+  เหตุนี้พร้อมค้นหาหน่วยกู้ชีพแล้ว: 'Case ready to search for rescue units',
+  บันทึกเหตุใหม่: 'Log new case',
+  บันทึกเหตุที่รับแจ้งทางโทรศัพท์: 'Log a Phone-In Case',
+  'สำหรับเหตุที่รับแจ้งโดยตรงโดยไม่ผ่านแอปพลิเคชัน กรุณากรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ':
     'For incidents reported directly, not through the citizen app — fill in details from the conversation with the reporter',
   'ข้อมูลผู้แจ้งเหตุ': 'Reporter Information',
   'ชื่อผู้แจ้งเหตุ': 'Reporter Name',
   'เบอร์ติดต่อกลับ': 'Callback number',
-  'ไม่บังคับ — กรอกไว้หากติดต่อกลับได้':
+  'ไม่บังคับ กรอกหากสามารถติดต่อกลับได้':
     'Optional — fill in if a callback number is available',
-  'เหตุการณ์ที่เกิดขึ้น': 'Incident Type',
+  ประเภทเหตุการณ์: 'Incident type',
   'พิมพ์คำค้นหรือหมายเลข CBD เพื่อเลือกประเภทเหตุการณ์': 'Type a search term or CBD code to select an incident type',
   ไม่พบประเภทเหตุการณ์ที่ค้นหา: 'No matching incident type found',
   'จุดเกิดเหตุ': 'Incident location',
@@ -96,7 +96,7 @@ export default function DispatchNewCase() {
 
   function handleSubmit() {
     const errs: Record<string, string> = {}
-    if (!incidentType) errs.incidentType = t('กรุณาเลือกเหตุการณ์ที่เกิดขึ้น')
+    if (!incidentType) errs.incidentType = t('กรุณาเลือกประเภทเหตุการณ์')
     if (!location.trim()) errs.location = t('กรุณาระบุจุดเกิดเหตุ')
     const countNum = Number(patientCount)
     if (!patientCount.trim() || Number.isNaN(countNum) || countNum < 1) {
@@ -130,8 +130,8 @@ export default function DispatchNewCase() {
       })
       setSubmitting(false)
       toast({
-        title: t('บันทึกเคสใหม่แล้ว'),
-        message: t('เคสพร้อมค้นหาหน่วยกู้ชีพแล้ว'),
+        title: t('บันทึกเหตุใหม่แล้ว'),
+        message: t('เหตุนี้พร้อมค้นหาหน่วยกู้ชีพแล้ว'),
         tone: 'success',
       })
       navigate(`/dispatch/case/${id}`)
@@ -147,14 +147,14 @@ export default function DispatchNewCase() {
   }
 
   return (
-    <AppShell variant="dashboard" title={t('บันทึกเคสใหม่')}>
+    <AppShell variant="dashboard" title={t('บันทึกเหตุใหม่')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('บันทึกเคสที่รับแจ้งทางโทรศัพท์')}</h1>
+            <h1 className="text-xl font-bold text-ink">{t('บันทึกเหตุที่รับแจ้งทางโทรศัพท์')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {t('สำหรับเหตุที่รับแจ้งโดยตรง ไม่ได้ผ่านแอปประชาชน — กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ')}
+              {t('สำหรับเหตุที่รับแจ้งโดยตรงโดยไม่ผ่านแอปพลิเคชัน กรุณากรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ')}
             </p>
           </div>
 
@@ -168,11 +168,11 @@ export default function DispatchNewCase() {
                 onChange={(e) => setReporterPhone(e.target.value)}
               />
             </div>
-            <p className="text-xs text-muted">{t('ไม่บังคับ — กรอกไว้หากติดต่อกลับได้')}</p>
+            <p className="text-xs text-muted">{t('ไม่บังคับ กรอกหากสามารถติดต่อกลับได้')}</p>
           </Card>
 
           <SearchableSelect
-            label={t('เหตุการณ์ที่เกิดขึ้น')}
+            label={t('ประเภทเหตุการณ์')}
             required
             value={incidentType}
             error={errors.incidentType}
@@ -280,7 +280,7 @@ export default function DispatchNewCase() {
               loading={submitting}
               onClick={handleSubmit}
             >
-              {t('บันทึกเคสใหม่')}
+              {t('บันทึกเหตุใหม่')}
             </Button>
             <Button variant="outline" size="lg" fullWidth disabled={submitting} onClick={() => navigate('/dispatch/dashboard')}>
               {t('ยกเลิก')}

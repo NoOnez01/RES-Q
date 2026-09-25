@@ -3,7 +3,7 @@ import type { AppUser, Role } from './types'
 import { t, registerTranslations } from './i18n'
 
 registerTranslations({
-  'ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)':
+  'ไม่มีสิทธิ์ดำเนินการ หรือไม่พบบัญชีนี้ในระบบ (กรุณาตรวจสอบสิทธิ์ผู้ดูแลระบบหรือหัวหน้าหน่วยงานของบัญชีที่ใช้งานอยู่)':
     'Not authorized to perform this action, or the account no longer exists (check the admin/org-lead permissions of the account in use)',
 })
 
@@ -58,7 +58,7 @@ export async function fetchPendingAccounts(): Promise<AppUser[]> {
 // empty result here means "the button did nothing," which needs to surface
 // as a real error instead of the misleading success toast callers show.
 function rlsBlockedMessage(): string {
-  return t('ไม่มีสิทธิ์ดำเนินการนี้ หรือไม่พบบัญชีนี้แล้ว (ตรวจสอบสิทธิ์แอดมิน/หัวหน้าหน่วยงานของบัญชีที่ใช้อยู่)')
+  return t('ไม่มีสิทธิ์ดำเนินการ หรือไม่พบบัญชีนี้ในระบบ (กรุณาตรวจสอบสิทธิ์ผู้ดูแลระบบหรือหัวหน้าหน่วยงานของบัญชีที่ใช้งานอยู่)')
 }
 
 /** `asOrgLead` also grants is_org_lead in the same update -- useful for the

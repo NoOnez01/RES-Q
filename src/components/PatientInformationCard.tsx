@@ -30,8 +30,8 @@ registerTranslations({
   เลขบัตรประชาชน: 'National ID number',
   'การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)': 'Primary Survey (G-R-X-A-B-C-D-E)',
   'R/D - การตอบสนอง/ระบบประสาท': 'R/D - Responsiveness/Disability',
-  'รักษาแล้ว: {note}': 'Treated: {note}',
-  อัปเดตอาการล่าสุด: 'Latest condition update',
+  'การรักษาที่ให้: {note}': 'Treated: {note}',
+  อาการล่าสุด: 'Latest condition update',
   การปฐมพยาบาลเบื้องต้น: 'First aid given',
   ไม่มีข้อมูล: 'No data',
 })
@@ -127,7 +127,7 @@ export function PatientInformationCard({
               </p>
               <p className="text-sm font-semibold text-ink truncate">{survey?.[key] || '-'}</p>
               {survey?.treatments?.[key] && (
-                <p className="mt-1 text-xs text-muted truncate">{t('รักษาแล้ว: {note}', { note: survey.treatments[key] })}</p>
+                <p className="mt-1 text-xs text-muted truncate">{t('การรักษาที่ให้: {note}', { note: survey.treatments[key] })}</p>
               )}
             </div>
           ))}
@@ -136,7 +136,7 @@ export function PatientInformationCard({
 
       {updates && updates.length > 0 && (
         <div className="border-t border-border pt-4">
-          <p className="mb-2 text-sm font-semibold text-ink">{t('อัปเดตอาการล่าสุด')}</p>
+          <p className="mb-2 text-sm font-semibold text-ink">{t('อาการล่าสุด')}</p>
           <div className="flex flex-col gap-2">
             {[...updates]
               .sort((a, b) => b.recordedAt - a.recordedAt)

@@ -5,7 +5,7 @@ import { t, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   เกิดข้อผิดพลาดที่ไม่คาดคิด: 'An unexpected error occurred',
-  กรุณาลองโหลดหน้านี้ใหม่อีกครั้ง: 'Please try reloading this page',
+  กรุณาโหลดหน้านี้ใหม่อีกครั้ง: 'Please try reloading this page',
 })
 
 interface Props {
@@ -39,7 +39,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
         <div className="mx-auto max-w-md px-4 py-16">
           <ErrorState
             title={t('เกิดข้อผิดพลาดที่ไม่คาดคิด')}
-            description={t('กรุณาลองโหลดหน้านี้ใหม่อีกครั้ง')}
+            description={t('กรุณาโหลดหน้านี้ใหม่อีกครั้ง')}
             onRetry={() => window.location.reload()}
           />
         </div>

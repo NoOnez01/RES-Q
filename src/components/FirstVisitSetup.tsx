@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 
 registerTranslations({
   ยินดีต้อนรับสู่: 'Welcome to',
-  'เลือกภาษาที่ใช้งาน เปลี่ยนได้ทุกเมื่อภายหลังในหน้าตั้งค่า': 'Pick your language — you can change it anytime later in Settings.',
+  'กรุณาเลือกภาษาที่ต้องการใช้งาน (เปลี่ยนภายหลังได้ที่หน้าตั้งค่า)': 'Pick your language — you can change it anytime later in Settings.',
   ภาษา: 'Language',
   เริ่มใช้งาน: 'Get started',
 })
@@ -60,7 +60,7 @@ export function FirstVisitSetup() {
           <p className="text-xs font-bold uppercase tracking-wide">{t('ยินดีต้อนรับสู่')} ResQ</p>
         </div>
         <h2 id="first-visit-title" className="text-lg font-bold text-ink">
-          {t('เลือกภาษาที่ใช้งาน เปลี่ยนได้ทุกเมื่อภายหลังในหน้าตั้งค่า')}
+          {t('กรุณาเลือกภาษาที่ต้องการใช้งาน (เปลี่ยนภายหลังได้ที่หน้าตั้งค่า)')}
         </h2>
 
         <div className="mt-5 space-y-2">

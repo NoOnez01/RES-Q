@@ -5,15 +5,15 @@ import { Textarea } from './ui/Field'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  'ไม่สามารถพูดบันทึกได้ขณะนี้ (ต้องใช้สัญญาณอินเทอร์เน็ต) กรุณาพิมพ์แทน':
+  'ขณะนี้ไม่สามารถบันทึกด้วยเสียงได้ (ต้องเชื่อมต่ออินเทอร์เน็ต) กรุณาพิมพ์ข้อความแทน':
     'Voice input is unavailable right now (requires an internet connection), please type instead',
   ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน: 'Microphone access was not granted',
   ไม่พบไมโครโฟนบนอุปกรณ์นี้: 'No microphone found on this device',
-  'พูดบันทึกไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์แทน': 'Voice input failed, please try again or type instead',
+  'บันทึกด้วยเสียงไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์ข้อความแทน': 'Voice input failed, please try again or type instead',
   พูดเพื่อบันทึกข้อความ: 'Speak to record text',
   'กำลังฟัง...': 'Listening...',
-  พูดบันทึก: 'Voice input',
-  อุปกรณ์นี้ไม่รองรับการพูดบันทึกข้อความ: 'This device does not support voice-to-text input',
+  บันทึกด้วยเสียง: 'Voice input',
+  อุปกรณ์นี้ไม่รองรับการบันทึกข้อความด้วยเสียง: 'This device does not support voice-to-text input',
   'พิมพ์หรือพูดเพื่อบันทึกข้อความ...': 'Type or speak to record text...',
 })
 
@@ -45,7 +45,7 @@ export function SpeechToTextPanel({
   const t = useT()
   const resolvedLabel = label ?? t('พูดเพื่อบันทึกข้อความ')
   const ERROR_LABEL: Record<string, string> = {
-    network: t('ไม่สามารถพูดบันทึกได้ขณะนี้ (ต้องใช้สัญญาณอินเทอร์เน็ต) กรุณาพิมพ์แทน'),
+    network: t('ขณะนี้ไม่สามารถบันทึกด้วยเสียงได้ (ต้องเชื่อมต่ออินเทอร์เน็ต) กรุณาพิมพ์ข้อความแทน'),
     'not-allowed': t('ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน'),
     'service-not-allowed': t('ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน'),
     'audio-capture': t('ไม่พบไมโครโฟนบนอุปกรณ์นี้'),
@@ -76,7 +76,7 @@ export function SpeechToTextPanel({
     recognition.onerror = (event: { error: string }) => {
       setListening(false)
       if (event.error === 'no-speech' || event.error === 'aborted') return
-      setErrorLabel(ERROR_LABEL[event.error] ?? t('พูดบันทึกไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์แทน'))
+      setErrorLabel(ERROR_LABEL[event.error] ?? t('บันทึกด้วยเสียงไม่สำเร็จ กรุณาลองใหม่หรือพิมพ์ข้อความแทน'))
     }
     recognition.onend = () => setListening(false)
     recognitionRef.current = recognition
@@ -113,10 +113,10 @@ export function SpeechToTextPanel({
             icon={listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
             onClick={toggle}
           >
-            {listening ? t('กำลังฟัง...') : t('พูดบันทึก')}
+            {listening ? t('กำลังฟัง...') : t('บันทึกด้วยเสียง')}
           </Button>
         ) : (
-          <span className="text-xs text-muted">{t('อุปกรณ์นี้ไม่รองรับการพูดบันทึกข้อความ')}</span>
+          <span className="text-xs text-muted">{t('อุปกรณ์นี้ไม่รองรับการบันทึกข้อความด้วยเสียง')}</span>
         )}
       </div>
       {errorLabel && (

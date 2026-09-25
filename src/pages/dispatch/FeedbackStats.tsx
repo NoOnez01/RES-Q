@@ -14,18 +14,18 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   ประเมินหน่วยกู้ชีพ: 'Rate rescue teams',
   ยังไม่มีข้อมูลความพึงพอใจ: 'No satisfaction data yet',
-  คะแนนและความคิดเห็นจะปรากฏที่นี่หลังผู้แจ้งเหตุให้คะแนนเคสที่เสร็จสิ้นแล้ว: 'Ratings and comments will appear here once reporters rate completed cases',
+  'คะแนนและความคิดเห็นจะแสดงที่นี่ เมื่อผู้แจ้งเหตุให้คะแนนเหตุที่ดำเนินการเสร็จสิ้นแล้ว': 'Ratings and comments will appear here once reporters rate completed cases',
   คะแนนเฉลี่ย: 'Average rating',
-  'จาก {n} รีวิว': 'from {n} reviews',
+  'จาก {n} การประเมิน': 'from {n} ratings',
   การกระจายคะแนน: 'Rating distribution',
-  '{n} รีวิว': '{n} reviews',
+  '{n} การประเมิน': '{n} ratings',
   จำนวน: 'Count',
   'คะแนน {n} ดาว': '{n}-star rating',
   'คะแนนแยกตามหน่วยกู้ชีพ ({n})': 'Ratings by rescue team ({n})',
   ยังไม่มีข้อมูลการประเมินหน่วยกู้ชีพ: 'No rescue team ratings yet',
   'ความคิดเห็น/ข้อร้องเรียน ({n})': 'Comments/complaints ({n})',
   ยังไม่มีข้อความจากผู้แจ้งเหตุ: 'No messages from reporters yet',
-  'เคส {caseId}': 'Case {caseId}',
+  'เหตุหมายเลข {caseId}': 'Case {caseId}',
   'หน่วยกู้ชีพ: {name}': 'Rescue team: {name}',
 })
 
@@ -69,7 +69,7 @@ export default function DispatchFeedbackStats() {
           ) : !stats || stats.count === 0 ? (
             <EmptyState
               title={t('ยังไม่มีข้อมูลความพึงพอใจ')}
-              description={t('คะแนนและความคิดเห็นจะปรากฏที่นี่หลังผู้แจ้งเหตุให้คะแนนเคสที่เสร็จสิ้นแล้ว')}
+              description={t('คะแนนและความคิดเห็นจะแสดงที่นี่ เมื่อผู้แจ้งเหตุให้คะแนนเหตุที่ดำเนินการเสร็จสิ้นแล้ว')}
             />
           ) : (
             <>
@@ -78,7 +78,7 @@ export default function DispatchFeedbackStats() {
                   <p className="text-sm font-medium text-muted">{t('คะแนนเฉลี่ย')}</p>
                   <p className="text-4xl font-extrabold text-ink">{stats.averageRating.toFixed(1)}</p>
                   <StarRow filled={Math.round(stats.averageRating)} />
-                  <p className="text-xs text-muted">{t('จาก {n} รีวิว', { n: stats.count })}</p>
+                  <p className="text-xs text-muted">{t('จาก {n} การประเมิน', { n: stats.count })}</p>
                 </Card>
                 <Card className="flex flex-col gap-2 py-6">
                   <p className="mb-1 text-sm font-medium text-muted">{t('การกระจายคะแนน')}</p>
@@ -101,7 +101,7 @@ export default function DispatchFeedbackStats() {
                         <Tooltip
                           cursor={{ fill: 'transparent' }}
                           contentStyle={CHART_TOOLTIP_STYLE}
-                          formatter={(value) => [t('{n} รีวิว', { n: value as number }), t('จำนวน')]}
+                          formatter={(value) => [t('{n} การประเมิน', { n: value as number }), t('จำนวน')]}
                           labelFormatter={(label) => t('คะแนน {n} ดาว', { n: String(label) })}
                         />
                         <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={18}>
@@ -140,7 +140,7 @@ export default function DispatchFeedbackStats() {
                           )}
                           <div>
                             <p className="font-semibold text-ink">{teamStat.teamName}</p>
-                            <p className="text-xs text-muted">{t('{n} รีวิว', { n: teamStat.count })}</p>
+                            <p className="text-xs text-muted">{t('{n} การประเมิน', { n: teamStat.count })}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function DispatchFeedbackStats() {
                     {stats.recentComplaints.map((row) => (
                       <Card key={row.id} className="flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-ink">{t('เคส {caseId}', { caseId: row.case_id })}</span>
+                          <span className="text-sm font-semibold text-ink">{t('เหตุหมายเลข {caseId}', { caseId: row.case_id })}</span>
                           <StarRow filled={row.rating} />
                         </div>
                         {row.rescue_team_name && <p className="text-xs text-muted">{t('หน่วยกู้ชีพ: {name}', { name: row.rescue_team_name })}</p>}

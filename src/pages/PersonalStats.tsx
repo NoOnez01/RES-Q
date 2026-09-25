@@ -18,19 +18,19 @@ registerTranslations({
   หน่วยกู้ชีพของฉัน: 'My rescue team',
   โรงพยาบาลของฉัน: 'My hospital',
   'ศูนย์สั่งการ 1669 (ภาพรวมระบบ)': 'Dispatch Center 1669 (system-wide)',
-  เคสที่ฉันแจ้งเหตุ: 'Cases I reported',
+  เหตุที่ฉันแจ้ง: 'Cases I reported',
   กรุณาเข้าสู่ระบบเพื่อดูสถิติของคุณ: 'Please log in to view your stats',
   ยังไม่มีข้อมูลสถิติ: 'No stats yet',
-  สถิติจะปรากฏที่นี่เมื่อมีเคสที่เกี่ยวข้องกับคุณในระบบ: 'Stats will appear here once there are cases related to you in the system',
-  เคสทั้งหมด: 'Total cases',
+  สถิติจะแสดงที่นี่เมื่อมีเหตุที่เกี่ยวข้องกับคุณในระบบ: 'Stats will appear here once there are cases related to you in the system',
+  เหตุทั้งหมด: 'Total cases',
   กำลังดำเนินการ: 'In progress',
   เสร็จสิ้นแล้ว: 'Completed',
-  แนวโน้มจำนวนเคสรายเดือน: 'Monthly case trend',
+  แนวโน้มจำนวนเหตุรายเดือน: 'Monthly case trend',
   'ยังไม่มีข้อมูลในช่วง {n} เดือนล่าสุด': 'No data in the last {n} months',
-  '{n} เคส': '{n} cases',
+  '{n} เหตุ': '{n} cases',
   จำนวน: 'Count',
   สัดส่วนตามระดับความรุนแรง: 'Breakdown by severity',
-  ยังไม่มีเคสที่ประเมินระดับความรุนแรง: 'No cases with a severity assessment yet',
+  ยังไม่มีเหตุที่ได้รับการประเมินระดับความรุนแรง: 'No cases have a severity assessment yet',
   วิกฤต: 'Critical',
   ฉุกเฉิน: 'Emergency',
   เร่งด่วน: 'Urgent',
@@ -87,7 +87,7 @@ export default function PersonalStats() {
       default:
         return {
           list: all.filter((c) => c.reporterUserId === currentUser.id || c.isDemo),
-          scopeLabel: t('เคสที่ฉันแจ้งเหตุ'),
+          scopeLabel: t('เหตุที่ฉันแจ้ง'),
         }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,19 +133,19 @@ export default function PersonalStats() {
             <EmptyState
               icon={<Activity className="size-6" />}
               title={t('ยังไม่มีข้อมูลสถิติ')}
-              description={t('สถิติจะปรากฏที่นี่เมื่อมีเคสที่เกี่ยวข้องกับคุณในระบบ')}
+              description={t('สถิติจะแสดงที่นี่เมื่อมีเหตุที่เกี่ยวข้องกับคุณในระบบ')}
             />
           ) : (
             <>
               <StatBar>
-                <StatItem label={t('เคสทั้งหมด')} value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
+                <StatItem label={t('เหตุทั้งหมด')} value={list.length} icon={<ClipboardList className="size-5" />} tone="primary" />
                 <StatItem label={t('กำลังดำเนินการ')} value={inProgressCount} icon={<Ambulance className="size-5" />} tone="warning" />
                 <StatItem label={t('เสร็จสิ้นแล้ว')} value={completedCount} icon={<CheckCircle2 className="size-5" />} tone="success" />
               </StatBar>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card className="flex flex-col gap-3">
-                  <p className="text-sm font-bold text-ink">{t('แนวโน้มจำนวนเคสรายเดือน')}</p>
+                  <p className="text-sm font-bold text-ink">{t('แนวโน้มจำนวนเหตุรายเดือน')}</p>
                   {trend.every((item) => item.count === 0) ? (
                     <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีข้อมูลในช่วง {n} เดือนล่าสุด', { n: TREND_MONTHS })}</p>
                   ) : (
@@ -157,7 +157,7 @@ export default function PersonalStats() {
                           <Tooltip
                             cursor={{ fill: '#EAF6FF' }}
                             contentStyle={CHART_TOOLTIP_STYLE}
-                            formatter={(value) => [t('{n} เคส', { n: value as number }), t('จำนวน')]}
+                            formatter={(value) => [t('{n} เหตุ', { n: value as number }), t('จำนวน')]}
                           />
                           <Bar dataKey="count" fill="#0B6EBD" radius={[6, 6, 0, 0]} maxBarSize={36} />
                         </BarChart>
@@ -169,7 +169,7 @@ export default function PersonalStats() {
                 <Card className="flex flex-col gap-3">
                   <p className="text-sm font-bold text-ink">{t('สัดส่วนตามระดับความรุนแรง')}</p>
                   {severityCounts.every((s) => s.count === 0) ? (
-                    <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีเคสที่ประเมินระดับความรุนแรง')}</p>
+                    <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีเหตุที่ได้รับการประเมินระดับความรุนแรง')}</p>
                   ) : (
                     <div className="flex items-center gap-4">
                       <div className="h-40 w-40 shrink-0">
@@ -190,7 +190,7 @@ export default function PersonalStats() {
                                   <Cell key={s.severity} fill={SEVERITY_CHART_COLORS[s.severity]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [t('{n} เคส', { n: value as number }), '']} />
+                            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [t('{n} เหตุ', { n: value as number }), '']} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>

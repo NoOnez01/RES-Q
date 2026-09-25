@@ -7,11 +7,11 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ปิด: 'Close',
-  แชร์ให้ญาติติดตามสถานะ: 'Share so family can track status',
-  'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์':
+  ส่งต่อให้ญาติติดตามสถานะ: 'Share so family can track status',
+  'สแกน QR Code หรือคัดลอกลิงก์ส่งให้ญาติ เพื่อติดตามสถานะการนำส่งได้ตลอดเวลา':
     'Scan the QR code or copy the link to let family view the transport status in real time',
-  'QR Code สำหรับแชร์เคส': 'QR code for sharing the case',
-  'กำลังสร้าง QR...': 'Generating QR...',
+  'QR Code สำหรับส่งต่อข้อมูลเหตุ': 'QR code for sharing the case',
+  'กำลังสร้าง QR Code...': 'Generating QR code...',
   คัดลอกแล้ว: 'Copied',
   คัดลอกลิงก์: 'Copy link',
 })
@@ -28,8 +28,8 @@ export function ShareCaseModal({ open, url, onClose, title, description }: Share
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const t = useT()
-  const resolvedTitle = title ?? t('แชร์ให้ญาติติดตามสถานะ')
-  const resolvedDescription = description ?? t('สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ญาติดูสถานะการนำส่งแบบเรียลไทม์')
+  const resolvedTitle = title ?? t('ส่งต่อให้ญาติติดตามสถานะ')
+  const resolvedDescription = description ?? t('สแกน QR Code หรือคัดลอกลิงก์ส่งให้ญาติ เพื่อติดตามสถานะการนำส่งได้ตลอดเวลา')
 
   useEffect(() => {
     if (!open) return
@@ -97,10 +97,10 @@ export function ShareCaseModal({ open, url, onClose, title, description }: Share
 
         <div className="mt-5 flex justify-center">
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt={t('QR Code สำหรับแชร์เคส')} className="size-48 rounded-2xl border border-border" />
+            <img src={qrDataUrl} alt={t('QR Code สำหรับส่งต่อข้อมูลเหตุ')} className="size-48 rounded-2xl border border-border" />
           ) : (
             <div className="flex size-48 items-center justify-center rounded-2xl border border-border bg-skyblue-pale/50 text-xs text-muted">
-              {t('กำลังสร้าง QR...')}
+              {t('กำลังสร้าง QR Code...')}
             </div>
           )}
         </div>

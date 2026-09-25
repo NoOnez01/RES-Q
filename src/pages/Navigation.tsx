@@ -25,23 +25,23 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   กำลังนำทาง: 'Navigating',
-  เคสนี้ไม่อยู่ในสถานะที่ต้องนำทาง: 'This case is not in a status that requires navigation',
-  กลับไปยังรายละเอียดเคส: 'Back to case details',
+  เหตุนี้ไม่อยู่ในสถานะที่ต้องนำทาง: 'This case is not in a status that requires navigation',
+  กลับไปยังรายละเอียดเหตุ: 'Back to case details',
   กำลังติดตามตำแหน่ง: 'Tracking location',
   'ถึง{destination}แล้ว': 'Arrived at {destination}',
   'กำลังเดินทาง...': 'En route...',
   ถึงโรงพยาบาลแล้ว: 'Arrived at the hospital',
   รอโรงพยาบาลยืนยันการรับผู้ป่วย: 'Waiting for the hospital to confirm patient admission',
-  เริ่มบันทึกข้อมูลผู้ป่วยได้เลย: 'You can start recording patient data now',
+  สามารถเริ่มบันทึกข้อมูลผู้ป่วยได้: 'You can start recording patient data now',
   จำลองการเดินทาง: 'Simulated',
-  'ใช้ GPS จริง': 'My GPS',
+  'ใช้ตำแหน่ง GPS จริง': 'My GPS',
   'กำลังค้นหาตำแหน่ง GPS...': 'Finding your GPS location...',
   // The four possible messages GeolocationError can carry (see
   // lib/geolocation.ts) -- registered here so the raw `err.message` string
   // it throws can be translated directly wherever it's caught, instead of
   // each caller re-describing its own (necessarily coarser) version.
   อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง: 'This device does not support location detection',
-  'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่': 'Finding your location took too long, please try again',
+  'การค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง': 'Finding your location took too long, please try again',
   กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ: 'Please allow location access',
   ไม่สามารถระบุตำแหน่งได้ในขณะนี้: 'Unable to determine your location right now',
 })
@@ -117,10 +117,10 @@ export default function NavigationPage() {
           <AnimatedBackground variant="map" />
           <div className="relative z-10">
             <ErrorState
-              title={t('ไม่พบเคสนี้')}
-              description={t('เคสอาจถูกลบหรือไม่มีอยู่ในระบบ')}
+              title={t('ไม่พบเหตุนี้')}
+              description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
               onRetry={() => navigate('/rescue/dashboard')}
-              retryLabel={t('กลับแดชบอร์ด')}
+              retryLabel={t('กลับไปหน้าภาพรวม')}
             />
           </div>
         </div>
@@ -135,9 +135,9 @@ export default function NavigationPage() {
           <AnimatedBackground variant="map" />
           <div className="relative z-10">
             <Card className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="font-semibold text-ink">{t('เคสนี้ไม่อยู่ในสถานะที่ต้องนำทาง')}</p>
+              <p className="font-semibold text-ink">{t('เหตุนี้ไม่อยู่ในสถานะที่ต้องนำทาง')}</p>
               <Link to={`/rescue/case/${c.id}`} className="text-sm font-semibold text-primary hover:text-primary-bright">
-                {t('กลับไปยังรายละเอียดเคส')}
+                {t('กลับไปยังรายละเอียดเหตุ')}
               </Link>
             </Card>
           </div>
@@ -182,7 +182,7 @@ export default function NavigationPage() {
     if (!id) return
     if (isEnRoute) {
       rescueMarkArrived(id)
-      toast({ title: t('ถึงจุดเกิดเหตุแล้ว'), message: t('เริ่มบันทึกข้อมูลผู้ป่วยได้เลย'), tone: 'success' })
+      toast({ title: t('ถึงจุดเกิดเหตุแล้ว'), message: t('สามารถเริ่มบันทึกข้อมูลผู้ป่วยได้'), tone: 'success' })
     } else {
       markHospitalArrived(id)
       toast({ title: t('ถึงโรงพยาบาลแล้ว'), message: t('รอโรงพยาบาลยืนยันการรับผู้ป่วย'), tone: 'success' })
@@ -197,7 +197,7 @@ export default function NavigationPage() {
       addPatientUpdate(id, updateNote.trim())
       setUpdateNote('')
       setUpdateLoading(false)
-      toast({ title: t('บันทึกอัปเดตอาการแล้ว'), message: t('ศูนย์สั่งการและโรงพยาบาลจะเห็นอัปเดตนี้ทันที'), tone: 'success' })
+      toast({ title: t('บันทึกอาการล่าสุดแล้ว'), message: t('ศูนย์สั่งการและโรงพยาบาลจะได้รับข้อมูลนี้ทันที'), tone: 'success' })
     }, 400)
   }
 
@@ -219,7 +219,7 @@ export default function NavigationPage() {
               onChange={(mode) => setGpsMode(mode === 'gps')}
               options={[
                 { value: 'simulated', label: t('จำลองการเดินทาง') },
-                { value: 'gps', label: t('ใช้ GPS จริง') },
+                { value: 'gps', label: t('ใช้ตำแหน่ง GPS จริง') },
               ]}
             />
           </div>
@@ -256,14 +256,14 @@ export default function NavigationPage() {
 
           {c.patientInfo && (
             <Card className="space-y-3">
-              <h3 className="font-bold text-ink">{t('อัปเดตอาการผู้ป่วย')}</h3>
+              <h3 className="font-bold text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
               {c.patientUpdates.length > 0 && (
                 <div className="rounded-xl bg-skyblue-pale p-3">
                   <p className="text-sm text-ink whitespace-pre-wrap">
                     {c.patientUpdates[c.patientUpdates.length - 1].note}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    {t('อัปเดตล่าสุด {date}', { date: formatDateTime(c.patientUpdates[c.patientUpdates.length - 1].recordedAt) })}
+                    {t('ปรับปรุงล่าสุด {date}', { date: formatDateTime(c.patientUpdates[c.patientUpdates.length - 1].recordedAt) })}
                   </p>
                 </div>
               )}
@@ -279,7 +279,7 @@ export default function NavigationPage() {
                 disabled={!updateNote.trim()}
                 onClick={handleAddUpdate}
               >
-                {t('บันทึกอัปเดต')}
+                {t('บันทึกอาการ')}
               </Button>
             </Card>
           )}

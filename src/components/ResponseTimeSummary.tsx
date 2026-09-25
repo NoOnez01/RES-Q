@@ -1,17 +1,17 @@
 import { Timer, Siren, Truck, ClipboardCheck } from 'lucide-react'
 import { Card } from './ui/Card'
-import { StatBar, StatItem } from './DashboardCard'
+import { StatItem } from './DashboardCard'
 import type { CaseStatus, EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   สรุปเวลาตอบสนองการช่วยเหลือ: 'Emergency response time summary',
-  'ค่าเฉลี่ยจากเคสที่มีข้อมูลครบ {n} เคส': 'Average from {n} cases with complete timing data',
+  'ค่าเฉลี่ยจาก {n} เหตุที่มีข้อมูลเวลาครบถ้วน': 'Average from {n} cases with complete timing data',
   ยังไม่มีข้อมูลเวลาเพียงพอสำหรับสรุปผล: 'Not enough timing data yet to summarize',
-  เวลารับแจ้งถึงมอบหมายหน่วย: 'Call to dispatch',
+  เวลารับแจ้งถึงสั่งการ: 'Call to dispatch',
   เวลาตอบสนอง: 'Response time',
   เวลานำส่งโรงพยาบาล: 'Transport time',
-  เคสที่เสร็จสิ้นทั้งหมด: 'Total completed cases',
+  เหตุที่เสร็จสิ้นทั้งหมด: 'Total completed cases',
   นาที: 'min',
 })
 
@@ -65,15 +65,17 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
         </h2>
         <p className="mt-0.5 text-xs text-muted">
           {hasSample
-            ? t('ค่าเฉลี่ยจากเคสที่มีข้อมูลครบ {n} เคส', { n: completedCount })
+            ? t('ค่าเฉลี่ยจาก {n} เหตุที่มีข้อมูลเวลาครบถ้วน', { n: completedCount })
             : t('ยังไม่มีข้อมูลเวลาเพียงพอสำหรับสรุปผล')}
         </p>
       </div>
-      <StatBar>
+      {/* 2 x 2 rather than the shared StatBar row: this card only gets half
+          the dashboard width, where four side-by-side stats crush their labels. */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-card [&>*]:bg-surface">
         <StatItem
           tone="primary"
           icon={<Siren className="size-5" />}
-          label={t('เวลารับแจ้งถึงมอบหมายหน่วย')}
+          label={t('เวลารับแจ้งถึงสั่งการ')}
           value={dispatchMin != null ? `${dispatchMin.toFixed(1)} ${t('นาที')}` : '—'}
         />
         <StatItem
@@ -91,10 +93,10 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
         <StatItem
           tone="primary"
           icon={<ClipboardCheck className="size-5" />}
-          label={t('เคสที่เสร็จสิ้นทั้งหมด')}
+          label={t('เหตุที่เสร็จสิ้นทั้งหมด')}
           value={completedCount}
         />
-      </StatBar>
+      </div>
     </Card>
   )
 }

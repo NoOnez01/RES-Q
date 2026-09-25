@@ -14,26 +14,26 @@ import { useT, registerTranslations } from '@/lib/i18n'
 import type { CaseStatus, EmergencyCase } from '@/lib/types'
 
 registerTranslations({
-  แดชบอร์ดหน่วยกู้ชีพ: 'Rescue dashboard',
-  เคสใหม่: 'New cases',
+  ภาพรวมหน่วยกู้ชีพ: 'Rescue overview',
+  เหตุใหม่: 'New cases',
   กำลังดำเนินการ: 'In progress',
   เสร็จสิ้นวันนี้: 'Completed today',
   พบเหตุด้วยตนเอง: 'Found incident myself',
-  เคสใหม่ที่ได้รับมอบหมาย: 'Newly assigned cases',
-  ยังไม่มีเคสใหม่: 'No new cases',
-  'เมื่อมีการมอบหมายเคสให้หน่วยของคุณ จะแสดงที่นี่': 'Cases assigned to your team will appear here',
-  รับเคส: 'Accept case',
+  เหตุใหม่ที่ได้รับมอบหมาย: 'Newly assigned cases',
+  ยังไม่มีเหตุใหม่: 'No new cases',
+  เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่: 'Cases assigned to your team will appear here',
+  รับเหตุ: 'Accept case',
   ปฏิเสธ: 'Reject',
-  ไม่มีเคสที่กำลังดำเนินการ: 'No cases in progress',
-  เคสที่คุณรับไว้และกำลังดำเนินการจะแสดงที่นี่: "Cases you've accepted and are working on will appear here",
+  ไม่มีเหตุที่กำลังดำเนินการ: 'No cases in progress',
+  เหตุที่คุณรับและกำลังดำเนินการจะแสดงที่นี่: "Cases you've accepted and are working on will appear here",
   เสร็จสิ้นแล้ว: 'Completed',
-  ยังไม่มีเคสที่เสร็จสิ้น: 'No completed cases yet',
-  เคสที่นำส่งโรงพยาบาลสำเร็จแล้วจะแสดงที่นี่: 'Cases successfully transported to hospital will appear here',
-  สัดส่วนระดับความรุนแรงของเคสที่รับผิดชอบ: "Severity distribution of your team's cases",
-  รับเคสแล้ว: 'Case accepted',
-  'เริ่มเดินทางไปยังเคส {caseNumber}': 'Now heading to case {caseNumber}',
-  ปฏิเสธเคสแล้ว: 'Case rejected',
-  'ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเคส {caseNumber}': 'Now finding a new rescue team for case {caseNumber}',
+  ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น: 'No completed cases yet',
+  เหตุที่นำส่งโรงพยาบาลเรียบร้อยแล้วจะแสดงที่นี่: 'Cases successfully transported to hospital will appear here',
+  สัดส่วนระดับความรุนแรงของเหตุที่รับผิดชอบ: "Severity distribution of your team's cases",
+  รับเหตุแล้ว: 'Case accepted',
+  'เริ่มเดินทางไปยังเหตุหมายเลข {caseNumber}': 'Now heading to case {caseNumber}',
+  ปฏิเสธการรับผู้ป่วยแล้ว: 'Patient declined',
+  'ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเหตุหมายเลข {caseNumber}': 'Now finding a new rescue team for case {caseNumber}',
 })
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
@@ -78,22 +78,22 @@ export default function RescueDashboard() {
 
   function handleAccept(c: EmergencyCase) {
     rescueAcceptCase(c.id)
-    toast({ title: t('รับเคสแล้ว'), message: t('เริ่มเดินทางไปยังเคส {caseNumber}', { caseNumber: c.caseNumber }), tone: 'success' })
+    toast({ title: t('รับเหตุแล้ว'), message: t('เริ่มเดินทางไปยังเหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber }), tone: 'success' })
   }
 
   function handleReject(c: EmergencyCase) {
     rescueRejectCase(c.id)
-    toast({ title: t('ปฏิเสธเคสแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเคส {caseNumber}', { caseNumber: c.caseNumber }), tone: 'info' })
+    toast({ title: t('ปฏิเสธการรับผู้ป่วยแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber }), tone: 'info' })
   }
 
   return (
-    <AppShell variant="dashboard" title={t('แดชบอร์ดหน่วยกู้ชีพ')}>
+    <AppShell variant="dashboard" title={t('ภาพรวมหน่วยกู้ชีพ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
           <StatBar>
             <StatItem
-              label={t('เคสใหม่')}
+              label={t('เหตุใหม่')}
               value={
                 <span key={newCases.length} className="inline-block animate-count-pop">
                   {newCases.length}
@@ -133,9 +133,9 @@ export default function RescueDashboard() {
           </div>
 
           <section className="mt-4">
-            <h2 className="mb-3 text-lg font-bold text-ink">{t('เคสใหม่ที่ได้รับมอบหมาย')}</h2>
+            <h2 className="mb-3 text-lg font-bold text-ink">{t('เหตุใหม่ที่ได้รับมอบหมาย')}</h2>
             {newCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเคสใหม่')} description={t('เมื่อมีการมอบหมายเคสให้หน่วยของคุณ จะแสดงที่นี่')} />
+              <EmptyState title={t('ยังไม่มีเหตุใหม่')} description={t('เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่')} />
             ) : (
               <div className="flex flex-col gap-4">
                 {newCases.map((c, i) => (
@@ -150,7 +150,7 @@ export default function RescueDashboard() {
                       actions={
                         <>
                           <Button variant="success" size="sm" onClick={() => handleAccept(c)}>
-                            {t('รับเคส')}
+                            {t('รับเหตุ')}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleReject(c)}>
                             {t('ปฏิเสธ')}
@@ -167,7 +167,7 @@ export default function RescueDashboard() {
           <section className="mt-8">
             <h2 className="mb-3 text-lg font-bold text-ink">{t('กำลังดำเนินการ')}</h2>
             {inProgressCases.length === 0 ? (
-              <EmptyState title={t('ไม่มีเคสที่กำลังดำเนินการ')} description={t('เคสที่คุณรับไว้และกำลังดำเนินการจะแสดงที่นี่')} />
+              <EmptyState title={t('ไม่มีเหตุที่กำลังดำเนินการ')} description={t('เหตุที่คุณรับและกำลังดำเนินการจะแสดงที่นี่')} />
             ) : (
               <div className="flex flex-col gap-4">
                 {inProgressCases.map((c, i) => (
@@ -182,7 +182,7 @@ export default function RescueDashboard() {
           <section className="mt-8">
             <h2 className="mb-3 text-lg font-bold text-ink">{t('เสร็จสิ้นแล้ว')}</h2>
             {doneCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเคสที่เสร็จสิ้น')} description={t('เคสที่นำส่งโรงพยาบาลสำเร็จแล้วจะแสดงที่นี่')} />
+              <EmptyState title={t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')} description={t('เหตุที่นำส่งโรงพยาบาลเรียบร้อยแล้วจะแสดงที่นี่')} />
             ) : (
               <div className="flex flex-col gap-4">
                 {doneCases.map((c) => (
@@ -194,7 +194,7 @@ export default function RescueDashboard() {
 
           <div className="mt-8">
             <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเคสที่รับผิดชอบ')} cases={allCases} />
+              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุที่รับผิดชอบ')} cases={allCases} />
             </Suspense>
           </div>
         </div>

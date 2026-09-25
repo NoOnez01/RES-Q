@@ -153,7 +153,7 @@ export async function generateCaseSheetPdf(c: EmergencyCase): Promise<void> {
   doc.text('ResQ', MARGIN, y)
   doc.setFontSize(13)
   doc.setTextColor(...NAVY)
-  doc.text('ใบสรุปเคสหน่วยกู้ชีพ', MARGIN + 24, y)
+  doc.text('ใบสรุปเหตุของหน่วยกู้ชีพ', MARGIN + 24, y)
   y += 7
   doc.setDrawColor(...PRIMARY)
   doc.setLineWidth(0.6)
@@ -162,7 +162,7 @@ export async function generateCaseSheetPdf(c: EmergencyCase): Promise<void> {
 
   doc.setFontSize(10)
   doc.setTextColor(...MUTED)
-  doc.text(`เลขที่เคส ${c.caseNumber}`, MARGIN, y)
+  doc.text(`หมายเลขเหตุ ${c.caseNumber}`, MARGIN, y)
   doc.text(`ออกเอกสารเมื่อ ${formatDateTime(Date.now())}`, PAGE_WIDTH - MARGIN, y, { align: 'right' })
   y += 8
 

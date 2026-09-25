@@ -12,14 +12,14 @@ import type { EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  'ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003': 'Search by case number, e.g. RQ-2026-003',
-  ไม่พบเคสที่ค้นหา: 'No matching case found',
-  'ไม่พบเคสที่ตรงกับ "{query}"': 'No case matches "{query}"',
+  'ค้นหาด้วยหมายเลขเหตุ เช่น RQ-2026-003': 'Search by case number, e.g. RQ-2026-003',
+  ไม่พบเหตุที่ค้นหา: 'No matching case found',
+  'ไม่พบเหตุที่ตรงกับ "{query}"': 'No case matches "{query}"',
   ซ่อนรายละเอียดเพิ่มเติม: 'Hide more details',
   แสดงรายละเอียดเพิ่มเติม: 'Show more details',
   รายละเอียดเพิ่มเติม: 'More details',
-  'จำนวนขั้นตอนในไทม์ไลน์: {n} ขั้นตอน': 'Timeline steps: {n}',
-  'อัปเดตล่าสุด: {date}': 'Last updated: {date}',
+  'จำนวนขั้นตอนในลำดับเหตุการณ์: {n} ขั้นตอน': 'Timeline steps: {n}',
+  'ปรับปรุงล่าสุด: {date}': 'Last updated: {date}',
 })
 
 function caseRouteForRole(role: Role | undefined, caseId: string): string {
@@ -95,14 +95,14 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('ค้นหาด้วยหมายเลขเคส เช่น RQ-2026-003')}
+                placeholder={t('ค้นหาด้วยหมายเลขเหตุ เช่น RQ-2026-003')}
                 className="pl-11"
               />
             </div>
           )}
           {visibleCases.length === 0 ? (
             trimmedQuery ? (
-              <EmptyState title={t('ไม่พบเคสที่ค้นหา')} description={t('ไม่พบเคสที่ตรงกับ "{query}"', { query: query.trim() })} />
+              <EmptyState title={t('ไม่พบเหตุที่ค้นหา')} description={t('ไม่พบเหตุที่ตรงกับ "{query}"', { query: query.trim() })} />
             ) : (
               <EmptyState title={emptyTitle} description={emptyDescription} />
             )
@@ -137,8 +137,8 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
                     />
                     {expanded && (
                       <div className="animate-fade-in-up rounded-xl border border-border bg-surface p-4 text-sm text-muted">
-                        <p>{t('จำนวนขั้นตอนในไทม์ไลน์: {n} ขั้นตอน', { n: c.timeline.length })}</p>
-                        <p className="mt-1">{t('อัปเดตล่าสุด: {date}', { date: formatDateTime(c.updatedAt) })}</p>
+                        <p>{t('จำนวนขั้นตอนในลำดับเหตุการณ์: {n} ขั้นตอน', { n: c.timeline.length })}</p>
+                        <p className="mt-1">{t('ปรับปรุงล่าสุด: {date}', { date: formatDateTime(c.updatedAt) })}</p>
                       </div>
                     )}
                   </div>

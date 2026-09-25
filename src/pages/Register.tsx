@@ -9,38 +9,38 @@ registerTranslations({
   สมัครสมาชิก: 'Sign up',
   เลือกประเภทบัญชีที่ตรงกับการใช้งานของคุณเพื่อเริ่มสมัครสมาชิก: 'Choose the account type that matches how you plan to use ResQ',
   ประชาชน: 'Public',
-  สมัครเพื่อขอความช่วยเหลือฉุกเฉินและติดตามเคสของคุณ: 'Sign up to request emergency help and track your case',
+  สมัครเพื่อขอความช่วยเหลือฉุกเฉินและติดตามสถานะการช่วยเหลือ: 'Sign up to request emergency help and track your case',
   หน่วยกู้ชีพ: 'Rescue team',
-  สมัครสำหรับหน่วยกู้ชีพที่รับเคสและนำส่งผู้ป่วย: 'For rescue teams that accept cases and transport patients',
+  สำหรับหน่วยกู้ชีพที่ปฏิบัติงานช่วยเหลือและนำส่งผู้ป่วย: 'For rescue teams that accept cases and transport patients',
   'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
-  สมัครสำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ: 'For dispatch staff who take reports and assign rescue teams',
+  สำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ: 'For dispatch staff who take reports and assign rescue teams',
   โรงพยาบาล: 'Hospital',
-  สมัครสำหรับโรงพยาบาลที่รับข้อมูลและยืนยันการรับผู้ป่วย: 'For hospitals that receive case data and confirm patient admission',
+  สำหรับโรงพยาบาลที่รับข้อมูลและยืนยันการรับผู้ป่วย: 'For hospitals that receive case data and confirm patient admission',
 })
 
 const OPTIONS = [
   {
     icon: <User className="size-6" />,
     title: 'ประชาชน',
-    description: 'สมัครเพื่อขอความช่วยเหลือฉุกเฉินและติดตามเคสของคุณ',
+    description: 'สมัครเพื่อขอความช่วยเหลือฉุกเฉินและติดตามสถานะการช่วยเหลือ',
     path: '/register/public',
   },
   {
     icon: <Ambulance className="size-6" />,
     title: 'หน่วยกู้ชีพ',
-    description: 'สมัครสำหรับหน่วยกู้ชีพที่รับเคสและนำส่งผู้ป่วย',
+    description: 'สำหรับหน่วยกู้ชีพที่ปฏิบัติงานช่วยเหลือและนำส่งผู้ป่วย',
     path: '/register/rescue',
   },
   {
     icon: <PhoneIncoming className="size-6" />,
     title: 'ศูนย์สั่งการ 1669',
-    description: 'สมัครสำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ',
+    description: 'สำหรับเจ้าหน้าที่ศูนย์สั่งการที่รับแจ้งเหตุและมอบหมายหน่วยกู้ชีพ',
     path: '/register/dispatch',
   },
   {
     icon: <Building2 className="size-6" />,
     title: 'โรงพยาบาล',
-    description: 'สมัครสำหรับโรงพยาบาลที่รับข้อมูลและยืนยันการรับผู้ป่วย',
+    description: 'สำหรับโรงพยาบาลที่รับข้อมูลและยืนยันการรับผู้ป่วย',
     path: '/register/hospital',
   },
 ]

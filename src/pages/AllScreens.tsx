@@ -17,30 +17,30 @@ registerTranslations({
   'สมัครสมาชิก (ศูนย์สั่งการ)': 'Sign up (dispatch center)',
   'สมัครสมาชิก (โรงพยาบาล)': 'Sign up (hospital)',
   การแจ้งเหตุฉุกเฉิน: 'Emergency reporting',
-  'ถ่ายรูปจุดเกิดเหตุ / เบอร์ติดต่อกลับ': 'Photograph scene / callback number',
-  'ติดต่อ 1669': 'Contact 1669',
+  ถ่ายภาพจุดเกิดเหตุ: 'Photograph the scene',
+  'ติดต่อศูนย์สั่งการ 1669': 'Contact Dispatch Center 1669',
   'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
-  แดชบอร์ดศูนย์สั่งการ: 'Dispatch dashboard',
+  ภาพรวมศูนย์สั่งการ: 'Dispatch overview',
   สายเรียกเข้า: 'Incoming calls',
   หน่วยกู้ชีพ: 'Rescue team',
-  แดชบอร์ดหน่วยกู้ชีพ: 'Rescue dashboard',
+  ภาพรวมหน่วยกู้ชีพ: 'Rescue overview',
   โรงพยาบาล: 'Hospital',
-  แดชบอร์ดโรงพยาบาล: 'Hospital dashboard',
+  ภาพรวมโรงพยาบาล: 'Hospital overview',
   'อื่น ๆ': 'Other',
   เลือกโรงพยาบาล: 'Select a hospital',
   การแจ้งเตือน: 'Notifications',
   ตั้งค่า: 'Settings',
-  ประวัติเคส: 'Case history',
+  ประวัติเหตุ: 'Case history',
   หน้าทั้งหมด: 'All pages',
-  'ติดตามเคส (ประชาชน)': 'Track case (public)',
-  'รายละเอียดเคส (ศูนย์สั่งการ)': 'Case details (dispatch)',
+  'ติดตามเหตุ (ประชาชน)': 'Track case (public)',
+  'รายละเอียดเหตุ (ศูนย์สั่งการ)': 'Case details (dispatch)',
   'กรอกรายละเอียดเหตุการณ์ (ศูนย์สั่งการ)': 'Fill in incident details (dispatch)',
-  'รายละเอียดเคส (หน่วยกู้ชีพ)': 'Case details (rescue)',
-  'รายละเอียดเคส (โรงพยาบาล)': 'Case details (hospital)',
+  'รายละเอียดเหตุ (หน่วยกู้ชีพ)': 'Case details (rescue)',
+  'รายละเอียดเหตุ (โรงพยาบาล)': 'Case details (hospital)',
   บันทึกข้อมูลผู้ป่วย: 'Record patient data',
   แผนที่นำทาง: 'Navigation map',
-  ตัวอย่างเคส: 'Example case',
-  'ต้องมีเคสตัวอย่างก่อน — ลองเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก': 'Needs a sample case first — try the "Contact responders" button on the home page',
+  ตัวอย่างเหตุ: 'Example case',
+  'ต้องมีเหตุตัวอย่างก่อน กรุณาเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก': 'Needs a sample case first — try the "Contact responders" button on the home page',
 })
 
 interface ScreenEntry {
@@ -65,24 +65,24 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
   {
     title: 'การแจ้งเหตุฉุกเฉิน',
     items: [
-      { label: 'ถ่ายรูปจุดเกิดเหตุ / เบอร์ติดต่อกลับ', path: '/public/emergency-photo' },
-      { label: 'ติดต่อ 1669', path: '/public/call-1669' },
+      { label: 'ถ่ายภาพจุดเกิดเหตุ', path: '/public/emergency-photo' },
+      { label: 'ติดต่อศูนย์สั่งการ 1669', path: '/public/call-1669' },
     ],
   },
   {
     title: 'ศูนย์สั่งการ 1669',
     items: [
-      { label: 'แดชบอร์ดศูนย์สั่งการ', path: '/dispatch/dashboard' },
+      { label: 'ภาพรวมศูนย์สั่งการ', path: '/dispatch/dashboard' },
       { label: 'สายเรียกเข้า', path: '/dispatch/incoming-call' },
     ],
   },
   {
     title: 'หน่วยกู้ชีพ',
-    items: [{ label: 'แดชบอร์ดหน่วยกู้ชีพ', path: '/rescue/dashboard' }],
+    items: [{ label: 'ภาพรวมหน่วยกู้ชีพ', path: '/rescue/dashboard' }],
   },
   {
     title: 'โรงพยาบาล',
-    items: [{ label: 'แดชบอร์ดโรงพยาบาล', path: '/hospital/dashboard' }],
+    items: [{ label: 'ภาพรวมโรงพยาบาล', path: '/hospital/dashboard' }],
   },
   {
     title: 'อื่น ๆ',
@@ -90,7 +90,7 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
       { label: 'เลือกโรงพยาบาล', path: '/hospital-selection' },
       { label: 'การแจ้งเตือน', path: '/notifications' },
       { label: 'ตั้งค่า', path: '/settings' },
-      { label: 'ประวัติเคส', path: '/case-history' },
+      { label: 'ประวัติเหตุ', path: '/case-history' },
       { label: 'หน้าทั้งหมด', path: '/all-screens' },
     ],
   },
@@ -98,11 +98,11 @@ const STATIC_GROUPS: { title: string; items: ScreenEntry[] }[] = [
 
 function caseScreens(caseId: string): ScreenEntry[] {
   return [
-    { label: 'ติดตามเคส (ประชาชน)', path: `/public/case/${caseId}` },
-    { label: 'รายละเอียดเคส (ศูนย์สั่งการ)', path: `/dispatch/case/${caseId}` },
+    { label: 'ติดตามเหตุ (ประชาชน)', path: `/public/case/${caseId}` },
+    { label: 'รายละเอียดเหตุ (ศูนย์สั่งการ)', path: `/dispatch/case/${caseId}` },
     { label: 'กรอกรายละเอียดเหตุการณ์ (ศูนย์สั่งการ)', path: `/dispatch/emergency-details/${caseId}` },
-    { label: 'รายละเอียดเคส (หน่วยกู้ชีพ)', path: `/rescue/case/${caseId}` },
-    { label: 'รายละเอียดเคส (โรงพยาบาล)', path: `/hospital/case/${caseId}` },
+    { label: 'รายละเอียดเหตุ (หน่วยกู้ชีพ)', path: `/rescue/case/${caseId}` },
+    { label: 'รายละเอียดเหตุ (โรงพยาบาล)', path: `/hospital/case/${caseId}` },
     { label: 'บันทึกข้อมูลผู้ป่วย', path: `/rescue/patient-record/${caseId}` },
     { label: 'แผนที่นำทาง', path: `/navigation/${caseId}` },
   ]
@@ -147,7 +147,7 @@ export default function AllScreens() {
           className="animate-fade-in-up"
           style={{ animationDelay: `${STATIC_GROUPS.length * 50}ms`, animationFillMode: 'backwards' }}
         >
-          <h2 className="mb-3 text-lg font-bold text-ink">{t('ตัวอย่างเคส')}</h2>
+          <h2 className="mb-3 text-lg font-bold text-ink">{t('ตัวอย่างเหตุ')}</h2>
           {caseItems ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {caseItems.map((item, ii) => (
@@ -166,7 +166,7 @@ export default function AllScreens() {
                   key={item.path}
                   label={t(item.label)}
                   disabled
-                  note={t('ต้องมีเคสตัวอย่างก่อน — ลองเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก')}
+                  note={t('ต้องมีเหตุตัวอย่างก่อน กรุณาเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก')}
                   delayMs={ii * 30}
                 />
               ))}

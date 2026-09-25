@@ -51,26 +51,26 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
-  ข้อมูลเคสไม่สอดคล้องกัน: 'Case data is inconsistent',
-  'เคสนี้มีข้อมูลไม่สอดคล้องกับสถานะปัจจุบัน อาจทำให้ไม่เห็นขั้นตอนถัดไป — ลองแก้ไขข้อมูลที่เกี่ยวข้องอีกครั้ง':
+  ข้อมูลของเหตุไม่สอดคล้องกัน: 'Case data is inconsistent',
+  'ข้อมูลของเหตุนี้ไม่สอดคล้องกับสถานะปัจจุบัน ซึ่งอาจทำให้ไม่แสดงขั้นตอนถัดไป กรุณาตรวจสอบและบันทึกข้อมูลที่เกี่ยวข้องอีกครั้ง':
     'This case has data that doesn’t match its current status, which may be hiding the next action — try re-submitting the relevant form',
-  'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"':
+  'มีการประเมินความรุนแรงแล้ว แต่สถานะของเหตุยังไม่เป็น "รับแจ้งเหตุแล้ว"':
     'Severity has been assessed, but the case status hasn’t reached "Received" yet',
-  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
+  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะของเหตุยังไม่เป็น "มอบหมายหน่วยกู้ชีพแล้ว"':
     'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
-  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
+  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะของเหตุยังไม่เป็น "ถึงจุดเกิดเหตุแล้ว"':
     'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
-  'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
+  'รับแจ้งเหตุแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
   รู้สึกตัวดี: 'Conscious',
   หมดสติ: 'Unconscious',
   ไม่ทราบ: 'Unknown',
   ทุกจังหวัด: 'All provinces',
-  รายละเอียดเคส: 'Case details',
-  ไม่พบเคสนี้: 'Case not found',
-  เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
-  'สร้างเคสเมื่อ {date}': 'Created {date}',
-  สถานะเคสอัปเดตแบบเรียลไทม์: 'Case status updates in real time',
-  'แชร์ QR/ลิงก์': 'Share QR/link',
+  รายละเอียดเหตุ: 'Case details',
+  ไม่พบเหตุนี้: 'Case not found',
+  เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
+  'แจ้งเหตุเมื่อ {date}': 'Reported {date}',
+  สถานะของเหตุแสดงผลตามเวลาจริง: 'Case status updates in real time',
+  'ส่งต่อ QR Code/ลิงก์': 'Share QR/link',
   รายละเอียดเหตุการณ์: 'Incident details',
   ประเภทเหตุการณ์: 'Incident type',
   จำนวนผู้ป่วย: 'Number of patients',
@@ -79,25 +79,25 @@ registerTranslations({
   เบอร์ติดต่อกลับ: 'Callback number',
   หมายเหตุเพิ่มเติม: 'Additional notes',
   ยังไม่ได้กรอกรายละเอียดเหตุการณ์: 'Incident details not yet filled in',
-  'การประเมินความรุนแรง (ศูนย์ 1669)': 'Severity assessment (Center 1669)',
+  'การประเมินความรุนแรง (ศูนย์สั่งการ 1669)': 'Severity assessment (Center 1669)',
   แก้ไขการประเมิน: 'Edit assessment',
   ลักษณะการบาดเจ็บ: 'Nature of injury',
-  'ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์ 1669': 'No severity assessment from Center 1669 yet',
+  'ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์สั่งการ 1669': 'No severity assessment from Center 1669 yet',
   กรอกรายละเอียดเหตุการณ์: 'Fill in incident details',
   หน่วยกู้ชีพเสนอปรับระดับความรุนแรง: 'Rescue team proposed a severity change',
   เดิม: 'Original',
   เสนอโดยหน่วยกู้ชีพ: 'Proposed by rescue team',
-  ยืนยันระดับสี: 'Confirm severity',
+  ยืนยันระดับความรุนแรง: 'Confirm severity',
   ไม่ยืนยัน: 'Decline',
   จุดเกิดเหตุ: 'Incident location',
-  ไทม์ไลน์เคส: 'Case timeline',
+  ลำดับเหตุการณ์: 'Case timeline',
   การดำเนินการ: 'Actions',
   กรุณากรอกรายละเอียดเหตุการณ์และประเมินระดับความรุนแรงก่อนค้นหาหน่วยกู้ชีพ: 'Please fill in incident details and assess severity before searching for a rescue team',
-  'เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้':
+  'เหตุนี้ได้รับการประเมินเป็นระดับไม่ฉุกเฉิน สามารถพิจารณาปิดเหตุโดยไม่ส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติ':
     'This case was assessed as non-urgent — consider closing it without dispatch, or search for a rescue team as usual',
   ค้นหาหน่วยกู้ชีพ: 'Search for a rescue team',
-  'เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด': 'This case has been assessed — ready to search for the nearest rescue team',
-  'เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด':
+  'เหตุนี้ได้รับการประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด': 'This case has been assessed — ready to search for the nearest rescue team',
+  'เลือกหน่วยกู้ชีพที่ต้องการมอบหมาย (เรียงตามความพร้อมและระยะทาง)':
     'Choose which rescue team to assign to this case — sorted by availability and proximity',
   ค้นหาชื่อหน่วยกู้ชีพ: 'Search rescue team name',
   'กรองตามจังหวัด (ไม่บังคับ)': 'Filter by province (optional)',
@@ -108,11 +108,11 @@ registerTranslations({
   ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก: 'No rescue team matches the search or selected province',
   '{km} กม. · {n} รถ/ทีม': '{km} km · {n} vehicle(s)/crew(s)',
   ไม่ว่าง: 'busy',
-  แนะนำที่สุด: 'Best match',
+  เหมาะสมที่สุด: 'Best match',
   'มีรถระดับ {level}': '{level}-level vehicle available',
   'ไม่มีรถระดับ {level}': 'No {level}-level vehicle',
   'แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย': 'Showing the {limit} nearest units, out of {total} total',
-  'หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์':
+  'หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่จำเป็น แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์ดังกล่าว':
     'The nearest unit lacks the right equipment — recommend assigning it alongside a unit that has it',
   'มอบหมายร่วมกับ {team} ({km} กม.)': 'Assign together with {team} ({km} km)',
   'มอบหมายทั้ง 2 หน่วย': 'Assign both teams',
@@ -133,33 +133,33 @@ registerTranslations({
   'ต้องการอุปกรณ์: {list}': 'Requires equipment: {list}',
   ยืนยันเพิ่มหน่วยสนับสนุน: 'Confirm adding support unit',
   ยกเลิก: 'Cancel',
-  หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว: 'A rescue team is already responsible for this case',
-  เคสเสร็จสิ้นแล้ว: 'Case completed',
+  มีหน่วยกู้ชีพรับผิดชอบเหตุนี้แล้ว: 'A rescue team is already responsible for this case',
+  ดำเนินการเสร็จสิ้นแล้ว: 'Case completed',
   กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์: 'The emergency response process is complete',
   ยืนยันการมอบหมายหน่วยกู้ชีพ: 'Confirm rescue team assignment',
-  'ต้องการมอบหมาย "{team}" ให้รับผิดชอบเคส {caseNumber} ใช่หรือไม่': 'Assign "{team}" to be responsible for case {caseNumber}?',
+  'ยืนยันการมอบหมาย "{team}" ให้รับผิดชอบเหตุหมายเลข {caseNumber}': 'Assign "{team}" to be responsible for case {caseNumber}?',
   ยืนยันมอบหมาย: 'Confirm assignment',
   ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่: 'Assign a higher-level support unit?',
-  'ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่':
+  'ระดับความรุนแรงเพิ่มขึ้น ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่':
     'Severity has increased — assign an additional {level}-level support unit?',
   มอบหมายหน่วยสนับสนุน: 'Assign support unit',
-  ไม่ต้อง: 'No',
-  แชร์ลิงก์ติดตามเคส: 'Share case tracking link',
-  'สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์':
+  ไม่ต้องการ: 'No',
+  ส่งต่อลิงก์ติดตามเหตุ: 'Share case tracking link',
+  'สแกน QR Code หรือคัดลอกลิงก์ส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้อง เพื่อติดตามสถานะได้ตลอดเวลา':
     'Scan the QR code or copy the link to let the reporter, family, or related agencies watch the status in real time',
   เริ่มค้นหาหน่วยกู้ชีพแล้ว: 'Started finding a rescue team',
-  'เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
-  ปิดเคสแล้ว: 'Case closed',
-  'บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ': 'Logged as advice given over the phone — no rescue team dispatched',
-  'ปิดเคส (ให้คำแนะนำแล้ว)': 'Close case (advice given)',
+  'เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
+  ปิดเหตุแล้ว: 'Case closed',
+  'บันทึกการให้คำแนะนำทางโทรศัพท์ โดยไม่ส่งหน่วยกู้ชีพ': 'Logged as advice given over the phone — no rescue team dispatched',
+  'ปิดเหตุ (ให้คำแนะนำแล้ว)': 'Close case (advice given)',
   บันทึกคำแนะนำที่ให้ทางโทรศัพท์: 'Log the advice given over the phone',
   'เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ': 'e.g. gave basic first-aid advice, no rescue team needed',
-  ยืนยันปิดเคส: 'Confirm closing case',
+  ยืนยันการปิดเหตุ: 'Confirm closing case',
   'มอบหมายหน่วยกู้ชีพสำเร็จ': 'Rescue team assigned',
-  '{team1} และ {team2} ได้รับมอบหมายเคส {caseNumber} แล้ว': '{team1} and {team2} have been assigned to case {caseNumber}',
-  '{team} ได้รับมอบหมายเคส {caseNumber} แล้ว': '{team} has been assigned to case {caseNumber}',
+  '{team1} และ {team2} ได้รับมอบหมายเหตุหมายเลข {caseNumber} แล้ว': '{team1} and {team2} have been assigned to case {caseNumber}',
+  '{team} ได้รับมอบหมายเหตุหมายเลข {caseNumber} แล้ว': '{team} has been assigned to case {caseNumber}',
   เพิ่มหน่วยสนับสนุนแล้ว: 'Support unit added',
-  '{team} เข้าร่วมช่วยเหลือเคสนี้': '{team} has joined to help with this case',
+  '{team} เข้าร่วมให้การช่วยเหลือเหตุนี้': '{team} has joined to help with this case',
 })
 
 const CONSCIOUS_LABEL: Record<string, string> = {
@@ -233,8 +233,8 @@ export default function DispatchCaseDetail() {
 
   if (!id || !emergencyCase || !recommendation) {
     return (
-      <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
-        <ErrorState title={t('ไม่พบเคสนี้')} description={t('เคสนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')} />
+      <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
+        <ErrorState title={t('ไม่พบเหตุนี้')} description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')} />
       </AppShell>
     )
   }
@@ -252,7 +252,7 @@ export default function DispatchCaseDetail() {
       setFindingLoading(false)
       toast({
         title: t('เริ่มค้นหาหน่วยกู้ชีพแล้ว'),
-        message: t('เคส {caseNumber} กำลังค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber: c.caseNumber }),
+        message: t('เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber: c.caseNumber }),
         tone: 'info',
       })
     }, 500)
@@ -264,7 +264,7 @@ export default function DispatchCaseDetail() {
     setTimeout(() => {
       closeCaseWithAdvice(id, closeAdviceNote.trim())
       setCloseAdviceLoading(false)
-      toast({ title: t('ปิดเคสแล้ว'), message: t('บันทึกว่าให้คำแนะนำทางโทรศัพท์ ไม่ต้องส่งหน่วยกู้ชีพ'), tone: 'success' })
+      toast({ title: t('ปิดเหตุแล้ว'), message: t('บันทึกการให้คำแนะนำทางโทรศัพท์ โดยไม่ส่งหน่วยกู้ชีพ'), tone: 'success' })
       navigate('/dispatch/dashboard')
     }, 400)
   }
@@ -276,7 +276,7 @@ export default function DispatchCaseDetail() {
   // out to be non-urgent -- so the note/confirm markup exists in one place.
   const closeAdviceBlock = !showCloseAdvice ? (
     <Button variant="outline" fullWidth icon={<XCircle className="size-4" />} onClick={() => setShowCloseAdvice(true)}>
-      {t('ปิดเคส (ให้คำแนะนำแล้ว)')}
+      {t('ปิดเหตุ (ให้คำแนะนำแล้ว)')}
     </Button>
   ) : (
     <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
@@ -289,7 +289,7 @@ export default function DispatchCaseDetail() {
       />
       <div className="flex gap-2">
         <Button fullWidth disabled={!closeAdviceNote.trim()} loading={closeAdviceLoading} onClick={handleCloseAdvice}>
-          {t('ยืนยันปิดเคส')}
+          {t('ยืนยันการปิดเหตุ')}
         </Button>
         <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
           {t('ยกเลิก')}
@@ -318,8 +318,8 @@ export default function DispatchCaseDetail() {
       toast({
         title: t('มอบหมายหน่วยกู้ชีพสำเร็จ'),
         message: supportTeam
-          ? t('{team1} และ {team2} ได้รับมอบหมายเคส {caseNumber} แล้ว', { team1: selectedTeam.name, team2: supportTeam.name, caseNumber: c.caseNumber })
-          : t('{team} ได้รับมอบหมายเคส {caseNumber} แล้ว', { team: selectedTeam.name, caseNumber: c.caseNumber }),
+          ? t('{team1} และ {team2} ได้รับมอบหมายเหตุหมายเลข {caseNumber} แล้ว', { team1: selectedTeam.name, team2: supportTeam.name, caseNumber: c.caseNumber })
+          : t('{team} ได้รับมอบหมายเหตุหมายเลข {caseNumber} แล้ว', { team: selectedTeam.name, caseNumber: c.caseNumber }),
         tone: 'success',
       })
       setTimeout(() => setJustAssigned(false), 3200)
@@ -362,23 +362,23 @@ export default function DispatchCaseDetail() {
       setAddSupportLoading(false)
       setShowAddSupport(false)
       setAddSupportTeamId(null)
-      toast({ title: t('เพิ่มหน่วยสนับสนุนแล้ว'), message: t('{team} เข้าร่วมช่วยเหลือเคสนี้', { team: team.name }), tone: 'success' })
+      toast({ title: t('เพิ่มหน่วยสนับสนุนแล้ว'), message: t('{team} เข้าร่วมให้การช่วยเหลือเหตุนี้', { team: team.name }), tone: 'success' })
     }, 500)
   }
 
   return (
-    <AppShell variant="dashboard" title={t('รายละเอียดเคส')}>
+    <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono text-lg font-extrabold text-primary">{c.caseNumber}</p>
-          <p className="text-sm text-muted">{t('สร้างเคสเมื่อ {date}', { date: new Date(c.createdAt).toLocaleString('th-TH') })}</p>
+          <p className="text-sm text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: new Date(c.createdAt).toLocaleString('th-TH') })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
-          <span className="inline-flex items-center gap-1.5" aria-label={t('สถานะเคสอัปเดตแบบเรียลไทม์')}>
+          <span className="inline-flex items-center gap-1.5" aria-label={t('สถานะของเหตุแสดงผลตามเวลาจริง')}>
             <PulseRing
               tone={c.status === 'completed' ? 'success' : c.status === 'called-1669' ? 'emergency' : 'primary'}
               size="sm"
@@ -386,7 +386,7 @@ export default function DispatchCaseDetail() {
             <StatusBadge status={c.status} />
           </span>
           <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
-            {t('แชร์ QR/ลิงก์')}
+            {t('ส่งต่อ QR Code/ลิงก์')}
           </Button>
         </div>
       </div>
@@ -395,9 +395,9 @@ export default function DispatchCaseDetail() {
         <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/40 bg-warning/[0.06] p-4">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="min-w-0">
-            <p className="font-bold text-ink">{t('ข้อมูลเคสไม่สอดคล้องกัน')}</p>
+            <p className="font-bold text-ink">{t('ข้อมูลของเหตุไม่สอดคล้องกัน')}</p>
             <p className="mt-0.5 text-sm text-muted">
-              {t('เคสนี้มีข้อมูลไม่สอดคล้องกับสถานะปัจจุบัน อาจทำให้ไม่เห็นขั้นตอนถัดไป — ลองแก้ไขข้อมูลที่เกี่ยวข้องอีกครั้ง')}
+              {t('ข้อมูลของเหตุนี้ไม่สอดคล้องกับสถานะปัจจุบัน ซึ่งอาจทำให้ไม่แสดงขั้นตอนถัดไป กรุณาตรวจสอบและบันทึกข้อมูลที่เกี่ยวข้องอีกครั้ง')}
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-ink">
               {healthIssues.map((issue) => (
@@ -459,7 +459,7 @@ export default function DispatchCaseDetail() {
 
           <Card>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-bold text-ink">{t('การประเมินความรุนแรง (ศูนย์ 1669)')}</h2>
+              <h2 className="text-base font-bold text-ink">{t('การประเมินความรุนแรง (ศูนย์สั่งการ 1669)')}</h2>
               {c.assessment && c.status !== 'completed' && (
                 <Button
                   variant="outline"
@@ -483,7 +483,7 @@ export default function DispatchCaseDetail() {
               </div>
             ) : (
               <div className="flex flex-col items-start gap-3">
-                <p className="text-sm text-muted">{t('ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์ 1669')}</p>
+                <p className="text-sm text-muted">{t('ยังไม่มีการประเมินระดับความรุนแรงจากศูนย์สั่งการ 1669')}</p>
                 <Button
                   size="sm"
                   icon={<ClipboardList className="size-4" />}
@@ -518,7 +518,7 @@ export default function DispatchCaseDetail() {
               )}
               <div className="mt-4 flex gap-2">
                 <Button fullWidth onClick={() => handleConfirmSeverity(true)}>
-                  {t('ยืนยันระดับสี')}
+                  {t('ยืนยันระดับความรุนแรง')}
                 </Button>
                 <Button variant="outline" fullWidth onClick={() => handleConfirmSeverity(false)}>
                   {t('ไม่ยืนยัน')}
@@ -552,7 +552,7 @@ export default function DispatchCaseDetail() {
           )}
 
           <Card>
-            <h2 className="mb-4 text-base font-bold text-ink">{t('ไทม์ไลน์เคส')}</h2>
+            <h2 className="mb-4 text-base font-bold text-ink">{t('ลำดับเหตุการณ์')}</h2>
             <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
           </Card>
         </div>
@@ -577,7 +577,7 @@ export default function DispatchCaseDetail() {
                 {c.assessment.severity === 5 ? (
                   <>
                     <p className="text-sm text-muted">
-                      {t('เคสนี้ประเมินเป็นระดับไม่ฉุกเฉิน — พิจารณาปิดเคสโดยไม่ต้องส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติก็ได้')}
+                      {t('เหตุนี้ได้รับการประเมินเป็นระดับไม่ฉุกเฉิน สามารถพิจารณาปิดเหตุโดยไม่ส่งหน่วยกู้ชีพ หรือค้นหาหน่วยกู้ชีพตามปกติ')}
                     </p>
                     <Button fullWidth variant="outline" loading={findingLoading} onClick={handleStartFinding}>
                       {t('ค้นหาหน่วยกู้ชีพ')}
@@ -586,7 +586,7 @@ export default function DispatchCaseDetail() {
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-muted">{t('เคสนี้ประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด')}</p>
+                    <p className="text-sm text-muted">{t('เหตุนี้ได้รับการประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด')}</p>
                     <Button fullWidth loading={findingLoading} onClick={handleStartFinding}>
                       {t('ค้นหาหน่วยกู้ชีพ')}
                     </Button>
@@ -598,7 +598,7 @@ export default function DispatchCaseDetail() {
             {c.status === 'finding-rescue' && (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  {t('เลือกหน่วยกู้ชีพที่ต้องการมอบหมายให้เคสนี้ — เรียงตามความพร้อมและระยะทางที่ใกล้ที่สุด')}
+                  {t('เลือกหน่วยกู้ชีพที่ต้องการมอบหมาย (เรียงตามความพร้อมและระยะทาง)')}
                 </p>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
@@ -685,7 +685,7 @@ export default function DispatchCaseDetail() {
                             <span className="flex flex-col items-end gap-1">
                               {isTop && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
-                                  {t('แนะนำที่สุด')}
+                                  {t('เหมาะสมที่สุด')}
                                 </span>
                               )}
                               {selectedLevel && (
@@ -720,7 +720,7 @@ export default function DispatchCaseDetail() {
                   <div className="flex flex-col gap-2 rounded-xl border border-warning/30 bg-warning/5 p-3.5">
                     <p className="flex items-start gap-2 text-sm font-semibold text-ink">
                       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-                      {t('หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่เหมาะสม แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์')}
+                      {t('หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่จำเป็น แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์ดังกล่าว')}
                     </p>
                     <label className="flex items-center gap-2 text-sm text-ink">
                       <input
@@ -916,13 +916,13 @@ export default function DispatchCaseDetail() {
                   </div>
                 )}
                 <p className="rounded-xl bg-skyblue-light px-3 py-2.5 text-xs font-medium text-muted">
-                  {t('หน่วยกู้ชีพรับผิดชอบเคสนี้แล้ว')}
+                  {t('มีหน่วยกู้ชีพรับผิดชอบเหตุนี้แล้ว')}
                 </p>
               </div>
             )}
 
             {c.status === 'completed' && (
-              <SuccessState title={t('เคสเสร็จสิ้นแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')} />
+              <SuccessState title={t('ดำเนินการเสร็จสิ้นแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')} />
             )}
           </Card>
         </div>
@@ -931,7 +931,7 @@ export default function DispatchCaseDetail() {
       <ConfirmationModal
         open={confirmOpen}
         title={t('ยืนยันการมอบหมายหน่วยกู้ชีพ')}
-        message={selectedTeam ? t('ต้องการมอบหมาย "{team}" ให้รับผิดชอบเคส {caseNumber} ใช่หรือไม่', { team: selectedTeam.name, caseNumber: c.caseNumber }) : ''}
+        message={selectedTeam ? t('ยืนยันการมอบหมาย "{team}" ให้รับผิดชอบเหตุหมายเลข {caseNumber}', { team: selectedTeam.name, caseNumber: c.caseNumber }) : ''}
         confirmLabel={t('ยืนยันมอบหมาย')}
         confirmLoading={assignLoading}
         onConfirm={handleConfirmAssign}
@@ -943,11 +943,11 @@ export default function DispatchCaseDetail() {
         title={t('ต้องการมอบหมายหน่วยสนับสนุนระดับสูงขึ้นหรือไม่')}
         message={
           escalateLevel
-            ? t('ระดับความรุนแรงเพิ่มขึ้น — ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่', { level: escalateLevel })
+            ? t('ระดับความรุนแรงเพิ่มขึ้น ต้องการมอบหมายหน่วยสนับสนุนระดับ {level} เพิ่มเติมหรือไม่', { level: escalateLevel })
             : ''
         }
         confirmLabel={t('มอบหมายหน่วยสนับสนุน')}
-        cancelLabel={t('ไม่ต้อง')}
+        cancelLabel={t('ไม่ต้องการ')}
         onConfirm={() => {
           setEscalateConfirmOpen(false)
           setEscalating(true)
@@ -960,8 +960,8 @@ export default function DispatchCaseDetail() {
         open={shareOpen}
         url={`${window.location.origin}${import.meta.env.BASE_URL}public/case/${c.id}`}
         onClose={() => setShareOpen(false)}
-        title={t('แชร์ลิงก์ติดตามเคส')}
-        description={t('สแกน QR หรือคัดลอกลิงก์เพื่อส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้องดูสถานะแบบเรียลไทม์')}
+        title={t('ส่งต่อลิงก์ติดตามเหตุ')}
+        description={t('สแกน QR Code หรือคัดลอกลิงก์ส่งให้ผู้แจ้งเหตุ ญาติ หรือหน่วยงานที่เกี่ยวข้อง เพื่อติดตามสถานะได้ตลอดเวลา')}
       />
         </div>
       </div>

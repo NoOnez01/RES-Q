@@ -5,8 +5,8 @@ import { formatDuration } from '@/lib/utils'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  บันทึกเสียงบันทึกเพิ่มเติม: 'Record additional voice note',
-  'อุปกรณ์นี้ไม่รองรับการบันทึกเสียง สามารถพิมพ์บันทึกแทนได้': 'This device does not support audio recording, you can type a note instead',
+  บันทึกเสียงเพิ่มเติม: 'Record additional voice note',
+  'อุปกรณ์นี้ไม่รองรับการบันทึกเสียง กรุณาพิมพ์ข้อความแทน': 'This device does not support audio recording. Please type a note instead.',
   เริ่มบันทึกเสียง: 'Start recording',
   หยุดบันทึก: 'Stop recording',
   หยุดชั่วคราว: 'Pause',
@@ -31,7 +31,7 @@ export function AudioRecorder({
   resetAfterSave?: boolean
 }) {
   const t = useT()
-  const resolvedLabel = label ?? t('บันทึกเสียงบันทึกเพิ่มเติม')
+  const resolvedLabel = label ?? t('บันทึกเสียงเพิ่มเติม')
   const [supported] = useState(() => typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia)
   const [recording, setRecording] = useState(false)
   const [seconds, setSeconds] = useState(0)
@@ -99,7 +99,7 @@ export function AudioRecorder({
       <p className="text-sm font-semibold text-ink mb-3">{resolvedLabel}</p>
 
       {!supported && (
-        <p className="text-xs text-muted mb-2">{t('อุปกรณ์นี้ไม่รองรับการบันทึกเสียง สามารถพิมพ์บันทึกแทนได้')}</p>
+        <p className="text-xs text-muted mb-2">{t('อุปกรณ์นี้ไม่รองรับการบันทึกเสียง กรุณาพิมพ์ข้อความแทน')}</p>
       )}
 
       {!audioUrl ? (

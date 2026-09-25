@@ -13,23 +13,23 @@ registerTranslations({
   'กำลังเริ่มต้น...': 'Starting...',
   ปิด: 'Close',
   สแกนบัตรประชาชน: 'Scan ID card',
-  ถ่ายรูปบัตรให้เห็นข้อความชัดเจน: 'Photograph the card so the text is clearly visible',
+  กรุณาถ่ายภาพบัตรให้เห็นข้อความชัดเจน: 'Photograph the card so the text is clearly visible',
   'กำลังอ่านข้อมูลจากบัตร...': 'Reading data from the card...',
-  ตรวจสอบและแก้ไขข้อมูลก่อนใช้: 'Review and edit the information before using it',
+  กรุณาตรวจสอบและแก้ไขข้อมูลก่อนนำไปใช้: 'Review and edit the information before using it',
   'กำลังเปิดกล้อง...': 'Opening camera...',
   ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง: 'No camera found, or camera access was not granted',
   'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
-  ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า: 'The first time may take a moment if the internet connection is slow',
+  'การใช้งานครั้งแรกอาจใช้เวลาสักครู่ หากสัญญาณอินเทอร์เน็ตช้า': 'The first time may take a moment if the internet connection is slow',
   'อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง': 'Failed to read the card, please enter the information manually',
-  'ข้อมูลที่อ่านได้อาจไม่ถูกต้อง 100% กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน':
-    'The extracted information may not be 100% accurate, please verify against the physical card before using it',
+  'ข้อมูลที่อ่านได้อาจคลาดเคลื่อน กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน':
+    'The extracted information may contain errors. Please check it against the physical card before using it.',
   'ชื่อ-นามสกุล': 'Full name',
   เลขบัตรประชาชน: 'National ID number',
   ข้อความทั้งหมดที่อ่านได้: 'All extracted text',
   ใช้ข้อมูลนี้: 'Use this information',
   สแกนใหม่: 'Scan again',
-  ถ่ายรูปบัตร: 'Take photo of card',
-  หรืออัปโหลดรูปบัตรแทนการถ่าย: 'Or upload a photo of the card instead',
+  ถ่ายภาพบัตร: 'Take photo of card',
+  หรืออัปโหลดภาพบัตรแทน: 'Or upload a photo of the card instead',
 })
 
 interface IdCardScannerModalProps {
@@ -229,9 +229,9 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
         <div className="mb-3 text-center text-white">
           <p className="mt-1 text-lg font-bold">{t('สแกนบัตรประชาชน')}</p>
           <p className="mt-0.5 text-sm text-white/70">
-            {mode === 'camera' && t('ถ่ายรูปบัตรให้เห็นข้อความชัดเจน')}
+            {mode === 'camera' && t('กรุณาถ่ายภาพบัตรให้เห็นข้อความชัดเจน')}
             {mode === 'processing' && t('กำลังอ่านข้อมูลจากบัตร...')}
-            {mode === 'review' && t('ตรวจสอบและแก้ไขข้อมูลก่อนใช้')}
+            {mode === 'review' && t('กรุณาตรวจสอบและแก้ไขข้อมูลก่อนนำไปใช้')}
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                   />
                 </div>
                 <p className="text-center text-xs text-white/50">
-                  {t('ครั้งแรกอาจใช้เวลาสักครู่หากสัญญาณอินเทอร์เน็ตช้า')}
+                  {t('การใช้งานครั้งแรกอาจใช้เวลาสักครู่ หากสัญญาณอินเทอร์เน็ตช้า')}
                 </p>
               </div>
             </div>
@@ -300,7 +300,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
               ) : (
                 <p className="flex items-start gap-2 rounded-xl border border-primary/20 bg-skyblue-pale p-3 text-xs text-ink">
                   <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                  {t('ข้อมูลที่อ่านได้อาจไม่ถูกต้อง 100% กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน')}
+                  {t('ข้อมูลที่อ่านได้อาจคลาดเคลื่อน กรุณาตรวจสอบกับบัตรจริงก่อนใช้งาน')}
                 </p>
               )}
               <Input label={t('ชื่อ-นามสกุล')} value={editName} onChange={(e) => setEditName(e.target.value)} />
@@ -337,7 +337,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                 disabled={cameraStatus !== 'ready'}
                 icon={<Camera className="size-5" />}
               >
-                {t('ถ่ายรูปบัตร')}
+                {t('ถ่ายภาพบัตร')}
               </Button>
               <input
                 ref={fileInputRef}
@@ -356,7 +356,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                 className="flex items-center justify-center gap-1.5 py-1 text-xs font-semibold text-white/70 hover:text-white"
               >
                 <Upload className="size-3.5" />
-                {t('หรืออัปโหลดรูปบัตรแทนการถ่าย')}
+                {t('หรืออัปโหลดภาพบัตรแทน')}
               </button>
             </div>
           )}

@@ -20,7 +20,7 @@ registerTranslations({
   สมัครสมาชิกไม่สำเร็จ: 'Sign-up failed',
   สมัครสมาชิกศูนย์สั่งการ: 'Dispatch center sign-up',
   สมัครสมาชิกสำเร็จ: 'Sign-up successful',
-  'บัญชีของคุณรอการอนุมัติก่อนเข้าใช้งานได้ (บัญชีศูนย์สั่งการที่มีอยู่แล้ว หรือผู้ดูแลระบบ เป็นผู้อนุมัติ)':
+  'บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (ผู้อนุมัติคือเจ้าหน้าที่ศูนย์สั่งการหรือผู้ดูแลระบบ)':
     'Your account is pending approval before you can log in (approved by an existing dispatch account or an admin)',
   ไปหน้าเข้าสู่ระบบ: 'Go to login',
   'ชื่อ-นามสกุลเจ้าหน้าที่': "Staff member's full name",
@@ -30,7 +30,7 @@ registerTranslations({
   รหัสผ่าน: 'Password',
   'อย่างน้อย 6 ตัวอักษร': 'At least 6 characters',
   สมัครสมาชิก: 'Sign up',
-  บัญชีศูนย์สั่งการต้องได้รับการอนุมัติก่อนเข้าใช้งานได้เช่นกัน: 'Dispatch accounts must also be approved before they can log in',
+  บัญชีศูนย์สั่งการต้องได้รับการอนุมัติก่อนเข้าใช้งานเช่นกัน: 'Dispatch accounts must also be approved before they can log in',
 })
 
 interface FormState {
@@ -98,7 +98,7 @@ export default function RegisterDispatch() {
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
           <SuccessState
             title={t('สมัครสมาชิกสำเร็จ')}
-            description={t('บัญชีของคุณรอการอนุมัติก่อนเข้าใช้งานได้ (บัญชีศูนย์สั่งการที่มีอยู่แล้ว หรือผู้ดูแลระบบ เป็นผู้อนุมัติ)')}
+            description={t('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (ผู้อนุมัติคือเจ้าหน้าที่ศูนย์สั่งการหรือผู้ดูแลระบบ)')}
             action={
               <Button variant="outline" onClick={() => navigate('/login')}>
                 {t('ไปหน้าเข้าสู่ระบบ')}
@@ -160,7 +160,7 @@ export default function RegisterDispatch() {
               </Button>
             </form>
             <p className="mt-4 text-center text-xs text-muted">
-              {t('บัญชีศูนย์สั่งการต้องได้รับการอนุมัติก่อนเข้าใช้งานได้เช่นกัน')}
+              {t('บัญชีศูนย์สั่งการต้องได้รับการอนุมัติก่อนเข้าใช้งานเช่นกัน')}
             </p>
           </Card>
         </div>

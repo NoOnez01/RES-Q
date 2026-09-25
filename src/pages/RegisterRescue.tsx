@@ -18,7 +18,7 @@ registerTranslations({
   กรุณาเลือกหน่วยกู้ชีพ: 'Please select a rescue team',
   กรุณากรอกชื่อหน่วยกู้ชีพ: 'Please enter the rescue team name',
   กรุณากรอกรหัสหน่วย: 'Please enter the unit code',
-  กรุณากรอกเบอร์หน่วย: "Please enter the unit's phone number",
+  กรุณากรอกเบอร์โทรศัพท์ของหน่วย: "Please enter the unit's phone number",
   กรุณากรอกจำนวนเจ้าหน้าที่: 'Please enter the number of staff',
   'กรุณากรอกจำนวนเป็นตัวเลขที่มากกว่า 0': 'Please enter a number greater than 0',
   กรุณากรอกอีเมล: 'Please enter your email',
@@ -27,7 +27,7 @@ registerTranslations({
   สมัครสมาชิกไม่สำเร็จ: 'Sign-up failed',
   สมัครสมาชิกหน่วยกู้ชีพ: 'Rescue team sign-up',
   สมัครสมาชิกสำเร็จ: 'Sign-up successful',
-  'บัญชีของคุณรอการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้': 'Your account is pending approval from Dispatch Center 1669 before you can log in',
+  'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากศูนย์สั่งการ 1669': 'Your account is pending approval from Dispatch Center 1669 before you can log in',
   ไปหน้าเข้าสู่ระบบ: 'Go to login',
   'ชื่อ-นามสกุล': 'Full name',
   เบอร์ติดต่อ: 'Contact number',
@@ -36,15 +36,15 @@ registerTranslations({
   ไม่พบหน่วยกู้ชีพที่ค้นหา: 'No matching rescue team found',
   'หน่วยของฉันไม่มีในรายการ': "My team isn't in the list",
   ชื่อหน่วยกู้ชีพ: 'Rescue team name',
-  เบอร์หน่วย: "Unit's phone number",
-  'รถ/ทีมคันแรกของหน่วย (เพิ่มคันอื่นๆ ได้ภายหลัง)': "The team's first vehicle/crew (more can be added later)",
+  เบอร์โทรศัพท์หน่วย: "Unit's phone number",
+  'รถหรือทีมแรกของหน่วย (เพิ่มเติมได้ภายหลัง)': "The team's first vehicle/crew (more can be added later)",
   'รหัสรถ/ทีม': 'Vehicle/crew code',
   จำนวนเจ้าหน้าที่: 'Number of staff',
   อีเมล: 'Email',
   รหัสผ่าน: 'Password',
   'อย่างน้อย 6 ตัวอักษร': 'At least 6 characters',
   สมัครสมาชิก: 'Sign up',
-  'บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้': 'Accounts must be approved by Dispatch Center 1669 before they can log in',
+  'บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งาน': 'Accounts must be approved by Dispatch Center 1669 before they can log in',
 })
 
 const NEW_TEAM_VALUE = '__new__'
@@ -95,7 +95,7 @@ export default function RegisterRescue() {
     if (creatingNew) {
       if (!form.newTeamName.trim()) next.newTeamName = t('กรุณากรอกชื่อหน่วยกู้ชีพ')
       if (!form.newTeamUnitCode.trim()) next.newTeamUnitCode = t('กรุณากรอกรหัสหน่วย')
-      if (!form.newTeamPhone.trim()) next.newTeamPhone = t('กรุณากรอกเบอร์หน่วย')
+      if (!form.newTeamPhone.trim()) next.newTeamPhone = t('กรุณากรอกเบอร์โทรศัพท์ของหน่วย')
       if (!form.newTeamMembers.trim()) next.newTeamMembers = t('กรุณากรอกจำนวนเจ้าหน้าที่')
       else if (Number.isNaN(Number(form.newTeamMembers)) || Number(form.newTeamMembers) <= 0)
         next.newTeamMembers = t('กรุณากรอกจำนวนเป็นตัวเลขที่มากกว่า 0')
@@ -144,7 +144,7 @@ export default function RegisterRescue() {
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
           <SuccessState
             title={t('สมัครสมาชิกสำเร็จ')}
-            description={t('บัญชีของคุณรอการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้')}
+            description={t('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากศูนย์สั่งการ 1669')}
             action={
               <Button variant="outline" onClick={() => navigate('/login')}>
                 {t('ไปหน้าเข้าสู่ระบบ')}
@@ -200,13 +200,13 @@ export default function RegisterRescue() {
                     error={errors.newTeamName}
                   />
                   <Input
-                    label={t('เบอร์หน่วย')}
+                    label={t('เบอร์โทรศัพท์หน่วย')}
                     required
                     value={form.newTeamPhone}
                     onChange={(e) => update('newTeamPhone', e.target.value)}
                     error={errors.newTeamPhone}
                   />
-                  <p className="text-xs font-semibold text-muted">{t('รถ/ทีมคันแรกของหน่วย (เพิ่มคันอื่นๆ ได้ภายหลัง)')}</p>
+                  <p className="text-xs font-semibold text-muted">{t('รถหรือทีมแรกของหน่วย (เพิ่มเติมได้ภายหลัง)')}</p>
                   <Input
                     label={t('รหัสรถ/ทีม')}
                     required
@@ -246,7 +246,7 @@ export default function RegisterRescue() {
               </Button>
             </form>
             <p className="mt-4 text-center text-xs text-muted">
-              {t('บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้')}
+              {t('บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งาน')}
             </p>
           </Card>
         </div>

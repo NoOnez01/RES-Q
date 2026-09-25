@@ -85,8 +85,8 @@ export default function Contact1669() {
 
   if (!caseId || !c) {
     return (
-      <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack>
-        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
+      <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเหตุ')}</div>
       </AppShell>
     )
   }
@@ -108,7 +108,7 @@ export default function Contact1669() {
   const isCallActive = c.callStatus === 'connecting' || c.callStatus === 'in-call'
 
   return (
-    <AppShell variant="flow" title={t('ติดต่อศูนย์ 1669')} showBack onBack={() => navigate(backTo)}>
+    <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack onBack={() => navigate(backTo)}>
       <div className="relative">
         <AnimatedBackground variant="call" />
         <div className="relative z-10 flex flex-col gap-5 pb-8">
@@ -127,9 +127,9 @@ export default function Contact1669() {
               </div>
             </div>
             <p className="text-2xl font-extrabold tracking-wide text-emergency">1669</p>
-            <p className="text-sm font-semibold text-ink">{t('เคส {caseNumber}', { caseNumber: c.caseNumber })}</p>
+            <p className="text-sm font-semibold text-ink">{t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.callStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทร... รอเจ้าหน้าที่รับสาย')}</p>
+              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}</p>
             )}
             {c.callStatus === 'in-call' && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">

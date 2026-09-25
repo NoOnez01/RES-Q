@@ -13,7 +13,7 @@ registerTranslations({
   ปิดเมนู: 'Close menu',
   ดูหน้าทั้งหมด: 'View all pages',
   ดูวิธีการใช้งาน: 'How it works',
-  ฟีเจอร์: 'Features',
+  คุณสมบัติของระบบ: 'Features',
   ติดต่อเรา: 'Contact us',
   ออกจากระบบ: 'Log out',
   เข้าสู่ระบบ: 'Log in',
@@ -103,7 +103,7 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
               >
                 <Sparkles className="size-4.5" />
-                {t('ฟีเจอร์')}
+                {t('คุณสมบัติของระบบ')}
               </Link>
               <Link
                 to="/#contact"

@@ -9,12 +9,12 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   สายเรียกเข้าใหม่: 'New incoming call',
-  'เคส {caseNumber} กำลังโทรเข้า': 'Case {caseNumber} is calling',
+  'สายเรียกเข้าจากเหตุหมายเลข {caseNumber}': 'Incoming call from case {caseNumber}',
   รับสาย: 'Answer',
   รับสายแล้ว: 'Call answered',
-  'กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}': 'Now talking with the reporter, case {caseNumber}',
-  'ศูนย์ 1669 เชิญเข้าร่วมสาย': 'Center 1669 is inviting you to a call',
-  'เคส {caseNumber} · สนทนากับผู้แจ้งเหตุ': 'Case {caseNumber} · talk with the reporter',
+  'กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}': 'Now talking with the reporter, case {caseNumber}',
+  'ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา': 'Dispatch Center 1669 is inviting you to the call',
+  'เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ': 'Case {caseNumber} · talk with the reporter',
   เข้าร่วม: 'Join',
 })
 
@@ -102,8 +102,8 @@ export function CallRingtoneBridge() {
   if (role === 'rescue') {
     return (
       <IncomingCallAlert
-        title={t('ศูนย์ 1669 เชิญเข้าร่วมสาย')}
-        message={t('เคส {caseNumber} · สนทนากับผู้แจ้งเหตุ', { caseNumber: visibleCall.caseNumber })}
+        title={t('ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา')}
+        message={t('เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ', { caseNumber: visibleCall.caseNumber })}
         answerLabel={t('เข้าร่วม')}
         onAnswer={() => {
           acceptRescueCallInvite(visibleCall.id)
@@ -117,13 +117,13 @@ export function CallRingtoneBridge() {
   return (
     <IncomingCallAlert
       title={t('สายเรียกเข้าใหม่')}
-      message={t('เคส {caseNumber} กำลังโทรเข้า', { caseNumber: visibleCall.caseNumber })}
+      message={t('สายเรียกเข้าจากเหตุหมายเลข {caseNumber}', { caseNumber: visibleCall.caseNumber })}
       answerLabel={t('รับสาย')}
       onAnswer={() => {
         answerCall(visibleCall.id)
         toast({
           title: t('รับสายแล้ว'),
-          message: t('กำลังสนทนากับผู้แจ้งเหตุ เคส {caseNumber}', { caseNumber: visibleCall.caseNumber }),
+          message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber: visibleCall.caseNumber }),
           tone: 'success',
         })
         navigate(`/dispatch/call/${visibleCall.id}`)

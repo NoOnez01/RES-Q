@@ -40,7 +40,7 @@ registerTranslations({
   '1 - ไม่ลืมตา': '1 - None',
   '5 - พูดคุยรู้เรื่อง': '5 - Oriented',
   '4 - พูดสับสน': '4 - Confused',
-  '3 - พูดเป็นคำๆ': '3 - Inappropriate words',
+  '3 - พูดเป็นคำ ๆ': '3 - Inappropriate words',
   '2 - ส่งเสียงไม่เป็นคำ': '2 - Incomprehensible sounds',
   '1 - ไม่ส่งเสียง': '1 - None',
   '6 - ทำตามคำสั่ง': '6 - Obeys commands',
@@ -69,14 +69,14 @@ registerTranslations({
     'Prevent heat loss and assess the surrounding environment for risk factors',
   กู้คืนข้อมูลที่กรอกไว้ล่าสุดแล้ว: 'Restored your last saved draft',
   บันทึกข้อมูลผู้ป่วย: 'Record patient data',
-  ไม่พบเคสนี้: 'Case not found',
-  เคสอาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
-  กลับแดชบอร์ด: 'Back to dashboard',
+  ไม่พบเหตุนี้: 'Case not found',
+  เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ: 'This case may have been deleted or does not exist',
+  กลับไปหน้าภาพรวม: 'Back to overview',
   บันทึกเสียงแล้ว: 'Audio saved',
   อัปโหลดเสียงไม่สำเร็จ: 'Failed to upload audio',
   กรุณาระบุการปฐมพยาบาลเบื้องต้น: 'Please describe the first aid given',
   บันทึกข้อมูลผู้ป่วยแล้ว: 'Patient data saved',
-  'เคส {caseNumber} พร้อมสำหรับขั้นตอนต่อไป': 'Case {caseNumber} is ready for the next step',
+  'เหตุหมายเลข {caseNumber} พร้อมสำหรับขั้นตอนถัดไป': 'Case {caseNumber} is ready for the next step',
   ข้อมูลผู้ป่วย: 'Patient information',
   สแกนบัตรประชาชน: 'Scan ID card',
   ชื่อผู้ป่วย: "Patient's name",
@@ -95,7 +95,7 @@ registerTranslations({
   พิมพ์หรือพูดเพื่อบันทึก: 'Type or speak to record',
   'การรักษาที่ให้ไปแล้ว (ถ้ามี)': 'Treatment already given (if any)',
   'R/D - การตอบสนองและระบบประสาท (Responsiveness/Disability)': 'R/D - Responsiveness/Disability',
-  'ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น การตอบสนองของลูกตา การเคลื่อนไหว':
+  'ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่าง ๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น การตอบสนองของรูม่านตา และการเคลื่อนไหว':
     "Assess the patient's response to voice, touch, or other stimuli, along with neurological details such as pupil response and movement",
   'Glasgow Coma Scale (GCS) — ไม่บังคับ': 'Glasgow Coma Scale (GCS) — optional',
   'รวม {n}/15': 'Total {n}/15',
@@ -113,9 +113,9 @@ registerTranslations({
   การปฐมพยาบาล: 'First aid',
   'การปฐมพยาบาลเบื้องต้น (พิมพ์หรือพูด)': 'First aid given (type or speak)',
   'เสนอปรับระดับความรุนแรง (ถ้าจำเป็น)': 'Propose a severity change (if needed)',
-  'เลือกเฉพาะเมื่อการประเมินจากที่เกิดเหตุจริงต่างจากที่ศูนย์ 1669 ประเมินไว้ทางโทรศัพท์':
+  'เลือกเฉพาะเมื่อผลการประเมิน ณ จุดเกิดเหตุแตกต่างจากที่ศูนย์สั่งการ 1669 ประเมินไว้ทางโทรศัพท์':
     'Select only if the on-scene assessment differs from what Center 1669 assessed over the phone',
-  '— ไม่เลือกหมายถึงเห็นด้วยกับระดับเดิม': '— leaving this unselected means you agree with the original level',
+  '(หากไม่เลือก ถือว่าเห็นด้วยกับระดับเดิม)': '(leaving this unselected means you agree with the original level)',
   'เหตุผลที่เสนอปรับระดับ (พิมพ์หรือพูด)': 'Reason for the proposed change (type or speak)',
   'บันทึกเสียงเพิ่มเติม (ถ้ามี)': 'Record additional audio (if any)',
 })
@@ -212,7 +212,7 @@ const GCS_EYE_OPTIONS: { value: GcsScore['eye']; title: string }[] = [
 const GCS_VERBAL_OPTIONS: { value: GcsScore['verbal']; title: string }[] = [
   { value: 5, title: '5 - พูดคุยรู้เรื่อง' },
   { value: 4, title: '4 - พูดสับสน' },
-  { value: 3, title: '3 - พูดเป็นคำๆ' },
+  { value: 3, title: '3 - พูดเป็นคำ ๆ' },
   { value: 2, title: '2 - ส่งเสียงไม่เป็นคำ' },
   { value: 1, title: '1 - ไม่ส่งเสียง' },
 ]
@@ -375,10 +375,10 @@ export default function RescuePatientRecord() {
     return (
       <AppShell variant="dashboard" title={t('บันทึกข้อมูลผู้ป่วย')}>
         <ErrorState
-          title={t('ไม่พบเคสนี้')}
-          description={t('เคสอาจถูกลบหรือไม่มีอยู่ในระบบ')}
+          title={t('ไม่พบเหตุนี้')}
+          description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
           onRetry={() => navigate('/rescue/dashboard')}
-          retryLabel={t('กลับแดชบอร์ด')}
+          retryLabel={t('กลับไปหน้าภาพรวม')}
         />
       </AppShell>
     )
@@ -439,7 +439,7 @@ export default function RescuePatientRecord() {
       submitPatientInfo(c!.id, info, severityProposal)
       clearDraft(c!.id)
       setLoading(false)
-      toast({ title: t('บันทึกข้อมูลผู้ป่วยแล้ว'), message: t('เคส {caseNumber} พร้อมสำหรับขั้นตอนต่อไป', { caseNumber: c!.caseNumber }), tone: 'success' })
+      toast({ title: t('บันทึกข้อมูลผู้ป่วยแล้ว'), message: t('เหตุหมายเลข {caseNumber} พร้อมสำหรับขั้นตอนถัดไป', { caseNumber: c!.caseNumber }), tone: 'success' })
       navigate(`/rescue/case/${c!.id}`)
     }, 600)
   }
@@ -500,7 +500,7 @@ export default function RescuePatientRecord() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-ink">{t('R/D - การตอบสนองและระบบประสาท (Responsiveness/Disability)')}</label>
             <p className="text-xs text-muted">
-              {t('ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่างๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น การตอบสนองของลูกตา การเคลื่อนไหว')}
+              {t('ประเมินการตอบสนองของผู้ป่วยต่อเสียง การสัมผัส หรือสิ่งเร้าต่าง ๆ พร้อมรายละเอียดการทำงานของระบบประสาท เช่น การตอบสนองของรูม่านตา และการเคลื่อนไหว')}
             </p>
             <OptionButtonGrid
               options={RESPONSIVENESS_OPTIONS}
@@ -618,8 +618,8 @@ export default function RescuePatientRecord() {
         <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '230ms', animationFillMode: 'backwards' }}>
           <SectionHeader index={5} title={t('เสนอปรับระดับความรุนแรง (ถ้าจำเป็น)')} />
           <p className="text-xs text-muted">
-            {t('เลือกเฉพาะเมื่อการประเมินจากที่เกิดเหตุจริงต่างจากที่ศูนย์ 1669 ประเมินไว้ทางโทรศัพท์')}
-            {c.assessment && ` ${t('— ไม่เลือกหมายถึงเห็นด้วยกับระดับเดิม')}`}
+            {t('เลือกเฉพาะเมื่อผลการประเมิน ณ จุดเกิดเหตุแตกต่างจากที่ศูนย์สั่งการ 1669 ประเมินไว้ทางโทรศัพท์')}
+            {c.assessment && ` ${t('(หากไม่เลือก ถือว่าเห็นด้วยกับระดับเดิม)')}`}
           </p>
           <div className="flex flex-col gap-2.5">
             {SEVERITY_OPTIONS.map((opt) => (

@@ -17,10 +17,10 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   การโทรสิ้นสุดแล้ว: 'The call has ended',
   โทรหาผู้แจ้งเหตุ: 'Call the reporter',
-  ไม่พบข้อมูลเคส: 'Case not found',
+  ไม่พบข้อมูลเหตุ: 'Case not found',
   ผู้แจ้งเหตุ: 'Reporter',
-  'เคส {caseNumber}': 'Case {caseNumber}',
-  'กำลังโทร... รอผู้แจ้งเหตุรับสาย': 'Calling... waiting for the reporter to answer',
+  'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
+  'กำลังโทรออก รอผู้แจ้งเหตุรับสาย': 'Calling... waiting for the reporter to answer',
   รอผู้แจ้งเหตุรับสาย: 'Waiting for the reporter to answer',
   วางสาย: 'Hang up',
 })
@@ -88,7 +88,7 @@ export default function RescueCallReporter() {
   if (!id || !c) {
     return (
       <AppShell variant="flow" title={t('โทรหาผู้แจ้งเหตุ')} showBack>
-        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเหตุ')}</div>
       </AppShell>
     )
   }
@@ -129,9 +129,9 @@ export default function RescueCallReporter() {
               </div>
             </div>
             <p className="text-sm font-semibold text-ink">{c.reporterName ?? t('ผู้แจ้งเหตุ')}</p>
-            <p className="text-xs text-muted">{t('เคส {caseNumber}', { caseNumber: c.caseNumber })}</p>
+            <p className="text-xs text-muted">{t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.rescueCallStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทร... รอผู้แจ้งเหตุรับสาย')}</p>
+              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอผู้แจ้งเหตุรับสาย')}</p>
             )}
             {c.rescueCallStatus === 'in-call' && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">

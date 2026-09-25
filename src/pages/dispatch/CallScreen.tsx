@@ -17,9 +17,9 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   การโทรสิ้นสุดแล้ว: 'The call has ended',
   สายเรียกเข้า: 'Incoming calls',
-  ไม่พบข้อมูลเคส: 'Case not found',
+  ไม่พบข้อมูลเหตุ: 'Case not found',
   กำลังสนทนา: 'In conversation',
-  'เคส {caseNumber}': 'Case {caseNumber}',
+  'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
   ตำแหน่ง: 'Location',
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   หน่วยกู้ชีพ: 'Rescue team',
@@ -30,12 +30,12 @@ registerTranslations({
   ยังอยู่ระหว่างการสนทนา: 'Still in an active call',
   ต้องการวางสายและออกจากหน้านี้หรือไม่: 'Hang up and leave this screen?',
   วางสายและออก: 'Hang up and leave',
-  คุยต่อ: 'Keep talking',
-  ดึงหน่วยกู้ชีพเข้าสาย: 'Bring the rescue team into this call',
-  'ให้ {team} ได้ยินผู้แจ้งเหตุโดยตรง': 'Let {team} hear the reporter directly',
-  เชิญเข้าสาย: 'Invite to call',
+  สนทนาต่อ: 'Continue the call',
+  เชิญหน่วยกู้ชีพเข้าร่วมสาย: 'Invite the rescue team into this call',
+  'เพื่อให้ {team} รับฟังข้อมูลจากผู้แจ้งเหตุโดยตรง': 'Let {team} hear the reporter directly',
+  เชิญเข้าร่วม: 'Invite to call',
   'กำลังเรียก {team}...': 'Calling {team}...',
-  'รอหน่วยกู้ชีพกดเข้าร่วม': 'Waiting for the rescue team to join',
+  รอหน่วยกู้ชีพตอบรับ: 'Awaiting rescue team response',
   '{team} กำลังเข้าร่วมสาย...': '{team} is joining the call...',
   ยกเลิก: 'Cancel',
 })
@@ -106,7 +106,7 @@ export default function DispatchCallScreen() {
   if (!id || !emergencyCase) {
     return (
       <AppShell variant="flow" title={t('สายเรียกเข้า')} showBack>
-        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเหตุ')}</div>
       </AppShell>
     )
   }
@@ -135,7 +135,7 @@ export default function DispatchCallScreen() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 font-semibold text-ink">
                 <User className="size-4 text-primary" />
-                {t('เคส {caseNumber}', { caseNumber: emergencyCase.caseNumber })}
+                {t('เหตุหมายเลข {caseNumber}', { caseNumber: emergencyCase.caseNumber })}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
                 <PulseRing tone="success" size="sm" />
@@ -167,14 +167,14 @@ export default function DispatchCallScreen() {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">
                     {!invite
-                      ? t('ดึงหน่วยกู้ชีพเข้าสาย')
+                      ? t('เชิญหน่วยกู้ชีพเข้าร่วมสาย')
                       : invite.status === 'ringing'
                         ? t('กำลังเรียก {team}...', { team: team.name })
                         : t('{team} กำลังเข้าร่วมสาย...', { team: team.name })}
                   </p>
                   {invite?.status !== 'joined' && (
                     <p className="truncate text-xs text-muted">
-                      {invite ? t('รอหน่วยกู้ชีพกดเข้าร่วม') : t('ให้ {team} ได้ยินผู้แจ้งเหตุโดยตรง', { team: team.name })}
+                      {invite ? t('รอหน่วยกู้ชีพตอบรับ') : t('เพื่อให้ {team} รับฟังข้อมูลจากผู้แจ้งเหตุโดยตรง', { team: team.name })}
                     </p>
                   )}
                 </div>
@@ -185,7 +185,7 @@ export default function DispatchCallScreen() {
                 </Button>
               ) : (
                 <Button size="sm" icon={<UserPlus className="size-4" />} onClick={() => inviteRescueToCall(id)}>
-                  {t('เชิญเข้าสาย')}
+                  {t('เชิญเข้าร่วม')}
                 </Button>
               )}
             </Card>
@@ -208,7 +208,7 @@ export default function DispatchCallScreen() {
         title={t('ยังอยู่ระหว่างการสนทนา')}
         message={t('ต้องการวางสายและออกจากหน้านี้หรือไม่')}
         confirmLabel={t('วางสายและออก')}
-        cancelLabel={t('คุยต่อ')}
+        cancelLabel={t('สนทนาต่อ')}
         tone="danger"
         onConfirm={handleConfirmLeave}
         onCancel={() => setShowLeaveConfirm(false)}

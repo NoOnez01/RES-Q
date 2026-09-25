@@ -12,8 +12,8 @@ registerTranslations({
   เร่งด่วน: 'Urgent',
   ไม่เร่งด่วน: 'Less urgent',
   ทั่วไป: 'General',
-  ยังไม่มีเคสที่ประเมินระดับความรุนแรงแล้ว: 'No cases have a severity assessment yet',
-  '{n} เคส': '{n} cases',
+  ยังไม่มีเหตุที่ได้รับการประเมินระดับความรุนแรง: 'No cases have a severity assessment yet',
+  '{n} เหตุ': '{n} cases',
   จำนวน: 'Count',
 })
 
@@ -48,7 +48,7 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
         {title}
       </h2>
       {total === 0 ? (
-        <p className="text-sm text-muted">{t('ยังไม่มีเคสที่ประเมินระดับความรุนแรงแล้ว')}</p>
+        <p className="text-sm text-muted">{t('ยังไม่มีเหตุที่ได้รับการประเมินระดับความรุนแรง')}</p>
       ) : (
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
@@ -58,7 +58,7 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
               <Tooltip
                 cursor={{ fill: 'transparent' }}
                 contentStyle={CHART_TOOLTIP_STYLE}
-                formatter={(value) => [t('{n} เคส', { n: value as number }), t('จำนวน')]}
+                formatter={(value) => [t('{n} เหตุ', { n: value as number }), t('จำนวน')]}
               />
               <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
                 {counts.map((c) => (

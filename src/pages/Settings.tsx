@@ -41,20 +41,20 @@ registerTranslations({
   ข้อมูลผู้ใช้งาน: 'Account',
   ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
   ออกจากระบบ: 'Log out',
-  หน้าตาและภาษา: 'Appearance & language',
+  การแสดงผลและภาษา: 'Appearance & language',
   บัญชีและความปลอดภัย: 'Account & security',
   'เข้าสู่ระบบด้วย Google': 'Signed in with Google',
   'เข้าสู่ระบบด้วย LINE': 'Signed in with LINE',
   เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน: 'Signed in with email & password',
   บัญชีที่เชื่อมต่อ: 'Linked accounts',
-  'เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE':
+  'เชื่อมโยงวิธีเข้าสู่ระบบหลายช่องทางไว้ในบัญชีเดียวกัน เพื่อให้เข้าสู่ระบบได้ทุกช่องทาง และรับการแจ้งเตือนผ่าน LINE':
     'Link multiple sign-in methods to the same account so you can log in any way, and get notifications via LINE.',
   เชื่อมต่อแล้ว: 'Linked',
   เชื่อมต่อ: 'Link',
   ยกเลิกการเชื่อมต่อ: 'Unlink',
   เปลี่ยนรหัสผ่าน: 'Change password',
-  ตั้งอีเมลและรหัสผ่าน: 'Set email & password',
-  'ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE': 'Set an email and password so you can log in even without Google or LINE.',
+  กำหนดอีเมลและรหัสผ่าน: 'Set email & password',
+  'กำหนดอีเมลและรหัสผ่าน เพื่อให้เข้าสู่ระบบได้โดยไม่ต้องใช้ Google หรือ LINE': 'Set an email and password so you can log in even without Google or LINE.',
   อีเมล: 'Email',
   รหัสผ่านใหม่: 'New password',
   'อย่างน้อย 6 ตัวอักษร': 'At least 6 characters',
@@ -62,24 +62,24 @@ registerTranslations({
   บันทึกรหัสผ่านใหม่: 'Save new password',
   บันทึก: 'Save',
   มุมมองผู้ดูแลระบบ: 'Admin view',
-  'เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)':
-    "View any organization's dashboard without restriction (every rescue team / every hospital).",
+  'เข้าดูหน้าภาพรวมของแต่ละหน่วยงานโดยไม่จำกัดขอบเขต (ทุกหน่วยกู้ชีพและทุกโรงพยาบาล)':
+    "View any organization's overview without restriction (every rescue team and every hospital).",
   ศูนย์สั่งการ: 'Dispatch center',
   'หน่วยกู้ชีพ (ทุกหน่วย)': 'Rescue teams (all)',
   'โรงพยาบาล (ทุกแห่ง)': 'Hospitals (all)',
   'บัญชีรออนุมัติ / จัดการสิทธิ์': 'Pending accounts / permissions',
-  'จัดการหน่วยกู้ชีพ/โรงพยาบาล': 'Manage rescue teams / hospitals',
+  จัดการหน่วยกู้ชีพและโรงพยาบาล: 'Manage rescue teams / hospitals',
   จัดการระบบเหรียญ: 'Manage coin system',
   ข้อควรทราบ: 'Notices',
   ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย: 'This system is a prototype for demonstration and research.',
   ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
   ระบบไม่ทดแทนการประเมินทางการแพทย์: 'This system does not replace professional medical assessment.',
   ล้างข้อมูลตัวอย่าง: 'Clear sample data',
-  'ลบเคสทั้งหมด (รวมข้อมูลที่ซิงค์ไว้ทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้':
+  'ลบข้อมูลเหตุทั้งหมด (รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้':
     "Deletes all cases (including data synced across every device) and this browser's local user data.",
   ล้างข้อมูลตัวอย่างทั้งหมด: 'Clear all sample data',
   ล้างข้อมูลทั้งหมด: 'Clear all data',
-  'การดำเนินการนี้จะลบเคสทั้งหมดทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ ไม่สามารถย้อนกลับได้':
+  'การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ และไม่สามารถกู้คืนได้':
     "This deletes all cases both in this browser and in the synced database (every device), plus this browser's user data. This cannot be undone.",
   เปลี่ยนรหัสผ่านแล้ว: 'Password changed',
   บันทึกอีเมลแล้ว: 'Email saved',
@@ -300,7 +300,7 @@ export default function Settings() {
 
         <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '15ms', animationFillMode: 'backwards' }}>
           <h3 className="flex items-center gap-2 font-bold text-ink">
-            <Sun className="size-4 text-primary" /> {t('หน้าตาและภาษา')}
+            <Sun className="size-4 text-primary" /> {t('การแสดงผลและภาษา')}
           </h3>
 
           <div className="space-y-2">
@@ -353,7 +353,7 @@ export default function Settings() {
             <div className="flex flex-col gap-3 border-t border-border pt-4">
               <p className="text-sm font-semibold text-ink">{t('บัญชีที่เชื่อมต่อ')}</p>
               <p className="text-xs text-muted">
-                {t('เชื่อมหลายวิธีเข้าสู่ระบบไว้ในบัญชีเดียวกัน เพื่อเข้าสู่ระบบด้วยวิธีไหนก็ได้ และรับการแจ้งเตือนผ่าน LINE')}
+                {t('เชื่อมโยงวิธีเข้าสู่ระบบหลายช่องทางไว้ในบัญชีเดียวกัน เพื่อให้เข้าสู่ระบบได้ทุกช่องทาง และรับการแจ้งเตือนผ่าน LINE')}
               </p>
               <div className="flex flex-col divide-y divide-border">
                 <div className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
@@ -389,10 +389,10 @@ export default function Settings() {
 
             <div className="flex flex-col gap-3 border-t border-border pt-4">
               <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? t('เปลี่ยนรหัสผ่าน') : t('ตั้งอีเมลและรหัสผ่าน')}
+                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? t('เปลี่ยนรหัสผ่าน') : t('กำหนดอีเมลและรหัสผ่าน')}
               </p>
               {!hasRealEmail && (
-                <p className="text-xs text-muted">{t('ตั้งอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบได้แม้ไม่มี Google หรือ LINE')}</p>
+                <p className="text-xs text-muted">{t('กำหนดอีเมลและรหัสผ่าน เพื่อให้เข้าสู่ระบบได้โดยไม่ต้องใช้ Google หรือ LINE')}</p>
               )}
               {!hasRealEmail && (
                 <Input
@@ -436,7 +436,7 @@ export default function Settings() {
             <h3 className="flex items-center gap-2 font-bold text-ink">
               <ShieldAlert className="size-4 text-primary" /> {t('มุมมองผู้ดูแลระบบ')}
             </h3>
-            <p className="text-sm text-muted">{t('เข้าดูแดชบอร์ดของแต่ละหน่วยงานแบบไม่จำกัดขอบเขต (เห็นทุกหน่วยกู้ชีพ/ทุกโรงพยาบาล)')}</p>
+            <p className="text-sm text-muted">{t('เข้าดูหน้าภาพรวมของแต่ละหน่วยงานโดยไม่จำกัดขอบเขต (ทุกหน่วยกู้ชีพและทุกโรงพยาบาล)')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {ADMIN_VIEWS.map((v) => (
                 <Button
@@ -459,7 +459,7 @@ export default function Settings() {
               </Link>
               <Link to="/manage-orgs">
                 <Button variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
-                  {t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}
+                  {t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}
                 </Button>
               </Link>
               <Link to="/manage-coins">
@@ -485,7 +485,7 @@ export default function Settings() {
         <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
           <div>
             <p className="font-bold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
-            <p className="text-sm text-muted">{t('ลบเคสทั้งหมด (รวมข้อมูลที่ซิงค์ไว้ทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้')}</p>
+            <p className="text-sm text-muted">{t('ลบข้อมูลเหตุทั้งหมด (รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้')}</p>
           </div>
           <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setResetOpen(true)}>
             {t('ล้างข้อมูลตัวอย่างทั้งหมด')}
@@ -499,7 +499,7 @@ export default function Settings() {
         tone="danger"
         title={t('ล้างข้อมูลทั้งหมด')}
         message={t(
-          'การดำเนินการนี้จะลบเคสทั้งหมดทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ ไม่สามารถย้อนกลับได้',
+          'การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ และไม่สามารถกู้คืนได้',
         )}
         confirmLabel={t('ล้างข้อมูลทั้งหมด')}
         confirmLoading={resetLoading}

@@ -49,7 +49,7 @@ export function getCurrentPosition(): Promise<Coords> {
     const timer = setTimeout(() => {
       finish(() => {
         if (best) resolve({ lat: best.coords.latitude, lng: best.coords.longitude })
-        else reject(new GeolocationError('timeout', 'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่'))
+        else reject(new GeolocationError('timeout', 'การค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'))
       })
     }, SAMPLE_WINDOW_MS)
 
@@ -71,7 +71,7 @@ export function getCurrentPosition(): Promise<Coords> {
           if (err.code === err.PERMISSION_DENIED) {
             reject(new GeolocationError('denied', 'กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ'))
           } else if (err.code === err.TIMEOUT) {
-            reject(new GeolocationError('timeout', 'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่'))
+            reject(new GeolocationError('timeout', 'การค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'))
           } else {
             reject(new GeolocationError('unavailable', 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้'))
           }
@@ -102,7 +102,7 @@ export function watchPosition(onUpdate: (pos: Coords) => void, onError?: (err: G
       if (err.code === err.PERMISSION_DENIED) {
         onError(new GeolocationError('denied', 'กรุณาอนุญาตการเข้าถึงตำแหน่งเพื่อระบุจุดเกิดเหตุ'))
       } else if (err.code === err.TIMEOUT) {
-        onError(new GeolocationError('timeout', 'ค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่'))
+        onError(new GeolocationError('timeout', 'การค้นหาตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง'))
       } else {
         onError(new GeolocationError('unavailable', 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้'))
       }

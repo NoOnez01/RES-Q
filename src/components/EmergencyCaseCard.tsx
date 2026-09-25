@@ -12,21 +12,21 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   รอหน่วยกู้ชีพตอบรับ: 'Awaiting rescue team response',
   หน่วยกู้ชีพตอบรับแล้ว: 'Rescue team responded',
-  หน่วยกู้ชีพปฏิเสธเคส: 'Rescue team declined the case',
+  หน่วยกู้ชีพปฏิเสธการรับเหตุ: 'Rescue team declined the case',
   รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   'ผู้ป่วย {n} คน': '{n} patient(s)',
-  ดูรายละเอียดเคส: 'View case details',
+  ดูรายละเอียดเหตุ: 'View case details',
   // Consistency-check messages from lib/caseHealth.ts -- registered here
   // since this card is the one place they're actually shown to a user.
-  'มีการประเมินความรุนแรงแล้ว แต่สถานะเคสยังไม่ถึง "รับแจ้งเหตุแล้ว"':
+  'มีการประเมินความรุนแรงแล้ว แต่สถานะของเหตุยังไม่เป็น "รับแจ้งเหตุแล้ว"':
     'Severity has been assessed, but the case status hasn’t reached "Received" yet',
-  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะเคสยังไม่ถึง "มอบหมายหน่วยกู้ชีพแล้ว"':
+  'มอบหมายหน่วยกู้ชีพแล้ว แต่สถานะของเหตุยังไม่เป็น "มอบหมายหน่วยกู้ชีพแล้ว"':
     'A rescue team is assigned, but the case status hasn’t reached "Rescue team assigned" yet',
-  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะเคสยังไม่ถึง "ถึงจุดเกิดเหตุแล้ว"':
+  'บันทึกข้อมูลผู้ป่วยแล้ว แต่สถานะของเหตุยังไม่เป็น "ถึงจุดเกิดเหตุแล้ว"':
     'Patient info is recorded, but the case status hasn’t reached "Arrived at scene" yet',
-  'เคสถูกรับแจ้งแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
-  ข้อมูลเคสไม่สอดคล้องกัน: 'Case data is inconsistent',
+  'รับแจ้งเหตุแล้ว แต่ยังไม่มีรายละเอียดเหตุการณ์': 'The case has been received, but has no incident details yet',
+  ข้อมูลของเหตุไม่สอดคล้องกัน: 'Case data is inconsistent',
 })
 
 type RescueResponseColor = 'yellow' | 'green' | 'red'
@@ -34,7 +34,7 @@ type RescueResponseColor = 'yellow' | 'green' | 'red'
 const RESCUE_RESPONSE_STYLE: Record<RescueResponseColor, { classes: string; label: string }> = {
   yellow: { classes: 'bg-warning text-white border-warning/40', label: 'รอหน่วยกู้ชีพตอบรับ' },
   green: { classes: 'bg-success text-white border-success/40', label: 'หน่วยกู้ชีพตอบรับแล้ว' },
-  red: { classes: 'bg-emergency text-white border-emergency/40', label: 'หน่วยกู้ชีพปฏิเสธเคส' },
+  red: { classes: 'bg-emergency text-white border-emergency/40', label: 'หน่วยกู้ชีพปฏิเสธการรับเหตุ' },
 }
 
 type CardTone = 'completed' | 'new' | 'warning' | 'default'
@@ -87,7 +87,7 @@ export function EmergencyCaseCard({
         <span
           role="alert"
           title={issues.map((i) => t(i.message)).join(' · ')}
-          aria-label={t('ข้อมูลเคสไม่สอดคล้องกัน')}
+          aria-label={t('ข้อมูลของเหตุไม่สอดคล้องกัน')}
           className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full border-2 border-surface bg-warning text-white shadow-card"
         >
           <AlertTriangle className="size-3.5" />
@@ -136,7 +136,7 @@ export function EmergencyCaseCard({
           onClick={() => navigate(to)}
           className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-bright"
         >
-          {t('ดูรายละเอียดเคส')}
+          {t('ดูรายละเอียดเหตุ')}
           <ChevronRight className="size-4" />
         </button>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

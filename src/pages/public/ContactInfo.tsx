@@ -11,14 +11,14 @@ import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ข้อมูลติดต่อกลับ: 'Callback details',
-  'ศูนย์ 1669 และหน่วยกู้ชีพจะใช้เบอร์นี้ติดต่อคุณ หากต้องการข้อมูลเพิ่มเติม':
+  'ศูนย์สั่งการ 1669 และหน่วยกู้ชีพจะใช้หมายเลขนี้ติดต่อคุณ หากต้องการข้อมูลเพิ่มเติม':
     'Center 1669 and the rescue team will use this number to reach you if they need more information',
   เบอร์โทรศัพท์สำหรับติดต่อกลับ: 'Callback phone number',
   'กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ': 'Please provide a callback phone number',
   เบอร์โทรศัพท์ไม่ถูกต้อง: 'Invalid phone number',
-  'ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน': 'Pulled from your profile ({name}) — editable if you want to change it',
-  ไปหน้าติดตามเคส: 'Go to case tracking',
-  ไม่พบข้อมูลเคส: 'Case not found',
+  'ใช้ข้อมูลจากบัญชีของคุณ ({name}) สามารถแก้ไขได้': 'From your account ({name}) — you can edit it',
+  ไปยังหน้าติดตามการช่วยเหลือ: 'Go to response tracking',
+  ไม่พบข้อมูลเหตุ: 'Case not found',
 })
 
 /**
@@ -42,7 +42,7 @@ export default function ContactInfo() {
   if (!id || !c) {
     return (
       <AppShell variant="flow" title={t('ข้อมูลติดต่อกลับ')} showBack={false}>
-        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเคส')}</div>
+        <div className="py-16 text-center text-sm text-muted">{t('ไม่พบข้อมูลเหตุ')}</div>
       </AppShell>
     )
   }
@@ -72,7 +72,7 @@ export default function ContactInfo() {
           <div>
             <h1 className="text-xl font-bold text-ink">{t('ข้อมูลติดต่อกลับ')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {t('ศูนย์ 1669 และหน่วยกู้ชีพจะใช้เบอร์นี้ติดต่อคุณ หากต้องการข้อมูลเพิ่มเติม')}
+              {t('ศูนย์สั่งการ 1669 และหน่วยกู้ชีพจะใช้หมายเลขนี้ติดต่อคุณ หากต้องการข้อมูลเพิ่มเติม')}
             </p>
           </div>
 
@@ -87,7 +87,7 @@ export default function ContactInfo() {
               error={phoneError}
               hint={
                 loggedIn && !phoneError
-                  ? t('ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน', { name: currentUser?.name ?? '' })
+                  ? t('ใช้ข้อมูลจากบัญชีของคุณ ({name}) สามารถแก้ไขได้', { name: currentUser?.name ?? '' })
                   : undefined
               }
               onChange={(e) => {
@@ -104,7 +104,7 @@ export default function ContactInfo() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <Button variant="primary" size="lg" fullWidth onClick={proceed}>
-            {t('ไปหน้าติดตามเคส')}
+            {t('ไปยังหน้าติดตามการช่วยเหลือ')}
           </Button>
         </div>
       </div>

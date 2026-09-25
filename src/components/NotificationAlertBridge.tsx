@@ -10,14 +10,14 @@ import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  มีเคสฉุกเฉินใหม่: 'New emergency case',
-  'เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ': 'Case {caseNumber} has been submitted, awaiting rescue team assignment',
-  หน่วยกู้ชีพปฏิเสธเคส: 'Rescue team declined the case',
-  'เคส {caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่': 'Case {caseNumber} was declined by the rescue team, please assign a new team',
-  ได้รับมอบหมายเคสใหม่: 'New case assigned to you',
-  'คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส': 'You have been assigned case {caseNumber}, please confirm acceptance',
+  มีเหตุฉุกเฉินใหม่: 'New emergency case',
+  'เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ': 'Case {caseNumber} has been submitted, awaiting rescue team assignment',
+  หน่วยกู้ชีพปฏิเสธการรับเหตุ: 'Rescue team declined the case',
+  'หน่วยกู้ชีพปฏิเสธเหตุหมายเลข {caseNumber} กรุณามอบหมายหน่วยใหม่': 'Case {caseNumber} was declined by the rescue team, please assign a new team',
+  ได้รับมอบหมายเหตุใหม่: 'New case assigned to you',
+  'คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ': 'You have been assigned case {caseNumber}, please confirm acceptance',
   มีผู้ป่วยกำลังนำส่ง: 'A patient is being transported',
-  'เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา': 'Case {caseNumber} selected your hospital for transfer, please prepare the treatment team',
+  'เหตุหมายเลข {caseNumber} จะนำส่งผู้ป่วยมายังโรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา': 'Case {caseNumber} is transporting a patient to your hospital. Please prepare the treatment team.',
 })
 
 const TONE_MAP: Record<AppNotification['tone'], ToastTone> = {
@@ -64,8 +64,8 @@ function handoffsFor(
       .filter((c) => c.status === 'received' && !c.assessment)
       .map((c) => ({
         case: c,
-        title: t('มีเคสฉุกเฉินใหม่'),
-        message: t('เคส {caseNumber} ถูกส่งเข้าระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ', { caseNumber: c.caseNumber }),
+        title: t('มีเหตุฉุกเฉินใหม่'),
+        message: t('เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-new:${c.id}`,
@@ -74,8 +74,8 @@ function handoffsFor(
       .filter((c) => c.status === 'finding-rescue' && c.rescueRejectedAt)
       .map((c) => ({
         case: c,
-        title: t('หน่วยกู้ชีพปฏิเสธเคส'),
-        message: t('เคส {caseNumber} ถูกปฏิเสธจากหน่วยกู้ชีพ กรุณามอบหมายหน่วยใหม่', { caseNumber: c.caseNumber }),
+        title: t('หน่วยกู้ชีพปฏิเสธการรับเหตุ'),
+        message: t('หน่วยกู้ชีพปฏิเสธเหตุหมายเลข {caseNumber} กรุณามอบหมายหน่วยใหม่', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
         key: `dispatch-rejected:${c.id}:${c.rescueRejectedAt}`,
@@ -87,8 +87,8 @@ function handoffsFor(
       .filter((c) => c.status === 'rescue-assigned' && c.assignedRescueTeam?.id === currentUser?.rescueTeamId)
       .map((c) => ({
         case: c,
-        title: t('ได้รับมอบหมายเคสใหม่'),
-        message: t('คุณได้รับมอบหมายเคส {caseNumber} กรุณายืนยันการรับเคส', { caseNumber: c.caseNumber }),
+        title: t('ได้รับมอบหมายเหตุใหม่'),
+        message: t('คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ', { caseNumber: c.caseNumber }),
         urgent: false,
         kind: 'rescue' as const,
         key: `rescue-assigned:${c.id}`,
@@ -105,7 +105,7 @@ function handoffsFor(
       .map((c) => ({
         case: c,
         title: t('มีผู้ป่วยกำลังนำส่ง'),
-        message: t('เคส {caseNumber} เลือกส่งตัวมาที่โรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c.caseNumber }),
+        message: t('เหตุหมายเลข {caseNumber} จะนำส่งผู้ป่วยมายังโรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'hospital' as const,
         key: `hospital-selected:${c.id}`,

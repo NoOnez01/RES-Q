@@ -48,13 +48,13 @@ registerTranslations({
   ระดับรถ: 'Vehicle level',
   'อุปกรณ์เฉพาะทาง (คั่นด้วยจุลภาค)': 'Specialized equipment (comma-separated)',
   'เครื่องตัดถ่าง, เฝือกดามคอ': 'Jaws of life, cervical collar',
-  กรุณากรอกชื่อเบอร์โทรศัพท์และที่อยู่โรงพยาบาล: "Please enter the hospital's name, phone number, and address",
+  'กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่ของโรงพยาบาล': "Please enter the hospital's name, phone number, and address",
   บันทึกข้อมูลโรงพยาบาลแล้ว: 'Hospital details saved',
   สร้างโรงพยาบาลใหม่แล้ว: 'New hospital created',
   ชื่อโรงพยาบาล: 'Hospital name',
   ที่อยู่: 'Address',
   จำนวนเตียงว่าง: 'Beds available',
-  ห้องฉุกเฉินพร้อมรับผู้ป่วย: 'Emergency room ready to receive patients',
+  ห้องฉุกเฉินพร้อมรับผู้ป่วย: 'ER ready for patients',
   'ความเชี่ยวชาญเฉพาะทาง (คั่นด้วยจุลภาค)': 'Specialties (comma-separated)',
   'ศัลยกรรมประสาท, หัวใจ': 'Neurosurgery, cardiology',
   'บันทึกข้อมูลรถ/ทีมแล้ว': 'Vehicle/crew details saved',
@@ -65,9 +65,9 @@ registerTranslations({
   '{vehicle} · {n} คน': '{vehicle} · {n} people',
   แก้ไข: 'Edit',
   ลบ: 'Delete',
-  'จัดการหน่วยกู้ชีพ/โรงพยาบาล': 'Manage rescue teams / hospitals',
+  จัดการหน่วยกู้ชีพและโรงพยาบาล: 'Manage rescue teams / hospitals',
   ไม่มีสิทธิ์เข้าถึงหน้านี้: 'No access to this page',
-  'เฉพาะแอดมินเท่านั้นที่จัดการหน่วยกู้ชีพ/โรงพยาบาลได้': 'Only admins can manage rescue teams / hospitals',
+  เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการหน่วยกู้ชีพและโรงพยาบาลได้: 'Only admins can manage rescue teams / hospitals',
   ลบหน่วยกู้ชีพแล้ว: 'Rescue team deleted',
   ลบไม่สำเร็จ: 'Delete failed',
   'ลบรถ/ทีมแล้ว': 'Vehicle/crew deleted',
@@ -82,13 +82,13 @@ registerTranslations({
   เพิ่มโรงพยาบาลแรกได้ที่ปุ่มด้านบน: 'Add the first hospital using the button above',
   'เตียงว่าง {n} · {phone}': 'Beds available {n} · {phone}',
   ยืนยันการลบหน่วยกู้ชีพ: 'Confirm deleting this rescue team',
-  'ต้องการลบ "{name}" หรือไม่ รถ/ทีมทั้งหมดในหน่วยนี้จะถูกลบไปด้วย เคสที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเคสใหม่ให้หน่วยนี้ได้อีก':
+  'ต้องการลบ "{name}" หรือไม่ รถและทีมทั้งหมดในหน่วยนี้จะถูกลบด้วย เหตุที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเหตุใหม่ให้หน่วยนี้ได้อีก':
     'Delete "{name}"? All vehicles/crews in this team will also be deleted. Previously assigned cases are not deleted, but no new case can be assigned to this team.',
   ยืนยันลบ: 'Confirm delete',
   'ยืนยันการลบรถ/ทีม': 'Confirm deleting this vehicle/crew',
   'ต้องการลบ "{name}" หรือไม่': 'Delete "{name}"?',
   ยืนยันการลบโรงพยาบาล: 'Confirm deleting this hospital',
-  'ต้องการลบ "{name}" หรือไม่ เคสที่ส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกส่งผู้ป่วยไปที่นี่ได้อีก':
+  'ต้องการลบ "{name}" หรือไม่ เหตุที่นำส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกนำส่งผู้ป่วยมายังโรงพยาบาลนี้ได้อีก':
     'Delete "{name}"? Previously sent cases are not deleted, but no new patient can be sent here.',
 })
 
@@ -289,7 +289,7 @@ function HospitalForm({
 
   async function handleSave() {
     if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast({ title: t('กรุณากรอกชื่อเบอร์โทรศัพท์และที่อยู่โรงพยาบาล'), tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่ของโรงพยาบาล'), tone: 'error' })
       return
     }
     setSaving(true)
@@ -469,8 +469,8 @@ export default function ManageOrgs() {
 
   if (!currentUser?.isAdmin) {
     return (
-      <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}>
-        <ErrorState title={t('ไม่มีสิทธิ์เข้าถึงหน้านี้')} description={t('เฉพาะแอดมินเท่านั้นที่จัดการหน่วยกู้ชีพ/โรงพยาบาลได้')} />
+      <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}>
+        <ErrorState title={t('ไม่มีสิทธิ์เข้าถึงหน้านี้')} description={t('เฉพาะผู้ดูแลระบบเท่านั้นที่จัดการหน่วยกู้ชีพและโรงพยาบาลได้')} />
       </AppShell>
     )
   }
@@ -527,7 +527,7 @@ export default function ManageOrgs() {
   }
 
   return (
-    <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}>
+    <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}>
       <div className="relative">
         <AnimatedBackground variant="dashboard" />
         <div className="relative z-10 flex flex-col gap-8">
@@ -657,7 +657,7 @@ export default function ManageOrgs() {
         open={!!deleteTeamTarget}
         title={t('ยืนยันการลบหน่วยกู้ชีพ')}
         message={t(
-          'ต้องการลบ "{name}" หรือไม่ รถ/ทีมทั้งหมดในหน่วยนี้จะถูกลบไปด้วย เคสที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเคสใหม่ให้หน่วยนี้ได้อีก',
+          'ต้องการลบ "{name}" หรือไม่ รถและทีมทั้งหมดในหน่วยนี้จะถูกลบด้วย เหตุที่มอบหมายไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถมอบหมายเหตุใหม่ให้หน่วยนี้ได้อีก',
           { name: deleteTeamTarget?.name ?? '' },
         )}
         confirmLabel={t('ยืนยันลบ')}
@@ -679,7 +679,7 @@ export default function ManageOrgs() {
       <ConfirmationModal
         open={!!deleteHospitalTarget}
         title={t('ยืนยันการลบโรงพยาบาล')}
-        message={t('ต้องการลบ "{name}" หรือไม่ เคสที่ส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกส่งผู้ป่วยไปที่นี่ได้อีก', {
+        message={t('ต้องการลบ "{name}" หรือไม่ เหตุที่นำส่งไว้ก่อนหน้าจะไม่ถูกลบ แต่จะไม่สามารถเลือกนำส่งผู้ป่วยมายังโรงพยาบาลนี้ได้อีก', {
           name: deleteHospitalTarget?.name ?? '',
         })}
         confirmLabel={t('ยืนยันลบ')}

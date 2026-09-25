@@ -25,7 +25,7 @@ registerTranslations({
   'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ': 'Failed to log in with LINE',
   เข้าสู่ระบบ: 'Log in',
   รอการอนุมัติจากศูนย์สั่งการ: 'Awaiting approval from the dispatch center',
-  'บัญชีของคุณลงทะเบียนสำเร็จแล้ว แต่ยังไม่ได้รับการอนุมัติให้เข้าใช้งาน กรุณาลองเข้าสู่ระบบอีกครั้งภายหลัง':
+  'ลงทะเบียนบัญชีเรียบร้อยแล้ว แต่ยังไม่ได้รับการอนุมัติให้เข้าใช้งาน กรุณาเข้าสู่ระบบอีกครั้งภายหลัง':
     'Your account registered successfully but has not been approved for access yet. Please try logging in again later.',
   กลับหน้าหลัก: 'Back to home',
   บัญชีนี้ไม่ได้รับการอนุมัติ: 'This account was not approved',
@@ -39,9 +39,9 @@ registerTranslations({
   // with" a status, vs this button's "log in with" an action) -- colliding on
   // the same flat-dictionary key would make whichever file loads last win.
   'เข้าสู่ระบบด้วย {provider}': 'Log in with {provider}',
-  'ยังไม่มีบัญชี? สมัครสมาชิก': "Don't have an account? Sign up",
-  เข้าใช้งานแบบไม่ต้องเข้าสู่ระบบ: 'Continue without logging in',
-  'หน่วยกู้ชีพ โรงพยาบาล และศูนย์สั่งการต้องได้รับการอนุมัติจากศูนย์สั่งการก่อนเข้าใช้งานได้':
+  'ยังไม่มีบัญชีผู้ใช้ สมัครสมาชิก': "Don't have an account? Sign up",
+  ใช้งานโดยไม่เข้าสู่ระบบ: 'Continue without logging in',
+  'เจ้าหน้าที่หน่วยกู้ชีพ โรงพยาบาล และศูนย์สั่งการ ต้องได้รับการอนุมัติจากศูนย์สั่งการก่อนเข้าใช้งาน':
     'Rescue teams, hospitals, and dispatch staff must be approved by the dispatch center before they can log in.',
 })
 
@@ -142,7 +142,7 @@ export default function Login() {
           {status === 'pending' ? (
             <SuccessState
               title={t('รอการอนุมัติจากศูนย์สั่งการ')}
-              description={t('บัญชีของคุณลงทะเบียนสำเร็จแล้ว แต่ยังไม่ได้รับการอนุมัติให้เข้าใช้งาน กรุณาลองเข้าสู่ระบบอีกครั้งภายหลัง')}
+              description={t('ลงทะเบียนบัญชีเรียบร้อยแล้ว แต่ยังไม่ได้รับการอนุมัติให้เข้าใช้งาน กรุณาเข้าสู่ระบบอีกครั้งภายหลัง')}
               action={
                 <Button variant="outline" onClick={() => navigate('/')}>
                   {t('กลับหน้าหลัก')}
@@ -215,15 +215,15 @@ export default function Login() {
                     onClick={() => navigate('/register')}
                     className="text-sm font-semibold text-primary hover:underline"
                   >
-                    {t('ยังไม่มีบัญชี? สมัครสมาชิก')}
+                    {t('ยังไม่มีบัญชีผู้ใช้ สมัครสมาชิก')}
                   </button>
                   <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-                    {t('เข้าใช้งานแบบไม่ต้องเข้าสู่ระบบ')}
+                    {t('ใช้งานโดยไม่เข้าสู่ระบบ')}
                   </Button>
                 </div>
               </Card>
               <p className="mt-4 text-center text-xs text-muted">
-                {t('หน่วยกู้ชีพ โรงพยาบาล และศูนย์สั่งการต้องได้รับการอนุมัติจากศูนย์สั่งการก่อนเข้าใช้งานได้')}
+                {t('เจ้าหน้าที่หน่วยกู้ชีพ โรงพยาบาล และศูนย์สั่งการ ต้องได้รับการอนุมัติจากศูนย์สั่งการก่อนเข้าใช้งาน')}
               </p>
             </>
           )}

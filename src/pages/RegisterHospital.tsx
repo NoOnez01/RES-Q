@@ -17,7 +17,7 @@ registerTranslations({
   กรุณากรอกเบอร์ติดต่อ: 'Please enter a contact number',
   กรุณาเลือกโรงพยาบาล: 'Please select a hospital',
   กรุณากรอกชื่อโรงพยาบาล: 'Please enter the hospital name',
-  กรุณากรอกเบอร์โรงพยาบาล: "Please enter the hospital's phone number",
+  กรุณากรอกเบอร์โทรศัพท์ของโรงพยาบาล: "Please enter the hospital's phone number",
   กรุณากรอกที่อยู่โรงพยาบาล: "Please enter the hospital's address",
   กรุณากรอกอีเมล: 'Please enter your email',
   กรุณากรอกรหัสผ่าน: 'Please enter your password',
@@ -25,7 +25,7 @@ registerTranslations({
   สมัครสมาชิกไม่สำเร็จ: 'Sign-up failed',
   สมัครสมาชิกโรงพยาบาล: 'Hospital sign-up',
   สมัครสมาชิกสำเร็จ: 'Sign-up successful',
-  'บัญชีของคุณรอการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้': 'Your account is pending approval from Dispatch Center 1669 before you can log in',
+  'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากศูนย์สั่งการ 1669': 'Your account is pending approval from Dispatch Center 1669 before you can log in',
   ไปหน้าเข้าสู่ระบบ: 'Go to login',
   'ชื่อ-นามสกุล': 'Full name',
   เบอร์ติดต่อ: 'Contact number',
@@ -33,13 +33,13 @@ registerTranslations({
   เลือกโรงพยาบาล: 'Select a hospital',
   'โรงพยาบาลของฉันไม่มีในรายการ': "My hospital isn't in the list",
   ชื่อโรงพยาบาล: 'Hospital name',
-  เบอร์โรงพยาบาล: "Hospital's phone number",
+  เบอร์โทรศัพท์โรงพยาบาล: "Hospital's phone number",
   ที่อยู่โรงพยาบาล: "Hospital's address",
   อีเมล: 'Email',
   รหัสผ่าน: 'Password',
   'อย่างน้อย 6 ตัวอักษร': 'At least 6 characters',
   สมัครสมาชิก: 'Sign up',
-  'บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้': 'Accounts must be approved by Dispatch Center 1669 before they can log in',
+  'บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งาน': 'Accounts must be approved by Dispatch Center 1669 before they can log in',
 })
 
 const NEW_HOSPITAL_VALUE = '__new__'
@@ -87,7 +87,7 @@ export default function RegisterHospital() {
     if (!form.hospitalId) next.hospitalId = t('กรุณาเลือกโรงพยาบาล')
     if (creatingNew) {
       if (!form.newHospitalName.trim()) next.newHospitalName = t('กรุณากรอกชื่อโรงพยาบาล')
-      if (!form.newHospitalPhone.trim()) next.newHospitalPhone = t('กรุณากรอกเบอร์โรงพยาบาล')
+      if (!form.newHospitalPhone.trim()) next.newHospitalPhone = t('กรุณากรอกเบอร์โทรศัพท์ของโรงพยาบาล')
       if (!form.newHospitalAddress.trim()) next.newHospitalAddress = t('กรุณากรอกที่อยู่โรงพยาบาล')
     }
     if (!form.email.trim()) next.email = t('กรุณากรอกอีเมล')
@@ -131,7 +131,7 @@ export default function RegisterHospital() {
         <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
           <SuccessState
             title={t('สมัครสมาชิกสำเร็จ')}
-            description={t('บัญชีของคุณรอการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้')}
+            description={t('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากศูนย์สั่งการ 1669')}
             action={
               <Button variant="outline" onClick={() => navigate('/login')}>
                 {t('ไปหน้าเข้าสู่ระบบ')}
@@ -189,7 +189,7 @@ export default function RegisterHospital() {
                     error={errors.newHospitalName}
                   />
                   <Input
-                    label={t('เบอร์โรงพยาบาล')}
+                    label={t('เบอร์โทรศัพท์โรงพยาบาล')}
                     required
                     value={form.newHospitalPhone}
                     onChange={(e) => update('newHospitalPhone', e.target.value)}
@@ -226,7 +226,7 @@ export default function RegisterHospital() {
               </Button>
             </form>
             <p className="mt-4 text-center text-xs text-muted">
-              {t('บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งานได้')}
+              {t('บัญชีต้องได้รับการอนุมัติจากศูนย์สั่งการ 1669 ก่อนเข้าใช้งาน')}
             </p>
           </Card>
         </div>

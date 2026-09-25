@@ -19,7 +19,7 @@ registerTranslations({
   'กม.': 'km',
   'ค้นหาหน่วยปฏิบัติการ (NDEMS)': 'Search units (NDEMS)',
   ค้นหาหน่วยปฏิบัติการทั่วประเทศ: 'Search units nationwide',
-  'ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก':
+  'ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเหตุที่เลือก':
     'Unit directory from the NDEMS system — search by name or code, filter by province or vehicle level, and sort by estimated distance from the selected case',
   'ค้นหาด้วยชื่อหน่วย รหัสหน่วย หรือจังหวัด': 'Search by unit name, unit code, or province',
   'กรองตามระดับรถ (เลือกได้หลายระดับ)': 'Filter by vehicle level (multiple allowed)',
@@ -27,16 +27,16 @@ registerTranslations({
   พิมพ์ชื่อจังหวัดเพื่อค้นหา: 'Type a province name to search',
   ไม่พบจังหวัดที่ค้นหา: 'No matching province found',
   ทุกจังหวัด: 'All provinces',
-  'คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)': 'Estimate distance from a case (optional)',
-  ยังไม่มีเคสที่มีตำแหน่งให้อ้างอิง: 'No case with a location to reference yet',
+  'คำนวณระยะทางโดยประมาณจากเหตุ (ไม่บังคับ)': 'Estimate distance from a case (optional)',
+  ยังไม่มีเหตุที่มีข้อมูลตำแหน่งสำหรับอ้างอิง: 'No case with a location to reference yet',
   'ไม่ระบุ (เรียงตามชื่อหน่วย)': 'Unspecified (sort by unit name)',
   'กำลังโหลดทำเนียบหน่วยปฏิบัติการ...': 'Loading the unit directory...',
   โหลดข้อมูลไม่สำเร็จ: 'Failed to load data',
-  'ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการจาก Supabase ได้ กรุณาลองใหม่อีกครั้ง': 'Could not load the unit directory from Supabase. Please try again.',
+  'ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการได้ กรุณาลองใหม่อีกครั้ง': 'Could not load the unit directory. Please try again.',
   ไม่พบหน่วยปฏิบัติการที่ค้นหา: 'No matching units found',
-  ลองปรับคำค้นหาหรือตัวกรองระดับรถ: 'Try adjusting your search or vehicle-level filter',
+  กรุณาปรับคำค้นหาหรือตัวกรองระดับรถ: 'Try adjusting your search or vehicle-level filter',
   'พบ {n} หน่วย': 'Found {n} units',
-  '— แสดง {n} หน่วยแรก': '— showing the first {n}',
+  '(แสดง {n} หน่วยแรก)': '(showing the first {n})',
 })
 
 const RESULT_LIMIT = 60
@@ -191,7 +191,7 @@ export default function DispatchUnitSearch() {
           <div>
             <h1 className="text-xl font-bold text-ink">{t('ค้นหาหน่วยปฏิบัติการทั่วประเทศ')}</h1>
             <p className="mt-1.5 text-sm text-muted">
-              {t('ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS — ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเคสที่เลือก')}
+              {t('ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเหตุที่เลือก')}
             </p>
           </div>
 
@@ -237,10 +237,10 @@ export default function DispatchUnitSearch() {
             />
 
             <Select
-              label={t('คำนวณระยะทางโดยประมาณจากเคส (ไม่บังคับ)')}
+              label={t('คำนวณระยะทางโดยประมาณจากเหตุ (ไม่บังคับ)')}
               value={referenceCaseId}
               onChange={(e) => setReferenceCaseId(e.target.value)}
-              hint={casesWithLocation.length === 0 ? t('ยังไม่มีเคสที่มีตำแหน่งให้อ้างอิง') : undefined}
+              hint={casesWithLocation.length === 0 ? t('ยังไม่มีเหตุที่มีข้อมูลตำแหน่งสำหรับอ้างอิง') : undefined}
             >
               <option value="">{t('ไม่ระบุ (เรียงตามชื่อหน่วย)')}</option>
               {casesWithLocation.map((c) => (
@@ -256,20 +256,20 @@ export default function DispatchUnitSearch() {
           ) : loadError ? (
             <ErrorState
               title={t('โหลดข้อมูลไม่สำเร็จ')}
-              description={t('ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการจาก Supabase ได้ กรุณาลองใหม่อีกครั้ง')}
+              description={t('ไม่สามารถโหลดทำเนียบหน่วยปฏิบัติการได้ กรุณาลองใหม่อีกครั้ง')}
               onRetry={() => window.location.reload()}
             />
           ) : results.length === 0 ? (
             <EmptyState
               icon={<Building2 className="size-6" />}
               title={t('ไม่พบหน่วยปฏิบัติการที่ค้นหา')}
-              description={t('ลองปรับคำค้นหาหรือตัวกรองระดับรถ')}
+              description={t('กรุณาปรับคำค้นหาหรือตัวกรองระดับรถ')}
             />
           ) : (
             <>
               <p className="text-xs text-muted">
                 {t('พบ {n} หน่วย', { n: results.length.toLocaleString('th-TH') })}
-                {results.length > RESULT_LIMIT && ` ${t('— แสดง {n} หน่วยแรก', { n: RESULT_LIMIT })}`}
+                {results.length > RESULT_LIMIT && ` ${t('(แสดง {n} หน่วยแรก)', { n: RESULT_LIMIT })}`}
               </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleResults.map(({ unit, distanceKm }) => (
