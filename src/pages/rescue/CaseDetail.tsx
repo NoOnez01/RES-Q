@@ -29,6 +29,7 @@ import { Truck } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   เดินทาง: 'En route',
   ถึงที่เกิดเหตุ: 'Arrived at scene',
   บันทึกข้อมูล: 'Record data',
@@ -336,7 +337,7 @@ export default function RescueCaseDetail() {
               )}
               <div className="flex items-start gap-2">
                 <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-ink">{c.incidentDetails.callbackPhone}</span>
+                <span className="text-ink">{c.incidentDetails.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
               </div>
             </div>
             {c.incidentDetails.notes && (

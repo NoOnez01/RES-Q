@@ -175,7 +175,10 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
         </button>
       )}
 
-      {(variant === 'flow' || showBack) && (
+      {/* Flow pages default to a back arrow, but an explicit showBack={false}
+          must win -- e.g. dispatch's live call screen, where a stray tap
+          would drop the call. */}
+      {(showBack ?? variant === 'flow') && (
         <button
           onClick={() => (onBack ? onBack() : navigate(-1))}
           aria-label={t('ย้อนกลับ')}

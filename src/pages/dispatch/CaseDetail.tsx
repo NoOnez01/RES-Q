@@ -50,6 +50,7 @@ import { checkCaseConsistency } from '@/lib/caseHealth'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   ข้อมูลเคสไม่สอดคล้องกัน: 'Case data is inconsistent',
   'เคสนี้มีข้อมูลไม่สอดคล้องกับสถานะปัจจุบัน อาจทำให้ไม่เห็นขั้นตอนถัดไป — ลองแก้ไขข้อมูลที่เกี่ยวข้องอีกครั้ง':
     'This case has data that doesn’t match its current status, which may be hiding the next action — try re-submitting the relevant form',
@@ -438,7 +439,7 @@ export default function DispatchCaseDetail() {
                   <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
                   <div>
                     <p className="text-xs text-muted">{t('เบอร์ติดต่อกลับ')}</p>
-                    <p className="text-sm font-semibold text-ink">{details.callbackPhone}</p>
+                    <p className="text-sm font-semibold text-ink">{details.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</p>
                   </div>
                 </div>
                 {details.notes && (

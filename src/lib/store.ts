@@ -606,7 +606,12 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, updatedAt: Date.now() } } }
+          // The citizen gives this number after their 1669 call, often after
+          // dispatch has already saved an assessment -- which snapshots it
+          // into incidentDetails.callbackPhone (what rescue/hospital read).
+          // Keep that copy current, or they'd be left with a blank number.
+          const incidentDetails = c.incidentDetails ? { ...c.incidentDetails, callbackPhone: phone } : c.incidentDetails
+          return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, incidentDetails, updatedAt: Date.now() } } }
         }),
 
       setReporterConsciousness: (caseId, consciousness) =>

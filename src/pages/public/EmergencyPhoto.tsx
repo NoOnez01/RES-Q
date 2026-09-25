@@ -5,10 +5,9 @@ import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input, Select } from '@/components/ui/Field'
+import { Select } from '@/components/ui/Field'
 import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
-import { RelativeContacts } from '@/components/RelativeContacts'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -34,8 +33,6 @@ registerTranslations({
   เล่นเสียง: 'Play',
   'บันทึกเสียง {duration}': 'Recording {duration}',
   ลบการบันทึกเสียง: 'Delete recording',
-  'กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ': 'Please provide a callback phone number',
-  เบอร์โทรศัพท์ไม่ถูกต้อง: 'Invalid phone number',
   กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่: 'Please indicate whether the patient is conscious',
   บันทึกรูปภาพแล้ว: 'Photo saved',
   อัปโหลดรูปภาพไม่สำเร็จ: 'Failed to upload photo',
@@ -49,8 +46,6 @@ registerTranslations({
   'กำลังค้นหาตำแหน่ง...': 'Locating...',
   'สัญญาณ GPS พร้อมใช้งาน': 'GPS signal ready',
   ใช้ตำแหน่งโดยประมาณ: 'Using an approximate location',
-  เบอร์โทรศัพท์สำหรับติดต่อกลับ: 'Callback phone number',
-  'ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน': 'Pulled from your profile ({name}) — editable if you want to change it',
   ผู้ป่วยยังมีสติหรือไม่: 'Is the patient conscious?',
   'ช่วยให้ศูนย์ 1669 ประเมินความรุนแรงได้เร็วขึ้น': 'Helps Center 1669 assess severity faster',
   เลือกระดับความรู้สึกตัว: 'Select consciousness level',
@@ -129,7 +124,6 @@ export default function EmergencyPhoto() {
   const finishPhotoStep = useStore((s) => s.finishPhotoStep)
   const setLocation = useStore((s) => s.setLocation)
   const deleteCase = useStore((s) => s.deleteCase)
-  const setReporterPhone = useStore((s) => s.setReporterPhone)
   const setReporterConsciousness = useStore((s) => s.setReporterConsciousness)
   const currentUser = useStore((s) => s.currentUser)
   const loggedIn = !!currentUser && !currentUser.isAnonymous
@@ -142,8 +136,6 @@ export default function EmergencyPhoto() {
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'ready' | 'failed'>('locating')
   const [captureKey, setCaptureKey] = useState<PhotoCategory | null>(null)
-  const [callbackPhone, setCallbackPhoneInput] = useState('')
-  const [phoneError, setPhoneError] = useState<string>()
   const [consciousness, setConsciousnessInput] = useState<Consciousness | ''>('')
   const [consciousnessError, setConsciousnessError] = useState<string>()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -169,8 +161,6 @@ export default function EmergencyPhoto() {
     resolvedRef.current = id
     setCaseId(id)
     const c = useStore.getState().cases[id]
-    if (c?.reporterPhone) setCallbackPhoneInput(c.reporterPhone)
-    else if (loggedIn && currentUser?.phone) setCallbackPhoneInput(currentUser.phone)
     if (c?.reporterConsciousness) setConsciousnessInput(c.reporterConsciousness)
     // Instant placeholder so the UI never shows "no location" while the
     // first real GPS fix comes in via the watch effect below.
@@ -214,23 +204,14 @@ export default function EmergencyPhoto() {
 
   function proceed() {
     if (!caseId || submitting) return
-    const digits = callbackPhone.replace(/\D/g, '')
-    if (!callbackPhone.trim()) {
-      setPhoneError(t('กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ'))
-      return
-    }
-    if (digits.length < 9 || digits.length > 10) {
-      setPhoneError(t('เบอร์โทรศัพท์ไม่ถูกต้อง'))
-      return
-    }
+    // The callback number and family contacts are asked after the call
+    // (public/ContactInfo.tsx) -- nothing extra to type before reaching 1669.
     if (!consciousness) {
       setConsciousnessError(t('กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่'))
       return
     }
-    setPhoneError(undefined)
     setConsciousnessError(undefined)
     setSubmitting(true)
-    setReporterPhone(caseId, callbackPhone)
     setReporterConsciousness(caseId, consciousness)
     setTimeout(() => {
       finishPhotoStep(caseId)
@@ -367,19 +348,7 @@ export default function EmergencyPhoto() {
             )}
           </div>
 
-          <Card className="flex flex-col gap-4">
-            <Input
-              label={t('เบอร์โทรศัพท์สำหรับติดต่อกลับ')}
-              type="tel"
-              required
-              value={callbackPhone}
-              error={phoneError}
-              hint={loggedIn && !phoneError ? t('ดึงจากโปรไฟล์ของคุณ ({name}) แก้ไขได้หากต้องการเปลี่ยน', { name: currentUser?.name ?? '' }) : undefined}
-              onChange={(e) => {
-                setCallbackPhoneInput(e.target.value)
-                if (phoneError) setPhoneError(undefined)
-              }}
-            />
+          <Card>
             <Select
               label={t('ผู้ป่วยยังมีสติหรือไม่')}
               required
@@ -397,8 +366,6 @@ export default function EmergencyPhoto() {
               <option value="unknown">{t(CONSCIOUSNESS_LABEL.unknown)}</option>
             </Select>
           </Card>
-
-          <RelativeContacts caseId={caseId} contacts={activeCase.relativeContacts} />
 
           <div className="flex flex-col gap-2.5">
             {slots.map((slot, i) => (

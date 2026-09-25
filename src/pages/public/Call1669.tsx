@@ -192,7 +192,8 @@ export default function Call1669() {
     clearTimers()
     finishCall(activeCaseId)
     submitReport(activeCaseId)
-    navigate(`/public/case/${activeCaseId}`)
+    // Callback number + family contacts come next, then the timeline.
+    navigate(`/public/contact-info/${activeCaseId}`)
   }
 
   if (!activeCase) {

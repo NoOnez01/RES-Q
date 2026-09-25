@@ -20,6 +20,7 @@ import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   รายละเอียดเคส: 'Case details',
   ไม่พบเคสนี้: 'Case not found',
   เคสที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่ในระบบ: "The case you're looking for may have been deleted or does not exist",
@@ -157,7 +158,7 @@ export default function HospitalCaseDetail() {
               </div>
               <div className="flex items-start gap-2">
                 <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-ink">{c.incidentDetails.callbackPhone}</span>
+                <span className="text-ink">{c.incidentDetails.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
               </div>
             </div>
             {c.assessment && (

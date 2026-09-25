@@ -31,6 +31,7 @@ import LineCallback from '@/pages/auth/LineCallback'
 
 import EmergencyPhoto from '@/pages/public/EmergencyPhoto'
 import Call1669 from '@/pages/public/Call1669'
+import ContactInfo from '@/pages/public/ContactInfo'
 import Contact1669 from '@/pages/Contact1669'
 import CaseTracking from '@/pages/public/CaseTracking'
 
@@ -165,6 +166,7 @@ export default function App() {
 
         <Route path="/public/emergency-photo" element={<EmergencyPhoto />} />
         <Route path="/public/call-1669" element={<Call1669 />} />
+        <Route path="/public/contact-info/:id" element={<ContactInfo />} />
         <Route path="/contact-1669/:caseId" element={<Contact1669 />} />
         <Route path="/public/case/:id" element={<CaseTracking />} />
 
