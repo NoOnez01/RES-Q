@@ -48,7 +48,17 @@ async function fetchToken(caseId: string, roomKind: CallRoomKind): Promise<{ tok
   const { data, error } = await supabase.functions.invoke<{ token: string; url: string }>('livekit-token', {
     body: { caseId, roomKind },
   })
-  if (error || !data?.token || !data.url) return null
+  if (error) {
+    // A non-2xx carries the function's own response -- its { error } body
+    // says which check refused the caller (unauthorized/forbidden/...).
+    const detail = error.context instanceof Response ? await error.context.text().catch(() => '') : ''
+    console.error('livekit-token failed:', error.message, detail)
+    return null
+  }
+  if (!data?.token || !data.url) {
+    console.error('livekit-token returned no token/url')
+    return null
+  }
   return data
 }
 
@@ -135,6 +145,9 @@ export function useLiveKitCall(caseId: string | null, roomKind: CallRoomKind, ac
       for (const event of refreshEvents) r.on(event, refresh)
       r.on(E.AudioPlaybackStatusChanged, () => {
         if (!cancelled) setAudioBlocked(!r.canPlaybackAudio)
+      })
+      r.on(E.Disconnected, (reason) => {
+        if (!cancelled) console.warn('LiveKit disconnected:', reason === undefined ? 'unknown' : lk.DisconnectReason[reason])
       })
       r.on(E.ConnectionStateChanged, (state) => {
         if (cancelled) return
