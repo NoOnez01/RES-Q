@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Building2, Ambulance, Share2, Phone, PhoneIncoming } from 'lucide-react'
+import { CheckCircle2, Building2, Ambulance, Share2, Phone, PhoneIncoming, Coins } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +18,7 @@ import { ErrorState, LoadingState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
+import { fetchCaseReward } from '@/lib/coins'
 import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
@@ -26,6 +27,8 @@ import type { EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  'คุณได้รับ {n} เหรียญจากการแจ้งเหตุครั้งนี้': 'You earned {n} coins for this report',
+  ดูเหรียญของฉัน: 'View my coins',
   ติดตามเคส: 'Track case',
   'กำลังค้นหาเคส...': 'Looking up the case...',
   ไม่พบเคสนี้: 'Case not found',
@@ -177,6 +180,26 @@ export default function CaseTracking() {
     activeCase?.selectedHospital?.location,
   ])
 
+  // Coins the reporter earned on this case -- awarded by the database the
+  // moment staff complete it (supabase-coin-system.sql), so look once it is.
+  // Null for anyone else viewing (RLS only returns the reporter's own rows).
+  const [earnedCoins, setEarnedCoins] = useState<number | null>(null)
+  const caseNumber = activeCase?.caseNumber
+  const completed = activeCase?.status === 'completed'
+  useEffect(() => {
+    if (!supabaseEnabled || !completed || !caseNumber) return
+    let cancelled = false
+    fetchCaseReward(caseNumber).then(
+      (n) => {
+        if (!cancelled) setEarnedCoins(n)
+      },
+      () => {},
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [completed, caseNumber])
+
   if (!activeCase) {
     return (
       <AppShell variant="flow" title={t('ติดตามเคส')} showBack onBack={() => navigate('/')}>
@@ -283,6 +306,18 @@ export default function CaseTracking() {
               <CheckCircle2 className="size-6 shrink-0 text-success" />
               <p className="text-sm font-semibold text-ink">{t('เคสเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ')}</p>
             </div>
+          )}
+
+          {isCompleted && earnedCoins !== null && (
+            <Card className="flex flex-wrap items-center justify-between gap-3 animate-fade-in-up">
+              <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Coins className="size-5 shrink-0 text-warning" aria-hidden="true" />
+                {t('คุณได้รับ {n} เหรียญจากการแจ้งเหตุครั้งนี้', { n: earnedCoins.toLocaleString() })}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => navigate('/coins')}>
+                {t('ดูเหรียญของฉัน')}
+              </Button>
+            </Card>
           )}
 
           {activeCase.status === 'completed' &&

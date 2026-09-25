@@ -39,6 +39,8 @@ import DispatchDashboard from '@/pages/dispatch/Dashboard'
 import DispatchNewCase from '@/pages/dispatch/NewCase'
 import DispatchPendingApprovals from '@/pages/dispatch/PendingApprovals'
 import ManageOrgs from '@/pages/dispatch/ManageOrgs'
+import ManageCoins from '@/pages/dispatch/ManageCoins'
+import Coins from '@/pages/Coins'
 import DispatchIncomingCall from '@/pages/dispatch/IncomingCall'
 import DispatchCallScreen from '@/pages/dispatch/CallScreen'
 import DispatchCaseDetail from '@/pages/dispatch/CaseDetail'
@@ -175,6 +177,8 @@ export default function App() {
         <Route path="/dispatch/pending-approvals" element={<RequireRole role="dispatch"><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/org-approvals" element={<RequireRole role={['rescue', 'hospital']}><DispatchPendingApprovals /></RequireRole>} />
         <Route path="/manage-orgs" element={<RequireRole role="dispatch"><ManageOrgs /></RequireRole>} />
+        <Route path="/manage-coins" element={<RequireRole role="dispatch"><ManageCoins /></RequireRole>} />
+        <Route path="/coins" element={<Coins />} />
         <Route
           path="/dispatch/feedback-stats"
           element={

@@ -10,6 +10,7 @@ import {
   Home,
   Ambulance,
   Building2,
+  Coins,
 } from 'lucide-react'
 import { registerTranslations } from './i18n'
 
@@ -26,6 +27,7 @@ registerTranslations({
   หน่วยกู้ชีพ: 'Rescue team',
   โรงพยาบาล: 'Hospital',
   ประชาชน: 'Public',
+  เหรียญ: 'Coins',
 })
 
 export interface NavItem {
@@ -71,6 +73,7 @@ export function navItemsForRole(role: Role | null, isOrgLead = false): NavItem[]
         { label: 'หน้าหลัก', path: '/', icon: Home },
         { label: 'เคสปัจจุบัน', path: '/current-cases', icon: ListChecks },
         { label: 'ประวัติเคส', path: '/case-history', icon: History },
+        { label: 'เหรียญ', path: '/coins', icon: Coins },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
       ]

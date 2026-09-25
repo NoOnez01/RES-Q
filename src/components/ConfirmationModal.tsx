@@ -23,6 +23,9 @@ interface ConfirmationModalProps {
   tone?: 'primary' | 'danger'
   confirmLoading?: boolean
   icon?: React.ReactNode
+  /** Extra content between the message and the buttons, e.g. the fields a
+   * confirmation needs (an amount, contact details). */
+  children?: React.ReactNode
 }
 
 export function ConfirmationModal({
@@ -36,6 +39,7 @@ export function ConfirmationModal({
   tone = 'primary',
   confirmLoading = false,
   icon,
+  children,
 }: ConfirmationModalProps) {
   const t = useT()
   useEffect(() => {
@@ -72,6 +76,7 @@ export function ConfirmationModal({
           {title}
         </h2>
         {message && <p className="mt-2 text-sm leading-relaxed text-muted">{message}</p>}
+        {children && <div className="mt-4 flex flex-col gap-3">{children}</div>}
         <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
           <Button variant="outline" fullWidth onClick={onCancel} className="sm:flex-1">
             {cancelLabel ?? t('ยกเลิก')}

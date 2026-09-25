@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   UserCheck,
   Wrench,
+  Coins,
   KeyRound,
   Mail,
   Sun,
@@ -68,6 +69,7 @@ registerTranslations({
   'โรงพยาบาล (ทุกแห่ง)': 'Hospitals (all)',
   'บัญชีรออนุมัติ / จัดการสิทธิ์': 'Pending accounts / permissions',
   'จัดการหน่วยกู้ชีพ/โรงพยาบาล': 'Manage rescue teams / hospitals',
+  จัดการระบบเหรียญ: 'Manage coin system',
   ข้อควรทราบ: 'Notices',
   ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย: 'This system is a prototype for demonstration and research.',
   ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
@@ -458,6 +460,11 @@ export default function Settings() {
               <Link to="/manage-orgs">
                 <Button variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
                   {t('จัดการหน่วยกู้ชีพ/โรงพยาบาล')}
+                </Button>
+              </Link>
+              <Link to="/manage-coins">
+                <Button variant="outline" size="sm" fullWidth icon={<Coins className="size-4" />}>
+                  {t('จัดการระบบเหรียญ')}
                 </Button>
               </Link>
             </div>

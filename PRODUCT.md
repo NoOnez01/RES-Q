@@ -44,6 +44,7 @@ Unlike a generic CAD/dispatch tool or a plain group chat, ResQ is role-scoped en
 - Glasgow Coma Scale scoring alongside AVPU responsiveness in the on-scene assessment.
 - Signature capture required when a family declines transport or declines the nearest hospital, for severity 1–2 cases.
 - Account linking: a single profile can carry email/password, Google, and/or LINE as interchangeable sign-in methods.
+- Coin system (supabase-coin-system.sql): a citizen earns an admin-set number of coins when staff complete a case they reported, then redeems them for rewards or donates them to partner foundations. Admins manage coins per case, foundations, rewards, and redemption requests (/manage-coins). Balances are a server-written ledger — clients can't award or spend coins except through the database functions.
 - Known technical constraint: the production JS bundle exceeds the default 500kB chunk-size warning (not yet code-split); not currently a functional issue.
 
 ## Brand Commitments
