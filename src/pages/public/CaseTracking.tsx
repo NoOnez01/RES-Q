@@ -107,7 +107,7 @@ export default function CaseTracking() {
   const rescueCallActive = !isRemoteOnly && activeCase?.rescueCallStatus === 'in-call'
   const rescueCallIsLive = rescueCallRinging || rescueCallActive
   const rescueCallIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', rescueCallIsLive)
+  const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', 'public', rescueCallIsLive)
 
   useEffect(() => {
     if (rescueCallActive && activeCase && !rescueCallIntervalRef.current) {

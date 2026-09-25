@@ -44,7 +44,7 @@ export default function RescueJoinCall() {
 
   const inviteStatus = c?.rescueCallInvite?.status
   const active = c?.callStatus === 'in-call' && !!inviteStatus
-  const call = useLiveKitCall(id ?? null, 'dispatch', active)
+  const call = useLiveKitCall(id ?? null, 'dispatch', 'rescue', active)
 
   // Normally already accepted from the incoming-call alert; this covers
   // opening the screen straight from a link while it's still ringing.

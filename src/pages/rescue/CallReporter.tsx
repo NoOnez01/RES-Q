@@ -49,7 +49,7 @@ export default function RescueCallReporter() {
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const callIsLive = c?.rescueCallStatus === 'connecting' || c?.rescueCallStatus === 'in-call'
-  const call = useLiveKitCall(id ?? null, 'rescue-citizen', !!callIsLive)
+  const call = useLiveKitCall(id ?? null, 'rescue-citizen', 'rescue', !!callIsLive)
 
   useEffect(() => {
     if (c?.rescueCallStatus === 'in-call' && !intervalRef.current && id) {

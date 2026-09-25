@@ -74,7 +74,7 @@ export default function Call1669() {
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
-  const call = useLiveKitCall(activeCaseId, 'dispatch', callIsLive)
+  const call = useLiveKitCall(activeCaseId, 'dispatch', 'public', callIsLive)
 
   useEffect(() => {
     return () => {

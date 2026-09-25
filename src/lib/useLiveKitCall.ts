@@ -14,6 +14,9 @@ function loadLiveKit(): Promise<LiveKit> {
 
 /** Which of a case's call rooms to join -- see supabase/functions/livekit-token. */
 export type CallRoomKind = 'dispatch' | 'rescue-citizen'
+/** Which side of the call this screen is. Only honored for admins, who can
+ * open any screen; everyone else joins as their own profile role. */
+export type CallSide = 'public' | 'dispatch' | 'rescue'
 export type CameraState = 'idle' | 'requesting' | 'ready' | 'denied' | 'unavailable'
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'failed' | 'disconnected'
 
@@ -43,10 +46,14 @@ export interface LiveKitCall {
   startAudio: () => void
 }
 
-async function fetchToken(caseId: string, roomKind: CallRoomKind): Promise<{ token: string; url: string } | null> {
+async function fetchToken(
+  caseId: string,
+  roomKind: CallRoomKind,
+  side: CallSide,
+): Promise<{ token: string; url: string } | null> {
   if (!supabase) return null
   const { data, error } = await supabase.functions.invoke<{ token: string; url: string }>('livekit-token', {
-    body: { caseId, roomKind },
+    body: { caseId, roomKind, role: side },
   })
   if (error) {
     // A non-2xx carries the function's own response -- its { error } body
@@ -83,7 +90,12 @@ function toCallParticipant(lk: LiveKit, p: Participant): CallParticipant {
  * only carries the media, so any number of participants (citizen,
  * dispatcher, and a rescue crew pulled in) can share the same room.
  */
-export function useLiveKitCall(caseId: string | null, roomKind: CallRoomKind, active: boolean): LiveKitCall {
+export function useLiveKitCall(
+  caseId: string | null,
+  roomKind: CallRoomKind,
+  side: CallSide,
+  active: boolean,
+): LiveKitCall {
   const [remotes, setRemotes] = useState<CallParticipant[]>([])
   const [localVideoTrack, setLocalVideoTrack] = useState<Track | null>(null)
   const [cameraState, setCameraState] = useState<CameraState>('idle')
@@ -107,7 +119,7 @@ export function useLiveKitCall(caseId: string | null, roomKind: CallRoomKind, ac
     async function join() {
       setConnectionState('connecting')
       setCameraState('requesting')
-      const [lk, credentials] = await Promise.all([loadLiveKit(), fetchToken(caseId!, roomKind)])
+      const [lk, credentials] = await Promise.all([loadLiveKit(), fetchToken(caseId!, roomKind, side)])
       if (cancelled) return
       if (!credentials) {
         setConnectionState('failed')
@@ -205,7 +217,7 @@ export function useLiveKitCall(caseId: string | null, roomKind: CallRoomKind, ac
       setMicOn(true)
       setAudioBlocked(false)
     }
-  }, [active, caseId, roomKind])
+  }, [active, caseId, roomKind, side])
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current

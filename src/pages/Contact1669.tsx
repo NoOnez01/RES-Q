@@ -42,7 +42,7 @@ export default function Contact1669() {
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const callIsLive = c?.callStatus === 'connecting' || c?.callStatus === 'in-call'
-  const call = useLiveKitCall(caseId ?? null, 'dispatch', !!callIsLive)
+  const call = useLiveKitCall(caseId ?? null, 'dispatch', isRescue ? 'rescue' : 'public', !!callIsLive)
 
   useEffect(() => {
     if (c?.callStatus === 'in-call' && !intervalRef.current && caseId) {

@@ -68,8 +68,9 @@ Deno.serve(async (req) => {
 
   let caseId: unknown
   let roomKind: unknown
+  let requestedRole: unknown
   try {
-    ;({ caseId, roomKind } = await req.json())
+    ;({ caseId, roomKind, role: requestedRole } = await req.json())
   } catch {
     return json({ error: 'invalid body' }, 400)
   }
@@ -92,19 +93,29 @@ Deno.serve(async (req) => {
       .maybeSingle()
     if (!profile || profile.approval_status !== 'approved') return json({ error: 'forbidden' }, 403)
 
-    const role = profile.role as Role
-    if (!profile.is_admin && !ROOM_ROLES[roomKind].includes(role)) return json({ error: 'forbidden' }, 403)
+    // Admins can work any screen (RequireRole lets them through), so their
+    // profile role doesn't say which side of this call they're on -- take
+    // the side the page asked for, as long as it belongs in this room.
+    // Everyone else is always their own role, whatever they asked for.
+    const allowed = ROOM_ROLES[roomKind]
+    const role =
+      profile.is_admin && allowed.includes(requestedRole as Role) ? (requestedRole as Role) : (profile.role as Role)
+    if (!profile.is_admin && !allowed.includes(role)) return json({ error: 'forbidden' }, 403)
 
     const { data: caseRow } = await supabase.from('cases').select('case_id').eq('data->>id', caseId).maybeSingle()
     if (!caseRow) return json({ error: 'forbidden' }, 403)
 
     const room = roomKind === 'dispatch' ? `resq-${caseId}` : `resq-${caseId}-${roomKind}`
     const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: userId,
+      // Per connection, not per user: LiveKit keeps one participant per
+      // identity, so the same account in two tabs/devices (an admin trying
+      // both sides of a call, a dispatcher on phone + desktop) would keep
+      // kicking each other out of the room.
+      identity: `${userId}:${crypto.randomUUID().slice(0, 8)}`,
       name: profile.name ?? undefined,
       // Read by the client to label each tile (1669 / rescue / reporter)
-      // -- from the profile row, not anything the client sent, so a
-      // participant can't pass themselves off as dispatch.
+      // -- a non-admin's is always their profile role, never what the
+      // client sent, so a citizen can't pass themselves off as dispatch.
       attributes: { role },
       // Only has to be valid at join time; LiveKit refreshes the session
       // itself for as long as the call lasts.

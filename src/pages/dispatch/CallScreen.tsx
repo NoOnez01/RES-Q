@@ -51,7 +51,7 @@ export default function DispatchCallScreen() {
   const t = useT()
 
   const isActive = emergencyCase?.callStatus === 'in-call'
-  const call = useLiveKitCall(id ?? null, 'dispatch', isActive)
+  const call = useLiveKitCall(id ?? null, 'dispatch', 'dispatch', isActive)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   // This screen has no back button (showBack={false} below) so a stray tap
