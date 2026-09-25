@@ -86,11 +86,12 @@ Deno.serve(async (req) => {
     if (userError || !userData.user) return json({ error: 'unauthorized' }, 401)
     const userId = userData.user.id
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, name, is_admin, approval_status')
-      .eq('id', userId)
-      .maybeSingle()
+    // Independent reads -- in parallel, since they sit on the path between a
+    // dispatcher pressing answer and the call connecting.
+    const [{ data: profile }, { data: caseRow }] = await Promise.all([
+      supabase.from('profiles').select('role, name, is_admin, approval_status').eq('id', userId).maybeSingle(),
+      supabase.from('cases').select('case_id').eq('data->>id', caseId).maybeSingle(),
+    ])
     if (!profile || profile.approval_status !== 'approved') return json({ error: 'forbidden' }, 403)
 
     // Admins can work any screen (RequireRole lets them through), so their
@@ -102,7 +103,6 @@ Deno.serve(async (req) => {
       profile.is_admin && allowed.includes(requestedRole as Role) ? (requestedRole as Role) : (profile.role as Role)
     if (!profile.is_admin && !allowed.includes(role)) return json({ error: 'forbidden' }, 403)
 
-    const { data: caseRow } = await supabase.from('cases').select('case_id').eq('data->>id', caseId).maybeSingle()
     if (!caseRow) return json({ error: 'forbidden' }, 403)
 
     const room = roomKind === 'dispatch' ? `resq-${caseId}` : `resq-${caseId}-${roomKind}`

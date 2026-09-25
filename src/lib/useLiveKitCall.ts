@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { LocalVideoTrack, Participant, Room, Track } from 'livekit-client'
+import type { LocalTrack, LocalVideoTrack, Participant, Room, Track } from 'livekit-client'
 import { supabase, supabaseEnabled } from './supabase'
 
 type LiveKit = typeof import('livekit-client')
+type Credentials = { token: string; url: string }
 
-// The SDK is ~150kB gzipped -- loaded only once a call actually starts, so
-// it never weighs down the first load for a citizen on weak mobile data who
-// may never place a call at all.
+// The SDK is ~150kB gzipped -- loaded only once a call actually starts (or
+// starts ringing, see prepareCall), so it never weighs down the first load
+// for a citizen on weak mobile data who may never place a call at all.
 let liveKitModule: Promise<LiveKit> | null = null
 function loadLiveKit(): Promise<LiveKit> {
-  return (liveKitModule ??= import('livekit-client'))
+  return (liveKitModule ??= import('livekit-client').catch((err: unknown) => {
+    liveKitModule = null // a failed chunk load (flaky mobile data) must be retryable
+    throw err
+  }))
 }
 
 /** Which of a case's call rooms to join -- see supabase/functions/livekit-token. */
@@ -46,13 +50,9 @@ export interface LiveKitCall {
   startAudio: () => void
 }
 
-async function fetchToken(
-  caseId: string,
-  roomKind: CallRoomKind,
-  side: CallSide,
-): Promise<{ token: string; url: string } | null> {
+async function fetchToken(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<Credentials | null> {
   if (!supabase) return null
-  const { data, error } = await supabase.functions.invoke<{ token: string; url: string }>('livekit-token', {
+  const { data, error } = await supabase.functions.invoke<Credentials>('livekit-token', {
     body: { caseId, roomKind, role: side },
   })
   if (error) {
@@ -67,6 +67,64 @@ async function fetchToken(
     return null
   }
   return data
+}
+
+// Tokens fetched while a call is still ringing, each used once by the join
+// that follows (identities are per connection, so a token is single-use).
+// Well inside the token's 10-minute TTL.
+const PREFETCH_MAX_AGE_MS = 5 * 60_000
+const prefetched = new Map<string, { at: number; credentials: Promise<Credentials | null> }>()
+
+function prefetchKey(caseId: string, roomKind: CallRoomKind, side: CallSide): string {
+  return `${caseId}|${roomKind}|${side}`
+}
+
+/**
+ * Called while a call rings for this user: loads the SDK and fetches the
+ * token ahead of time, so answering goes straight to connecting instead of
+ * first waiting on a chunk download and an Edge Function round trip.
+ */
+export function prepareCall(caseId: string, roomKind: CallRoomKind, side: CallSide): void {
+  if (!supabaseEnabled) return
+  loadLiveKit().catch(() => {})
+  const key = prefetchKey(caseId, roomKind, side)
+  const hit = prefetched.get(key)
+  if (hit && Date.now() - hit.at < PREFETCH_MAX_AGE_MS) return
+  prefetched.set(key, { at: Date.now(), credentials: fetchToken(caseId, roomKind, side) })
+}
+
+/** The prefetched token if there's a fresh one, else a new fetch. Doesn't
+ * remove it -- the join does that once it actually connects, so a join
+ * cancelled straight away (a quick remount) leaves it for the next one. */
+function getCredentials(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<Credentials | null> {
+  const hit = prefetched.get(prefetchKey(caseId, roomKind, side))
+  if (!hit || Date.now() - hit.at >= PREFETCH_MAX_AGE_MS) return fetchToken(caseId, roomKind, side)
+  return hit.credentials.then((c) => c ?? fetchToken(caseId, roomKind, side))
+}
+
+function mediaErrorState(err: unknown): CameraState {
+  return (err as DOMException)?.name === 'NotFoundError' ? 'unavailable' : 'denied'
+}
+
+/**
+ * Camera + mic in one request (one permission prompt), falling back to the
+ * mic alone -- a voice-only call beats no call on a phone with no camera or
+ * a refused one.
+ */
+async function openLocalMedia(
+  lk: LiveKit,
+  facingMode: 'user' | 'environment',
+): Promise<{ tracks: LocalTrack[]; cameraState: CameraState }> {
+  try {
+    return { tracks: await lk.createLocalTracks({ audio: true, video: { facingMode } }), cameraState: 'ready' }
+  } catch (err) {
+    const cameraState = mediaErrorState(err)
+    try {
+      return { tracks: await lk.createLocalTracks({ audio: true }), cameraState }
+    } catch (audioErr) {
+      return { tracks: [], cameraState: mediaErrorState(audioErr) }
+    }
+  }
 }
 
 function toCallParticipant(lk: LiveKit, p: Participant): CallParticipant {
@@ -111,21 +169,35 @@ export function useLiveKitCall(
     if (!active || !caseId || !supabaseEnabled) return
     let cancelled = false
     let room: Room | null = null
-    // The mic publishes before the camera, so reading the toggles off live
+    // Tracks publish one at a time, so reading the toggles off live
     // publications mid-join would flash "camera off" for a moment on every
-    // call -- hold the defaults until both have had their first attempt.
+    // call -- hold the defaults until the first publish attempt is done.
     let mediaSettled = false
 
     async function join() {
       setConnectionState('connecting')
       setCameraState('requesting')
-      const [lk, credentials] = await Promise.all([loadLiveKit(), fetchToken(caseId!, roomKind, side)])
-      if (cancelled) return
-      if (!credentials) {
-        setConnectionState('failed')
-        setCameraState('idle')
+      // Joining is several round trips to the LiveKit server, which may be
+      // far away -- so the camera/mic start up while the token and connect
+      // are in flight rather than after them.
+      const media = loadLiveKit().then((lk) => openLocalMedia(lk, facingModeRef.current))
+      media.catch(() => {}) // an SDK load failure is reported just below
+      const discardMedia = () => void media.then(({ tracks }) => tracks.forEach((t) => t.stop())).catch(() => {})
+      const [lk, credentials] = await Promise.all([loadLiveKit(), getCredentials(caseId!, roomKind, side)]).catch(
+        (err: unknown) => {
+          console.error('LiveKit SDK failed to load:', err)
+          return [null, null] as const
+        },
+      )
+      if (cancelled || !lk || !credentials) {
+        discardMedia()
+        if (!cancelled) {
+          setConnectionState('failed')
+          setCameraState('idle')
+        }
         return
       }
+      prefetched.delete(prefetchKey(caseId!, roomKind, side))
       liveKitRef.current = lk
       room = new lk.Room({ adaptiveStream: true, dynacast: true })
       roomRef.current = room
@@ -172,28 +244,33 @@ export function useLiveKitCall(
         await r.connect(credentials.url, credentials.token)
       } catch (err) {
         console.error('LiveKit connect failed:', err)
+        discardMedia()
         if (!cancelled) {
           setConnectionState('failed')
           setCameraState('idle')
         }
         return
       }
-      if (cancelled) return
+      if (cancelled) {
+        discardMedia()
+        return
+      }
       setAudioBlocked(!r.canPlaybackAudio)
 
-      // Separately, so a phone with no camera (or a denied camera) still
-      // joins with its microphone -- a voice-only call beats no call.
-      try {
-        await r.localParticipant.setMicrophoneEnabled(true)
-      } catch (err) {
-        if (!cancelled && (err as DOMException)?.name === 'NotAllowedError') setCameraState('denied')
+      const { tracks, cameraState: mediaState } = await media
+      if (cancelled) {
+        tracks.forEach((t) => t.stop())
+        return
       }
-      try {
-        await r.localParticipant.setCameraEnabled(true, { facingMode: facingModeRef.current })
-        if (!cancelled) setCameraState((s) => (s === 'denied' ? s : 'ready'))
-      } catch (err) {
-        if (!cancelled) setCameraState((err as DOMException)?.name === 'NotFoundError' ? 'unavailable' : 'denied')
-      }
+      setCameraState(mediaState)
+      await Promise.all(
+        tracks.map((t) =>
+          r.localParticipant.publishTrack(t).catch((err: unknown) => {
+            console.error('LiveKit publish failed:', err)
+            t.stop()
+          }),
+        ),
+      )
       mediaSettled = true
       refresh()
     }

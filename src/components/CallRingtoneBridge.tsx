@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
+import { prepareCall } from '@/lib/useLiveKitCall'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -71,6 +72,13 @@ export function CallRingtoneBridge() {
   }, [ringingForMe, role, cases, activeCaseId])
 
   useEffect(() => stopRingtone, [])
+
+  // Get the call ready while it rings -- answering then goes straight to
+  // connecting instead of first loading the SDK and fetching a token.
+  useEffect(() => {
+    const side = role === 'rescue' ? 'rescue' : 'dispatch'
+    for (const c of ringingForMe) prepareCall(c.id, 'dispatch', side)
+  }, [ringingForMe, role])
 
   useEffect(() => {
     // Once a call stops ringing (answered/cancelled), drop it from the
