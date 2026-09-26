@@ -4,7 +4,7 @@
 // point to the nearest intersection.
 
 /** Same order as ROAD_CLASSES in scripts/build-road-graph.mjs. */
-export const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street'] as const
+export const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service'] as const
 
 export interface RoadGraph {
   nodeCount: number
@@ -32,6 +32,9 @@ export interface RoadGraph {
    * divides straight-line distance by this, so it never overestimates. */
   maxSpeedMps: number
   grid: { south: number; west: number; cell: number; cols: number; rows: number; start: Uint32Array; nodes: Uint32Array }
+  /** Segments per grid cell (any shape point in the cell) -- for snapping a
+   * point onto the road it is actually on, see nearbySegments(). */
+  segGrid: { start: Uint32Array; segs: Uint32Array }
 }
 
 const HEADER_BYTES = 48
@@ -142,6 +145,7 @@ export function parseGraph(buf: ArrayBuffer): RoadGraph {
     adjReverse,
     maxSpeedMps: maxSpeedKmh / 3.6,
     grid: { south, west, cell: GRID_CELL_DEG, cols, rows, start, nodes: gridNodes },
+    segGrid: buildSegmentGrid(shapeOffset, shapePoints, segCount, south, west, cols, rows),
   }
 }
 
@@ -208,4 +212,119 @@ export function segmentMidpoint(g: RoadGraph, seg: number): { lat: number; lng: 
   }
   const last = pts[pts.length - 1]
   return { lat: last[0], lng: last[1] }
+}
+
+/** Intersections within `radiusM` of a point, nearest first, at most `max`. */
+export function nearbyNodes(g: RoadGraph, lat: number, lng: number, radiusM: number, max: number): { node: number; metres: number }[] {
+  const { south, west, cell, cols, rows, start, nodes } = g.grid
+  const c0 = Math.floor((lng - west) / cell)
+  const r0 = Math.floor((lat - south) / cell)
+  const reach = Math.ceil(radiusM / (cell * 111_000)) + 1
+  const found: { node: number; metres: number }[] = []
+  for (let r = r0 - reach; r <= r0 + reach; r++) {
+    for (let c = c0 - reach; c <= c0 + reach; c++) {
+      if (r < 0 || c < 0 || r >= rows || c >= cols) continue
+      const cellIndex = r * cols + c
+      for (let i = start[cellIndex]; i < start[cellIndex + 1]; i++) {
+        const n = nodes[i]
+        const metres = haversineM(lat, lng, g.nodeLat[n], g.nodeLng[n])
+        if (metres <= radiusM) found.push({ node: n, metres })
+      }
+    }
+  }
+  return found.sort((a, b) => a.metres - b.metres).slice(0, max)
+}
+
+function buildSegmentGrid(
+  shapeOffset: Uint32Array,
+  shapePoints: Int32Array,
+  segCount: number,
+  south: number,
+  west: number,
+  cols: number,
+  rows: number,
+): { start: Uint32Array; segs: Uint32Array } {
+  const cellsOf = (seg: number) => {
+    const cells = new Set<number>()
+    for (let i = shapeOffset[seg]; i < shapeOffset[seg + 1]; i++) {
+      const c = Math.min(cols - 1, Math.max(0, Math.floor((shapePoints[i * 2 + 1] / 1e6 - west) / GRID_CELL_DEG)))
+      const r = Math.min(rows - 1, Math.max(0, Math.floor((shapePoints[i * 2] / 1e6 - south) / GRID_CELL_DEG)))
+      cells.add(r * cols + c)
+    }
+    return cells
+  }
+  const perSeg: Set<number>[] = []
+  const start = new Uint32Array(cols * rows + 1)
+  for (let s = 0; s < segCount; s++) {
+    const cells = cellsOf(s)
+    perSeg.push(cells)
+    for (const cell of cells) start[cell + 1]++
+  }
+  for (let i = 0; i < cols * rows; i++) start[i + 1] += start[i]
+  const cursor = start.slice(0, cols * rows)
+  const segs = new Uint32Array(start[cols * rows])
+  perSeg.forEach((cells, s) => {
+    for (const cell of cells) segs[cursor[cell]++] = s
+  })
+  return { start, segs }
+}
+
+export interface SegmentSnap {
+  seg: number
+  /** Distance from the point to the road, metres. */
+  metres: number
+  /** Where along the segment the point projects: metres from its from-node. */
+  along: number
+  /** The projected point on the road. */
+  lat: number
+  lng: number
+}
+
+/** Road segments within `radiusM` of a point, nearest first, with where the
+ * point projects onto each -- what OSRM-style snapping uses, rather than
+ * jumping to the nearest intersection (which may be far along a long road,
+ * or on the other carriageway of a divided one). */
+export function nearbySegments(g: RoadGraph, lat: number, lng: number, radiusM: number, max: number): SegmentSnap[] {
+  const { south, west, cell, cols, rows } = g.grid
+  const c0 = Math.floor((lng - west) / cell)
+  const r0 = Math.floor((lat - south) / cell)
+  const reach = Math.ceil(radiusM / (cell * 111_000))
+  const kx = Math.cos((lat * Math.PI) / 180) * 111_320
+  const ky = 110_540
+  const seen = new Set<number>()
+  const out: SegmentSnap[] = []
+  for (let r = r0 - reach; r <= r0 + reach; r++) {
+    for (let c = c0 - reach; c <= c0 + reach; c++) {
+      if (r < 0 || c < 0 || r >= rows || c >= cols) continue
+      const idx = r * cols + c
+      for (let i = g.segGrid.start[idx]; i < g.segGrid.start[idx + 1]; i++) {
+        const seg = g.segGrid.segs[i]
+        if (seen.has(seg)) continue
+        seen.add(seg)
+        const pts = segmentShape(g, seg, false)
+        let best: SegmentSnap | null = null
+        let walked = 0
+        for (let k = 1; k < pts.length; k++) {
+          const ax = (pts[k - 1][1] - lng) * kx, ay = (pts[k - 1][0] - lat) * ky
+          const bx = (pts[k][1] - lng) * kx, by = (pts[k][0] - lat) * ky
+          const dx = bx - ax, dy = by - ay
+          const len2 = dx * dx + dy * dy
+          const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2))
+          const px = ax + t * dx, py = ay + t * dy
+          const d = Math.hypot(px, py)
+          const pieceLen = Math.sqrt(len2)
+          if (!best || d < best.metres) {
+            best = { seg, metres: d, along: walked + t * pieceLen, lat: lat + py / ky, lng: lng + px / kx }
+          }
+          walked += pieceLen
+        }
+        if (best && best.metres <= radiusM) {
+          // Shape lengths are flat-earth; scale to the stored segment length.
+          best.along = walked > 0 ? (best.along / walked) * g.segLength[seg] : 0
+          out.push(best)
+        }
+      }
+    }
+  }
+  return out.sort((a, b) => a.metres - b.metres).slice(0, max)
 }

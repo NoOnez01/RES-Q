@@ -42,9 +42,9 @@ const CACHE_FILE = join(ROOT, 'scripts', '.cache', `${REGION.name}-osm.json`)
 
 // Order matters: the index is the class code stored in the file, and
 // src/lib/astar/graph.ts reads it back with the same list.
-const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street']
+const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service']
 // Typical free-flow speeds (km/h) when a way has no usable maxspeed tag.
-const DEFAULT_SPEED = { motorway: 90, trunk: 80, primary: 60, secondary: 50, tertiary: 40, unclassified: 35, residential: 25, living_street: 15 }
+const DEFAULT_SPEED = { motorway: 90, trunk: 80, primary: 60, secondary: 50, tertiary: 40, unclassified: 35, residential: 25, living_street: 15, service: 15 }
 const LINK_SPEED = 40
 // Shape simplification tolerance: points closer than this to the line
 // between their neighbours add nothing visible on the map.
@@ -54,7 +54,7 @@ function overpassQuery() {
   const types = ROAD_CLASSES.flatMap((c) => (['motorway', 'trunk', 'primary', 'secondary', 'tertiary'].includes(c) ? [c, `${c}_link`] : [c]))
   const bbox = `${REGION.south},${REGION.west},${REGION.north},${REGION.east}`
   return `[out:json][timeout:180];
-way["highway"~"^(${types.join('|')})$"]["area"!="yes"]["access"!~"^(no|private)$"]["motor_vehicle"!~"^(no|private)$"](${bbox});
+way["highway"~"^(${types.join('|')})$"]["area"!="yes"]["access"!~"^(no|private)$"]["motor_vehicle"!~"^(no|private)$"]["service"!~"^(parking_aisle|drive-through)$"](${bbox});
 out body qt;
 >;
 out skel qt;`
