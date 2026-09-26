@@ -178,6 +178,17 @@ split into intersection-to-intersection segments with each road's class,
 free-flow speed (its `maxspeed` tag, else a default for the road class) and
 one-way rules, written as a compact binary file the browser loads on demand.
 
+It also keeps what the turn-aware search needs: traffic lights (at an
+intersection, or counted along a segment), barriers that block cars
+(bollards, blocks, chains …, unless cars are explicitly allowed), and
+turn restrictions (`no_*` / `only_*` relations whose `via` is a node).
+Service roads are included (not parking aisles or drive-throughs) so a
+route can start or end inside a hospital or campus.
+
+The file format is `RQG2`, parsed by `parseGraph` in
+`src/lib/astar/graph.ts`. When the format changes, bump its magic and the
+`?v=` in `src/lib/astar/region.ts` so browsers drop a cached old file.
+
 ```
 node scripts/build-road-graph.mjs            # download from Overpass + build
 node scripts/build-road-graph.mjs --cached   # rebuild from the last download

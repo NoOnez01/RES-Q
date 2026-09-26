@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -14,16 +14,30 @@ import type { MapPin as MapPinT } from '@/components/MapPanel'
 import { ETAWidget } from '@/components/ETAWidget'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
+import { ConfirmationModal } from '@/components/ConfirmationModal'
+import { Textarea } from '@/components/ui/Field'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { clamp, estimateEtaMin, haversineKm, formatDateTime } from '@/lib/utils'
 import { pointAlongRoute } from '@/lib/routing'
 import { useLiveRoute } from '@/lib/useLiveRoute'
 import { useSimulatedProgress } from '@/lib/useSimulatedProgress'
+import { CLOSURE_REASON_LABEL, reportRoadClosure, useRoadClosures, type ClosureReason } from '@/lib/roadClosures'
 import type { GeoLocation } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  แจ้งเส้นทางถูกปิด: 'Report road closed',
+  'เจอถนนที่ผ่านไม่ได้ แจ้งไว้เพื่อให้ทุกหน่วยเลี่ยงเส้นทางนี้': "Found a road you can't get through? Report it so every unit avoids it",
+  'ระบบจะบันทึกตำแหน่งปัจจุบันของรถเป็นจุดที่ถนนถูกปิด และคำนวณเส้นทางใหม่ที่เลี่ยงจุดนี้ให้ทุกหน่วย (หมดอายุอัตโนมัติใน 6 ชั่วโมง)':
+    "The vehicle's current position is saved as the closed spot, and every unit's route is recalculated to avoid it (expires automatically after 6 hours)",
+  สาเหตุ: 'Reason',
+  'รายละเอียดเพิ่มเติม (ถ้ามี)': 'More details (if any)',
+  ยืนยันแจ้งเส้นทางถูกปิด: 'Report closure',
+  'บันทึกเส้นทางถูกปิดแล้ว': 'Road closure reported',
+  'กำลังคำนวณเส้นทางใหม่ที่เลี่ยงจุดนี้': 'Recalculating a route that avoids it',
+  แจ้งเส้นทางถูกปิดไม่สำเร็จ: 'Could not report the closure',
+  'เส้นทางถูกปิด: {reason}': 'Road closed: {reason}',
   กำลังนำทาง: 'Navigating',
   เหตุนี้ไม่อยู่ในสถานะที่ต้องนำทาง: 'This case is not in a status that requires navigation',
   กลับไปยังรายละเอียดเหตุ: 'Back to case details',
@@ -77,6 +91,11 @@ export default function NavigationPage() {
   // so simulated stays the default and this only takes over once someone
   // explicitly asks for it.
   const [gpsMode, setGpsMode] = useState(false)
+  const closures = useRoadClosures()
+  const [closureOpen, setClosureOpen] = useState(false)
+  const [closureReason, setClosureReason] = useState<ClosureReason>('flood')
+  const [closureNote, setClosureNote] = useState('')
+  const [reportingClosure, setReportingClosure] = useState(false)
 
   const isEnRoute = c?.status === 'rescue-en-route'
   const isTransporting = c?.status === 'transporting'
@@ -161,7 +180,35 @@ export default function NavigationPage() {
   const pins: MapPinT[] = [
     { id: 'rescue', lat: livePos.lat, lng: livePos.lng, label: t('หน่วยกู้ชีพ'), kind: 'rescue' },
     { id: 'dest', lat: target.lat, lng: target.lng, label: destinationLabel, kind: isTransporting ? 'hospital' : 'incident' },
+    ...closures.map((cl) => ({
+      id: `closure-${cl.id}`,
+      lat: cl.lat,
+      lng: cl.lng,
+      label: t('เส้นทางถูกปิด: {reason}', { reason: t(CLOSURE_REASON_LABEL[cl.reason]) }) + (cl.note ? ` — ${cl.note}` : ''),
+      kind: 'closure' as const,
+    })),
   ]
+
+  async function submitClosure() {
+    setReportingClosure(true)
+    try {
+      await reportRoadClosure({
+        lat: livePos.lat,
+        lng: livePos.lng,
+        reason: closureReason,
+        note: closureNote,
+        reporterName: c?.assignedRescueTeam?.name,
+      })
+      toast({ title: t('บันทึกเส้นทางถูกปิดแล้ว'), message: t('กำลังคำนวณเส้นทางใหม่ที่เลี่ยงจุดนี้'), tone: 'success' })
+      setClosureOpen(false)
+      setClosureNote('')
+    } catch (err) {
+      console.error('Failed to report road closure:', err)
+      toast({ title: t('แจ้งเส้นทางถูกปิดไม่สำเร็จ'), tone: 'error' })
+    } finally {
+      setReportingClosure(false)
+    }
+  }
 
   // Real road distance + road-network ETA when available; the old
   // as-the-crow-flies estimate otherwise (straight-line from the real GPS
@@ -237,6 +284,13 @@ export default function NavigationPage() {
             <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
           </Card>
 
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
+            <p className="text-sm text-muted">{t('เจอถนนที่ผ่านไม่ได้ แจ้งไว้เพื่อให้ทุกหน่วยเลี่ยงเส้นทางนี้')}</p>
+            <Button size="sm" variant="outline" icon={<Ban className="size-4" />} onClick={() => setClosureOpen(true)}>
+              {t('แจ้งเส้นทางถูกปิด')}
+            </Button>
+          </div>
+
           <Card className="flex items-center justify-center gap-2 py-4 text-center">
             {arrived ? (
               <span className="flex items-center gap-2 font-semibold text-success">
@@ -300,6 +354,33 @@ export default function NavigationPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        open={closureOpen}
+        title={t('แจ้งเส้นทางถูกปิด')}
+        message={t('ระบบจะบันทึกตำแหน่งปัจจุบันของรถเป็นจุดที่ถนนถูกปิด และคำนวณเส้นทางใหม่ที่เลี่ยงจุดนี้ให้ทุกหน่วย (หมดอายุอัตโนมัติใน 6 ชั่วโมง)')}
+        confirmLabel={t('ยืนยันแจ้งเส้นทางถูกปิด')}
+        confirmLoading={reportingClosure}
+        onConfirm={() => void submitClosure()}
+        onCancel={() => setClosureOpen(false)}
+      >
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-ink">{t('สาเหตุ')}</p>
+          <SegmentedControl<ClosureReason>
+            variant="card"
+            value={closureReason}
+            onChange={setClosureReason}
+            options={(Object.keys(CLOSURE_REASON_LABEL) as ClosureReason[]).map((r) => ({ value: r, label: t(CLOSURE_REASON_LABEL[r]) }))}
+          />
+        </div>
+        <Textarea
+          label={t('รายละเอียดเพิ่มเติม (ถ้ามี)')}
+          rows={2}
+          maxLength={300}
+          value={closureNote}
+          onChange={(e) => setClosureNote(e.target.value)}
+        />
+      </ConfirmationModal>
     </AppShell>
   )
 }

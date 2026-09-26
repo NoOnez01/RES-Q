@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
+import { RoadClosuresCard } from '@/components/RoadClosuresCard'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
@@ -138,6 +139,8 @@ export default function DispatchDashboard() {
               tone="success"
             />
           </StatBar>
+
+          <RoadClosuresCard className="mt-6" />
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-ink">{t('เหตุทั้งหมด')}</h2>

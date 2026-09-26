@@ -7,7 +7,8 @@ export const GRAPH_REGION = {
   west: 98.84,
   north: 18.95,
   east: 99.12,
-  url: `${import.meta.env.BASE_URL}graphs/chiang-mai.bin`,
+  // ?v= changes with the file format, so no browser reuses a cached old file.
+  url: `${import.meta.env.BASE_URL}graphs/chiang-mai.bin?v=2`,
 }
 
 export function inGraphRegion(p: Pick<GeoLocation, 'lat' | 'lng'>): boolean {

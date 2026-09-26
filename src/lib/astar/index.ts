@@ -37,6 +37,7 @@ export function routeWithAStar(
   origin: Pick<GeoLocation, 'lat' | 'lng'>,
   destination: Pick<GeoLocation, 'lat' | 'lng'>,
   signal?: AbortSignal,
+  closures: { id: string; lat: number; lng: number }[] = [],
 ): Promise<AStarRoute | null> {
   if (!inGraphRegion(origin) || !inGraphRegion(destination) || typeof Worker === 'undefined') return Promise.resolve(null)
   return new Promise((resolve) => {
@@ -51,7 +52,12 @@ export function routeWithAStar(
       },
       { once: true },
     )
-    const request: RouteRequest = { id, origin: { lat: origin.lat, lng: origin.lng }, destination: { lat: destination.lat, lng: destination.lng } }
+    const request: RouteRequest = {
+      id,
+      origin: { lat: origin.lat, lng: origin.lng },
+      destination: { lat: destination.lat, lng: destination.lng },
+      closures: closures.map((c) => ({ id: c.id, lat: c.lat, lng: c.lng })),
+    }
     getWorker().postMessage(request)
   })
 }

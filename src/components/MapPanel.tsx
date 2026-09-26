@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { MapPin, Ambulance, Building2 } from 'lucide-react'
+import { MapPin, Ambulance, Building2, Ban } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -14,19 +14,22 @@ export interface MapPin {
   lat: number
   lng: number
   label: string
-  kind: 'incident' | 'rescue' | 'hospital'
+  /** 'closure' = a reported road closure the route avoids. */
+  kind: 'incident' | 'rescue' | 'hospital' | 'closure'
 }
 
 const pinColors: Record<MapPin['kind'], string> = {
   incident: '#D92D20',
   rescue: '#0B6EBD',
   hospital: '#12B76A',
+  closure: '#B54708',
 }
 
 const pinIcons: Record<MapPin['kind'], React.ElementType> = {
   incident: MapPin,
   rescue: Ambulance,
   hospital: Building2,
+  closure: Ban,
 }
 
 function buildIcon(kind: MapPin['kind']) {

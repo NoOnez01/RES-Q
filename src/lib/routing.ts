@@ -1,5 +1,6 @@
 import { haversineKm } from './utils'
 import { routeWithAStar } from './astar'
+import { closuresKey, getActiveClosures } from './roadClosures'
 import type { GeoLocation } from './types'
 
 export interface RouteResult {
@@ -187,7 +188,8 @@ interface RouteCacheEntry {
 const routeCache = new Map<string, RouteCacheEntry>()
 function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
   const r = (n: number) => n.toFixed(4)
-  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}`
+  // Closures change the answer, so a route is cached per set of them.
+  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}|${closuresKey(getActiveClosures())}`
 }
 
 const ROUTE_TIMEOUT_MS = 8000
@@ -202,7 +204,7 @@ function fetchRouteFromAStar(origin: GeoLocation, destination: GeoLocation, sign
   const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS)
   const onAbort = () => controller.abort()
   signal.addEventListener('abort', onAbort, { once: true })
-  return routeWithAStar(origin, destination, controller.signal)
+  return routeWithAStar(origin, destination, controller.signal, getActiveClosures())
     .then((r): RouteResult | null =>
       r && r.points.length >= 2
         ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'astar', traffic: r.traffic }

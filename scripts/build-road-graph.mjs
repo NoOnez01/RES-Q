@@ -12,9 +12,14 @@
 // (c) OpenStreetMap contributors, ODbL -- the map already carries the
 // attribution. Re-run it to pick up road changes.
 //
+// Beyond the roads themselves it records what makes a route legal and its
+// time realistic: traffic lights (a wait at each), bollards/barriers that
+// block cars, and OSM turn restrictions (no_left_turn, only_straight_on,
+// ...), so A* can refuse illegal turns.
+//
 // Binary layout (little-endian; 4-byte sections first so every typed
 // array view is aligned):
-//   "RQG1"  u32 nodeCount  u32 segCount  u32 pointCount
+//   "RQG2"  u32 nodeCount  u32 segCount  u32 pointCount  u32 restrictionCount  u32 0
 //   f64 south  f64 west  f64 north  f64 east
 //   i32[nodeCount*2]   node lat/lng * 1e6 (intersections)
 //   u32[segCount]      segment from-node
@@ -24,9 +29,16 @@
 //   i32[pointCount*2]  shape points lat/lng * 1e6 (from-node ... to-node)
 //   u32[segCount]      which OSM road (way) the segment belongs to, numbered
 //                      from 0 -- one traffic lookup covers the whole road
+//   u32[restrictions]  turn restriction: from-road (way index)
+//   u32[restrictions]  turn restriction: via intersection (node index)
+//   u32[restrictions]  turn restriction: to-road (way index)
 //   u8[segCount]       road class (ROAD_CLASSES index)
 //   u8[segCount]       free-flow speed, km/h
 //   i8[segCount]       oneway: 0 both ways, 1 from->to only, -1 to->from only
+//   u8[segCount]       traffic lights part-way along the segment
+//   u8[segCount]       flags: 1 = blocked for cars (a barrier part-way along)
+//   u8[nodeCount]      flags: 1 = traffic light, 2 = barrier (can't pass through)
+//   u8[restrictions]   kind: 0 = no_* (this turn banned), 1 = only_* (only this turn)
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -53,11 +65,14 @@ const SIMPLIFY_METRES = 3
 function overpassQuery() {
   const types = ROAD_CLASSES.flatMap((c) => (['motorway', 'trunk', 'primary', 'secondary', 'tertiary'].includes(c) ? [c, `${c}_link`] : [c]))
   const bbox = `${REGION.south},${REGION.west},${REGION.north},${REGION.east}`
-  return `[out:json][timeout:180];
-way["highway"~"^(${types.join('|')})$"]["area"!="yes"]["access"!~"^(no|private)$"]["motor_vehicle"!~"^(no|private)$"]["service"!~"^(parking_aisle|drive-through)$"](${bbox});
+  return `[out:json][timeout:240];
+way["highway"~"^(${types.join('|')})$"]["area"!="yes"]["access"!~"^(no|private)$"]["motor_vehicle"!~"^(no|private)$"]["service"!~"^(parking_aisle|drive-through)$"](${bbox})->.roads;
+.roads
 out body qt;
->;
-out skel qt;`
+node(w.roads);
+out body qt;
+rel(bw.roads)["type"="restriction"];
+out body qt;`
 }
 
 async function download() {
@@ -158,12 +173,27 @@ function oneway(tags) {
   return 0
 }
 
+// Barriers a car can't get past (gates are usually opened, so they aren't).
+const BLOCKING_BARRIERS = new Set(['bollard', 'block', 'jersey_barrier', 'log', 'chain', 'debris'])
+
+function blocksCars(tags) {
+  if (!tags?.barrier || !BLOCKING_BARRIERS.has(tags.barrier)) return false
+  return !['yes', 'designated', 'permissive'].includes(tags.motor_vehicle ?? tags.motorcar ?? tags.access ?? '')
+}
+
 function build(osm) {
   const coords = new Map()
+  const signals = new Set()
+  const barriers = new Set()
   const ways = []
+  const relations = []
   for (const el of osm.elements) {
-    if (el.type === 'node') coords.set(el.id, [el.lat, el.lon])
-    else if (el.type === 'way' && el.nodes?.length >= 2) ways.push(el)
+    if (el.type === 'node') {
+      coords.set(el.id, [el.lat, el.lon])
+      if (el.tags?.highway === 'traffic_signals') signals.add(el.id)
+      if (blocksCars(el.tags)) barriers.add(el.id)
+    } else if (el.type === 'way' && el.nodes?.length >= 2) ways.push(el)
+    else if (el.type === 'relation') relations.push(el)
   }
 
   // An OSM node becomes a graph node where roads meet or end.
@@ -189,7 +219,19 @@ function build(osm) {
       let length = 0
       for (let k = 1; k < pts.length; k++) length += metres(pts[k - 1], pts[k])
       if (length < 0.5) continue
-      raw.push({ from: ids[0], to: ids[ids.length - 1], pts, length, cls, speed, dir, way: w.id })
+      const inner = ids.slice(1, -1)
+      raw.push({
+        from: ids[0],
+        to: ids[ids.length - 1],
+        pts,
+        length,
+        cls,
+        speed,
+        dir,
+        way: w.id,
+        signals: Math.min(255, inner.filter((id) => signals.has(id)).length),
+        blocked: inner.some((id) => barriers.has(id)),
+      })
     }
   }
 
@@ -229,19 +271,50 @@ function build(osm) {
   const shapes = segs.map((s) => simplify(s.pts))
   const pointCount = shapes.reduce((n, p) => n + p.length, 0)
 
-  const header = 4 + 4 * 3 + 8 * 4
+  const wayIndex = new Map()
+  for (const s of segs) if (!wayIndex.has(s.way)) wayIndex.set(s.way, wayIndex.size)
+
+  // Turn restrictions via a single intersection (the common case; ones via
+  // a whole way are rare and skipped). Time-of-day ones are separate
+  // (restriction:conditional) tags and not read.
+  const restrictions = []
+  for (const r of relations) {
+    const kind = r.tags?.['restriction:motorcar'] ?? r.tags?.restriction
+    if (!kind || !/^(no|only)_/.test(kind)) continue
+    const fromM = r.members.filter((m) => m.role === 'from' && m.type === 'way')
+    const toM = r.members.filter((m) => m.role === 'to' && m.type === 'way')
+    const viaM = r.members.filter((m) => m.role === 'via')
+    if (fromM.length !== 1 || toM.length !== 1 || viaM.length !== 1 || viaM[0].type !== 'node') continue
+    const fromWay = wayIndex.get(fromM[0].ref)
+    const toWay = wayIndex.get(toM[0].ref)
+    const via = nodeIndex.get(viaM[0].ref)
+    if (fromWay === undefined || toWay === undefined || via === undefined) continue
+    restrictions.push({ fromWay, via, toWay, only: kind.startsWith('only_') ? 1 : 0 })
+  }
+
+  const header = 4 + 4 * 5 + 8 * 4
   const bytes =
-    header + nodes.length * 8 + segs.length * 4 * 3 + (segs.length + 1) * 4 + pointCount * 8 + segs.length * 4 + segs.length * 3
+    header +
+    nodes.length * 8 +
+    segs.length * 4 * 3 +
+    (segs.length + 1) * 4 +
+    pointCount * 8 +
+    segs.length * 4 +
+    restrictions.length * 4 * 3 +
+    segs.length * 5 +
+    nodes.length +
+    restrictions.length
   const buf = new ArrayBuffer(bytes)
   const view = new DataView(buf)
-  new Uint8Array(buf, 0, 4).set([0x52, 0x51, 0x47, 0x31]) // "RQG1"
+  new Uint8Array(buf, 0, 4).set([0x52, 0x51, 0x47, 0x32]) // "RQG2"
   view.setUint32(4, nodes.length, true)
   view.setUint32(8, segs.length, true)
   view.setUint32(12, pointCount, true)
-  view.setFloat64(16, REGION.south, true)
-  view.setFloat64(24, REGION.west, true)
-  view.setFloat64(32, REGION.north, true)
-  view.setFloat64(40, REGION.east, true)
+  view.setUint32(16, restrictions.length, true)
+  view.setFloat64(24, REGION.south, true)
+  view.setFloat64(32, REGION.west, true)
+  view.setFloat64(40, REGION.north, true)
+  view.setFloat64(48, REGION.east, true)
 
   let off = header
   const nodeArr = new Int32Array(buf, off, nodes.length * 2)
@@ -270,24 +343,35 @@ function build(osm) {
     }
   })
   shapeOffsets[segs.length] = p
-  const wayIndex = new Map()
-  new Uint32Array(buf, off, segs.length).set(
-    segs.map((s) => {
-      if (!wayIndex.has(s.way)) wayIndex.set(s.way, wayIndex.size)
-      return wayIndex.get(s.way)
-    }),
-  )
+  new Uint32Array(buf, off, segs.length).set(segs.map((s) => wayIndex.get(s.way)))
   off += segs.length * 4
+  for (const field of ['fromWay', 'via', 'toWay']) {
+    new Uint32Array(buf, off, restrictions.length).set(restrictions.map((r) => r[field]))
+    off += restrictions.length * 4
+  }
   new Uint8Array(buf, off, segs.length).set(segs.map((s) => s.cls))
   off += segs.length
   new Uint8Array(buf, off, segs.length).set(segs.map((s) => s.speed))
   off += segs.length
   new Int8Array(buf, off, segs.length).set(segs.map((s) => s.dir))
+  off += segs.length
+  new Uint8Array(buf, off, segs.length).set(segs.map((s) => s.signals))
+  off += segs.length
+  new Uint8Array(buf, off, segs.length).set(segs.map((s) => (s.blocked ? 1 : 0)))
+  off += segs.length
+  const nodeFlags = new Uint8Array(buf, off, nodes.length)
+  for (const [osmId, i] of nodeIndex) nodeFlags[i] = (signals.has(osmId) ? 1 : 0) | (barriers.has(osmId) ? 2 : 0)
+  off += nodes.length
+  new Uint8Array(buf, off, restrictions.length).set(restrictions.map((r) => r.only))
 
   const rawPoints = segs.reduce((n, s) => n + s.pts.length, 0)
   console.log(
     `${ways.length} ways -> ${segs.length} segments (${raw.length - segs.length} dropped outside the main network), ` +
-      `${nodes.length} intersections, ${new Set(segs.map((s) => s.way)).size} roads, ${pointCount} shape points (${rawPoints} before simplifying)`,
+      `${nodes.length} intersections, ${wayIndex.size} roads, ${pointCount} shape points (${rawPoints} before simplifying)`,
+  )
+  console.log(
+    `${[...nodeIndex.keys()].filter((id) => signals.has(id)).length} traffic lights at intersections + ${segs.reduce((n, s) => n + s.signals, 0)} along roads, ` +
+      `${segs.filter((s) => s.blocked).length} blocked segments, ${restrictions.length} turn restrictions`,
   )
   return new Uint8Array(buf)
 }

@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { useTabVisibility } from '@/lib/useReducedMotion'
 import { initSupabaseCaseSync } from '@/lib/supabaseCaseSync'
+import { startRoadClosureSync } from '@/lib/roadClosures'
 import { ensureAnonymousSession, onAuthChange } from '@/lib/auth'
 import { primeAudio } from '@/lib/alertSound'
 import { initNativeNotifications } from '@/lib/nativeNotify'
@@ -97,6 +98,8 @@ export default function App() {
       if (userId === lastUserId) return
       lastUserId = userId
       initSupabaseCaseSync()
+      // Closures are only readable signed in (every session is, anonymously).
+      if (userId) startRoadClosureSync()
     }
 
     // RequireRole waits on authResolved before deciding whether to redirect,

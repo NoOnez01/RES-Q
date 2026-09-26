@@ -1,5 +1,5 @@
-import { haversineM, nearbyNodes, nearbySegments, nearestNode, segmentShape, type RoadGraph } from './graph'
-import { aStarMulti, type Endpoint, type PathResult } from './search'
+import { directedEdge, haversineM, nearbyNodes, nearbySegments, nearestNode, segmentShape, type RoadGraph } from './graph'
+import { aStarMulti, SIGNAL_SECONDS, type Endpoint, type PathResult } from './search'
 import { congestionFactor, sampleTraffic, trafficCoolingDown, trafficForWay, type TrafficSource } from './traffic'
 
 export interface AStarRoute {
@@ -59,10 +59,16 @@ function shapeSplit(g: RoadGraph, seg: number, along: number): { before: [number
   return { before, after }
 }
 
-function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' | 'end'): Snap[] {
+/** A segment no car can use right now: a barrier on it, or a reported closure. */
+function unusable(g: RoadGraph, seg: number, closed: ReadonlySet<number>): boolean {
+  return g.segBlocked[seg] === 1 || closed.has(seg)
+}
+
+function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' | 'end', closed: ReadonlySet<number>): Snap[] {
   const out: Snap[] = []
   for (const snap of nearbySegments(g, p.lat, p.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)) {
     const { seg, along } = snap
+    if (unusable(g, seg, closed)) continue
     const len = g.segLength[seg]
     const walk = snap.metres / CONNECTOR_SPEED_MPS
     const proj: [number, number] = [snap.lat, snap.lng]
@@ -70,11 +76,14 @@ function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' |
     const forward = g.segOneway[seg] !== -1
     const backward = g.segOneway[seg] !== 1
     if (role === 'start') {
-      if (forward) out.push({ node: g.segTo[seg], seconds: walk + (len - along) / freeFlowMps(g, seg), points: [proj, ...after], metres: snap.metres + len - along })
-      if (backward) out.push({ node: g.segFrom[seg], seconds: walk + along / freeFlowMps(g, seg), points: [proj, ...before.slice().reverse()], metres: snap.metres + along })
+      // Already on the road heading this way: the search applies turn rules
+      // to the first turn off it.
+      if (forward) out.push({ node: g.segTo[seg], edge: directedEdge(g, seg, false), seconds: walk + (len - along) / freeFlowMps(g, seg), points: [proj, ...after], metres: snap.metres + len - along })
+      if (backward) out.push({ node: g.segFrom[seg], edge: directedEdge(g, seg, true), seconds: walk + along / freeFlowMps(g, seg), points: [proj, ...before.slice().reverse()], metres: snap.metres + along })
     } else {
-      if (forward) out.push({ node: g.segFrom[seg], seconds: along / freeFlowMps(g, seg) + walk, points: [...before, proj], metres: along + snap.metres })
-      if (backward) out.push({ node: g.segTo[seg], seconds: (len - along) / freeFlowMps(g, seg) + walk, points: [...after.slice().reverse(), proj], metres: len - along + snap.metres })
+      // The last turn onto this road is checked like any other.
+      if (forward) out.push({ node: g.segFrom[seg], edge: directedEdge(g, seg, false), seconds: along / freeFlowMps(g, seg) + walk, points: [...before, proj], metres: along + snap.metres })
+      if (backward) out.push({ node: g.segTo[seg], edge: directedEdge(g, seg, true), seconds: (len - along) / freeFlowMps(g, seg) + walk, points: [...after.slice().reverse(), proj], metres: len - along + snap.metres })
     }
   }
   // Nearby intersections too, reached on foot: more choices can only make
@@ -82,7 +91,7 @@ function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' |
   // are all one dead-end street.
   for (const { node, metres } of nearbyNodes(g, p.lat, p.lng, NODE_RADIUS_M, NODE_CANDIDATES)) {
     const at: [number, number] = [g.nodeLat[node], g.nodeLng[node]]
-    out.push({ node, seconds: metres / CONNECTOR_SPEED_MPS, points: role === 'start' ? [at] : [at], metres })
+    out.push({ node, seconds: metres / CONNECTOR_SPEED_MPS, points: [at], metres })
   }
   if (out.length > 0) return out
   // Nothing mapped nearby: fall back to the nearest intersection.
@@ -94,12 +103,17 @@ function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' |
 
 /** Start and end on the same segment, in a direction it allows: no need to
  * reach any intersection at all. */
-function sameSegmentRoute(g: RoadGraph, origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) {
+function sameSegmentRoute(
+  g: RoadGraph,
+  origin: { lat: number; lng: number },
+  destination: { lat: number; lng: number },
+  closed: ReadonlySet<number>,
+) {
   let best: { seconds: number; metres: number; points: [number, number][] } | null = null
   const ends = nearbySegments(g, destination.lat, destination.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)
   for (const a of nearbySegments(g, origin.lat, origin.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)) {
     const b = ends.find((e) => e.seg === a.seg)
-    if (!b) continue
+    if (!b || unusable(g, a.seg, closed)) continue
     const onRoad = Math.abs(b.along - a.along)
     const allowed = b.along >= a.along ? g.segOneway[a.seg] !== -1 : g.segOneway[a.seg] !== 1
     if (!allowed) continue
@@ -129,17 +143,21 @@ export async function computeRoute(
   destination: { lat: number; lng: number },
   longdoKey: string | undefined,
   signal?: AbortSignal,
+  /** Segments reported closed right now (road closures), avoided entirely. */
+  closed: ReadonlySet<number> = new Set(),
 ): Promise<AStarRoute | null> {
   const started = performance.now()
-  const sources = snapEnds(g, origin, 'start')
-  const targets = snapEnds(g, destination, 'end')
+  const sources = snapEnds(g, origin, 'start', closed)
+  const targets = snapEnds(g, destination, 'end', closed)
   if (sources.length === 0 || targets.length === 0) return null
 
   const search = (): PathResult | null => {
     const factor = congestionFactor()
     return aStarMulti(g, sources, targets, destination, (seg) => {
+      if (unusable(g, seg, closed)) return Infinity
       const sampled = trafficForWay(g.segWay[seg])?.mps
-      return g.segLength[seg] / (sampled ?? (g.segSpeedKmh[seg] / 3.6) * factor)
+      const drive = g.segLength[seg] / (sampled ?? (g.segSpeedKmh[seg] / 3.6) * factor)
+      return drive + g.segSignals[seg] * SIGNAL_SECONDS
     })
   }
 
@@ -171,7 +189,7 @@ export async function computeRoute(
     rounds++
   }
   if (signal?.aborted) return null
-  const direct = sameSegmentRoute(g, origin, destination)
+  const direct = sameSegmentRoute(g, origin, destination, closed)
   if (direct && (!path || direct.seconds <= path.seconds)) {
     return {
       points: [[origin.lat, origin.lng], ...direct.points, [destination.lat, destination.lng]],

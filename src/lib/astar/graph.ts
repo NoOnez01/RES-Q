@@ -1,7 +1,7 @@
 // The road graph written by scripts/build-road-graph.mjs, parsed into flat
 // typed arrays (see that script for the file layout) plus what routing
-// needs on top: a directed adjacency list and a grid for snapping a GPS
-// point to the nearest intersection.
+// needs on top: a directed adjacency list, turn geometry and restrictions
+// for turn-aware search, and grids for snapping a GPS point onto a road.
 
 /** Same order as ROAD_CLASSES in scripts/build-road-graph.mjs. */
 export const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service'] as const
@@ -22,6 +22,18 @@ export interface RoadGraph {
   segClass: Uint8Array
   segSpeedKmh: Uint8Array
   segOneway: Int8Array
+  /** Traffic lights part-way along each segment (each adds a wait). */
+  segSignals: Uint8Array
+  /** 1 = a barrier part-way along blocks cars. */
+  segBlocked: Uint8Array
+  /** Per intersection: 1 = traffic light, 2 = barrier (can't pass through). */
+  nodeFlags: Uint8Array
+  /** Compass bearing (degrees) a segment leaves its from-node, and arrives
+   * at its to-node, travelling from -> to -- for turn angles. */
+  segStartBearing: Float32Array
+  segEndBearing: Float32Array
+  /** Turn restrictions keyed by their via intersection. */
+  restrictionsAt: Map<number, { fromWay: number; toWay: number; only: boolean }[]>
   /** Directed edges out of node n: adjOffset[n] .. adjOffset[n + 1]. */
   adjOffset: Uint32Array
   adjSeg: Uint32Array
@@ -37,20 +49,21 @@ export interface RoadGraph {
   segGrid: { start: Uint32Array; segs: Uint32Array }
 }
 
-const HEADER_BYTES = 48
+const HEADER_BYTES = 56
 const GRID_CELL_DEG = 0.005
 
 export function parseGraph(buf: ArrayBuffer): RoadGraph {
   const view = new DataView(buf)
   const magic = String.fromCharCode(...new Uint8Array(buf, 0, 4))
-  if (magic !== 'RQG1') throw new Error(`Not a road graph file (${magic})`)
+  if (magic !== 'RQG2') throw new Error(`Not a road graph file this version can read (${magic})`)
   const nodeCount = view.getUint32(4, true)
   const segCount = view.getUint32(8, true)
   const pointCount = view.getUint32(12, true)
-  const south = view.getFloat64(16, true)
-  const west = view.getFloat64(24, true)
-  const north = view.getFloat64(32, true)
-  const east = view.getFloat64(40, true)
+  const restrictionCount = view.getUint32(16, true)
+  const south = view.getFloat64(24, true)
+  const west = view.getFloat64(32, true)
+  const north = view.getFloat64(40, true)
+  const east = view.getFloat64(48, true)
 
   let off = HEADER_BYTES
   const nodeFixed = new Int32Array(buf, off, nodeCount * 2)
@@ -67,11 +80,42 @@ export function parseGraph(buf: ArrayBuffer): RoadGraph {
   off += pointCount * 8
   const segWay = new Uint32Array(buf, off, segCount)
   off += segCount * 4
+  const restrFrom = new Uint32Array(buf, off, restrictionCount)
+  off += restrictionCount * 4
+  const restrVia = new Uint32Array(buf, off, restrictionCount)
+  off += restrictionCount * 4
+  const restrTo = new Uint32Array(buf, off, restrictionCount)
+  off += restrictionCount * 4
   const segClass = new Uint8Array(buf, off, segCount)
   off += segCount
   const segSpeedKmh = new Uint8Array(buf, off, segCount)
   off += segCount
   const segOneway = new Int8Array(buf, off, segCount)
+  off += segCount
+  const segSignals = new Uint8Array(buf, off, segCount)
+  off += segCount
+  const segBlocked = new Uint8Array(buf, off, segCount)
+  off += segCount
+  const nodeFlags = new Uint8Array(buf, off, nodeCount)
+  off += nodeCount
+  const restrOnly = new Uint8Array(buf, off, restrictionCount)
+
+  const restrictionsAt = new Map<number, { fromWay: number; toWay: number; only: boolean }[]>()
+  for (let i = 0; i < restrictionCount; i++) {
+    const list = restrictionsAt.get(restrVia[i]) ?? []
+    list.push({ fromWay: restrFrom[i], toWay: restrTo[i], only: restrOnly[i] === 1 })
+    restrictionsAt.set(restrVia[i], list)
+  }
+
+  const segStartBearing = new Float32Array(segCount)
+  const segEndBearing = new Float32Array(segCount)
+  for (let sgi = 0; sgi < segCount; sgi++) {
+    const a = shapeOffset[sgi]
+    const b = shapeOffset[sgi + 1] - 1
+    const pt = (i: number) => [shapePoints[i * 2] / 1e6, shapePoints[i * 2 + 1] / 1e6] as const
+    segStartBearing[sgi] = bearing(...pt(a), ...pt(a + 1))
+    segEndBearing[sgi] = bearing(...pt(b - 1), ...pt(b))
+  }
 
   const nodeLat = new Float64Array(nodeCount)
   const nodeLng = new Float64Array(nodeCount)
@@ -139,6 +183,12 @@ export function parseGraph(buf: ArrayBuffer): RoadGraph {
     segClass,
     segSpeedKmh,
     segOneway,
+    segSignals,
+    segBlocked,
+    nodeFlags,
+    segStartBearing,
+    segEndBearing,
+    restrictionsAt,
     adjOffset,
     adjSeg,
     adjTo,
@@ -151,6 +201,35 @@ export function parseGraph(buf: ArrayBuffer): RoadGraph {
 
 const EARTH_RADIUS_M = 6371008.8
 const RAD = Math.PI / 180
+
+/** Initial compass bearing from one point to another, degrees 0..360. */
+export function bearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const y = Math.sin((lng2 - lng1) * RAD) * Math.cos(lat2 * RAD)
+  const x = Math.cos(lat1 * RAD) * Math.sin(lat2 * RAD) - Math.sin(lat1 * RAD) * Math.cos(lat2 * RAD) * Math.cos((lng2 - lng1) * RAD)
+  return (Math.atan2(y, x) / RAD + 360) % 360
+}
+
+/** Direction of travel arriving at the head of directed edge e. */
+export function edgeArrivalBearing(g: RoadGraph, e: number): number {
+  const seg = g.adjSeg[e]
+  return g.adjReverse[e] ? (g.segStartBearing[seg] + 180) % 360 : g.segEndBearing[seg]
+}
+
+/** Direction of travel leaving the tail of directed edge e. */
+export function edgeDepartureBearing(g: RoadGraph, e: number): number {
+  const seg = g.adjSeg[e]
+  return g.adjReverse[e] ? (g.segEndBearing[seg] + 180) % 360 : g.segStartBearing[seg]
+}
+
+/** The directed edge that runs segment `seg` in the given direction, or -1
+ * if the segment's one-way rule doesn't allow that direction. */
+export function directedEdge(g: RoadGraph, seg: number, reverse: boolean): number {
+  const tail = reverse ? g.segTo[seg] : g.segFrom[seg]
+  for (let e = g.adjOffset[tail]; e < g.adjOffset[tail + 1]; e++) {
+    if (g.adjSeg[e] === seg && (g.adjReverse[e] === 1) === reverse) return e
+  }
+  return -1
+}
 
 export function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const dLat = (lat2 - lat1) * RAD

@@ -19,6 +19,7 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { fetchCaseReward } from '@/lib/coins'
+import { closuresKey, useRoadClosures } from '@/lib/roadClosures'
 import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
@@ -143,6 +144,8 @@ export default function CaseTracking() {
   // Stays null (every value below then falls back to the old straight-line
   // estimate) if the routing request fails.
   const [route, setRoute] = useState<RouteResult | null>(null)
+  // Re-planned when a road closure is reported or cleared.
+  const closures = closuresKey(useRoadClosures())
   useEffect(() => {
     if (!activeCase?.assignedRescueTeam) {
       setRoute(null)
@@ -178,6 +181,7 @@ export default function CaseTracking() {
     activeCase?.status,
     activeCase?.location,
     activeCase?.selectedHospital?.location,
+    closures,
   ])
 
   // Coins the reporter earned on this case -- awarded by the database the

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { watchPosition, toGeoLocation, type Coords } from './geolocation'
 import { fetchRoute, type RouteResult } from './routing'
 import { haversineKm } from './utils'
+import { closuresKey, useRoadClosures } from './roadClosures'
 import type { GeoLocation } from './types'
 
 export interface LiveRouteState {
@@ -58,6 +59,10 @@ export function useLiveRoute({
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
   const [route, setRoute] = useState<RouteResult | null>(null)
   const lastRouteOriginRef = useRef<Coords | null>(null)
+  // A reported/cleared road closure changes the best route even when the
+  // vehicle hasn't moved, so it re-plans on that too.
+  const closures = closuresKey(useRoadClosures())
+  const lastClosuresRef = useRef(closures)
   const routeRequestIdRef = useRef(0)
   const activeControllerRef = useRef<AbortController | null>(null)
 
@@ -89,8 +94,9 @@ export function useLiveRoute({
       return
     }
     const last = lastRouteOriginRef.current
-    if (last && haversineKm(last, routeOrigin) < rerouteThresholdKm) return
+    if (last && haversineKm(last, routeOrigin) < rerouteThresholdKm && lastClosuresRef.current === closures) return
     lastRouteOriginRef.current = routeOrigin
+    lastClosuresRef.current = closures
 
     // A genuinely new request supersedes whatever was previously in
     // flight -- abort that one now, right as it's actually being replaced
@@ -105,7 +111,7 @@ export function useLiveRoute({
       if (routeRequestIdRef.current === requestId) setRoute(r)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng, rerouteThresholdKm])
+  }, [active, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng, rerouteThresholdKm, closures])
 
   // Unmount-only cleanup -- separate from the per-run logic above so a
   // component unmounting mid-request still cancels it, without that
