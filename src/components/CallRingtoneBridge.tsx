@@ -6,6 +6,7 @@ import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
 import { isStillRinging } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
+import { IncomingCallScreen } from './call/IncomingCallScreen'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -17,6 +18,8 @@ registerTranslations({
   'ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา': 'Dispatch Center 1669 is inviting you to the call',
   'เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ': 'Case {caseNumber} · talk with the reporter',
   เข้าร่วม: 'Join',
+  หน่วยกู้ชีพ: 'Rescue team',
+  'สายวิดีโอเรียกเข้า · เหตุหมายเลข {caseNumber}': 'Incoming video call · case {caseNumber}',
 })
 
 /**
@@ -24,7 +27,8 @@ registerTranslations({
  * regardless of which page someone's looking at — a real phone rings no
  * matter what app is in the foreground. Dispatch hears any unanswered 1669
  * call; a rescue crew hears 1669 inviting them into a live call on one of
- * their cases; a citizen hears their own outgoing ring. Driven purely by
+ * their cases; a citizen hears their own outgoing ring, and a rescue team
+ * calling them comes up full screen wherever they are. Driven purely by
  * synced case state, so the moment anyone answers or cancels, the ring
  * stops everywhere.
  */
@@ -34,6 +38,8 @@ export function CallRingtoneBridge() {
   const activeCaseId = useStore((s) => s.activeCaseId)
   const answerCall = useStore((s) => s.answerCall)
   const acceptRescueCallInvite = useStore((s) => s.acceptRescueCallInvite)
+  const answerRescueCall = useStore((s) => s.answerRescueCall)
+  const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
   const navigate = useNavigate()
   const [dismissedCallIds, setDismissedCallIds] = useState<Set<string>>(new Set())
   const t = useT()
@@ -66,6 +72,24 @@ export function CallRingtoneBridge() {
     return []
   }, [cases, role, myTeamId, now])
 
+  // A rescue team calling a citizen about a case they reported -- shown full
+  // screen from wherever they are in the app, like a phone call. Only their
+  // *own* cases: an admin working with a citizen profile has every case in
+  // the store.
+  const citizenIncoming = useMemo(() => {
+    if (role !== 'public' || !currentUser) return null
+    return (
+      Object.values(cases)
+        .filter(
+          (c) =>
+            c.reporterUserId === currentUser.id &&
+            c.rescueCallStatus === 'connecting' &&
+            isStillRinging(c.rescueCallRingingAt, now),
+        )
+        .sort((a, b) => a.createdAt - b.createdAt)[0] ?? null
+    )
+  }, [cases, role, currentUser, now])
+
   useEffect(() => {
     let shouldRing = ringingForMe.length > 0
     if (role === 'public') {
@@ -97,7 +121,8 @@ export function CallRingtoneBridge() {
   useEffect(() => {
     const side = role === 'rescue' ? 'rescue' : 'dispatch'
     for (const c of ringingForMe) prepareCall(c.id, 'dispatch', side)
-  }, [ringingForMe, role])
+    if (citizenIncoming) prepareCall(citizenIncoming.id, 'rescue-citizen', 'public')
+  }, [ringingForMe, role, citizenIncoming])
 
   useEffect(() => {
     // Once a call stops ringing (answered/cancelled), drop it from the
@@ -114,6 +139,22 @@ export function CallRingtoneBridge() {
     [ringingForMe, dismissedCallIds],
   )
 
+  if (citizenIncoming) {
+    const id = citizenIncoming.id
+    return (
+      <IncomingCallScreen
+        callerRole="rescue"
+        title={citizenIncoming.assignedRescueTeam?.name ?? t('หน่วยกู้ชีพ')}
+        subtitle={t('สายวิดีโอเรียกเข้า · เหตุหมายเลข {caseNumber}', { caseNumber: citizenIncoming.caseNumber })}
+        onAccept={() => {
+          answerRescueCall(id)
+          navigate(`/public/case/${id}`)
+        }}
+        onDecline={() => setRescueCallStatus(id, 'ended')}
+      />
+    )
+  }
+
   if (!visibleCall) return null
 
   const dismiss = () => setDismissedCallIds((prev) => new Set(prev).add(visibleCall.id))
@@ -121,6 +162,7 @@ export function CallRingtoneBridge() {
   if (role === 'rescue') {
     return (
       <IncomingCallAlert
+        callerRole="dispatch"
         title={t('ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา')}
         message={t('เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ', { caseNumber: visibleCall.caseNumber })}
         answerLabel={t('เข้าร่วม')}
@@ -135,6 +177,7 @@ export function CallRingtoneBridge() {
 
   return (
     <IncomingCallAlert
+      callerRole={visibleCall.activeCallerRole === 'rescue' ? 'rescue' : 'public'}
       title={t('สายเรียกเข้าใหม่')}
       message={t('สายเรียกเข้าจากเหตุหมายเลข {caseNumber}', { caseNumber: visibleCall.caseNumber })}
       answerLabel={t('รับสาย')}

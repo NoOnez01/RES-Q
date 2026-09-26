@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { PhoneOff, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
@@ -17,7 +17,6 @@ registerTranslations({
   'การสนทนากับศูนย์สั่งการ 1669': 'Call with Center 1669',
   'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
   'สนทนาร่วมกับศูนย์สั่งการ 1669 และผู้แจ้งเหตุ': 'On the call with Center 1669 and the reporter',
-  'รอเจ้าหน้าที่ศูนย์สั่งการ 1669': 'Waiting for 1669',
   ออกจากสาย: 'Leave call',
   การโทรสิ้นสุดแล้ว: 'The call has ended',
   ไม่มีสายที่เชิญเข้าร่วม: 'No call to join',
@@ -105,13 +104,18 @@ export default function RescueJoinCall() {
             <p className="w-full text-xs text-muted">{t('สนทนาร่วมกับศูนย์สั่งการ 1669 และผู้แจ้งเหตุ')}</p>
           </Card>
 
-          <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอเจ้าหน้าที่ศูนย์สั่งการ 1669')} />
-
-          <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleLeave}>
-            {t('ออกจากสาย')}
-          </Button>
         </div>
       </div>
+
+      <CallScreen
+        call={call}
+        emergencyCase={c}
+        open={active}
+        peer="dispatch"
+        durationSec={c.callDurationSec}
+        onEnd={handleLeave}
+        endLabel={t('ออกจากสาย')}
+      />
     </AppShell>
   )
 }

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Phone, PhoneOff } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
@@ -24,8 +24,8 @@ registerTranslations({
   ผู้แจ้งเหตุ: 'Reporter',
   'เหตุหมายเลข {caseNumber}': 'Case {caseNumber}',
   'กำลังโทรออก รอผู้แจ้งเหตุรับสาย': 'Calling... waiting for the reporter to answer',
-  รอผู้แจ้งเหตุรับสาย: 'Waiting for the reporter to answer',
   วางสาย: 'Hang up',
+  ยกเลิกการโทร: 'Cancel call',
 })
 
 /**
@@ -46,7 +46,6 @@ export default function RescueCallReporter() {
   const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
   const t = useT()
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
   const noAnswerRef = useRef(false)
   const hasProceededRef = useRef(false)
@@ -55,18 +54,14 @@ export default function RescueCallReporter() {
   const callIsLive = c?.rescueCallStatus === 'connecting' || c?.rescueCallStatus === 'in-call'
   const call = useLiveKitCall(id ?? null, 'rescue-citizen', 'rescue', !!callIsLive)
 
+  // Counts while the call is connected. Started and stopped by this effect
+  // alone -- a ref-guarded interval stays "running" after a cleanup cleared
+  // it, so a remount or a re-run of the effect froze the timer.
   useEffect(() => {
-    if (c?.rescueCallStatus === 'in-call' && !intervalRef.current && id) {
-      const caseId = id
-      intervalRef.current = setInterval(() => tickRescueCallDuration(caseId), 1000)
-    }
-    if (c?.rescueCallStatus !== 'in-call' && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
+    if (c?.rescueCallStatus !== 'in-call' || !id) return
+    const caseId = id
+    const timer = setInterval(() => tickRescueCallDuration(caseId), 1000)
+    return () => clearInterval(timer)
   }, [c?.rescueCallStatus, id, tickRescueCallDuration])
 
   // An unanswered call ends itself rather than ringing forever on the
@@ -164,15 +159,6 @@ export default function RescueCallReporter() {
             )}
           </Card>
 
-          {callIsLive && (
-            <>
-              <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอผู้แจ้งเหตุรับสาย')} />
-              <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                {t('วางสาย')}
-              </Button>
-            </>
-          )}
-
           {!isCallActive && (
             <Button variant="primary" size="lg" fullWidth icon={<Phone className="size-5" />} onClick={handleCall}>
               {t('โทรหาผู้แจ้งเหตุ')}
@@ -180,6 +166,17 @@ export default function RescueCallReporter() {
           )}
         </div>
       </div>
+
+      <CallScreen
+        call={call}
+        emergencyCase={c}
+        open={isCallActive}
+        ringing={c.rescueCallStatus === 'connecting'}
+        peer="public"
+        durationSec={c.rescueCallDurationSec ?? 0}
+        onEnd={handleHangUp}
+        endLabel={c.rescueCallStatus === 'connecting' ? t('ยกเลิกการโทร') : t('วางสาย')}
+      />
     </AppShell>
   )
 }

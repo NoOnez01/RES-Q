@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { PhoneOff, MapPin, User, Ambulance, UserPlus } from 'lucide-react'
+import { MapPin, User } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
@@ -24,18 +23,13 @@ registerTranslations({
   ยังไม่ระบุตำแหน่ง: 'No location set yet',
   หน่วยกู้ชีพ: 'Rescue team',
   ผู้แจ้งเหตุ: 'Reporter',
-  รอหน่วยกู้ชีพเปิดกล้อง: "Waiting for the rescue team to turn on their camera",
-  รอผู้แจ้งเหตุเปิดกล้อง: "Waiting for the reporter to turn on their camera",
   วางสาย: 'Hang up',
   ยังอยู่ระหว่างการสนทนา: 'Still in an active call',
   ต้องการวางสายและออกจากหน้านี้หรือไม่: 'Hang up and leave this screen?',
   วางสายและออก: 'Hang up and leave',
   สนทนาต่อ: 'Continue the call',
   เชิญหน่วยกู้ชีพเข้าร่วมสาย: 'Invite the rescue team into this call',
-  'เพื่อให้ {team} รับฟังข้อมูลจากผู้แจ้งเหตุโดยตรง': 'Let {team} hear the reporter directly',
-  เชิญเข้าร่วม: 'Invite to call',
   'กำลังเรียก {team}...': 'Calling {team}...',
-  รอหน่วยกู้ชีพตอบรับ: 'Awaiting rescue team response',
   '{team} กำลังเข้าร่วมสาย...': '{team} is joining the call...',
   ยกเลิก: 'Cancel',
 })
@@ -152,56 +146,31 @@ export default function DispatchCallScreen() {
             </div>
           </Card>
 
-          <VideoCallPanel
-            call={call}
-            emergencyCase={emergencyCase}
-            waitingLabel={
-              emergencyCase.activeCallerRole === 'rescue' ? t('รอหน่วยกู้ชีพเปิดกล้อง') : t('รอผู้แจ้งเหตุเปิดกล้อง')
-            }
-          />
-
-          {canPullInRescue && team && (
-            <Card className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <Ambulance className="size-5 shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink">
-                    {!invite
-                      ? t('เชิญหน่วยกู้ชีพเข้าร่วมสาย')
-                      : invite.status === 'ringing'
-                        ? t('กำลังเรียก {team}...', { team: team.name })
-                        : t('{team} กำลังเข้าร่วมสาย...', { team: team.name })}
-                  </p>
-                  {invite?.status !== 'joined' && (
-                    <p className="truncate text-xs text-muted">
-                      {invite ? t('รอหน่วยกู้ชีพตอบรับ') : t('เพื่อให้ {team} รับฟังข้อมูลจากผู้แจ้งเหตุโดยตรง', { team: team.name })}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {invite ? (
-                <Button variant="outline" size="sm" onClick={() => clearRescueCallInvite(id)}>
-                  {t('ยกเลิก')}
-                </Button>
-              ) : (
-                <Button size="sm" icon={<UserPlus className="size-4" />} onClick={() => inviteRescueToCall(id)}>
-                  {t('เชิญเข้าร่วม')}
-                </Button>
-              )}
-            </Card>
-          )}
-
-          <Button
-            variant="danger"
-            size="lg"
-            fullWidth
-            icon={<PhoneOff className="size-5" />}
-            onClick={handleHangUp}
-          >
-            {t('วางสาย')}
-          </Button>
         </div>
       </div>
+
+      <CallScreen
+        call={call}
+        emergencyCase={emergencyCase}
+        open={isActive}
+        peer={emergencyCase.activeCallerRole === 'rescue' ? 'rescue' : 'public'}
+        durationSec={emergencyCase.callDurationSec}
+        onEnd={handleHangUp}
+        endLabel={t('วางสาย')}
+        action={canPullInRescue && !invite ? { label: t('เชิญหน่วยกู้ชีพเข้าร่วมสาย'), onClick: () => inviteRescueToCall(id) } : undefined}
+        banner={
+          canPullInRescue && team && invite
+            ? {
+                text:
+                  invite.status === 'ringing'
+                    ? t('กำลังเรียก {team}...', { team: team.name })
+                    : t('{team} กำลังเข้าร่วมสาย...', { team: team.name }),
+                actionLabel: t('ยกเลิก'),
+                onAction: () => clearRescueCallInvite(id),
+              }
+            : undefined
+        }
+      />
 
       <ConfirmationModal
         open={showLeaveConfirm}

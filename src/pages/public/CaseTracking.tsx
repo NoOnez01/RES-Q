@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Building2, Ambulance, Share2, Phone, PhoneIncoming, Coins } from 'lucide-react'
+import { CheckCircle2, Building2, Ambulance, Share2, Phone, Coins } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -13,7 +13,7 @@ import { MapPanel } from '@/components/MapPanel'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { CaseQrPanel } from '@/components/CaseQrPanel'
 import { CaseFeedbackForm } from '@/components/CaseFeedbackForm'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { ErrorState, LoadingState } from '@/components/States'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
@@ -34,9 +34,7 @@ registerTranslations({
   'กำลังค้นหาข้อมูลเหตุ...': 'Looking up the case...',
   ไม่พบเหตุนี้: 'Case not found',
   'ข้อมูลเหตุอาจถูกลบ หรือรหัสไม่ถูกต้อง': 'This case may have been deleted, or the code is incorrect',
-  หน่วยกู้ชีพกำลังโทรหาคุณ: 'The rescue team is calling you',
-  ปฏิเสธ: 'Reject',
-  รับสาย: 'Answer',
+  หน่วยกู้ชีพจะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The rescue team will end the call when the conversation is finished',
   'การช่วยเหลือเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ': 'Response complete — thank you for using ResQ',
   ขอบคุณสำหรับความคิดเห็นของท่าน: 'Thank you for your feedback',
   ส่งต่อให้ญาติติดตามสถานะ: 'Share so family can track status',
@@ -103,29 +101,25 @@ export default function CaseTracking() {
   // LiveKit room so it can't collide with one already in progress on the
   // case's 1669 room. Only meaningful for a live-synced case (isRemoteOnly is a
   // read-only snapshot with no session to answer from), same gating as the
-  // "ติดต่อศูนย์สั่งการ 1669" button below.
-  const answerRescueCall = useStore((s) => s.answerRescueCall)
-  const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
+  // "ติดต่อศูนย์สั่งการ 1669" button below. The ring itself is answered from
+  // the full-screen incoming call (CallRingtoneBridge), which brings the
+  // citizen here; they join the room only once they have -- joining while it
+  // rang would show rescue their camera before they'd picked up.
   const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
-  const rescueCallRinging = !isRemoteOnly && activeCase?.rescueCallStatus === 'connecting'
   const rescueCallActive = !isRemoteOnly && activeCase?.rescueCallStatus === 'in-call'
-  const rescueCallIsLive = rescueCallRinging || rescueCallActive
-  const rescueCallIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', 'public', rescueCallIsLive)
+  const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', 'public', rescueCallActive)
 
+  // Counts while the call is connected. Started and stopped by this effect
+  // alone, keyed on the case id rather than the case object (which changes
+  // with every tick) -- a ref-guarded interval stays "running" after a cleanup cleared
+  // it, so a remount or a re-run of the effect froze the timer.
+  const activeCaseId = activeCase?.id
   useEffect(() => {
-    if (rescueCallActive && activeCase && !rescueCallIntervalRef.current) {
-      const caseId = activeCase.id
-      rescueCallIntervalRef.current = setInterval(() => tickRescueCallDuration(caseId), 1000)
-    }
-    if (!rescueCallActive && rescueCallIntervalRef.current) {
-      clearInterval(rescueCallIntervalRef.current)
-      rescueCallIntervalRef.current = null
-    }
-    return () => {
-      if (rescueCallIntervalRef.current) clearInterval(rescueCallIntervalRef.current)
-    }
-  }, [rescueCallActive, activeCase, tickRescueCallDuration])
+    if (!rescueCallActive || !activeCaseId) return
+    const caseId = activeCaseId
+    const timer = setInterval(() => tickRescueCallDuration(caseId), 1000)
+    return () => clearInterval(timer)
+  }, [rescueCallActive, activeCaseId, tickRescueCallDuration])
 
   useEffect(() => {
     if (!activeCase) return
@@ -274,36 +268,18 @@ export default function CaseTracking() {
         <AnimatedBackground variant="emergency" />
 
         <div className="relative z-10 flex flex-col gap-5 pb-8">
-          {rescueCallRinging && (
-            <Card className="flex flex-col items-center gap-3 border-primary/40 bg-skyblue-light text-center animate-fade-in-up">
-              <span className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <PhoneIncoming className="size-6 animate-pulse" />
-              </span>
-              <p className="font-bold text-ink">{t('หน่วยกู้ชีพกำลังโทรหาคุณ')}</p>
-              <div className="flex w-full gap-2">
-                <Button
-                  variant="outline"
-                  fullWidth
-                  onClick={() => setRescueCallStatus(activeCase.id, 'ended')}
-                >
-                  {t('ปฏิเสธ')}
-                </Button>
-                <Button variant="primary" fullWidth icon={<Phone className="size-4" />} onClick={() => answerRescueCall(activeCase.id)}>
-                  {t('รับสาย')}
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {rescueCallActive && (
-            // Only rescue can end this call (see ConfirmationModal-free design
-            // here -- there is deliberately no hang-up button for the
-            // reporter): staff controls when the call is actually finished,
-            // not a citizen who may be distressed or acting on impulse.
-            <div className="animate-fade-in-up">
-              <VideoCallPanel call={rescueCall} emergencyCase={activeCase} waitingLabel={t('รอหน่วยกู้ชีพเปิดกล้อง')} />
-            </div>
-          )}
+          {/* Only rescue can end this call -- there is deliberately no
+              hang-up button for the reporter: staff controls when the call
+              is actually finished, not a citizen who may be distressed or
+              acting on impulse. */}
+          <CallScreen
+            call={rescueCall}
+            emergencyCase={activeCase}
+            open={rescueCallActive}
+            peer="rescue"
+            durationSec={activeCase.rescueCallDurationSec ?? 0}
+            note={t('หน่วยกู้ชีพจะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}
+          />
 
           {activeCase.status === 'completed' && (
             <div className="flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 animate-fade-in-up">

@@ -46,6 +46,8 @@ export interface LiveKitCall {
   connectionState: ConnectionState
   cameraOn: boolean
   micOn: boolean
+  /** Which camera is live -- the front one's preview is shown mirrored. */
+  facingMode: 'user' | 'environment'
   /** The browser blocked remote audio autoplay -- needs a tap to start. */
   audioBlocked: boolean
   toggleCamera: () => void
@@ -195,6 +197,7 @@ export function useLiveKitCall(
   const [cameraOn, setCameraOn] = useState(true)
   const [micOn, setMicOn] = useState(true)
   const [audioBlocked, setAudioBlocked] = useState(false)
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const roomRef = useRef<Room | null>(null)
   const liveKitRef = useRef<LiveKit | null>(null)
   const facingModeRef = useRef<'user' | 'environment'>('user')
@@ -327,6 +330,7 @@ export function useLiveKitCall(
       void room?.disconnect()
       roomRef.current = null
       facingModeRef.current = 'user'
+      setFacingMode('user')
       setRemotes([])
       setLocalVideoTrack(null)
       setCameraState('idle')
@@ -368,6 +372,7 @@ export function useLiveKitCall(
       .restartTrack({ facingMode: next })
       .then(() => {
         facingModeRef.current = next
+        setFacingMode(next)
       })
       .catch((err) => console.error('switchCamera failed:', err))
   }, [])
@@ -383,6 +388,7 @@ export function useLiveKitCall(
     connectionState,
     cameraOn,
     micOn,
+    facingMode,
     audioBlocked,
     toggleCamera,
     toggleMic,

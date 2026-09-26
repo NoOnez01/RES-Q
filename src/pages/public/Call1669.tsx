@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Phone, MapPin, Camera, PhoneOff } from 'lucide-react'
+import { Phone, MapPin, Camera } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
@@ -34,7 +34,6 @@ registerTranslations({
   รูปภาพแนบ: 'Attached photos',
   'แนบรูปภาพแล้ว {n} รูป': '{n} photo(s) attached',
   ไม่มีรูปภาพแนบ: 'No photos attached',
-  รอเจ้าหน้าที่รับสาย: 'Waiting for a responder to answer',
   ยกเลิกการโทร: 'Cancel call',
   เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
   'สิ้นสุดการโทร ดำเนินการต่อ': 'End call and continue',
@@ -58,7 +57,6 @@ export default function Call1669() {
   const activeCase = activeCaseId ? cases[activeCaseId] : null
 
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const selfHungUpRef = useRef(false)
   const noAnswerRef = useRef(false)
   const hasShownEndedRef = useRef(false)
@@ -70,26 +68,16 @@ export default function Call1669() {
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
   const call = useLiveKitCall(activeCaseId, 'dispatch', 'public', callIsLive)
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [])
-
   // The call only actually connects once a dispatcher presses "รับสาย" on
   // their end (answerCall) — that flips callStatus to 'in-call' and syncs
   // here, which is what starts the duration timer, not a local timeout.
+  // Started and stopped by this effect alone -- a ref-guarded interval stays
+  // "running" after a cleanup cleared it, so a remount froze the timer.
   useEffect(() => {
-    if (activeCase?.callStatus === 'in-call' && !intervalRef.current && activeCaseId) {
-      const id = activeCaseId
-      intervalRef.current = setInterval(() => {
-        tickCallDuration(id)
-      }, 1000)
-    }
-    if (activeCase?.callStatus !== 'in-call' && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
+    if (activeCase?.callStatus !== 'in-call' || !activeCaseId) return
+    const id = activeCaseId
+    const timer = setInterval(() => tickCallDuration(id), 1000)
+    return () => clearInterval(timer)
   }, [activeCase?.callStatus, activeCaseId, tickCallDuration])
 
   // If nobody at dispatch answers within RING_TIMEOUT_MS, stop ringing on
@@ -154,10 +142,6 @@ export default function Call1669() {
   }, [activeCase?.callStatus])
 
   function clearTimers() {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
     if (proceedTimerRef.current) {
       clearTimeout(proceedTimerRef.current)
       proceedTimerRef.current = null
@@ -281,23 +265,27 @@ export default function Call1669() {
             </div>
           </Card>
 
-          {callIsLive && (
-            <>
-              <VideoCallPanel call={call} emergencyCase={activeCase} waitingLabel={t('รอเจ้าหน้าที่รับสาย')} />
-              {activeCase.callStatus === 'connecting' ? (
-                <Button variant="outline" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                  {t('ยกเลิกการโทร')}
-                </Button>
-              ) : (
-                // Once connected, only 1669 ends the call -- staff controls
-                // when the conversation is actually finished, not a citizen
-                // who may still be distressed mid-call.
-                <p className="text-center text-xs text-muted">{t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}</p>
-              )}
-            </>
-          )}
         </div>
       </div>
+
+      <CallScreen
+        call={call}
+        emergencyCase={activeCase}
+        open={callIsLive}
+        ringing={connecting}
+        peer="dispatch"
+        durationSec={activeCase.callDurationSec}
+        // Once connected, only 1669 ends the call -- staff controls when the
+        // conversation is actually finished, not a citizen who may still be
+        // distressed mid-call.
+        onEnd={connecting ? handleHangUp : undefined}
+        endLabel={t('ยกเลิกการโทร')}
+        note={
+          connecting
+            ? t('หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ', { sec: RING_TIMEOUT_MS / 1000 })
+            : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')
+        }
+      />
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>

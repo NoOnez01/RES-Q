@@ -33,7 +33,7 @@ Unlike a generic CAD/dispatch tool or a plain group chat, ResQ is role-scoped en
 - Dispatch/hospital staff: desktop, operations-center setting, monitoring multiple concurrent cases.
 - Rescue teams: mobile, in the field, often in a moving vehicle.
 - LINE is a primary channel for the Thai market: LINE Login (account linking) and a LINE OA bot (incident reporting + Flex Message status push) run alongside the web app, sharing one underlying case record.
-- Live video calling (LiveKit, one room per case, tokens minted by the `livekit-token` Edge Function) connects a citizen and a dispatcher for real-time triage; the dispatcher can pull the assigned rescue crew into the same call so it becomes three-way.
+- Live video calling (LiveKit, one room per case, tokens minted by the `livekit-token` Edge Function) connects a citizen and a dispatcher for real-time triage; the dispatcher can pull the assigned rescue crew into the same call so it becomes three-way. Calls run full screen like a phone call app (src/components/call/): the other person fills the screen, your own camera floats in a draggable corner tile (tap to swap), round controls fade while watching, and minimizing leaves a floating tile over the page. A rescue team calling a citizen rings full screen from anywhere in the app; staff get an incoming-call banner. A citizen joins the room only after answering, and can't hang up on staff once connected.
 - Thai is the sole UI language throughout; no English-language screens exist today.
 
 ## Capabilities and Constraints

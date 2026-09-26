@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Phone, PhoneOff } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { VideoCallPanel } from '@/components/VideoCallPanel'
+import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
@@ -18,6 +18,9 @@ import { useT, registerTranslations } from '@/lib/i18n'
 registerTranslations({
   ยังไม่มีเจ้าหน้าที่รับสาย: 'No one answered',
   กรุณาลองติดต่ออีกครั้งในอีกสักครู่: 'Please try again in a moment',
+  ยกเลิกการโทร: 'Cancel call',
+  วางสาย: 'Hang up',
+  เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
 })
 
 /**
@@ -42,7 +45,6 @@ export default function Contact1669() {
   const isRescue = currentUser?.role === 'rescue'
   const backTo = caseId ? (isRescue ? `/rescue/case/${caseId}` : `/public/case/${caseId}`) : '/'
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
   const noAnswerRef = useRef(false)
   const hasProceededRef = useRef(false)
@@ -51,18 +53,14 @@ export default function Contact1669() {
   const callIsLive = c?.callStatus === 'connecting' || c?.callStatus === 'in-call'
   const call = useLiveKitCall(caseId ?? null, 'dispatch', isRescue ? 'rescue' : 'public', !!callIsLive)
 
+  // Counts while the call is connected. Started and stopped by this effect
+  // alone -- a ref-guarded interval stays "running" after a cleanup cleared
+  // it, so a remount or a re-run of the effect froze the timer.
   useEffect(() => {
-    if (c?.callStatus === 'in-call' && !intervalRef.current && caseId) {
-      const id = caseId
-      intervalRef.current = setInterval(() => tickCallDuration(id), 1000)
-    }
-    if (c?.callStatus !== 'in-call' && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
+    if (c?.callStatus !== 'in-call' || !caseId) return
+    const id = caseId
+    const timer = setInterval(() => tickCallDuration(id), 1000)
+    return () => clearInterval(timer)
   }, [c?.callStatus, caseId, tickCallDuration])
 
   // Nobody answering must not leave this call ringing forever -- here or on
@@ -166,21 +164,6 @@ export default function Contact1669() {
             )}
           </Card>
 
-          {callIsLive && (
-            <>
-              <VideoCallPanel call={call} emergencyCase={c} waitingLabel={t('รอเจ้าหน้าที่รับสาย')} />
-              {isRescue || c.callStatus === 'connecting' ? (
-                <Button variant="danger" size="lg" fullWidth icon={<PhoneOff className="size-5" />} onClick={handleHangUp}>
-                  {isRescue ? t('วางสาย') : t('ยกเลิกการโทร')}
-                </Button>
-              ) : (
-                // Once connected, only staff ends the call -- a citizen
-                // calling in doesn't get to hang up on 1669 mid-conversation.
-                <p className="text-center text-xs text-muted">{t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}</p>
-              )}
-            </>
-          )}
-
           {!isCallActive && (
             <Button variant="danger" size="lg" fullWidth icon={<Phone className="size-5" />} onClick={handleCall}>
               {t('โทร 1669')}
@@ -188,6 +171,20 @@ export default function Contact1669() {
           )}
         </div>
       </div>
+
+      <CallScreen
+        call={call}
+        emergencyCase={c}
+        open={isCallActive}
+        ringing={c.callStatus === 'connecting'}
+        peer="dispatch"
+        durationSec={c.callDurationSec}
+        // Once connected, only staff ends the call -- a citizen calling in
+        // doesn't get to hang up on 1669 mid-conversation.
+        onEnd={isRescue || c.callStatus === 'connecting' ? handleHangUp : undefined}
+        endLabel={c.callStatus === 'connecting' ? t('ยกเลิกการโทร') : t('วางสาย')}
+        note={isRescue || c.callStatus === 'connecting' ? undefined : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}
+      />
     </AppShell>
   )
 }
