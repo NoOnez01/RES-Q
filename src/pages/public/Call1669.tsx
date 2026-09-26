@@ -10,14 +10,11 @@ import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
-import { RING_TIMEOUT_MS } from '@/lib/calls'
+import { useKeepRinging } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  ยังไม่มีเจ้าหน้าที่รับสาย: 'No one answered',
-  'ระบบบันทึกเรื่องแจ้งเหตุของคุณเข้าคิวของศูนย์สั่งการแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด':
-    'Your report has been queued at the dispatch center. A responder will contact you as soon as possible.',
   เจ้าหน้าที่วางสายแล้ว: 'The responder ended the call',
   การโทรสิ้นสุดแล้ว: 'The call has ended',
   'ติดต่อศูนย์สั่งการ 1669': 'Contact Dispatch Center 1669',
@@ -25,8 +22,7 @@ registerTranslations({
   กรุณาโทรแจ้งเหตุเพื่อให้เจ้าหน้าที่ประสานความช่วยเหลือ: 'Please call to report the incident so a responder can coordinate help',
   'สายด่วนการแพทย์ฉุกเฉิน 1669': 'Emergency medical hotline 1669',
   'กำลังโทรออก รอเจ้าหน้าที่รับสาย': 'Calling... waiting for a responder to answer',
-  'หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ':
-    "If no one answers within {sec} seconds, your report will be logged automatically",
+  'สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก': 'The call keeps ringing until a 1669 responder answers, or you cancel',
   'เจ้าหน้าที่รับสายแล้ว กำลังสนทนา': 'The responder has answered, call in progress',
   หมายเลขเหตุ: 'Case number',
   ตำแหน่ง: 'Location',
@@ -58,11 +54,9 @@ export default function Call1669() {
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const selfHungUpRef = useRef(false)
-  const noAnswerRef = useRef(false)
   const hasShownEndedRef = useRef(false)
   const hasProceededRef = useRef(false)
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const connecting = activeCase?.callStatus === 'connecting'
   const callIsLive = activeCase?.callStatus === 'connecting' || activeCase?.callStatus === 'in-call'
@@ -80,44 +74,18 @@ export default function Call1669() {
     return () => clearInterval(timer)
   }, [activeCase?.callStatus, activeCaseId, tickCallDuration])
 
-  // If nobody at dispatch answers within RING_TIMEOUT_MS, stop ringing on
-  // our own rather than leaving the citizen staring at "รอเจ้าหน้าที่รับสาย"
-  // indefinitely -- a busy dispatch center must not strand them, and the
-  // report itself only reaches dispatch's queue once the call *ends*.
-  // Ending the call here (same as a manual hang-up) lets the "call ended ->
-  // proceed" effect below submit the report. Counted from when the ring
-  // started, so reopening this page mid-ring doesn't restart the clock.
-  useEffect(() => {
-    if (activeCase?.callStatus !== 'connecting' || !activeCaseId) return
-    const id = activeCaseId
-    const elapsed = Date.now() - (activeCase.callRingingAt ?? Date.now())
-    ringTimeoutRef.current = setTimeout(() => {
-      noAnswerRef.current = true
-      setCallStatus(id, 'ended')
-    }, Math.max(0, RING_TIMEOUT_MS - elapsed))
-    return () => {
-      if (ringTimeoutRef.current) {
-        clearTimeout(ringTimeoutRef.current)
-        ringTimeoutRef.current = null
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- callRingingAt is read once per ring
-  }, [activeCase?.callStatus, activeCaseId, setCallStatus])
+  // An emergency call to 1669 never gives up on its own: it rings until a
+  // responder answers or the citizen cancels, kept ringing on dispatch's
+  // side for as long as this screen is waiting.
+  useKeepRinging(activeCaseId, connecting)
 
   // The call ending is driven purely by the synced callStatus field, so this
-  // fires whether the citizen hung up themselves, the dispatcher did on
-  // their end, or nobody ever answered (see the ring-timeout effect above)
-  // — one side ending the call ends it for both.
+  // fires whether the citizen hung up themselves or the dispatcher did on
+  // their end — one side ending the call ends it for both.
   useEffect(() => {
     if (activeCase?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    if (noAnswerRef.current) {
-      toast({
-        title: t('ยังไม่มีเจ้าหน้าที่รับสาย'),
-        message: t('ระบบบันทึกเรื่องแจ้งเหตุของคุณเข้าคิวของศูนย์สั่งการแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด'),
-        tone: 'warning',
-      })
-    } else if (!selfHungUpRef.current) {
+    if (!selfHungUpRef.current) {
       toast({ title: t('เจ้าหน้าที่วางสายแล้ว'), message: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
     }
     // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
@@ -146,16 +114,11 @@ export default function Call1669() {
       clearTimeout(proceedTimerRef.current)
       proceedTimerRef.current = null
     }
-    if (ringTimeoutRef.current) {
-      clearTimeout(ringTimeoutRef.current)
-      ringTimeoutRef.current = null
-    }
   }
 
   function handleConfirmCall() {
     if (!activeCaseId) return
     selfHungUpRef.current = false
-    noAnswerRef.current = false
     hasShownEndedRef.current = false
     hasProceededRef.current = false
     setConfirmOpen(false)
@@ -233,7 +196,7 @@ export default function Call1669() {
               <>
                 <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}</p>
                 <p className="text-xs text-muted">
-                  {t('หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ', { sec: RING_TIMEOUT_MS / 1000 })}
+                  {t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')}
                 </p>
               </>
             )}
@@ -282,7 +245,7 @@ export default function Call1669() {
         endLabel={t('ยกเลิกการโทร')}
         note={
           connecting
-            ? t('หากไม่มีผู้รับสายภายใน {sec} วินาที ระบบจะบันทึกการแจ้งเหตุของคุณโดยอัตโนมัติ', { sec: RING_TIMEOUT_MS / 1000 })
+            ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')
             : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')
         }
       />

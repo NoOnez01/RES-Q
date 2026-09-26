@@ -210,6 +210,8 @@ interface ResQState {
    * status to 'connecting' -- it stamps who's calling for CallScreen.tsx's
    * remote-party label; other status changes leave it as-is. */
   setCallStatus: (caseId: string, status: CallStatus, callerRole?: CallerRole) => void
+  /** A caller still waiting on 1669: re-stamps the ring (see lib/calls.ts). */
+  keepCallRinging: (caseId: string) => void
   tickCallDuration: (caseId: string) => void
   finishCall: (caseId: string) => void
   // Rescue calling the reporter directly -- separate call relationship from
@@ -517,6 +519,17 @@ export const useStore = create<ResQState>()(
           // A crew invite only makes sense while that call is live.
           if (status !== 'in-call') updated.rescueCallInvite = undefined
           return { cases: { ...s.cases, [caseId]: updated } }
+        }),
+
+      // Leaves updatedAt alone on purpose: sync is last-write-wins on the
+      // whole case, so a re-stamp crossing paths with dispatch answering
+      // must count as the older write, or it would put the call back to
+      // ringing on everyone's screen.
+      keepCallRinging: (caseId) =>
+        set((s) => {
+          const c = s.cases[caseId]
+          if (!c || c.callStatus !== 'connecting') return {}
+          return { cases: { ...s.cases, [caseId]: { ...c, callRingingAt: Date.now() } } }
         }),
 
       // Dispatcher presses "รับสาย" on a ringing call — this is what actually

@@ -12,12 +12,11 @@ import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { RING_TIMEOUT_MS } from '@/lib/calls'
+import { useKeepRinging } from '@/lib/calls'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
-  ยังไม่มีเจ้าหน้าที่รับสาย: 'No one answered',
-  กรุณาลองติดต่ออีกครั้งในอีกสักครู่: 'Please try again in a moment',
+  'สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก': 'The call keeps ringing until a 1669 responder answers, or you cancel',
   ยกเลิกการโทร: 'Cancel call',
   วางสาย: 'Hang up',
   เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
@@ -46,7 +45,6 @@ export default function Contact1669() {
   const backTo = caseId ? (isRescue ? `/rescue/case/${caseId}` : `/public/case/${caseId}`) : '/'
 
   const hasShownEndedRef = useRef(false)
-  const noAnswerRef = useRef(false)
   const hasProceededRef = useRef(false)
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -63,29 +61,14 @@ export default function Contact1669() {
     return () => clearInterval(timer)
   }, [c?.callStatus, caseId, tickCallDuration])
 
-  // Nobody answering must not leave this call ringing forever -- here or on
-  // every dispatcher's screen (see lib/calls.ts). Counted from when the ring
-  // started, so reopening the page mid-ring doesn't restart the clock.
-  useEffect(() => {
-    if (c?.callStatus !== 'connecting' || !caseId) return
-    const id = caseId
-    const elapsed = Date.now() - (c.callRingingAt ?? Date.now())
-    const timer = setTimeout(() => {
-      noAnswerRef.current = true
-      setCallStatus(id, 'ended')
-    }, Math.max(0, RING_TIMEOUT_MS - elapsed))
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- callRingingAt is read once per ring
-  }, [c?.callStatus, caseId, setCallStatus])
+  // A call to 1669 rings until a responder answers or the caller cancels
+  // -- kept ringing on dispatch's side for as long as this screen waits.
+  useKeepRinging(caseId, c?.callStatus === 'connecting')
 
   useEffect(() => {
     if (c?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    toast(
-      noAnswerRef.current
-        ? { title: t('ยังไม่มีเจ้าหน้าที่รับสาย'), message: t('กรุณาลองติดต่ออีกครั้งในอีกสักครู่'), tone: 'warning' }
-        : { title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' },
-    )
+    toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
     // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
     // why (a new closure every render from useT()); this toast only ever
     // fires once per call anyway (guarded by hasShownEndedRef above).
@@ -117,7 +100,6 @@ export default function Contact1669() {
 
   function handleCall() {
     hasShownEndedRef.current = false
-    noAnswerRef.current = false
     hasProceededRef.current = false
     if (proceedTimerRef.current) {
       clearTimeout(proceedTimerRef.current)
@@ -183,7 +165,13 @@ export default function Contact1669() {
         // doesn't get to hang up on 1669 mid-conversation.
         onEnd={isRescue || c.callStatus === 'connecting' ? handleHangUp : undefined}
         endLabel={c.callStatus === 'connecting' ? t('ยกเลิกการโทร') : t('วางสาย')}
-        note={isRescue || c.callStatus === 'connecting' ? undefined : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}
+        note={
+          c.callStatus === 'connecting'
+            ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')
+            : isRescue
+              ? undefined
+              : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')
+        }
       />
     </AppShell>
   )
