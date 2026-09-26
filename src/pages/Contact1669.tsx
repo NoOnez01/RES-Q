@@ -12,7 +12,13 @@ import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { useT } from '@/lib/i18n'
+import { RING_TIMEOUT_MS } from '@/lib/calls'
+import { useT, registerTranslations } from '@/lib/i18n'
+
+registerTranslations({
+  ยังไม่มีเจ้าหน้าที่รับสาย: 'No one answered',
+  กรุณาลองติดต่ออีกครั้งในอีกสักครู่: 'Please try again in a moment',
+})
 
 /**
  * Generic "contact 1669" call screen for reaching dispatch about a case
@@ -38,6 +44,7 @@ export default function Contact1669() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
+  const noAnswerRef = useRef(false)
   const hasProceededRef = useRef(false)
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -58,10 +65,29 @@ export default function Contact1669() {
     }
   }, [c?.callStatus, caseId, tickCallDuration])
 
+  // Nobody answering must not leave this call ringing forever -- here or on
+  // every dispatcher's screen (see lib/calls.ts). Counted from when the ring
+  // started, so reopening the page mid-ring doesn't restart the clock.
+  useEffect(() => {
+    if (c?.callStatus !== 'connecting' || !caseId) return
+    const id = caseId
+    const elapsed = Date.now() - (c.callRingingAt ?? Date.now())
+    const timer = setTimeout(() => {
+      noAnswerRef.current = true
+      setCallStatus(id, 'ended')
+    }, Math.max(0, RING_TIMEOUT_MS - elapsed))
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- callRingingAt is read once per ring
+  }, [c?.callStatus, caseId, setCallStatus])
+
   useEffect(() => {
     if (c?.callStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
+    toast(
+      noAnswerRef.current
+        ? { title: t('ยังไม่มีเจ้าหน้าที่รับสาย'), message: t('กรุณาลองติดต่ออีกครั้งในอีกสักครู่'), tone: 'warning' }
+        : { title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' },
+    )
     // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
     // why (a new closure every render from useT()); this toast only ever
     // fires once per call anyway (guarded by hasShownEndedRef above).
@@ -93,6 +119,7 @@ export default function Contact1669() {
 
   function handleCall() {
     hasShownEndedRef.current = false
+    noAnswerRef.current = false
     hasProceededRef.current = false
     if (proceedTimerRef.current) {
       clearTimeout(proceedTimerRef.current)

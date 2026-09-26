@@ -12,10 +12,13 @@ import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
+import { RING_TIMEOUT_MS } from '@/lib/calls'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   การโทรสิ้นสุดแล้ว: 'The call has ended',
+  ผู้แจ้งเหตุไม่รับสาย: 'The reporter did not answer',
+  กรุณาลองโทรอีกครั้งในอีกสักครู่: 'Please try calling again in a moment',
   โทรหาผู้แจ้งเหตุ: 'Call the reporter',
   ไม่พบข้อมูลเหตุ: 'Case not found',
   ผู้แจ้งเหตุ: 'Reporter',
@@ -45,6 +48,7 @@ export default function RescueCallReporter() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasShownEndedRef = useRef(false)
+  const noAnswerRef = useRef(false)
   const hasProceededRef = useRef(false)
   const proceedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -65,10 +69,28 @@ export default function RescueCallReporter() {
     }
   }, [c?.rescueCallStatus, id, tickRescueCallDuration])
 
+  // An unanswered call ends itself rather than ringing forever on the
+  // reporter's phone (see lib/calls.ts); counted from when the ring started.
+  useEffect(() => {
+    if (c?.rescueCallStatus !== 'connecting' || !id) return
+    const caseId = id
+    const elapsed = Date.now() - (c.rescueCallRingingAt ?? Date.now())
+    const timer = setTimeout(() => {
+      noAnswerRef.current = true
+      setRescueCallStatus(caseId, 'ended')
+    }, Math.max(0, RING_TIMEOUT_MS - elapsed))
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rescueCallRingingAt is read once per ring
+  }, [c?.rescueCallStatus, id, setRescueCallStatus])
+
   useEffect(() => {
     if (c?.rescueCallStatus !== 'ended' || hasShownEndedRef.current) return
     hasShownEndedRef.current = true
-    toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
+    toast(
+      noAnswerRef.current
+        ? { title: t('ผู้แจ้งเหตุไม่รับสาย'), message: t('กรุณาลองโทรอีกครั้งในอีกสักครู่'), tone: 'warning' }
+        : { title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' },
+    )
     // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
     // why (a new closure every render from useT()); this toast only ever
     // fires once per call anyway (guarded by hasShownEndedRef above).
@@ -95,6 +117,7 @@ export default function RescueCallReporter() {
 
   function handleCall() {
     hasShownEndedRef.current = false
+    noAnswerRef.current = false
     hasProceededRef.current = false
     if (proceedTimerRef.current) {
       clearTimeout(proceedTimerRef.current)

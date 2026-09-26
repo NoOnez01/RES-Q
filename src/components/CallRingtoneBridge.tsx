@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
-import { prepareCall } from '@/lib/useLiveKitCall'
+import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
+import { isStillRinging } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -39,37 +40,55 @@ export function CallRingtoneBridge() {
 
   const role = currentUser?.role ?? 'public'
   const myTeamId = currentUser?.rescueTeamId
+  const inConversation = useInLiveConversation()
+
+  // Re-evaluated on a timer as well as on case changes: a ring has to be
+  // able to expire (lib/calls.ts) even when no case data changes -- e.g. the
+  // caller closed their page mid-ring and will never hang up.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 5000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Cases ringing for *this* user, i.e. the ones that get an on-screen alert.
   const ringingForMe = useMemo(() => {
     const all = Object.values(cases)
-    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting')
+    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting' && isStillRinging(c.callRingingAt, now))
     if (role === 'rescue' && myTeamId) {
       return all.filter(
         (c) =>
           c.rescueCallInvite?.status === 'ringing' &&
+          isStillRinging(c.rescueCallInvite.invitedAt, now) &&
           (c.assignedRescueTeam?.id === myTeamId || c.supportingRescueTeam?.id === myTeamId),
       )
     }
     return []
-  }, [cases, role, myTeamId])
+  }, [cases, role, myTeamId, now])
 
   useEffect(() => {
     let shouldRing = ringingForMe.length > 0
     if (role === 'public') {
       const activeCase = activeCaseId ? cases[activeCaseId] : null
-      // Either an outgoing call to 1669 still ringing, or an incoming call
-      // from rescue -- a citizen can be reached by rescue on any case they
-      // reported, not just whichever one happens to be "active" at the
-      // moment, so this checks every case's rescueCallStatus rather than
-      // only activeCaseId.
+      // Either their outgoing call to 1669 still ringing, or rescue calling
+      // them on any case they reported (not only the "active" one). Only
+      // their *own* cases -- an admin working with a citizen profile has
+      // every case in the store and would otherwise ring for all of them.
       shouldRing =
-        activeCase?.callStatus === 'connecting' ||
-        Object.values(cases).some((c) => c.rescueCallStatus === 'connecting')
+        (activeCase?.callStatus === 'connecting' && isStillRinging(activeCase.callRingingAt, now)) ||
+        Object.values(cases).some(
+          (c) =>
+            c.reporterUserId === currentUser?.id &&
+            c.rescueCallStatus === 'connecting' &&
+            isStillRinging(c.rescueCallRingingAt, now),
+        )
     }
-    if (shouldRing) startRingtone()
+    // Never loop the ring into a call this device is already on: it drowns
+    // out the conversation and the microphone carries it to the other side.
+    // The on-screen alert below still shows the waiting call.
+    if (shouldRing && !inConversation) startRingtone()
     else stopRingtone()
-  }, [ringingForMe, role, cases, activeCaseId])
+  }, [ringingForMe, role, cases, activeCaseId, currentUser, now, inConversation])
 
   useEffect(() => stopRingtone, [])
 

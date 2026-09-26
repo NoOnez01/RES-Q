@@ -512,6 +512,7 @@ export const useStore = create<ResQState>()(
           const c = s.cases[caseId]
           if (!c) return {}
           const updated = { ...c, callStatus: status, updatedAt: Date.now() }
+          if (status === 'connecting') updated.callRingingAt = Date.now()
           if (status === 'connecting' && callerRole) updated.activeCallerRole = callerRole
           // A crew invite only makes sense while that call is live.
           if (status !== 'in-call') updated.rescueCallInvite = undefined
@@ -541,7 +542,10 @@ export const useStore = create<ResQState>()(
           const c = s.cases[caseId]
           if (!c) return {}
           const updated = { ...c, rescueCallStatus: status, updatedAt: Date.now() }
-          if (status === 'connecting') updated.rescueCallDurationSec = 0
+          if (status === 'connecting') {
+            updated.rescueCallDurationSec = 0
+            updated.rescueCallRingingAt = Date.now()
+          }
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 

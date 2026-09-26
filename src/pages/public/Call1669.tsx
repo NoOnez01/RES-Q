@@ -10,6 +10,7 @@ import { VideoCallPanel } from '@/components/VideoCallPanel'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
+import { RING_TIMEOUT_MS } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -43,13 +44,6 @@ registerTranslations({
   ยกเลิก: 'Cancel',
 })
 
-// How long the citizen waits with no dispatcher answering before the call
-// is treated as unanswered. Without this, a busy dispatch center left the
-// citizen ringing forever with a "cancel" button as the only way out -- and
-// because the report itself only reaches dispatch's queue once the call
-// *ends* (see handleProceed's submitReport below), an emergency report
-// could sit stuck indefinitely behind a call nobody ever picked up.
-const RING_TIMEOUT_MS = 45000
 
 export default function Call1669() {
   const navigate = useNavigate()
@@ -100,22 +94,26 @@ export default function Call1669() {
 
   // If nobody at dispatch answers within RING_TIMEOUT_MS, stop ringing on
   // our own rather than leaving the citizen staring at "รอเจ้าหน้าที่รับสาย"
-  // indefinitely. Ending the call here (same as a manual hang-up) still lets
-  // the existing "call ended -> proceed" effect below submit the report, so
-  // an unanswered call never leaves the emergency report itself stuck.
+  // indefinitely -- a busy dispatch center must not strand them, and the
+  // report itself only reaches dispatch's queue once the call *ends*.
+  // Ending the call here (same as a manual hang-up) lets the "call ended ->
+  // proceed" effect below submit the report. Counted from when the ring
+  // started, so reopening this page mid-ring doesn't restart the clock.
   useEffect(() => {
     if (activeCase?.callStatus !== 'connecting' || !activeCaseId) return
     const id = activeCaseId
+    const elapsed = Date.now() - (activeCase.callRingingAt ?? Date.now())
     ringTimeoutRef.current = setTimeout(() => {
       noAnswerRef.current = true
       setCallStatus(id, 'ended')
-    }, RING_TIMEOUT_MS)
+    }, Math.max(0, RING_TIMEOUT_MS - elapsed))
     return () => {
       if (ringTimeoutRef.current) {
         clearTimeout(ringTimeoutRef.current)
         ringTimeoutRef.current = null
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- callRingingAt is read once per ring
   }, [activeCase?.callStatus, activeCaseId, setCallStatus])
 
   // The call ending is driven purely by the synced callStatus field, so this

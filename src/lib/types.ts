@@ -390,6 +390,9 @@ export interface EmergencyCase {
   photos: EmergencyPhoto[]
   audioRecordings: AudioRecording[]
   callStatus: CallStatus
+  /** When callStatus last became 'connecting' -- receivers stop ringing a
+   * call that has rung too long (see lib/calls.ts). */
+  callRingingAt?: number
   callDurationSec: number
   /** Set alongside callStatus 'connecting' -- see CallerRole. */
   activeCallerRole?: CallerRole
@@ -400,6 +403,8 @@ export interface EmergencyCase {
    * rescue may need to call the reporter while a 1669 call history exists
    * on the same case. Rescue is always the caller, the reporter the callee. */
   rescueCallStatus?: CallStatus
+  /** When rescueCallStatus last became 'connecting' (see callRingingAt). */
+  rescueCallRingingAt?: number
   rescueCallDurationSec?: number
   /** Dispatcher pulling the assigned rescue crew into an in-progress 1669
    * call (same LiveKit room, so it becomes three-way). 'ringing' until a

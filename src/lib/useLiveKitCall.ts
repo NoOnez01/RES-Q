@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { LocalTrack, LocalVideoTrack, Participant, Room, Track } from 'livekit-client'
 import { supabase, supabaseEnabled } from './supabase'
 
@@ -33,6 +33,10 @@ export interface CallParticipant {
   audioTrack: Track | null
   micOn: boolean
   isSpeaking: boolean
+  /** Another connection of the signed-in account (another tab or device).
+   * Never played aloud: it's your own voice, and playing it back through
+   * the speaker into the same microphone is an echo loop. */
+  sameUser: boolean
 }
 
 export interface LiveKitCall {
@@ -127,7 +131,12 @@ async function openLocalMedia(
   }
 }
 
-function toCallParticipant(lk: LiveKit, p: Participant): CallParticipant {
+/** Identities are `${userId}:${per-connection suffix}` (see livekit-token). */
+function userOfIdentity(identity: string): string {
+  return identity.split(':')[0]
+}
+
+function toCallParticipant(lk: LiveKit, p: Participant, localIdentity: string): CallParticipant {
   const camera = p.getTrackPublication(lk.Track.Source.Camera)
   const mic = p.getTrackPublication(lk.Track.Source.Microphone)
   return {
@@ -138,7 +147,32 @@ function toCallParticipant(lk: LiveKit, p: Participant): CallParticipant {
     audioTrack: mic?.track ?? null,
     micOn: !!mic && !mic.isMuted,
     isSpeaking: p.isSpeaking,
+    sameUser: p.identity !== localIdentity && userOfIdentity(p.identity) === userOfIdentity(localIdentity),
   }
+}
+
+// Hook instances whose room is connected with at least one *other* person
+// in it -- so the app can tell this device is mid-conversation (the ringtone
+// must not loop into an ongoing call; see CallRingtoneBridge).
+const conversing = new Set<symbol>()
+const conversingListeners = new Set<() => void>()
+
+function setConversing(id: symbol, on: boolean) {
+  if (on === conversing.has(id)) return
+  if (on) conversing.add(id)
+  else conversing.delete(id)
+  for (const listener of conversingListeners) listener()
+}
+
+/** True while this device is in a live call with someone else. */
+export function useInLiveConversation(): boolean {
+  return useSyncExternalStore(
+    (listener) => {
+      conversingListeners.add(listener)
+      return () => conversingListeners.delete(listener)
+    },
+    () => conversing.size > 0,
+  )
 }
 
 /**
@@ -164,6 +198,7 @@ export function useLiveKitCall(
   const roomRef = useRef<Room | null>(null)
   const liveKitRef = useRef<LiveKit | null>(null)
   const facingModeRef = useRef<'user' | 'environment'>('user')
+  const instanceRef = useRef(Symbol('call'))
 
   useEffect(() => {
     if (!active || !caseId || !supabaseEnabled) return
@@ -205,8 +240,11 @@ export function useLiveKitCall(
 
       const refresh = () => {
         if (cancelled) return
-        setRemotes([...r.remoteParticipants.values()].map((p) => toCallParticipant(lk, p)))
-        const local = toCallParticipant(lk, r.localParticipant)
+        const localIdentity = r.localParticipant.identity
+        const others = [...r.remoteParticipants.values()].map((p) => toCallParticipant(lk, p, localIdentity))
+        setRemotes(others)
+        setConversing(instanceRef.current, r.state === lk.ConnectionState.Connected && others.some((p) => !p.sameUser))
+        const local = toCallParticipant(lk, r.localParticipant, localIdentity)
         setLocalVideoTrack(local.videoTrack)
         if (mediaSettled) {
           setCameraOn(!!local.videoTrack)
@@ -238,6 +276,7 @@ export function useLiveKitCall(
         if (state === lk.ConnectionState.Connected) setConnectionState('connected')
         else if (state === lk.ConnectionState.Disconnected) setConnectionState('disconnected')
         else setConnectionState('connecting')
+        refresh()
       })
 
       try {
@@ -277,8 +316,10 @@ export function useLiveKitCall(
 
     void join()
 
+    const instance = instanceRef.current
     return () => {
       cancelled = true
+      setConversing(instance, false)
       // `room` is still null if this runs while the SDK/token are loading --
       // join() then bails before creating one. A pending connect() is
       // aborted by disconnect().

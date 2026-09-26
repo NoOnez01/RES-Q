@@ -197,7 +197,9 @@ export function VideoCallPanel({
         </button>
       </div>
 
-      {call.remotes.map((p) => p.audioTrack && <TrackAudio key={p.identity} track={p.audioTrack} />)}
+      {/* Your own account on another tab/device is your own voice -- playing
+          it would feed the speaker back into the microphone (echo loop). */}
+      {call.remotes.map((p) => p.audioTrack && !p.sameUser && <TrackAudio key={p.identity} track={p.audioTrack} />)}
     </div>
   )
 }
