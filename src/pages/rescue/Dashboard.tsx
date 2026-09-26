@@ -1,11 +1,9 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { ClipboardList, ClipboardPlus, Loader2, CheckCircle2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ClipboardList, ClipboardPlus, Loader2, CheckCircle2, Navigation, Check, X } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { StatBar, StatItem } from '@/components/DashboardCard'
-import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
-import { EmptyState } from '@/components/States'
+import { CaseQueue, QueueSection, byUrgency, isToday, reachedAt } from '@/components/CaseQueue'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
@@ -20,19 +18,18 @@ registerTranslations({
   เสร็จสิ้นวันนี้: 'Completed today',
   พบเหตุด้วยตนเอง: 'Found incident myself',
   เหตุใหม่ที่ได้รับมอบหมาย: 'Newly assigned cases',
-  ยังไม่มีเหตุใหม่: 'No new cases',
-  เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่: 'Cases assigned to your team will appear here',
-  รับเหตุ: 'Accept case',
-  ปฏิเสธ: 'Reject',
-  ไม่มีเหตุที่กำลังดำเนินการ: 'No cases in progress',
-  เหตุที่คุณรับและกำลังดำเนินการจะแสดงที่นี่: "Cases you've accepted and are working on will appear here",
-  เสร็จสิ้นแล้ว: 'Completed',
+  ภารกิจที่กำลังดำเนินการ: 'Current missions',
+  เสร็จสิ้นล่าสุด: 'Recently completed',
+  'ไม่มีเหตุใหม่ เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่': 'No new cases. Cases assigned to your team will appear here.',
+  ไม่มีภารกิจที่กำลังดำเนินการ: 'No missions in progress',
   ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น: 'No completed cases yet',
-  เหตุที่นำส่งโรงพยาบาลเรียบร้อยแล้วจะแสดงที่นี่: 'Cases successfully transported to hospital will appear here',
+  รับเหตุ: 'Accept case',
+  ปฏิเสธเหตุ: 'Reject case',
+  นำทาง: 'Navigate',
   สัดส่วนระดับความรุนแรงของเหตุที่รับผิดชอบ: "Severity distribution of your team's cases",
   รับเหตุแล้ว: 'Case accepted',
   'เริ่มเดินทางไปยังเหตุหมายเลข {caseNumber}': 'Now heading to case {caseNumber}',
-  ปฏิเสธการรับผู้ป่วยแล้ว: 'Patient declined',
+  ปฏิเสธเหตุแล้ว: 'Case declined',
   'ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเหตุหมายเลข {caseNumber}': 'Now finding a new rescue team for case {caseNumber}',
 })
 
@@ -45,10 +42,15 @@ const IN_PROGRESS_STATUSES: CaseStatus[] = [
   'transporting',
   'hospital-arrived',
 ]
+// The legs driven with the navigation screen open.
+const DRIVING: CaseStatus[] = ['rescue-en-route', 'transporting']
 
 const DONE_STATUSES: CaseStatus[] = ['hospital-received', 'completed']
 
+const finishedAt = (c: EmergencyCase) => reachedAt(c, 'hospital-received') ?? reachedAt(c, 'completed') ?? c.updatedAt
+
 export default function RescueDashboard() {
+  const navigate = useNavigate()
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
   const viewingRole = useStore((s) => s.viewingRole)
@@ -69,12 +71,13 @@ export default function RescueDashboard() {
         (c) => c.assignedRescueTeam?.id === currentUser?.rescueTeamId || c.supportingRescueTeam?.id === currentUser?.rescueTeamId,
       )
     }
-    return list.sort((a, b) => b.createdAt - a.createdAt)
+    return list
   }, [cases, viewingAllTeams, currentUser?.rescueTeamId])
 
-  const newCases = allCases.filter((c) => c.status === 'rescue-assigned')
-  const inProgressCases = allCases.filter((c) => IN_PROGRESS_STATUSES.includes(c.status))
-  const doneCases = allCases.filter((c) => DONE_STATUSES.includes(c.status)).slice(0, 5)
+  const newCases = allCases.filter((c) => c.status === 'rescue-assigned').sort(byUrgency)
+  const inProgressCases = allCases.filter((c) => IN_PROGRESS_STATUSES.includes(c.status)).sort(byUrgency)
+  const doneCases = allCases.filter((c) => DONE_STATUSES.includes(c.status)).sort((a, b) => finishedAt(b) - finishedAt(a))
+  const doneToday = doneCases.filter((c) => isToday(finishedAt(c))).length
 
   function handleAccept(c: EmergencyCase) {
     rescueAcceptCase(c.id)
@@ -83,121 +86,78 @@ export default function RescueDashboard() {
 
   function handleReject(c: EmergencyCase) {
     rescueRejectCase(c.id)
-    toast({ title: t('ปฏิเสธการรับผู้ป่วยแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber }), tone: 'info' })
+    toast({ title: t('ปฏิเสธเหตุแล้ว'), message: t('ระบบกำลังค้นหาหน่วยกู้ชีพใหม่สำหรับเหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber }), tone: 'info' })
   }
 
   return (
     <AppShell variant="dashboard" title={t('ภาพรวมหน่วยกู้ชีพ')}>
-      <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
-          <StatBar>
-            <StatItem
-              label={t('เหตุใหม่')}
-              value={
-                <span key={newCases.length} className="inline-block animate-count-pop">
-                  {newCases.length}
-                </span>
-              }
-              icon={<ClipboardList className="size-4.5" />}
-              tone="warning"
-            />
-            <StatItem
-              label={t('กำลังดำเนินการ')}
-              value={
-                <span key={inProgressCases.length} className="inline-block animate-count-pop">
-                  {inProgressCases.length}
-                </span>
-              }
-              icon={<Loader2 className="size-4.5" />}
-              tone="primary"
-            />
-            <StatItem
-              label={t('เสร็จสิ้นวันนี้')}
-              value={
-                <span key={doneCases.length} className="inline-block animate-count-pop">
-                  {doneCases.length}
-                </span>
-              }
-              icon={<CheckCircle2 className="size-4.5" />}
-              tone="success"
-            />
-          </StatBar>
+      <StatBar>
+        <StatItem label={t('เหตุใหม่')} value={newCases.length} icon={<ClipboardList />} tone="warning" alert={newCases.length > 0} />
+        <StatItem label={t('กำลังดำเนินการ')} value={inProgressCases.length} icon={<Loader2 />} tone="primary" />
+        <StatItem label={t('เสร็จสิ้นวันนี้')} value={doneToday} icon={<CheckCircle2 />} tone="success" />
+      </StatBar>
 
-          <div className="mt-8 flex justify-end">
-            <Link to="/rescue/new-case">
-              <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
-                {t('พบเหตุด้วยตนเอง')}
+      <QueueSection
+        title={t('เหตุใหม่ที่ได้รับมอบหมาย')}
+        count={newCases.length}
+        urgent
+        aside={
+          <Link to="/rescue/new-case">
+            <Button variant="outline" size="sm" icon={<ClipboardPlus className="size-4" />}>
+              {t('พบเหตุด้วยตนเอง')}
+            </Button>
+          </Link>
+        }
+      >
+        <CaseQueue
+          rows={newCases.map((c) => ({
+            case: c,
+            to: `/rescue/case/${c.id}`,
+            action: (
+              <>
+                <Button variant="outline" size="sm" icon={<X className="size-4" />} onClick={() => handleReject(c)}>
+                  {t('ปฏิเสธเหตุ')}
+                </Button>
+                <Button variant="success" size="sm" icon={<Check className="size-4" />} onClick={() => handleAccept(c)}>
+                  {t('รับเหตุ')}
+                </Button>
+              </>
+            ),
+          }))}
+          empty={t('ไม่มีเหตุใหม่ เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่')}
+          actionWidth="14.5rem"
+        />
+      </QueueSection>
+
+      <QueueSection title={t('ภารกิจที่กำลังดำเนินการ')} count={inProgressCases.length}>
+        <CaseQueue
+          rows={inProgressCases.map((c) => ({
+            case: c,
+            to: `/rescue/case/${c.id}`,
+            action: DRIVING.includes(c.status) ? (
+              <Button size="sm" icon={<Navigation className="size-4" />} onClick={() => navigate(`/navigation/${c.id}`)}>
+                {t('นำทาง')}
               </Button>
-            </Link>
-          </div>
+            ) : undefined,
+          }))}
+          empty={t('ไม่มีภารกิจที่กำลังดำเนินการ')}
+          actionWidth="14.5rem"
+        />
+      </QueueSection>
 
-          <section className="mt-4">
-            <h2 className="mb-3 text-lg font-bold text-ink">{t('เหตุใหม่ที่ได้รับมอบหมาย')}</h2>
-            {newCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเหตุใหม่')} description={t('เหตุที่ได้รับมอบหมายให้หน่วยของคุณจะแสดงที่นี่')} />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {newCases.map((c, i) => (
-                  <div
-                    key={c.id}
-                    className="animate-fade-in-up"
-                    style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'backwards' }}
-                  >
-                    <EmergencyCaseCard
-                      emergencyCase={c}
-                      to={`/rescue/case/${c.id}`}
-                      actions={
-                        <>
-                          <Button variant="success" size="sm" onClick={() => handleAccept(c)}>
-                            {t('รับเหตุ')}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleReject(c)}>
-                            {t('ปฏิเสธ')}
-                          </Button>
-                        </>
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+      <QueueSection title={t('เสร็จสิ้นล่าสุด')} count={Math.min(doneCases.length, 5)}>
+        <CaseQueue
+          rows={doneCases.slice(0, 5).map((c) => ({ case: c, to: `/rescue/case/${c.id}` }))}
+          empty={t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')}
+          timeOf={finishedAt}
+          actionWidth="14.5rem"
+        />
+      </QueueSection>
 
-          <section className="mt-8">
-            <h2 className="mb-3 text-lg font-bold text-ink">{t('กำลังดำเนินการ')}</h2>
-            {inProgressCases.length === 0 ? (
-              <EmptyState title={t('ไม่มีเหตุที่กำลังดำเนินการ')} description={t('เหตุที่คุณรับและกำลังดำเนินการจะแสดงที่นี่')} />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {inProgressCases.map((c, i) => (
-                  <div key={c.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'backwards' }}>
-                    <EmergencyCaseCard emergencyCase={c} to={`/rescue/case/${c.id}`} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="mt-8">
-            <h2 className="mb-3 text-lg font-bold text-ink">{t('เสร็จสิ้นแล้ว')}</h2>
-            {doneCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')} description={t('เหตุที่นำส่งโรงพยาบาลเรียบร้อยแล้วจะแสดงที่นี่')} />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {doneCases.map((c) => (
-                  <EmergencyCaseCard key={c.id} emergencyCase={c} to={`/rescue/case/${c.id}`} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          <div className="mt-8">
-            <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุที่รับผิดชอบ')} cases={allCases} />
-            </Suspense>
-          </div>
-        </div>
+      <div className="mt-10">
+        <Suspense fallback={<ChartCardSkeleton />}>
+          <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุที่รับผิดชอบ')} cases={allCases} />
+        </Suspense>
       </div>
     </AppShell>
   )

@@ -13,6 +13,7 @@ registerTranslations({
   บทบาทปัจจุบัน: 'Current role',
   แก้ไขข้อมูลส่วนตัว: 'Edit profile',
   แจ้งเหตุฉุกเฉิน: 'Report an emergency',
+  เครื่องมือ: 'Tools',
 })
 
 interface SidebarProps {
@@ -22,6 +23,24 @@ interface SidebarProps {
    * banner so they don't mistake it for their own account, plus a way back. */
   viewingAs?: Role | null
   onExitView?: () => void
+}
+
+function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
+  const t = useT()
+  const Icon = item.icon
+  return (
+    <Link
+      to={item.path}
+      aria-current={active ? 'page' : undefined}
+      className={clsx(
+        'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
+        active ? 'bg-primary text-white shadow-card' : 'text-ink hover:bg-skyblue-light',
+      )}
+    >
+      <Icon className="size-4.5 shrink-0" />
+      <span className="truncate">{t(item.label)}</span>
+    </Link>
+  )
 }
 
 export function Sidebar({ items, role, viewingAs, onExitView }: SidebarProps) {
@@ -58,23 +77,17 @@ export function Sidebar({ items, role, viewingAs, onExitView }: SidebarProps) {
       </Link>
 
       <nav className="flex-1 space-y-1 px-3">
-        {items.map((item) => {
-          const active = location.pathname === item.path
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={clsx(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
-                active ? 'bg-primary text-white shadow-card' : 'text-ink hover:bg-skyblue-light',
-              )}
-            >
-              <Icon className="size-4.5" />
-              {t(item.label)}
-            </Link>
-          )
-        })}
+        {items.filter((item) => !item.tool).map((item) => (
+          <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
+        ))}
+        {items.some((item) => item.tool) && (
+          <>
+            <p className="px-3 pb-1 pt-5 text-xs font-semibold text-muted">{t('เครื่องมือ')}</p>
+            {items.filter((item) => item.tool).map((item) => (
+              <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
+            ))}
+          </>
+        )}
       </nav>
 
       <div className="p-4">

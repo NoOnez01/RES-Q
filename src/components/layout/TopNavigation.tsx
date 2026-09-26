@@ -188,10 +188,11 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
         </button>
       )}
 
+      {/* On a wide dashboard the sidebar already carries the brand. */}
       {variant !== 'flow' && (
-        <Link to="/" className="flex items-center gap-2 shrink-0">
+        <Link to="/" className={clsx('flex shrink-0 items-center gap-2', variant === 'dashboard' && 'lg:hidden')}>
           <img src={FAVICON_URL} alt="" className="size-8" />
-          <span className="text-lg font-extrabold text-ink">ResQ</span>
+          <span className={clsx('text-lg font-extrabold text-ink', variant === 'dashboard' && title && 'hidden sm:inline')}>ResQ</span>
         </Link>
       )}
 

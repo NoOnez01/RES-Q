@@ -11,6 +11,8 @@ import {
   Ambulance,
   Building2,
   Coins,
+  BarChart3,
+  Search,
 } from 'lucide-react'
 import { registerTranslations } from './i18n'
 
@@ -28,12 +30,19 @@ registerTranslations({
   โรงพยาบาล: 'Hospital',
   ประชาชน: 'Public',
   เหรียญ: 'Coins',
+  บัญชีรออนุมัติ: 'Pending accounts',
+  ประเมินหน่วยกู้ชีพ: 'Rate rescue teams',
+  'ค้นหาหน่วย (NDEMS)': 'Search units (NDEMS)',
+  เครื่องมือ: 'Tools',
 })
 
 export interface NavItem {
   label: string
   path: string
   icon: typeof Home
+  /** A tool rather than a place: listed under "เครื่องมือ" in the side
+   * menu, and left out of the phone's bottom bar, which has no room. */
+  tool?: boolean
 }
 
 /** `isOrgLead` adds an approvals link for rescue/hospital -- someone
@@ -49,6 +58,9 @@ export function navItemsForRole(role: Role | null, isOrgLead = false): NavItem[]
         { label: 'ประวัติเหตุ', path: '/case-history', icon: History },
         { label: 'การแจ้งเตือน', path: '/notifications', icon: Bell },
         { label: 'ตั้งค่า', path: '/settings', icon: Settings },
+        { label: 'บัญชีรออนุมัติ', path: '/dispatch/pending-approvals', icon: UserCheck, tool: true },
+        { label: 'ประเมินหน่วยกู้ชีพ', path: '/dispatch/feedback-stats', icon: BarChart3, tool: true },
+        { label: 'ค้นหาหน่วย (NDEMS)', path: '/dispatch/unit-search', icon: Search, tool: true },
       ]
     case 'rescue':
       return [

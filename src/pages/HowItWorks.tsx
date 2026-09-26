@@ -51,7 +51,7 @@ registerTranslations({
   'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล': 'Travels to help, records the patient condition, and transports to hospital',
   โรงพยาบาล: 'Hospital',
   เตรียมทีมรักษาและยืนยันการรับผู้ป่วย: 'Prepares the care team and confirms patient admission',
-  'โปรดถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ': "Please photograph only the scene, not the injured person's face",
+  'กรุณาถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ': "Please photograph only the scene, not the injured person's face",
   ถ่ายภาพ: 'Take photo',
   'กำลังติดต่อศูนย์สั่งการ 1669': 'Contacting 1669',
   ส่งข้อมูล: 'Submit',
@@ -165,7 +165,7 @@ function StepPreview({ step }: { step: number }) {
           {t('ถ่ายภาพ')}
         </div>
         <div className="w-full rounded-lg bg-warning/10 px-3 py-2 text-center text-[11px] leading-relaxed text-warning">
-          {t('โปรดถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ')}
+          {t('กรุณาถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ')}
         </div>
       </div>
     )

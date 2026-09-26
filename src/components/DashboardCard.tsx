@@ -9,7 +9,7 @@ export function StatBar({ className, children }: { className?: string; children:
   return (
     <div
       className={clsx(
-        'flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface shadow-card sm:flex-row sm:divide-x sm:divide-y-0',
+        'grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-card sm:flex [&>*]:bg-surface [&>*:last-child:nth-child(odd)]:col-span-2',
         className,
       )}
     >
@@ -18,35 +18,36 @@ export function StatBar({ className, children }: { className?: string; children:
   )
 }
 
-const TONE_CLASSES: Record<string, string> = {
-  primary: 'bg-skyblue-light text-primary',
-  emergency: 'bg-emergency/10 text-emergency',
-  success: 'bg-success/10 text-success',
-  warning: 'bg-warning/10 text-warning',
+const TONE_TEXT: Record<string, string> = {
+  primary: 'text-primary',
+  emergency: 'text-emergency',
+  success: 'text-success',
+  warning: 'text-warning',
 }
 
+/** One figure: its label (with the tone's icon) over the number. `alert`
+ * turns the number itself red -- for a count that means something is
+ * waiting on this role right now, never for decoration. */
 export function StatItem({
   label,
   value,
   icon,
   tone = 'primary',
+  alert = false,
 }: {
   label: string
   value: ReactNode
   icon?: ReactNode
   tone?: 'primary' | 'emergency' | 'success' | 'warning'
+  alert?: boolean
 }) {
   return (
-    <div className="flex flex-1 items-center gap-3 p-4">
-      {icon && (
-        <span className={clsx('flex size-10 shrink-0 items-center justify-center rounded-xl', TONE_CLASSES[tone])}>
-          {icon}
-        </span>
-      )}
-      <div className="min-w-0">
-        <p className="text-2xl font-extrabold leading-none text-ink">{value}</p>
-        <p className="mt-1.5 text-xs font-medium text-muted">{label}</p>
-      </div>
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-5 py-4">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+        {icon && <span className={clsx('shrink-0 [&>svg]:size-4', TONE_TEXT[tone])}>{icon}</span>}
+        <span className="leading-snug">{label}</span>
+      </p>
+      <p className={clsx('text-2xl font-bold leading-none tabular-nums', alert ? 'text-emergency' : 'text-ink')}>{value}</p>
     </div>
   )
 }

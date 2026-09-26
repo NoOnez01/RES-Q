@@ -14,7 +14,7 @@ export function BottomNavigation({ items }: { items: NavItem[] }) {
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label={t('เมนูหลัก')}
     >
-      {items.map((item) => {
+      {items.filter((item) => !item.tool).map((item) => {
         const active = location.pathname === item.path
         const Icon = item.icon
         return (

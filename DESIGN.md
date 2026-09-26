@@ -116,7 +116,7 @@ Calm blue dominates; emergency red is rationed to genuine urgency; every other s
 
 ## Layout
 
-Content is centered and capped (`max-w-5xl` for most sections, `max-w-7xl` for the two-column hero) rather than running edge-to-edge, at every viewport including ultrawide desktop. Section rhythm is generous vertical padding (`py-16` between major sections) with tighter internal card padding (`p-5`–`p-6`). Dashboards use a responsive card grid (1 column mobile → 2–3 columns desktop) rather than dense tables. Mobile-first throughout: every flow (citizen report, rescue field updates) must work one-handed on a phone before it's considered done for desktop.
+Content is centered and capped (`max-w-5xl` for most sections, `max-w-7xl` for the two-column hero) rather than running edge-to-edge, at every viewport including ultrawide desktop. Section rhythm is generous vertical padding (`py-16` between major sections) with tighter internal card padding (`p-5`–`p-6`). Staff dashboards and case lists are queues, not card grids: cases render as rows in one panel (see Case Queues below), grouped by what the role must do next. Mobile-first throughout: every flow (citizen report, rescue field updates) must work one-handed on a phone before it's considered done for desktop.
 
 ## Elevation & Depth
 
@@ -156,10 +156,13 @@ Rounded throughout, scaling with the element's importance: buttons and small con
 **One Card Per Distinct Concern, Not One Per Fact.** Before adding another `<Card>`, check whether it's a genuinely separate concern from the card above it or just another fact about the same thing — if the latter, it's a section inside the existing card.
 
 ### Stat Bars
-Dashboard KPIs (case counts, today's totals) render as one `StatBar` — a single bordered/shadowed row with `divide-x`/`divide-y` hairlines between figures — never as N separate `shadow-card` tiles side by side. A wall of identical boxed numbers reads as a generic admin-panel template; one bar reads as a single "here's where things stand" statement. See `src/components/DashboardCard.tsx` (`StatBar`/`StatItem`).
+Dashboard KPIs (case counts, today's totals) render as one `StatBar` — a single bordered/shadowed row with hairlines between figures (2 × 2 on a phone) — never as N separate `shadow-card` tiles side by side. Each figure is a small label (with its tone's icon inline, no icon tile) over a tabular number; the number turns Alert Red only when it counts something waiting on this role right now (`alert`). A wall of identical boxed numbers reads as a generic admin-panel template; one bar reads as a single "here's where things stand" statement. See `src/components/DashboardCard.tsx` (`StatBar`/`StatItem`).
+
+### Case Queues
+Dispatch, rescue and hospital dashboards, and the current-cases / case-history lists, show cases through `CaseQueue` (`src/components/CaseQueue.tsx`): one bordered panel, a column header on wide screens, hairline-divided rows. Every row follows the same grid in every role — severity · case (number over incident type) · place, or the patient and vitals for a hospital · status with the handling unit under it · elapsed time over clock time · the role's one next action. The whole row opens the case; its action sits above that link. On a phone the row stacks and the action takes its own full-width line. Sections (`QueueSection`) carry a count; the count turns red for a queue waiting on this role. Order: unassessed first, then most severe, then longest waiting. Waiting-on-a-team and declined states are text under the status, not extra pills; an unassessed case gets a faint red tint and a dashed "ยังไม่ประเมิน" chip in the severity column.
 
 ### Case/List Item Cards
-`EmergencyCaseCard` (and anything like it) carries at most **two** semantic badges at once (typically severity + status) plus one small non-text indicator (e.g. the rescue-response icon dot) — never a third or fourth pill stacked on for a state the other two already imply. If a new state needs signaling, prefer changing the card's own background tint/ring (already used for "completed" and "new, unassessed") over adding another pill.
+`EmergencyCaseCard` (now only the incoming-call list) carries at most **two** semantic badges at once (typically severity + status) plus one small non-text indicator (e.g. the rescue-response icon dot) — never a third or fourth pill stacked on for a state the other two already imply. If a new state needs signaling, prefer changing the card's own background tint/ring (already used for "completed" and "new, unassessed") over adding another pill.
 
 ### Inputs / Fields
 - **Style:** white background, Hairline Border stroke, `rounded-xl` corners, label above the field in navy semibold.
@@ -183,7 +186,7 @@ Not every screen is a card grid. Before building a page, name its primary task (
 Two role dashboards showing the same underlying data (case counts, a list) can still look different if their actual operating context differs — a 1669 operator watching dozens of concurrent cases and a rescue crew handling one case at a time are not the same task, and don't need the same layout just because they share a component library.
 
 ### Signature Component: Animated Backgrounds
-Full-bleed decorative SVG/CSS backgrounds (heartbeat line, drifting particles, orbiting rings, mesh gradients) sit behind hero and dashboard content at low opacity, `pointer-events-none`, and respect `prefers-reduced-motion` by freezing in place. They exist to keep the "calm but alive" feeling ambient — never to compete with foreground content for attention.
+Full-bleed decorative SVG/CSS backgrounds (heartbeat line, drifting particles, orbiting rings, mesh gradients) sit behind hero and public-page content at low opacity (never behind staff dashboards or case queues, where they compete with data), `pointer-events-none`, and respect `prefers-reduced-motion` by freezing in place. They exist to keep the "calm but alive" feeling ambient — never to compete with foreground content for attention.
 
 ## Do's and Don'ts
 

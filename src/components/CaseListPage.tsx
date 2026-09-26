@@ -1,13 +1,10 @@
 import { useMemo, useState } from 'react'
-import clsx from 'clsx'
-import { ChevronDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
+import { CaseQueue } from '@/components/CaseQueue'
 import { EmptyState } from '@/components/States'
 import { Input } from '@/components/ui/Field'
 import { useStore } from '@/lib/store'
-import { formatDateTime } from '@/lib/utils'
 import type { EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -15,11 +12,6 @@ registerTranslations({
   'ค้นหาด้วยหมายเลขเหตุ เช่น RQ-2026-003': 'Search by case number, e.g. RQ-2026-003',
   ไม่พบเหตุที่ค้นหา: 'No matching case found',
   'ไม่พบเหตุที่ตรงกับ "{query}"': 'No case matches "{query}"',
-  ซ่อนรายละเอียดเพิ่มเติม: 'Hide more details',
-  แสดงรายละเอียดเพิ่มเติม: 'Show more details',
-  รายละเอียดเพิ่มเติม: 'More details',
-  'จำนวนขั้นตอนในลำดับเหตุการณ์: {n} ขั้นตอน': 'Timeline steps: {n}',
-  'ปรับปรุงล่าสุด: {date}': 'Last updated: {date}',
 })
 
 function caseRouteForRole(role: Role | undefined, caseId: string): string {
@@ -45,8 +37,8 @@ interface CaseListPageProps {
 
 /**
  * Shared by CaseHistory (completed cases) and CurrentCases (everything
- * still in progress) -- same card list and expand behavior, just a
- * different status filter and sort key.
+ * still in progress) -- the same case queue as the dashboards, just a
+ * different status filter and sort key (which the time column follows).
  *
  * `cases` in the store already reflects whatever Supabase RLS scoped the
  * session to (a real rescue/hospital account only ever gets its own org's
@@ -61,7 +53,6 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
   const viewingRole = useStore((s) => s.viewingRole)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const t = useT()
 
@@ -86,68 +77,26 @@ export function CaseListPage({ title, emptyTitle, emptyDescription, filter, sort
 
   return (
     <AppShell variant="dashboard" title={title}>
-      <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
-          {sortedCases.length > 0 && (
-            <div className="relative mb-4">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('ค้นหาด้วยหมายเลขเหตุ เช่น RQ-2026-003')}
-                className="pl-11"
-              />
-            </div>
-          )}
-          {visibleCases.length === 0 ? (
-            trimmedQuery ? (
-              <EmptyState title={t('ไม่พบเหตุที่ค้นหา')} description={t('ไม่พบเหตุที่ตรงกับ "{query}"', { query: query.trim() })} />
-            ) : (
-              <EmptyState title={emptyTitle} description={emptyDescription} />
-            )
-          ) : (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {visibleCases.map((c, i) => {
-                const expanded = expandedId === c.id
-                return (
-                  <div
-                    key={c.id}
-                    className="flex flex-col gap-2 animate-fade-in-up"
-                    style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'backwards' }}
-                  >
-                    <EmergencyCaseCard
-                      emergencyCase={c}
-                      to={caseRouteForRole(currentUser?.role, c.id)}
-                      actions={
-                        <button
-                          type="button"
-                          aria-expanded={expanded}
-                          aria-label={expanded ? t('ซ่อนรายละเอียดเพิ่มเติม') : t('แสดงรายละเอียดเพิ่มเติม')}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedId(expanded ? null : c.id)
-                          }}
-                          className="inline-flex min-h-[48px] items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30"
-                        >
-                          {t('รายละเอียดเพิ่มเติม')}
-                          <ChevronDown className={clsx('size-4 transition-transform', expanded && 'rotate-180')} />
-                        </button>
-                      }
-                    />
-                    {expanded && (
-                      <div className="animate-fade-in-up rounded-xl border border-border bg-surface p-4 text-sm text-muted">
-                        <p>{t('จำนวนขั้นตอนในลำดับเหตุการณ์: {n} ขั้นตอน', { n: c.timeline.length })}</p>
-                        <p className="mt-1">{t('ปรับปรุงล่าสุด: {date}', { date: formatDateTime(c.updatedAt) })}</p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+      {sortedCases.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('ค้นหาด้วยหมายเลขเหตุ เช่น RQ-2026-003')}
+            className="pl-11"
+          />
         </div>
-      </div>
+      )}
+      {sortedCases.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
+        <CaseQueue
+          rows={visibleCases.map((c) => ({ case: c, to: caseRouteForRole(currentUser?.role, c.id) }))}
+          empty={t('ไม่พบเหตุที่ตรงกับ "{query}"', { query: query.trim() })}
+          timeOf={(c) => c[sortBy]}
+        />
+      )}
     </AppShell>
   )
 }

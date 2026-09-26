@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { Truck, Clock, CheckCircle2, Building2, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { Card } from '@/components/ui/Card'
 import { StatBar, StatItem } from '@/components/DashboardCard'
-import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
-import { EmptyState } from '@/components/States'
+import { CaseQueue, QueueSection, byUrgency, reachedAt, type QueueDetail } from '@/components/CaseQueue'
+import type { EmergencyCase } from '@/lib/types'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
@@ -50,7 +49,31 @@ registerTranslations({
   ยืนยันการปฏิเสธ: 'Confirm rejection',
   พร้อม: 'Ready',
   ภาระงานสูง: 'Busy',
+  ผู้ป่วย: 'Patient',
+  ผู้ป่วยกำลังนำส่งมา: 'Patients on the way',
+  รอบันทึกข้อมูลผู้ป่วย: 'Patient details not recorded yet',
+  ไม่มีข้อมูลผู้ป่วยในระบบ: 'No patient details on record',
+  ปฏิเสธ: 'Reject',
+  '{age} ปี': '{age} y',
+  'ความดัน {bp} · ชีพจร {hr} · ออกซิเจน {o2}%': 'BP {bp} · HR {hr} · SpO₂ {o2}%',
 })
+
+/** Who's coming in, and their last recorded vitals -- what a receiving
+ * team reads first, ahead of where the incident happened. */
+function patientDetail(c: EmergencyCase, t: ReturnType<typeof useT>): QueueDetail {
+  const p = c.patientInfo
+  if (!p) {
+    const done = c.status === 'hospital-received' || c.status === 'completed'
+    return { primary: done ? t('ไม่มีข้อมูลผู้ป่วยในระบบ') : t('รอบันทึกข้อมูลผู้ป่วย'), secondary: c.location?.address }
+  }
+  const who = [p.name, p.age ? t('{age} ปี', { age: p.age }) : '', p.gender].filter(Boolean).join(' · ')
+  const v = p.vitals
+  const vitals =
+    v && (v.bloodPressure || v.pulse || v.oxygenSat)
+      ? t('ความดัน {bp} · ชีพจร {hr} · ออกซิเจน {o2}%', { bp: v.bloodPressure || '-', hr: v.pulse || '-', o2: v.oxygenSat || '-' })
+      : undefined
+  return { primary: who, secondary: vitals }
+}
 
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 
@@ -79,15 +102,12 @@ export default function HospitalDashboard() {
     return list
   }, [cases, viewingAllHospitals, currentUser?.hospitalId])
 
-  const transportingCases = hospitalCases
-    .filter((c) => c.status === 'transporting')
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-  const arrivedCases = hospitalCases
-    .filter((c) => c.status === 'hospital-arrived')
-    .sort((a, b) => b.updatedAt - a.updatedAt)
+  const transportingCases = hospitalCases.filter((c) => c.status === 'transporting').sort(byUrgency)
+  const arrivedCases = hospitalCases.filter((c) => c.status === 'hospital-arrived').sort(byUrgency)
+  const receivedAt = (c: EmergencyCase) => reachedAt(c, 'hospital-received') ?? c.updatedAt
   const doneCases = hospitalCases
     .filter((c) => c.status === 'hospital-received' || c.status === 'completed')
-    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .sort((a, b) => receivedAt(b) - receivedAt(a))
 
   const totalBeds = useMemo(() => hospitals.reduce((sum, h) => sum + h.bedsAvailable, 0), [hospitals])
   const bedsInUse = transportingCases.length + arrivedCases.length
@@ -116,10 +136,7 @@ export default function HospitalDashboard() {
 
   return (
     <AppShell variant="dashboard" title={t('ภาพรวมโรงพยาบาล')}>
-      <div className="relative">
-        <AnimatedBackground variant="hospital" />
-        <div className="relative z-10">
-          <Card className="mb-5 animate-fade-in-up divide-y divide-border p-0">
+          <Card className="mb-5 divide-y divide-border p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 p-5">
               <div className="flex items-center gap-2.5">
                 {hospitalAcceptingCases ? (
@@ -168,166 +185,103 @@ export default function HospitalDashboard() {
           <StatBar>
             <StatItem
               label={t('กำลังนำส่ง')}
-              value={
-                <span key={transportingCases.length} className="inline-block animate-count-pop">
-                  {transportingCases.length}
-                </span>
-              }
-              icon={<Truck className="size-5" />}
+              value={transportingCases.length}
+              icon={<Truck />}
               tone="primary"
             />
             <StatItem
               label={t('รอยืนยันรับผู้ป่วย')}
-              value={
-                <span key={arrivedCases.length} className="inline-block animate-count-pop">
-                  {arrivedCases.length}
-                </span>
-              }
-              icon={<Clock className="size-5" />}
+              value={arrivedCases.length}
+              icon={<Clock />}
               tone="warning"
+              alert={arrivedCases.length > 0}
             />
             <StatItem
               label={t('เสร็จสิ้นแล้ว')}
-              value={
-                <span key={doneCases.length} className="inline-block animate-count-pop">
-                  {doneCases.length}
-                </span>
-              }
-              icon={<CheckCircle2 className="size-5" />}
+              value={doneCases.length}
+              icon={<CheckCircle2 />}
               tone="success"
             />
           </StatBar>
 
-          {hospitalCases.length === 0 ? (
-            <div className="mt-8">
-              <EmptyState
-                icon={<Building2 className="size-6" />}
-                title={t('ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล')}
-                description={t('เมื่อมีการเลือกนำส่งผู้ป่วยมายังโรงพยาบาลนี้ รายการจะแสดงที่นี่')}
-              />
-            </div>
-          ) : (
-            <div className="mt-8 flex flex-col gap-8">
-              <section>
-                <h2 className="mb-4 text-lg font-bold text-ink">{t('กำลังนำส่ง')}</h2>
-                {transportingCases.length === 0 ? (
-                  <p className="text-sm text-muted">{t('ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้')}</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {transportingCases.map((c, i) => (
-                      <div
-                        key={c.id}
-                        className="animate-fade-in-up"
-                        style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}
-                      >
-                        <EmergencyCaseCard
-                          emergencyCase={c}
-                          to={`/hospital/case/${c.id}`}
-                          actions={
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                icon={<XCircle className="size-3.5" />}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setRejectTargetId(c.id)
-                                }}
-                              >
-                                {t('ปฏิเสธการรับผู้ป่วย')}
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  navigate(`/hospital/case/${c.id}`)
-                                }}
-                              >
-                                {t('รับผู้ป่วย')}
-                              </Button>
-                            </div>
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+          <QueueSection title={t('ผู้ป่วยกำลังนำส่งมา')} count={transportingCases.length} urgent>
+            <CaseQueue
+              rows={transportingCases.map((c) => ({
+                case: c,
+                to: '/hospital/case/' + c.id,
+                action: (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      icon={<XCircle className="size-4" />}
+                      aria-label={t('ปฏิเสธการรับผู้ป่วย')}
+                      title={t('ปฏิเสธการรับผู้ป่วย')}
+                      onClick={() => setRejectTargetId(c.id)}
+                    >
+                      {t('ปฏิเสธ')}
+                    </Button>
+                    <Button size="sm" onClick={() => navigate('/hospital/case/' + c.id)}>
+                      {t('รับผู้ป่วย')}
+                    </Button>
+                  </>
+                ),
+              }))}
+              empty={t('ไม่มีผู้ป่วยกำลังนำส่งในขณะนี้')}
+              detailLabel={t('ผู้ป่วย')}
+              detailOf={(c) => patientDetail(c, t)}
+              timeOf={(c) => reachedAt(c, 'transporting') ?? c.updatedAt}
+              actionWidth="16rem"
+            />
+          </QueueSection>
 
-              <section>
-                <h2 className="mb-4 text-lg font-bold text-ink">{t('รอยืนยันรับผู้ป่วย')}</h2>
-                {arrivedCases.length === 0 ? (
-                  <p className="text-sm text-muted">{t('ไม่มีผู้ป่วยรอการยืนยันรับตัว')}</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {arrivedCases.map((c, i) => (
-                      <div
-                        key={c.id}
-                        className="animate-fade-in-up"
-                        style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}
-                      >
-                        <EmergencyCaseCard
-                          emergencyCase={c}
-                          to={`/hospital/case/${c.id}`}
-                          actions={
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                icon={<XCircle className="size-3.5" />}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setRejectTargetId(c.id)
-                                }}
-                              >
-                                {t('ปฏิเสธการรับผู้ป่วย')}
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  navigate(`/hospital/case/${c.id}`)
-                                }}
-                              >
-                                {t('ยืนยันรับผู้ป่วย')}
-                              </Button>
-                            </div>
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+          <QueueSection title={t('รอยืนยันรับผู้ป่วย')} count={arrivedCases.length} urgent>
+            <CaseQueue
+              rows={arrivedCases.map((c) => ({
+                case: c,
+                to: '/hospital/case/' + c.id,
+                action: (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      icon={<XCircle className="size-4" />}
+                      aria-label={t('ปฏิเสธการรับผู้ป่วย')}
+                      title={t('ปฏิเสธการรับผู้ป่วย')}
+                      onClick={() => setRejectTargetId(c.id)}
+                    >
+                      {t('ปฏิเสธ')}
+                    </Button>
+                    <Button size="sm" onClick={() => navigate('/hospital/case/' + c.id)}>
+                      {t('ยืนยันรับผู้ป่วย')}
+                    </Button>
+                  </>
+                ),
+              }))}
+              empty={t('ไม่มีผู้ป่วยรอการยืนยันรับตัว')}
+              detailLabel={t('ผู้ป่วย')}
+              detailOf={(c) => patientDetail(c, t)}
+              timeOf={(c) => reachedAt(c, 'hospital-arrived') ?? c.updatedAt}
+              actionWidth="16rem"
+            />
+          </QueueSection>
 
-              <section>
-                <h2 className="mb-4 text-lg font-bold text-ink">{t('เสร็จสิ้นแล้ว')}</h2>
-                {doneCases.length === 0 ? (
-                  <p className="text-sm text-muted">{t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')}</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {doneCases.map((c, i) => (
-                      <div
-                        key={c.id}
-                        className="animate-fade-in-up"
-                        style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}
-                      >
-                        <EmergencyCaseCard emergencyCase={c} to={`/hospital/case/${c.id}`} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-          )}
+          <QueueSection title={t('เสร็จสิ้นแล้ว')} count={doneCases.length}>
+            <CaseQueue
+              rows={doneCases.slice(0, 8).map((c) => ({ case: c, to: '/hospital/case/' + c.id }))}
+              empty={hospitalCases.length === 0 ? t('ยังไม่มีผู้ป่วยที่ถูกส่งมายังโรงพยาบาล') : t('ยังไม่มีเหตุที่ดำเนินการเสร็จสิ้น')}
+              detailLabel={t('ผู้ป่วย')}
+              detailOf={(c) => patientDetail(c, t)}
+              timeOf={receivedAt}
+              actionWidth="16rem"
+            />
+          </QueueSection>
 
-          <div className="mt-8">
+          <div className="mt-10">
             <Suspense fallback={<ChartCardSkeleton />}>
               <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของผู้ป่วยที่ส่งมา')} cases={hospitalCases} />
             </Suspense>
           </div>
-        </div>
-      </div>
 
       <ConfirmationModal
         open={!!rejectTargetId}

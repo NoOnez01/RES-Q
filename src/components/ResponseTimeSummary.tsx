@@ -15,6 +15,12 @@ registerTranslations({
   นาที: 'min',
 })
 
+const MILESTONE_PAIRS: [CaseStatus, CaseStatus][] = [
+  ['received', 'rescue-assigned'],
+  ['rescue-assigned', 'rescue-arrived'],
+  ['transporting', 'hospital-arrived'],
+]
+
 function timestampFor(c: EmergencyCase, status: CaseStatus): number | undefined {
   return c.timeline.find((e) => e.status === status)?.timestamp
 }
@@ -54,6 +60,15 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
   const responseMin = avgMinutesBetween(cases, 'rescue-assigned', 'rescue-arrived')
   const transportMin = avgMinutesBetween(cases, 'transporting', 'hospital-arrived')
   const completedCount = cases.filter((c) => c.status === 'completed').length
+  // The cases the averages actually come from -- any case with at least one
+  // complete pair of milestones, not just the completed ones.
+  const sampleCount = cases.filter((c) =>
+    MILESTONE_PAIRS.some(([from, to]) => {
+      const a = timestampFor(c, from)
+      const b = timestampFor(c, to)
+      return a != null && b != null && b >= a
+    }),
+  ).length
   const hasSample = dispatchMin != null || responseMin != null || transportMin != null
 
   return (
@@ -65,7 +80,7 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
         </h2>
         <p className="mt-0.5 text-xs text-muted">
           {hasSample
-            ? t('ค่าเฉลี่ยจาก {n} เหตุที่มีข้อมูลเวลาครบถ้วน', { n: completedCount })
+            ? t('ค่าเฉลี่ยจาก {n} เหตุที่มีข้อมูลเวลาครบถ้วน', { n: sampleCount })
             : t('ยังไม่มีข้อมูลเวลาเพียงพอสำหรับสรุปผล')}
         </p>
       </div>

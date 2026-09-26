@@ -1,18 +1,16 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import clsx from 'clsx'
-import { AlertTriangle, Search, Ambulance, CheckCircle2, ArrowRight, ClipboardList, ClipboardPlus, Building2 } from 'lucide-react'
+import { AlertTriangle, Search, Ambulance, CheckCircle2, ClipboardList, ClipboardPlus, ArrowRight } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { StatBar, StatItem } from '@/components/DashboardCard'
-import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
-import { EmptyState } from '@/components/States'
+import { CaseQueue, QueueSection, byUrgency, isToday, reachedAt } from '@/components/CaseQueue'
 import { RoadClosuresCard } from '@/components/RoadClosuresCard'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
 import { Button } from '@/components/ui/Button'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
+import type { EmergencyCase } from '@/lib/types'
 
 registerTranslations({
   ภาพรวมศูนย์สั่งการ: 'Dispatch overview',
@@ -20,16 +18,16 @@ registerTranslations({
   กำลังค้นหาหน่วยกู้ชีพ: 'Finding a rescue team',
   หน่วยกู้ชีพกำลังปฏิบัติงาน: 'Rescue teams active',
   เสร็จสิ้นวันนี้: 'Completed today',
-  เหตุทั้งหมด: 'Total cases',
   บันทึกเหตุใหม่: 'Log new case',
-  บัญชีรออนุมัติ: 'Pending accounts',
-  ประเมินหน่วยกู้ชีพ: 'Rate rescue teams',
-  'ค้นหาหน่วยปฏิบัติการ (NDEMS)': 'Search units (NDEMS)',
-  ดูสายเรียกเข้าทั้งหมด: 'View all incoming calls',
-  ยังไม่มีเหตุในระบบ: 'No cases yet',
-  เหตุใหม่จะแสดงที่นี่โดยอัตโนมัติ: 'New cases will appear here automatically',
-  เริ่มค้นหาหน่วยกู้ชีพ: 'Start finding a rescue team',
-  กรอกรายละเอียดเหตุการณ์: 'Fill in incident details',
+  ต้องดำเนินการ: 'Needs action',
+  กำลังปฏิบัติงาน: 'In progress',
+  ไม่มีเหตุที่รอดำเนินการ: 'No cases waiting on dispatch',
+  ไม่มีหน่วยกู้ชีพที่กำลังปฏิบัติงาน: 'No rescue teams out on a case',
+  ยังไม่มีเหตุที่เสร็จสิ้นวันนี้: 'No cases completed today',
+  ดูประวัติเหตุทั้งหมด: 'See full case history',
+  สถิติการปฏิบัติงาน: 'Performance',
+  ประเมินเหตุ: 'Assess case',
+  ค้นหาหน่วยกู้ชีพ: 'Search for a rescue team',
   เริ่มค้นหาหน่วยกู้ชีพแล้ว: 'Started finding a rescue team',
   'เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน': 'Case {caseNumber} is now searching for an available rescue team',
   สัดส่วนระดับความรุนแรงของเหตุ: 'Case severity distribution',
@@ -38,14 +36,12 @@ registerTranslations({
 const SeverityDistributionChart = lazy(() => import('@/components/SeverityDistributionChart'))
 const ResponseTimeSummary = lazy(() => import('@/components/ResponseTimeSummary'))
 
-const IN_PROGRESS_STATUSES = [
-  'rescue-assigned',
-  'rescue-en-route',
-  'rescue-arrived',
-  'assisted',
-  'transporting',
-  'hospital-arrived',
-]
+// Reports still being put together by the citizen show here too, so a
+// dispatcher sees them coming before the call does.
+const NEEDS_DISPATCH = new Set<EmergencyCase['status']>(['contacted', 'photos-taken', 'received', 'finding-rescue'])
+const DONE = new Set<EmergencyCase['status']>(['completed'])
+
+const completedAt = (c: EmergencyCase) => reachedAt(c, 'completed') ?? c.updatedAt
 
 export default function DispatchDashboard() {
   const navigate = useNavigate()
@@ -63,184 +59,110 @@ export default function DispatchDashboard() {
     [cases],
   )
 
-  const newCount = allCases.filter((c) => c.status === 'received').length
-  const findingCount = allCases.filter((c) => c.status === 'finding-rescue').length
-  const inProgressCount = allCases.filter((c) => IN_PROGRESS_STATUSES.includes(c.status)).length
-  const completedCount = allCases.filter((c) => c.status === 'completed').length
+  const { needsAction, active, doneToday } = useMemo(() => {
+    const needsAction = allCases.filter((c) => NEEDS_DISPATCH.has(c.status)).sort(byUrgency)
+    const active = allCases.filter((c) => !NEEDS_DISPATCH.has(c.status) && !DONE.has(c.status)).sort(byUrgency)
+    const doneToday = allCases
+      .filter((c) => DONE.has(c.status) && isToday(completedAt(c)))
+      .sort((a, b) => completedAt(b) - completedAt(a))
+    return { needsAction, active, doneToday }
+  }, [allCases])
 
-  const activeCases = useMemo(
-    () =>
-      [...allCases].sort((a, b) => {
-        const rank = (c: (typeof allCases)[number]) => {
-          if (c.status === 'completed') return 2
-          if (c.status === 'received' && !c.assessment) return 0
-          return 1
-        }
-        const rankDiff = rank(a) - rank(b)
-        if (rankDiff !== 0) return rankDiff
-        return b.createdAt - a.createdAt
-      }),
-    [allCases],
-  )
+  const newCount = needsAction.filter((c) => c.status === 'received').length
+  const findingCount = needsAction.filter((c) => c.status === 'finding-rescue').length
 
-  function handleStartFinding(caseId: string, caseNumber: string) {
-    startFindingRescue(caseId)
+  function handleStartFinding(c: EmergencyCase) {
+    startFindingRescue(c.id)
     toast({
       title: t('เริ่มค้นหาหน่วยกู้ชีพแล้ว'),
-      message: t('เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber }),
+      message: t('เหตุหมายเลข {caseNumber} อยู่ระหว่างค้นหาหน่วยกู้ชีพที่พร้อมปฏิบัติงาน', { caseNumber: c.caseNumber }),
       tone: 'info',
     })
   }
 
+  // The one step dispatch owes each case waiting on it.
+  function actionFor(c: EmergencyCase) {
+    if (c.status !== 'received') return undefined
+    return c.assessment ? (
+      <Button size="sm" icon={<Search className="size-4" />} onClick={() => handleStartFinding(c)}>
+        {t('ค้นหาหน่วยกู้ชีพ')}
+      </Button>
+    ) : (
+      <Button
+        size="sm"
+        icon={<ClipboardList className="size-4" />}
+        onClick={() => navigate(`/dispatch/emergency-details/${c.id}`)}
+      >
+        {t('ประเมินเหตุ')}
+      </Button>
+    )
+  }
+
+  const row = (c: EmergencyCase) => ({ case: c, to: `/dispatch/case/${c.id}`, action: actionFor(c) })
+
   return (
     <AppShell variant="dashboard" title={t('ภาพรวมศูนย์สั่งการ')}>
-      <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
-          <StatBar>
-            <StatItem
-              label={t('เหตุใหม่รอดำเนินการ')}
-              value={
-                <span key={newCount} className="inline-block animate-count-pop">
-                  {newCount}
-                </span>
-              }
-              icon={<AlertTriangle className="size-5" />}
-              tone="emergency"
-            />
-            <StatItem
-              label={t('กำลังค้นหาหน่วยกู้ชีพ')}
-              value={
-                <span key={findingCount} className="inline-block animate-count-pop">
-                  {findingCount}
-                </span>
-              }
-              icon={<Search className="size-5" />}
-              tone="warning"
-            />
-            <StatItem
-              label={t('หน่วยกู้ชีพกำลังปฏิบัติงาน')}
-              value={
-                <span key={inProgressCount} className="inline-block animate-count-pop">
-                  {inProgressCount}
-                </span>
-              }
-              icon={<Ambulance className="size-5" />}
-              tone="primary"
-            />
-            <StatItem
-              label={t('เสร็จสิ้นวันนี้')}
-              value={
-                <span key={completedCount} className="inline-block animate-count-pop">
-                  {completedCount}
-                </span>
-              }
-              icon={<CheckCircle2 className="size-5" />}
-              tone="success"
-            />
-          </StatBar>
+      <StatBar>
+        <StatItem
+          label={t('เหตุใหม่รอดำเนินการ')}
+          value={newCount}
+          icon={<AlertTriangle />}
+          tone="emergency"
+          alert={newCount > 0}
+        />
+        <StatItem label={t('กำลังค้นหาหน่วยกู้ชีพ')} value={findingCount} icon={<Search />} tone="warning" />
+        <StatItem label={t('หน่วยกู้ชีพกำลังปฏิบัติงาน')} value={active.length} icon={<Ambulance />} tone="primary" />
+        <StatItem label={t('เสร็จสิ้นวันนี้')} value={doneToday.length} icon={<CheckCircle2 />} tone="success" />
+      </StatBar>
 
-          <RoadClosuresCard className="mt-6" />
+      <RoadClosuresCard className="mt-6" />
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-ink">{t('เหตุทั้งหมด')}</h2>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/dispatch/new-case">
-                <Button variant="primary" size="sm" icon={<ClipboardPlus className="size-4" />}>
-                  {t('บันทึกเหตุใหม่')}
-                </Button>
-              </Link>
-              <Link to="/dispatch/pending-approvals">
-                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  {t('บัญชีรออนุมัติ')}
-                </Button>
-              </Link>
-              <Link to="/dispatch/feedback-stats">
-                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  {t('ประเมินหน่วยกู้ชีพ')}
-                </Button>
-              </Link>
-              <Link to="/dispatch/unit-search">
-                <Button variant="outline" size="sm" icon={<Building2 className="size-4" />}>
-                  {t('ค้นหาหน่วยปฏิบัติการ (NDEMS)')}
-                </Button>
-              </Link>
-              <Link to="/dispatch/incoming-call">
-                <Button variant="outline" size="sm" iconRight={<ArrowRight className="size-4" />}>
-                  {t('ดูสายเรียกเข้าทั้งหมด')}
-                </Button>
-              </Link>
-            </div>
-          </div>
+      <QueueSection
+        title={t('ต้องดำเนินการ')}
+        count={needsAction.length}
+        urgent
+        aside={
+          <Link to="/dispatch/new-case">
+            <Button size="sm" icon={<ClipboardPlus className="size-4" />}>
+              {t('บันทึกเหตุใหม่')}
+            </Button>
+          </Link>
+        }
+      >
+        <CaseQueue rows={needsAction.map(row)} empty={t('ไม่มีเหตุที่รอดำเนินการ')} actionWidth="11.5rem" />
+      </QueueSection>
 
-          <div className="mt-4">
-            {activeCases.length === 0 ? (
-              <EmptyState title={t('ยังไม่มีเหตุในระบบ')} description={t('เหตุใหม่จะแสดงที่นี่โดยอัตโนมัติ')} />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {activeCases.map((c, index) => {
-                  const isJustArrived = Date.now() - c.createdAt < 5000
-                  return (
-                    <div key={c.id} className="relative">
-                      {isJustArrived && (
-                        <div
-                          className="pointer-events-none absolute inset-0 animate-pulse-glow rounded-2xl"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <div
-                        className="relative animate-fade-in-up rounded-2xl"
-                        style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'both' }}
-                      >
-                        <EmergencyCaseCard
-                          emergencyCase={c}
-                          to={`/dispatch/case/${c.id}`}
-                          actions={
-                            c.status === 'received' ? (
-                              c.assessment ? (
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleStartFinding(c.id, c.caseNumber)
-                                  }}
-                                >
-                                  {t('เริ่มค้นหาหน่วยกู้ชีพ')}
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  icon={<ClipboardList className="size-4" />}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    navigate(`/dispatch/emergency-details/${c.id}`)
-                                  }}
-                                >
-                                  {t('กรอกรายละเอียดเหตุการณ์')}
-                                </Button>
-                              )
-                            ) : undefined
-                          }
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+      <QueueSection title={t('กำลังปฏิบัติงาน')} count={active.length}>
+        <CaseQueue rows={active.map(row)} empty={t('ไม่มีหน่วยกู้ชีพที่กำลังปฏิบัติงาน')} actionWidth="11.5rem" />
+      </QueueSection>
 
-          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Suspense fallback={<ChartCardSkeleton />}>
-              <ResponseTimeSummary cases={allCases} />
-            </Suspense>
-            <Suspense fallback={<ChartCardSkeleton />}>
-              <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุ')} cases={allCases} />
-            </Suspense>
-          </div>
+      <QueueSection
+        title={t('เสร็จสิ้นวันนี้')}
+        count={doneToday.length}
+        aside={
+          <Link
+            to="/case-history"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-bright"
+          >
+            {t('ดูประวัติเหตุทั้งหมด')}
+            <ArrowRight className="size-4" />
+          </Link>
+        }
+      >
+        <CaseQueue rows={doneToday.map(row)} empty={t('ยังไม่มีเหตุที่เสร็จสิ้นวันนี้')} timeOf={completedAt} actionWidth="11.5rem" />
+      </QueueSection>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-base font-bold text-ink">{t('สถิติการปฏิบัติงาน')}</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Suspense fallback={<ChartCardSkeleton />}>
+            <ResponseTimeSummary cases={allCases} />
+          </Suspense>
+          <Suspense fallback={<ChartCardSkeleton />}>
+            <SeverityDistributionChart title={t('สัดส่วนระดับความรุนแรงของเหตุ')} cases={allCases} />
+          </Suspense>
         </div>
-      </div>
+      </section>
     </AppShell>
   )
 }
