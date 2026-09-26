@@ -48,6 +48,8 @@ export interface LiveKitCall {
   micOn: boolean
   /** Which camera is live -- the front one's preview is shown mirrored. */
   facingMode: 'user' | 'environment'
+  /** The device has more than one camera to switch between. */
+  canSwitchCamera: boolean
   /** The browser blocked remote audio autoplay -- needs a tap to start. */
   audioBlocked: boolean
   toggleCamera: () => void
@@ -198,6 +200,7 @@ export function useLiveKitCall(
   const [micOn, setMicOn] = useState(true)
   const [audioBlocked, setAudioBlocked] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
+  const [canSwitchCamera, setCanSwitchCamera] = useState(false)
   const roomRef = useRef<Room | null>(null)
   const liveKitRef = useRef<LiveKit | null>(null)
   const facingModeRef = useRef<'user' | 'environment'>('user')
@@ -211,6 +214,18 @@ export function useLiveKitCall(
     // publications mid-join would flash "camera off" for a moment on every
     // call -- hold the defaults until the first publish attempt is done.
     let mediaSettled = false
+
+    // Counted once camera access is granted (before that, browsers hide
+    // the device list) and again whenever a camera is plugged in or out.
+    const countCameras = () => {
+      navigator.mediaDevices?.enumerateDevices().then(
+        (devices) => {
+          if (!cancelled) setCanSwitchCamera(devices.filter((d) => d.kind === 'videoinput').length > 1)
+        },
+        () => {},
+      )
+    }
+    navigator.mediaDevices?.addEventListener('devicechange', countCameras)
 
     async function join() {
       setConnectionState('connecting')
@@ -315,6 +330,7 @@ export function useLiveKitCall(
       )
       mediaSettled = true
       refresh()
+      countCameras()
     }
 
     void join()
@@ -322,6 +338,7 @@ export function useLiveKitCall(
     const instance = instanceRef.current
     return () => {
       cancelled = true
+      navigator.mediaDevices?.removeEventListener('devicechange', countCameras)
       setConversing(instance, false)
       // `room` is still null if this runs while the SDK/token are loading --
       // join() then bails before creating one. A pending connect() is
@@ -331,6 +348,7 @@ export function useLiveKitCall(
       roomRef.current = null
       facingModeRef.current = 'user'
       setFacingMode('user')
+      setCanSwitchCamera(false)
       setRemotes([])
       setLocalVideoTrack(null)
       setCameraState('idle')
@@ -367,12 +385,31 @@ export function useLiveKitCall(
       | LocalVideoTrack
       | undefined
     if (!track) return
-    const next = facingModeRef.current === 'user' ? 'environment' : 'user'
-    track
-      .restartTrack({ facingMode: next })
-      .then(() => {
-        facingModeRef.current = next
-        setFacingMode(next)
+    const settings = track.mediaStreamTrack.getSettings()
+    if (settings.facingMode) {
+      // A phone: front <-> back. By facing rather than by device, since a
+      // phone lists each back lens (wide, ultra-wide, zoom) as its own camera.
+      const next = facingModeRef.current === 'user' ? 'environment' : 'user'
+      track
+        .restartTrack({ facingMode: next })
+        .then(() => {
+          facingModeRef.current = next
+          setFacingMode(next)
+        })
+        .catch((err) => console.error('switchCamera failed:', err))
+      return
+    }
+    // A computer's cameras say nothing about which way they face -- step
+    // through them in turn instead.
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        const cameras = devices.filter((d) => d.kind === 'videoinput')
+        if (cameras.length < 2) return
+        const at = cameras.findIndex((d) => d.deviceId === settings.deviceId)
+        // Exact: a bare id is only a preference, and Chrome keeps the
+        // camera it already had.
+        return track.restartTrack({ deviceId: { exact: cameras[(at + 1) % cameras.length].deviceId } })
       })
       .catch((err) => console.error('switchCamera failed:', err))
   }, [])
@@ -389,6 +426,7 @@ export function useLiveKitCall(
     cameraOn,
     micOn,
     facingMode,
+    canSwitchCamera,
     audioBlocked,
     toggleCamera,
     toggleMic,

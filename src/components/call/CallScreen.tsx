@@ -23,9 +23,11 @@ registerTranslations({
   ไม่พบกล้องหรือไมโครโฟนบนอุปกรณ์นี้: 'No camera or microphone found on this device',
   ย่อหน้าจอสาย: 'Minimize call',
   กลับไปที่หน้าจอสาย: 'Back to the call',
-  สลับมุมมอง: 'Swap views',
-  ภาพจากกล้องของคุณ: 'Your camera',
+  'แสดง {name} เต็มจอ': 'Show {name} full screen',
+  แสดงกล้องของคุณเต็มจอ: 'Show your camera full screen',
+  คุณ: 'You',
   'สลับกล้องหน้า/หลัง': 'Switch front/back camera',
+  อุปกรณ์นี้มีกล้องเดียว: 'This device has only one camera',
   กล้อง: 'Camera',
   ไมโครโฟน: 'Microphone',
   วางสาย: 'Hang up',
@@ -82,16 +84,11 @@ const GLOW = 'bg-[radial-gradient(circle_at_50%_38%,rgb(var(--color-primary)/0.3
 
 function ParticipantView({
   participant,
-  name,
   contain = false,
-  labelled = false,
   compact = false,
 }: {
   participant: CallParticipant
-  name: string
   contain?: boolean
-  /** Name tag on the tile -- for a group call, where the header can't say whose tile is whose. */
-  labelled?: boolean
   compact?: boolean
 }) {
   const t = useT()
@@ -101,15 +98,9 @@ function ParticipantView({
         <TrackVideo track={participant.videoTrack} contain={contain} />
       ) : (
         <div className={clsx('absolute inset-0 flex flex-col items-center justify-center gap-3', GLOW)}>
-          <CallAvatar role={callRoleOf(participant.role)} size={compact ? 'sm' : labelled ? 'md' : 'lg'} speaking={participant.isSpeaking} />
-          {!compact && !labelled && <p className="text-sm font-medium text-white/75">{t('ปิดกล้องอยู่')}</p>}
+          <CallAvatar role={callRoleOf(participant.role)} size={compact ? 'sm' : 'lg'} speaking={participant.isSpeaking} />
+          {!compact && <p className="text-sm font-medium text-white/75">{t('ปิดกล้องอยู่')}</p>}
         </div>
-      )}
-      {labelled && (
-        <span className="absolute bottom-2 left-2 inline-flex max-w-[85%] items-center gap-1 rounded-full bg-navy/60 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-          {!participant.micOn && <MicOff className="size-3 shrink-0" aria-label={t('ปิดไมโครโฟนอยู่')} />}
-          <span className="truncate">{name}</span>
-        </span>
       )}
     </div>
   )
@@ -128,9 +119,9 @@ function SelfView({ call, compact = false }: { call: LiveKitCall; compact?: bool
 type Corner = 'tl' | 'tr' | 'bl' | 'br'
 
 /**
- * Drag a floating tile anywhere; let go and it settles into the nearest
- * corner. A tap (no real movement) is left to the element's own click, so
- * the tile still works as a button from the keyboard.
+ * Drag floating tiles anywhere; let go and they settle into the nearest
+ * corner. A tap (no real movement) is left to the tapped element's own
+ * click, so each tile still works as a button, from the keyboard too.
  */
 function useCornerDrag(initial: Corner) {
   const [corner, setCorner] = useState<Corner>(initial)
@@ -141,7 +132,6 @@ function useCornerDrag(initial: Corner) {
 
   const bind = {
     onPointerDown(e: ReactPointerEvent<HTMLElement>) {
-      e.currentTarget.setPointerCapture(e.pointerId)
       gesture.current = { x: e.clientX, y: e.clientY, moved: false }
       swallowClick.current = false
     },
@@ -151,7 +141,12 @@ function useCornerDrag(initial: Corner) {
       const x = e.clientX - g.x
       const y = e.clientY - g.y
       if (!g.moved && Math.hypot(x, y) < 8) return
-      g.moved = true
+      if (!g.moved) {
+        g.moved = true
+        // Captured only once it's really a drag -- capturing on press would
+        // send a tap's click to the group rather than the tile tapped.
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }
       setOffset({ x, y })
     },
     onPointerUp(e: ReactPointerEvent<HTMLElement>) {
@@ -217,6 +212,70 @@ function FloatingTile({
   )
 }
 
+const SELF = 'self'
+
+/** Everyone not on the big screen, as small frames in a corner -- drag the
+ * group anywhere; tap one to put it on the big screen. */
+function SmallTiles({
+  call,
+  ids,
+  nameOf,
+  drag,
+  onFocus,
+}: {
+  call: LiveKitCall
+  /** SELF or a remote identity, in display order. */
+  ids: string[]
+  nameOf: (p: CallParticipant) => string
+  drag: ReturnType<typeof useCornerDrag>
+  onFocus: (id: string) => void
+}) {
+  const t = useT()
+  const labelled = ids.length > 1
+  return (
+    <div
+      {...drag.bind}
+      style={drag.offset ? { transform: `translate(${drag.offset.x}px, ${drag.offset.y}px)` } : undefined}
+      className={clsx('fixed z-10 flex touch-none flex-col gap-2', drag.offset ? 'cursor-grabbing' : 'cursor-grab', PIP_CORNERS[drag.corner])}
+    >
+      {ids.map((id) => {
+        const p = id === SELF ? null : call.remotes.find((r) => r.identity === id)
+        if (id !== SELF && !p) return null
+        const name = p ? nameOf(p) : t('คุณ')
+        const label = p ? t('แสดง {name} เต็มจอ', { name }) : t('แสดงกล้องของคุณเต็มจอ')
+        return (
+          <button
+            key={id}
+            type="button"
+            aria-label={label}
+            title={label}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (drag.tapped()) onFocus(id)
+            }}
+            className={clsx(
+              'relative block aspect-[3/4] w-24 overflow-hidden rounded-2xl bg-navy text-white shadow-card-lg ring-1 ring-white/25 transition-transform duration-150 active:scale-95 sm:aspect-video sm:w-44',
+              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60',
+            )}
+          >
+            {p ? <ParticipantView participant={p} compact /> : <SelfView call={call} compact />}
+            {p && !p.micOn && (
+              <span className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-navy/70">
+                <MicOff className="size-3.5" aria-label={t('ปิดไมโครโฟนอยู่')} />
+              </span>
+            )}
+            {labelled && (
+              <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-navy/90 to-transparent px-2 pb-1 pt-4 text-left text-[11px] font-semibold">
+                {name}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 const PIP_CORNERS: Record<Corner, string> = {
   tl: 'left-3 top-[calc(env(safe-area-inset-top)+5.5rem)]',
   tr: 'right-3 top-[calc(env(safe-area-inset-top)+5.5rem)]',
@@ -257,12 +316,13 @@ function DockButton({
       onClick={onClick}
       className={clsx(
         'flex size-14 items-center justify-center rounded-full transition-colors duration-150 [&>svg]:size-6',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-40',
+        // Disabled stays hoverable, so its tooltip can say why.
+        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 disabled:cursor-not-allowed disabled:opacity-40',
         end
-          ? 'bg-emergency text-white hover:bg-emergency-dark'
+          ? 'bg-emergency text-white enabled:hover:bg-emergency-dark'
           : pressed === false
-            ? 'bg-white text-navy hover:bg-white/90'
-            : 'bg-white/15 text-white hover:bg-white/25',
+            ? 'bg-white text-navy enabled:hover:bg-white/90'
+            : 'bg-white/15 text-white enabled:hover:bg-white/25',
       )}
     >
       {children}
@@ -312,8 +372,10 @@ export interface CallScreenProps {
 
 /**
  * A video call, full screen the way phone call apps do it: whoever you're
- * talking to fills the screen, your own camera floats in a corner (drag it
- * anywhere; tap it to swap views), and the controls sit in a row of round
+ * talking to fills the screen, while your own camera (and anyone else on the
+ * call) floats as small frames in a corner -- drag them anywhere; tap one and
+ * it takes the big screen, the big one dropping into its place. The controls
+ * sit in a row of round
  * buttons along the bottom that fade out while you watch and come back on a
  * tap. While it rings, your own camera fills the screen behind who you're
  * calling. Minimizing shrinks the call to a floating tile so the page
@@ -334,7 +396,9 @@ export function CallScreen({
 }: CallScreenProps) {
   const t = useT()
   const [minimized, setMinimized] = useState(false)
-  const [swapped, setSwapped] = useState(false)
+  // Who's on the big screen: SELF, a remote identity, or null for the first
+  // person you're talking to.
+  const [focus, setFocus] = useState<string | null>(null)
   const [endedAt, setEndedAt] = useState<number | null>(null)
   const [prevOpen, setPrevOpen] = useState(open)
   if (prevOpen !== open) {
@@ -342,7 +406,7 @@ export function CallScreen({
     setEndedAt(open ? null : Date.now())
     if (open) {
       setMinimized(false)
-      setSwapped(false)
+      setFocus(null)
     }
   }
   useEffect(() => {
@@ -358,9 +422,13 @@ export function CallScreen({
   const remotes = call.remotes
   const failed = open && (call.connectionState === 'failed' || call.connectionState === 'disconnected')
   const hero = ended || failed || remotes.length === 0
-  const group = remotes.length > 1
-  const isSwapped = swapped && remotes.length === 1
-  const mainHasVideo = group ? remotes.some((p) => p.videoTrack) : isSwapped ? !!call.localVideoTrack : !!remotes[0]?.videoTrack
+  // One person big, everyone else (you included) small; a focused person
+  // who has left hands the big screen back to the first one still here.
+  const focusId = focus === SELF || remotes.some((p) => p.identity === focus) ? focus : (remotes[0]?.identity ?? null)
+  const selfMain = focusId === SELF
+  const mainRemote = selfMain ? null : (remotes.find((p) => p.identity === focusId) ?? null)
+  const smallIds = [...remotes.filter((p) => p.identity !== focusId).map((p) => p.identity), ...(selfMain ? [] : [SELF])]
+  const mainHasVideo = selfMain ? !!call.localVideoTrack : !!mainRemote?.videoTrack
 
   // Controls fade out once there's video to watch, and come back on a tap
   // (or any mouse movement / keyboard focus).
@@ -378,23 +446,6 @@ export function CallScreen({
     return () => clearTimeout(hideTimer.current)
   }, [autoHide])
   const controlsVisible = !autoHide || controlsShown
-
-  // Flipping only makes sense with a second camera (phones, not laptops).
-  const [canFlip, setCanFlip] = useState(false)
-  const hasLocalVideo = !!call.localVideoTrack
-  useEffect(() => {
-    if (!hasLocalVideo || !navigator.mediaDevices?.enumerateDevices) return
-    let cancelled = false
-    navigator.mediaDevices.enumerateDevices().then(
-      (devices) => {
-        if (!cancelled) setCanFlip(devices.filter((d) => d.kind === 'videoinput').length > 1)
-      },
-      () => {},
-    )
-    return () => {
-      cancelled = true
-    }
-  }, [hasLocalVideo])
 
   // A phone must not dim and lock mid-call.
   useEffect(() => {
@@ -436,8 +487,15 @@ export function CallScreen({
 
   if (!visible) return null
 
-  const names = [...new Set(remotes.map((p) => roleName(callRoleOf(p.role), c, t)))]
-  const title = names.length > 0 ? names.join(' · ') : roleName(peer, c, t)
+  const nameOf = (p: CallParticipant) => roleName(callRoleOf(p.role), c, t)
+  // Named after whoever's on the big screen; with your own camera there in
+  // a group call, after everyone else.
+  const headerPerson = mainRemote ?? (remotes.length === 1 ? remotes[0] : null)
+  const title = headerPerson
+    ? nameOf(headerPerson)
+    : remotes.length > 0
+      ? [...new Set(remotes.map(nameOf))].join(' · ')
+      : roleName(peer, c, t)
   const status = ended
     ? t('สิ้นสุดการโทร')
     : failed
@@ -461,7 +519,6 @@ export function CallScreen({
   const audio = remotes.map((p) => p.audioTrack && !p.sameUser && <TrackAudio key={p.identity} track={p.audioTrack} />)
 
   if (minimized) {
-    const first = remotes[0]
     return createPortal(
       <>
         <FloatingTile
@@ -471,8 +528,10 @@ export function CallScreen({
           onTap={() => setMinimized(false)}
           className="z-[95] aspect-[3/4] w-32 animate-scale-in sm:aspect-video sm:w-56"
         >
-          {first ? (
-            <ParticipantView participant={first} name={title} compact />
+          {mainRemote ? (
+            <ParticipantView participant={mainRemote} compact />
+          ) : selfMain ? (
+            <SelfView call={call} compact />
           ) : (
             <div className={clsx('flex h-full w-full items-center justify-center', GLOW)}>
               <CallAvatar role={peer} size="sm" ringing={ringing} />
@@ -546,18 +605,10 @@ export function CallScreen({
               </div>
             </div>
           </>
-        ) : group ? (
-          <div className={clsx('grid h-full gap-1 p-1', remotes.length === 2 ? 'grid-rows-2 sm:grid-cols-2 sm:grid-rows-1' : 'grid-cols-2')}>
-            {remotes.map((p) => (
-              <div key={p.identity} className="overflow-hidden rounded-2xl">
-                <ParticipantView participant={p} name={roleName(callRoleOf(p.role), c, t)} labelled />
-              </div>
-            ))}
-          </div>
-        ) : isSwapped ? (
-          <SelfView call={call} />
+        ) : mainRemote ? (
+          <ParticipantView key={mainRemote.identity} participant={mainRemote} contain />
         ) : (
-          <ParticipantView participant={remotes[0]} name={title} contain />
+          <SelfView call={call} />
         )}
       </div>
 
@@ -577,7 +628,7 @@ export function CallScreen({
             <>
               <p className="flex items-center justify-center gap-1.5 font-bold">
                 <span className="truncate">{title}</span>
-                {!group && !isSwapped && !remotes[0].micOn && (
+                {headerPerson && !headerPerson.micOn && (
                   <MicOff className="size-4 shrink-0 text-white/80" aria-label={t('ปิดไมโครโฟนอยู่')} />
                 )}
               </p>
@@ -616,17 +667,7 @@ export function CallScreen({
         </div>
       )}
 
-      {!hero && (
-        <FloatingTile
-          drag={pipDrag}
-          corners={PIP_CORNERS}
-          label={remotes.length === 1 ? t('สลับมุมมอง') : t('ภาพจากกล้องของคุณ')}
-          onTap={remotes.length === 1 ? () => setSwapped((s) => !s) : undefined}
-          className="z-10 aspect-[3/4] w-28 sm:aspect-video sm:w-48"
-        >
-          {isSwapped ? <ParticipantView participant={remotes[0]} name={title} compact /> : <SelfView call={call} compact />}
-        </FloatingTile>
-      )}
+      {!hero && <SmallTiles call={call} ids={smallIds} nameOf={nameOf} drag={pipDrag} onFocus={setFocus} />}
 
       {/* Controls */}
       <div
@@ -648,8 +689,12 @@ export function CallScreen({
         )}
         {note && !ended && <p className="max-w-xs text-center text-xs leading-relaxed text-white/70">{note}</p>}
         <div className="flex items-center gap-3 rounded-full bg-navy/40 p-2 backdrop-blur-md sm:gap-4">
-          {canFlip && call.cameraOn && (
-            <DockButton label={t('สลับกล้องหน้า/หลัง')} onClick={call.switchCamera} disabled={ended}>
+          {call.cameraOn && (
+            <DockButton
+              label={call.canSwitchCamera ? t('สลับกล้องหน้า/หลัง') : t('อุปกรณ์นี้มีกล้องเดียว')}
+              onClick={call.switchCamera}
+              disabled={ended || !call.canSwitchCamera}
+            >
               <SwitchCamera />
             </DockButton>
           )}
