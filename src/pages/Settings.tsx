@@ -4,6 +4,7 @@ import {
   UserCircle2,
   ShieldCheck,
   Trash2,
+  LogIn,
   LogOut,
   Radio,
   Ambulance,
@@ -40,6 +41,11 @@ registerTranslations({
   ตั้งค่า: 'Settings',
   ข้อมูลผู้ใช้งาน: 'Account',
   ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
+  เข้าสู่ระบบ: 'Log in',
+  สมัครสมาชิก: 'Sign up',
+  'เข้าสู่ระบบหรือสมัครสมาชิก เพื่อเก็บประวัติการแจ้งเหตุและเหรียญไว้ในบัญชีของคุณ': 'Log in or sign up to keep your report history and coins in your own account',
+  'ลบข้อมูลเหตุทั้งหมด รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์': 'Delete all case data, including what is synced to every device',
+  'การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) และไม่สามารถกู้คืนได้': 'This deletes all case data, both in this browser and in the synced database (every device), and cannot be undone',
   ออกจากระบบ: 'Log out',
   การแสดงผลและภาษา: 'Appearance & language',
   บัญชีและความปลอดภัย: 'Account & security',
@@ -75,12 +81,8 @@ registerTranslations({
   ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง: 'Data in the system is simulated, not real patient data.',
   ระบบไม่ทดแทนการประเมินทางการแพทย์: 'This system does not replace professional medical assessment.',
   ล้างข้อมูลตัวอย่าง: 'Clear sample data',
-  'ลบข้อมูลเหตุทั้งหมด (รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้':
-    "Deletes all cases (including data synced across every device) and this browser's local user data.",
   ล้างข้อมูลตัวอย่างทั้งหมด: 'Clear all sample data',
   ล้างข้อมูลทั้งหมด: 'Clear all data',
-  'การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ และไม่สามารถกู้คืนได้':
-    "This deletes all cases both in this browser and in the synced database (every device), plus this browser's user data. This cannot be undone.",
   เปลี่ยนรหัสผ่านแล้ว: 'Password changed',
   บันทึกอีเมลแล้ว: 'Email saved',
   กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยัน: 'Please check your email to confirm',
@@ -134,6 +136,10 @@ export default function Settings() {
     navigate(view.path)
   }
 
+  const loggedIn = !!currentUser && !currentUser.isAnonymous
+  // Wiping every synced case is a demo tool for the dispatch center; for
+  // anyone else it deletes nothing server-side (RLS), so it isn't offered.
+  const canReset = loggedIn && (currentUser?.role === 'dispatch' || !!currentUser?.isAdmin)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
 
@@ -286,15 +292,34 @@ export default function Settings() {
           <h3 className="flex items-center gap-2 font-bold text-ink">
             <UserCircle2 className="size-4 text-primary" /> {t('ข้อมูลผู้ใช้งาน')}
           </h3>
-          <div className="rounded-xl bg-skyblue-pale p-4">
-            <p className="font-semibold text-ink">{currentUser?.name ?? t('ยังไม่ได้เข้าสู่ระบบ')}</p>
-            <p className="text-sm text-muted">{t(roleLabel(currentUser?.role ?? null))}</p>
-          </div>
-
-          {currentUser && !currentUser.isAnonymous && (
-            <Button variant="outline" size="sm" icon={<LogOut className="size-4" />} onClick={handleLogout}>
-              {t('ออกจากระบบ')}
-            </Button>
+          {loggedIn && currentUser ? (
+            <>
+              <div className="rounded-xl bg-skyblue-pale p-4">
+                <p className="font-semibold text-ink">{currentUser.name}</p>
+                <p className="text-sm text-muted">{t(roleLabel(currentUser.role))}</p>
+              </div>
+              <Button variant="outline" size="sm" icon={<LogOut className="size-4" />} onClick={handleLogout}>
+                {t('ออกจากระบบ')}
+              </Button>
+            </>
+          ) : (
+            // An anonymous visitor has a session (so a report can be
+            // tracked) but no account -- don't show its placeholder
+            // profile ("ผู้ใช้ทั่วไป") as if it were one.
+            <>
+              <div className="rounded-xl bg-skyblue-pale p-4">
+                <p className="font-semibold text-ink">{t('ยังไม่ได้เข้าสู่ระบบ')}</p>
+                <p className="text-sm text-muted">{t('เข้าสู่ระบบหรือสมัครสมาชิก เพื่อเก็บประวัติการแจ้งเหตุและเหรียญไว้ในบัญชีของคุณ')}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" icon={<LogIn className="size-4" />} onClick={() => navigate('/login')}>
+                  {t('เข้าสู่ระบบ')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/register')}>
+                  {t('สมัครสมาชิก')}
+                </Button>
+              </div>
+            </>
           )}
         </Card>
 
@@ -482,15 +507,17 @@ export default function Settings() {
           </ul>
         </Card>
 
-        <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
-          <div>
-            <p className="font-bold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
-            <p className="text-sm text-muted">{t('ลบข้อมูลเหตุทั้งหมด (รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์) และข้อมูลผู้ใช้ในเบราว์เซอร์นี้')}</p>
-          </div>
-          <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setResetOpen(true)}>
-            {t('ล้างข้อมูลตัวอย่างทั้งหมด')}
-          </Button>
-        </Card>
+        {canReset && (
+          <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
+            <div>
+              <p className="font-bold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
+              <p className="text-sm text-muted">{t('ลบข้อมูลเหตุทั้งหมด รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์')}</p>
+            </div>
+            <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setResetOpen(true)}>
+              {t('ล้างข้อมูลตัวอย่างทั้งหมด')}
+            </Button>
+          </Card>
+        )}
         </div>
       </div>
 
@@ -498,9 +525,7 @@ export default function Settings() {
         open={resetOpen}
         tone="danger"
         title={t('ล้างข้อมูลทั้งหมด')}
-        message={t(
-          'การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) รวมถึงข้อมูลผู้ใช้ในเบราว์เซอร์นี้ และไม่สามารถกู้คืนได้',
-        )}
+        message={t('การดำเนินการนี้จะลบข้อมูลเหตุทั้งหมด ทั้งในเบราว์เซอร์นี้และในฐานข้อมูลที่ซิงค์ไว้ (ทุกอุปกรณ์) และไม่สามารถกู้คืนได้')}
         confirmLabel={t('ล้างข้อมูลทั้งหมด')}
         confirmLoading={resetLoading}
         onConfirm={handleReset}

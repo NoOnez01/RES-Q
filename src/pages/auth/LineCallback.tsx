@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoadingState, ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
-import { completeLineLogin, consumeLineLoginState, getStoredLineState, linkLineIdentity } from '@/lib/auth'
+import { completeLineLogin, consumeLineLoginState, ensureAnonymousSession, getCurrentUser, linkLineIdentity } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import type { LineAuthMode } from '@/lib/auth'
 import type { Role } from '@/lib/types'
@@ -19,6 +19,8 @@ registerTranslations({
   กลับไปตั้งค่า: 'Back to settings',
   เข้าสู่ระบบไม่สำเร็จ: 'Login failed',
   'ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง': 'Could not confirm login with LINE. Please try again.',
+  'ยกเลิกการเข้าสู่ระบบด้วย LINE แล้ว': 'LINE login was cancelled',
+  'ลิงก์เข้าสู่ระบบนี้ใช้แล้วหรือหมดอายุ กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง': 'This login link was already used or has expired. Please log in with LINE again.',
   กลับไปเข้าสู่ระบบ: 'Back to login',
   'กำลังเข้าสู่ระบบ...': 'Logging in...',
 })
@@ -56,15 +58,23 @@ export default function LineCallback() {
       const state = searchParams.get('state')
       const lineError = searchParams.get('error')
       if (lineError || !code || !state) {
+        // LINE's own ?error= (e.g. access_denied when the user tapped Cancel).
+        if (lineError) setErrorMessage(t('ยกเลิกการเข้าสู่ระบบด้วย LINE แล้ว'))
         setFailed(true)
         return
       }
-      const expectedState = getStoredLineState()
-      const consumed = consumeLineLoginState()
-      if (!consumed || state !== expectedState) {
-        // Doesn't match what we stored right before redirecting to LINE --
-        // either a stale/replayed callback or a forged one. Refuse rather
-        // than trying to log anyone in.
+      const consumed = consumeLineLoginState(state)
+      if (!consumed) {
+        // Not a login this browser started (or started too long ago) --
+        // a stale/replayed callback or a forged one. Refuse rather than
+        // trying to log anyone in; but someone just returning here (Back
+        // after logging in) is already signed in, so take them onward.
+        const current = await getCurrentUser()
+        if (current && !current.isAnonymous) {
+          navigate(ROLE_PATH[current.role], { replace: true })
+          return
+        }
+        setErrorMessage(t('ลิงก์เข้าสู่ระบบนี้ใช้แล้วหรือหมดอายุ กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง'))
         setFailed(true)
         return
       }
@@ -87,9 +97,8 @@ export default function LineCallback() {
         toast({ title: t('เข้าสู่ระบบสำเร็จ'), message: t('ยินดีต้อนรับ {name}', { name: profile.name }), tone: 'success' })
         navigate(ROLE_PATH[profile.role], { replace: true })
       } catch (err) {
-        if (consumed.mode === 'link') {
-          setErrorMessage(err instanceof Error ? err.message : typeof err === 'string' ? err : null)
-        }
+        console.error('LINE callback failed:', err)
+        setErrorMessage(err instanceof Error ? err.message : typeof err === 'string' ? err : null)
         setFailed(true)
       }
     }
@@ -101,6 +110,13 @@ export default function LineCallback() {
     // an already-consumed code instead of running the login flow once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, navigate, setUser])
+
+  // App skips its usual anonymous sign-in on this page (so it can't race
+  // the LINE session); once the login has failed, a visitor still needs
+  // one to report an emergency from here on.
+  useEffect(() => {
+    if (failed) void ensureAnonymousSession()
+  }, [failed])
 
   return (
     <AppShell variant="flow" title={t('เข้าสู่ระบบ')}>
@@ -115,7 +131,7 @@ export default function LineCallback() {
         ) : (
           <ErrorState
             title={t('เข้าสู่ระบบไม่สำเร็จ')}
-            description={t('ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง')}
+            description={errorMessage || t('ไม่สามารถยืนยันการเข้าสู่ระบบด้วย LINE ได้ กรุณาลองอีกครั้ง')}
             onRetry={() => navigate('/login')}
             retryLabel={t('กลับไปเข้าสู่ระบบ')}
           />

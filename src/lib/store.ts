@@ -1118,7 +1118,8 @@ export const useStore = create<ResQState>()(
           activeCaseId: null,
           notifications: [],
           caseSeq: 0,
-          hydratedDemo: false,
+          // Cleared on purpose -- don't re-seed the sample case next load.
+          hydratedDemo: true,
         }),
     }),
     {

@@ -71,7 +71,9 @@ export default function Profile() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (!currentUser) {
+  // An anonymous visitor's session has a placeholder profile, not an
+  // account -- there's nothing of theirs to edit until they log in.
+  if (!currentUser || currentUser.isAnonymous) {
     return (
       <AppShell variant="dashboard" title={t('ข้อมูลส่วนตัว')}>
         <ErrorState

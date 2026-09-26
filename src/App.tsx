@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store'
 import { useTabVisibility } from '@/lib/useReducedMotion'
 import { initSupabaseCaseSync } from '@/lib/supabaseCaseSync'
 import { startRoadClosureSync } from '@/lib/roadClosures'
-import { ensureAnonymousSession, onAuthChange } from '@/lib/auth'
+import { ensureAnonymousSession, getCurrentUser, isAuthCallbackPath, isLiveSessionUser, onAuthChange } from '@/lib/auth'
 import { primeAudio } from '@/lib/alertSound'
 import { initNativeNotifications } from '@/lib/nativeNotify'
 import { ToastViewport } from '@/components/ToastNotification'
@@ -110,9 +110,12 @@ export default function App() {
     // than one that hangs forever on a loading state.
     const timeout = window.setTimeout(() => setAuthResolved(true), 4000)
 
-    void ensureAnonymousSession().then((user) => {
+    // On an auth callback the page establishes the real session itself --
+    // just read whatever session exists rather than starting an anonymous
+    // one that could race it and win.
+    void (isAuthCallbackPath() ? getCurrentUser() : ensureAnonymousSession()).then(async (user) => {
       setAuthResolved(true)
-      if (!user) return
+      if (!user || !(await isLiveSessionUser(user.id))) return
       setUser(user)
       syncFor(user.id)
       // The mount-time refreshOrgs() above fires before this session exists,

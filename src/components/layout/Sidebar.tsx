@@ -14,6 +14,8 @@ registerTranslations({
   แก้ไขข้อมูลส่วนตัว: 'Edit profile',
   แจ้งเหตุฉุกเฉิน: 'Report an emergency',
   เครื่องมือ: 'Tools',
+  ยังไม่ได้เข้าสู่ระบบ: 'Not signed in',
+  เข้าสู่ระบบ: 'Log in',
 })
 
 interface SidebarProps {
@@ -23,6 +25,8 @@ interface SidebarProps {
    * banner so they don't mistake it for their own account, plus a way back. */
   viewingAs?: Role | null
   onExitView?: () => void
+  /** Signed in with a real account, not just an anonymous visitor session. */
+  loggedIn: boolean
 }
 
 function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -43,7 +47,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
   )
 }
 
-export function Sidebar({ items, role, viewingAs, onExitView }: SidebarProps) {
+export function Sidebar({ items, role, viewingAs, onExitView, loggedIn }: SidebarProps) {
   const location = useLocation()
   const t = useT()
 
@@ -70,11 +74,18 @@ export function Sidebar({ items, role, viewingAs, onExitView }: SidebarProps) {
         </div>
       )}
 
-      <Link to="/profile" className="block px-6 py-4 hover:bg-skyblue-light">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t('บทบาทปัจจุบัน')}</p>
-        <p className="mt-1 font-bold text-ink">{t(roleLabel(role))}</p>
-        <p className="mt-0.5 text-xs text-primary">{t('แก้ไขข้อมูลส่วนตัว')}</p>
-      </Link>
+      {loggedIn ? (
+        <Link to="/profile" className="block px-6 py-4 hover:bg-skyblue-light">
+          <p className="text-xs font-semibold text-muted">{t('บทบาทปัจจุบัน')}</p>
+          <p className="mt-1 font-bold text-ink">{t(roleLabel(role))}</p>
+          <p className="mt-0.5 text-xs text-primary">{t('แก้ไขข้อมูลส่วนตัว')}</p>
+        </Link>
+      ) : (
+        <Link to="/login" className="block px-6 py-4 hover:bg-skyblue-light">
+          <p className="font-bold text-ink">{t('ยังไม่ได้เข้าสู่ระบบ')}</p>
+          <p className="mt-0.5 text-xs text-primary">{t('เข้าสู่ระบบ')}</p>
+        </Link>
+      )}
 
       <nav className="flex-1 space-y-1 px-3">
         {items.filter((item) => !item.tool).map((item) => (

@@ -198,8 +198,33 @@ export async function signInWithGoogle(): Promise<void> {
 }
 
 const LINE_LOGIN_CHANNEL_ID = import.meta.env.VITE_LINE_LOGIN_CHANNEL_ID as string | undefined
-const LINE_STATE_KEY = 'resq-line-login-state'
-const LINE_MODE_KEY = 'resq-line-login-mode'
+// Pending LINE logins, by state. localStorage rather than sessionStorage: on
+// a phone LINE often confirms in its own app and then opens the callback in
+// a NEW browser tab, which has none of the old tab's sessionStorage -- so
+// the callback was refused ("sometimes LINE login fails"). Several can be
+// pending at once (a retry after an abandoned attempt); each expires.
+const LINE_PENDING_KEY = 'resq-line-login-pending'
+const LINE_PENDING_TTL_MS = 15 * 60_000
+
+type PendingLineLogins = Record<string, { mode: LineAuthMode; at: number }>
+
+function readPendingLineLogins(): PendingLineLogins {
+  try {
+    const all = JSON.parse(localStorage.getItem(LINE_PENDING_KEY) ?? '{}') as PendingLineLogins
+    const now = Date.now()
+    return Object.fromEntries(Object.entries(all).filter(([, v]) => now - v.at < LINE_PENDING_TTL_MS))
+  } catch {
+    return {}
+  }
+}
+
+function writePendingLineLogins(pending: PendingLineLogins): void {
+  try {
+    localStorage.setItem(LINE_PENDING_KEY, JSON.stringify(pending))
+  } catch {
+    // Storage full or blocked -- the callback will then refuse, as before.
+  }
+}
 
 export type LineAuthMode = 'login' | 'link'
 
@@ -240,8 +265,7 @@ export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<AppU
   }
 
   const state = randomToken()
-  sessionStorage.setItem(LINE_STATE_KEY, state)
-  sessionStorage.setItem(LINE_MODE_KEY, mode)
+  writePendingLineLogins({ ...readPendingLineLogins(), [state]: { mode, at: Date.now() } })
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: LINE_LOGIN_CHANNEL_ID,
@@ -254,21 +278,17 @@ export async function signInWithLine(mode: LineAuthMode = 'login'): Promise<AppU
   return null
 }
 
-/** Reads back and clears the state saved just before redirecting to LINE --
- * a mismatch (or nothing stored, e.g. a replayed/forged callback URL) means
- * this isn't a callback we actually initiated. Web-only: native never
- * redirects anywhere, see signInWithLine. */
-export function consumeLineLoginState(): { redirectUri: string; mode: LineAuthMode } | null {
-  const state = sessionStorage.getItem(LINE_STATE_KEY)
-  const mode: LineAuthMode = sessionStorage.getItem(LINE_MODE_KEY) === 'link' ? 'link' : 'login'
-  sessionStorage.removeItem(LINE_STATE_KEY)
-  sessionStorage.removeItem(LINE_MODE_KEY)
-  if (!state) return null
-  return { redirectUri: lineRedirectUri(), mode }
-}
-
-export function getStoredLineState(): string | null {
-  return sessionStorage.getItem(LINE_STATE_KEY)
+/** Looks up and clears the pending login this callback's `state` belongs
+ * to -- nothing found (a replayed or forged callback URL, or one older than
+ * the TTL) means this isn't a callback this browser initiated. Web-only:
+ * native never redirects anywhere, see signInWithLine. */
+export function consumeLineLoginState(state: string): { redirectUri: string; mode: LineAuthMode } | null {
+  const pending = readPendingLineLogins()
+  const entry = pending[state]
+  delete pending[state]
+  writePendingLineLogins(pending)
+  if (!entry) return null
+  return { redirectUri: lineRedirectUri(), mode: entry.mode }
 }
 
 interface LineExchangeResult {
@@ -361,6 +381,16 @@ export async function unlinkLineIdentity(userId: string): Promise<void> {
   if (error) throw error
 }
 
+/** Whether `userId` is still who the live session belongs to. A profile
+ * fetched for an earlier session -- the anonymous one a LINE or Google login
+ * is replacing -- can resolve after the new one, and must not overwrite it
+ * (that flipped a successful login back to "not logged in"). */
+export async function isLiveSessionUser(userId: string | null): Promise<boolean> {
+  if (!supabase) return true
+  const { data } = await supabase.auth.getSession()
+  return (data.session?.user.id ?? null) === userId
+}
+
 export function onAuthChange(callback: (user: AppUser | null) => void): () => void {
   if (!supabaseEnabled || !supabase) return () => {}
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -368,7 +398,20 @@ export function onAuthChange(callback: (user: AppUser | null) => void): () => vo
       callback(null)
       return
     }
-    void fetchProfile(session.user.id, !!session.user.is_anonymous).then(callback)
+    const userId = session.user.id
+    void fetchProfile(userId, !!session.user.is_anonymous).then(async (profile) => {
+      // A brand-new social login has a session before its profiles row
+      // exists (ensureSocialProfile creates it next, and sets the user
+      // itself) -- "no profile" here doesn't mean signed out.
+      if (!profile) return
+      if (await isLiveSessionUser(userId)) callback(profile)
+    })
   })
   return () => data.subscription.unsubscribe()
+}
+
+/** On an OAuth/LINE return the callback page establishes the session itself;
+ * an anonymous sign-in started alongside it could land last and replace it. */
+export function isAuthCallbackPath(pathname = window.location.pathname): boolean {
+  return /\/auth\/(line-)?callback\/?$/.test(pathname)
 }

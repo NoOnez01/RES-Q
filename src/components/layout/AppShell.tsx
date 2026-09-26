@@ -23,6 +23,7 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
   // never falls back to it for a non-admin account.
   const effectiveRole = currentUser?.isAdmin && viewingRole ? viewingRole : (currentUser?.role ?? null)
   const items = navItemsForRole(effectiveRole, !!currentUser?.isOrgLead)
+  const loggedIn = !!currentUser && !currentUser.isAnonymous
 
   if (variant === 'dashboard') {
     return (
@@ -32,8 +33,15 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
           role={effectiveRole}
           viewingAs={currentUser?.isAdmin && viewingRole ? viewingRole : null}
           onExitView={() => setViewingRole(null)}
+          loggedIn={loggedIn}
         />
-        <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} items={items} />
+        <MobileMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          items={items}
+          showAuthLinks={!loggedIn}
+          loggedInUser={loggedIn ? currentUser : null}
+        />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <TopNavigation variant="dashboard" title={title} onMenuClick={() => setMenuOpen(true)} />
           <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pb-8 lg:px-8">{children}</main>
@@ -51,8 +59,6 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
       </div>
     )
   }
-
-  const loggedIn = !!currentUser && !currentUser.isAnonymous
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">

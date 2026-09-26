@@ -264,13 +264,19 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
                 </span>
               )}
             </button>
-            <button
-              onClick={() => navigate('/profile')}
-              aria-label={t('ข้อมูลส่วนตัว')}
-              className="rounded-lg p-1.5 text-ink hover:bg-skyblue-light"
-            >
-              <Avatar url={currentUser?.avatarUrl} className="size-6" />
-            </button>
+            {loggedIn ? (
+              <button
+                onClick={() => navigate('/profile')}
+                aria-label={t('ข้อมูลส่วนตัว')}
+                className="rounded-lg p-1.5 text-ink hover:bg-skyblue-light"
+              >
+                <Avatar url={currentUser?.avatarUrl} className="size-6" />
+              </button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+                {t('เข้าสู่ระบบ')}
+              </Button>
+            )}
           </>
         )}
       </div>
