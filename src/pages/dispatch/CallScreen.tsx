@@ -84,18 +84,19 @@ export default function DispatchCallScreen() {
 
   // The call ending is driven purely by the synced callStatus field, so this
   // fires the same way whether WE hung up or the citizen on the other end
-  // did — one side ending the call ends it for both.
+  // did — one side ending the call ends it for both. Straight on to the
+  // case itself: what was just heard gets assessed next.
   useEffect(() => {
     if (emergencyCase?.callStatus !== 'ended' || hasNavigatedAway.current) return
     hasNavigatedAway.current = true
     toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
-    const timer = setTimeout(() => navigate('/dispatch/incoming-call'), 1200)
+    const timer = setTimeout(() => navigate(`/dispatch/case/${id}`, { replace: true }), 1200)
     return () => clearTimeout(timer)
     // `t` intentionally omitted -- see Navigation.tsx's GPS-watch effect for
     // why (a new closure every render from useT()); this toast only ever
     // fires once per call anyway (guarded by hasNavigatedAway above).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emergencyCase?.callStatus, navigate])
+  }, [emergencyCase?.callStatus, navigate, id])
 
   if (!id || !emergencyCase) {
     return (

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Camera, MapPin, User } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
 import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
@@ -7,6 +8,8 @@ import { isStillRinging } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { IncomingCallScreen } from './call/IncomingCallScreen'
+import { IncomingCallPopup, type IncomingCallDetail } from './call/IncomingCallPopup'
+import type { EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -18,6 +21,10 @@ registerTranslations({
   'ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา': 'Dispatch Center 1669 is inviting you to the call',
   'เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ': 'Case {caseNumber} · talk with the reporter',
   เข้าร่วม: 'Join',
+  ภายหลัง: 'Later',
+  ผู้แจ้งเหตุ: 'Reporter',
+  ยังไม่ระบุตำแหน่ง: 'No location set yet',
+  'แนบรูปภาพแล้ว {n} รูป': '{n} photo(s) attached',
   หน่วยกู้ชีพ: 'Rescue team',
   'สายวิดีโอเรียกเข้า · เหตุหมายเลข {caseNumber}': 'Incoming video call · case {caseNumber}',
 })
@@ -157,40 +164,94 @@ export function CallRingtoneBridge() {
 
   if (!visibleCall) return null
 
-  const dismiss = () => setDismissedCallIds((prev) => new Set(prev).add(visibleCall.id))
+  const c = visibleCall
+  const dismiss = () => setDismissedCallIds((prev) => new Set(prev).add(c.id))
+  const waitingCount = ringingForMe.length - 1 - ringingForMe.filter((r) => r.id !== c.id && dismissedCallIds.has(r.id)).length
 
+  // What's already known about the case, so it's answered knowing where
+  // and what.
+  const details = (who: IncomingCallDetail | null): IncomingCallDetail[] =>
+    [
+      who,
+      c.incidentDetails?.incidentType ? { icon: <AlertTriangle />, text: c.incidentDetails.incidentType } : null,
+      { icon: <MapPin />, text: c.location?.address ?? t('ยังไม่ระบุตำแหน่ง') },
+      c.photos.length > 0 ? { icon: <Camera />, text: t('แนบรูปภาพแล้ว {n} รูป', { n: c.photos.length }) } : null,
+    ].filter((d): d is IncomingCallDetail => d !== null)
+
+  // A popup in the middle of the screen, unless this device is already on a
+  // call -- then the banner, so nothing covers the live conversation.
   if (role === 'rescue') {
-    return (
+    const answer = () => {
+      acceptRescueCallInvite(c.id)
+      navigate(`/rescue/join-call/${c.id}`)
+    }
+    return inConversation ? (
       <IncomingCallAlert
         callerRole="dispatch"
         title={t('ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา')}
-        message={t('เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ', { caseNumber: visibleCall.caseNumber })}
+        message={t('เหตุหมายเลข {caseNumber} · สนทนากับผู้แจ้งเหตุ', { caseNumber: c.caseNumber })}
         answerLabel={t('เข้าร่วม')}
-        onAnswer={() => {
-          acceptRescueCallInvite(visibleCall.id)
-          navigate(`/rescue/join-call/${visibleCall.id}`)
-        }}
+        onAnswer={answer}
+        onDismiss={dismiss}
+      />
+    ) : (
+      <IncomingCallPopup
+        callerRole="dispatch"
+        title={t('ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา')}
+        caseNumber={c.caseNumber}
+        details={details(null)}
+        ringingSince={c.rescueCallInvite?.invitedAt}
+        waitingCount={waitingCount}
+        answerLabel={t('เข้าร่วม')}
+        dismissLabel={t('ภายหลัง')}
+        onAnswer={answer}
         onDismiss={dismiss}
       />
     )
   }
 
-  return (
+  const answer = () => {
+    answerCall(c.id)
+    toast({
+      title: t('รับสายแล้ว'),
+      message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber: c.caseNumber }),
+      tone: 'success',
+    })
+    navigate(`/dispatch/call/${c.id}`)
+  }
+  const callerRole = c.activeCallerRole === 'rescue' ? 'rescue' : 'public'
+  return inConversation ? (
     <IncomingCallAlert
-      callerRole={visibleCall.activeCallerRole === 'rescue' ? 'rescue' : 'public'}
+      callerRole={callerRole}
       title={t('สายเรียกเข้าใหม่')}
-      message={t('สายเรียกเข้าจากเหตุหมายเลข {caseNumber}', { caseNumber: visibleCall.caseNumber })}
+      message={t('สายเรียกเข้าจากเหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}
       answerLabel={t('รับสาย')}
-      onAnswer={() => {
-        answerCall(visibleCall.id)
-        toast({
-          title: t('รับสายแล้ว'),
-          message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber: visibleCall.caseNumber }),
-          tone: 'success',
-        })
-        navigate(`/dispatch/call/${visibleCall.id}`)
-      }}
+      onAnswer={answer}
+      onDismiss={dismiss}
+    />
+  ) : (
+    <IncomingCallPopup
+      callerRole={callerRole}
+      title={t('สายเรียกเข้าใหม่')}
+      caseNumber={c.caseNumber}
+      details={details(callerLine(c, t))}
+      ringingSince={c.callRingStartedAt ?? c.callRingingAt}
+      waitingCount={waitingCount}
+      answerLabel={t('รับสาย')}
+      dismissLabel={t('ภายหลัง')}
+      onAnswer={answer}
       onDismiss={dismiss}
     />
   )
+}
+
+/** Who's on the line: the reporter (with the number they gave), or the
+ * rescue team when a crew is the one calling in. */
+function callerLine(c: EmergencyCase, t: ReturnType<typeof useT>): IncomingCallDetail {
+  if (c.activeCallerRole === 'rescue') {
+    return { icon: <User />, text: c.assignedRescueTeam?.name ?? t('หน่วยกู้ชีพ') }
+  }
+  const phone = c.incidentDetails?.callbackPhone ?? c.reporterPhone
+  const name = c.reporterName ?? t('ผู้แจ้งเหตุ')
+  return { icon: <User />, text: phone ? `${name} · ${phone}` : name }
 }

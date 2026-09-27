@@ -393,6 +393,9 @@ export interface EmergencyCase {
   /** When callStatus last became 'connecting' -- receivers stop ringing a
    * call that has rung too long (see lib/calls.ts). */
   callRingingAt?: number
+  /** When this call first started ringing. callRingingAt moves with every
+   * re-stamp (useKeepRinging); this doesn't, so "ringing for 0:40" is real. */
+  callRingStartedAt?: number
   callDurationSec: number
   /** Set alongside callStatus 'connecting' -- see CallerRole. */
   activeCallerRole?: CallerRole
