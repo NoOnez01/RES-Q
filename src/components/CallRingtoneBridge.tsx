@@ -44,6 +44,7 @@ export function CallRingtoneBridge() {
   const currentUser = useStore((s) => s.currentUser)
   const activeCaseId = useStore((s) => s.activeCaseId)
   const answerCall = useStore((s) => s.answerCall)
+  const setDispatchCallCaseId = useStore((s) => s.setDispatchCallCaseId)
   const acceptRescueCallInvite = useStore((s) => s.acceptRescueCallInvite)
   const answerRescueCall = useStore((s) => s.answerRescueCall)
   const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
@@ -220,7 +221,9 @@ export function CallRingtoneBridge() {
       message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber: c.caseNumber }),
       tone: 'success',
     })
-    navigate(`/dispatch/call/${c.id}`)
+    // The call opens full screen over the case itself (DispatchCallHost).
+    setDispatchCallCaseId(c.id)
+    navigate(`/dispatch/case/${c.id}`)
   }
   const callerRole = c.activeCallerRole === 'rescue' ? 'rescue' : 'public'
   return inConversation ? (

@@ -134,6 +134,11 @@ interface ResQState {
   currentUser: AppUser | null
   cases: Record<string, EmergencyCase>
   activeCaseId: string | null
+  /** The case whose call this dispatcher is on. Held app-wide (see
+   * DispatchCallHost) so the call stays up while they move between the
+   * case, its assessment, and assigning a rescue team. */
+  dispatchCallCaseId: string | null
+  setDispatchCallCaseId: (caseId: string | null) => void
   notifications: AppNotification[]
   caseSeq: number
   hydratedDemo: boolean
@@ -336,6 +341,8 @@ export const useStore = create<ResQState>()(
       setAuthResolved: (resolved) => set({ authResolved: resolved }),
       cases: {},
       activeCaseId: null,
+      dispatchCallCaseId: null,
+      setDispatchCallCaseId: (caseId) => set({ dispatchCallCaseId: caseId }),
       notifications: [],
       caseSeq: 0,
       hydratedDemo: false,
@@ -357,7 +364,7 @@ export const useStore = create<ResQState>()(
 
       setUser: (user) => set({ currentUser: user }),
       logout: () => {
-        set({ currentUser: null, viewingRole: null })
+        set({ currentUser: null, viewingRole: null, dispatchCallCaseId: null })
         void authSignOut()
       },
 

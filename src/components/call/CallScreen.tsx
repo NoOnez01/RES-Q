@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import type { Track } from 'livekit-client'
-import { AlertTriangle, ChevronDown, Mic, MicOff, PhoneOff, RefreshCw, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ClipboardList, Mic, MicOff, PhoneOff, RefreshCw, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
 import type { CallParticipant, LiveKitCall } from '@/lib/useLiveKitCall'
 import type { EmergencyCase } from '@/lib/types'
 import { formatDuration } from '@/lib/utils'
@@ -378,6 +378,9 @@ export interface CallScreenProps {
   note?: string
   /** Top-right action, e.g. dispatch pulling the rescue team into the call. */
   action?: { label: string; onClick: () => void }
+  /** Open the case while the call carries on: shrinks the call to its
+   * floating tile, then `onOpen` shows the case underneath. */
+  details?: { label: string; onOpen: () => void }
   /** A status pill under the header, e.g. an invite that's ringing. */
   banner?: { text: string; actionLabel?: string; onAction?: () => void }
 }
@@ -404,6 +407,7 @@ export function CallScreen({
   endLabel,
   note,
   action,
+  details,
   banner,
 }: CallScreenProps) {
   const t = useT()
@@ -647,14 +651,16 @@ export function CallScreen({
       <div
         onClick={stop}
         className={clsx(
-          'relative flex items-start gap-3 bg-gradient-to-b from-navy/80 via-navy/40 to-transparent px-3 pb-10 pt-[calc(env(safe-area-inset-top)+0.75rem)] transition-opacity duration-300',
+          'relative grid grid-cols-[1fr_auto_1fr] items-start gap-3 bg-gradient-to-b from-navy/80 via-navy/40 to-transparent px-3 pb-10 pt-[calc(env(safe-area-inset-top)+0.75rem)] transition-opacity duration-300',
           controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
       >
-        <RoundIconButton label={t('ย่อหน้าจอสาย')} onClick={() => setMinimized(true)} disabled={ended}>
-          <ChevronDown />
-        </RoundIconButton>
-        <div className="min-w-0 flex-1 pt-0.5 text-center">
+        <div className="justify-self-start">
+          <RoundIconButton label={t('ย่อหน้าจอสาย')} onClick={() => setMinimized(true)} disabled={ended}>
+            <ChevronDown />
+          </RoundIconButton>
+        </div>
+        <div className="min-w-0 max-w-[46vw] pt-0.5 text-center">
           {!hero && (
             <>
               <p className="flex items-center justify-center gap-1.5 font-bold">
@@ -669,13 +675,29 @@ export function CallScreen({
             </>
           )}
         </div>
-        {action ? (
-          <RoundIconButton label={action.label} onClick={action.onClick} disabled={ended}>
-            <UserPlus />
-          </RoundIconButton>
-        ) : (
-          <span className="size-11 shrink-0" aria-hidden="true" />
-        )}
+        <div className="flex items-center justify-end gap-2">
+          {details && (
+            <button
+              type="button"
+              aria-label={details.label}
+              title={details.label}
+              disabled={ended}
+              onClick={() => {
+                setMinimized(true)
+                details.onOpen()
+              }}
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/15 px-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 disabled:opacity-40 sm:px-4"
+            >
+              <ClipboardList className="size-5" aria-hidden="true" />
+              <span className="hidden sm:inline">{details.label}</span>
+            </button>
+          )}
+          {action && (
+            <RoundIconButton label={action.label} onClick={action.onClick} disabled={ended}>
+              <UserPlus />
+            </RoundIconButton>
+          )}
+        </div>
       </div>
 
       {(banner || cameraError) && (

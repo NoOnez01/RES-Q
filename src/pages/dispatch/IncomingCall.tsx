@@ -30,6 +30,7 @@ export default function IncomingCall() {
   const navigate = useNavigate()
   const cases = useStore((s) => s.cases)
   const answerCall = useStore((s) => s.answerCall)
+  const setDispatchCallCaseId = useStore((s) => s.setDispatchCallCaseId)
   const t = useT()
 
   // Only calls actually happening right now — ringing (not yet answered) or
@@ -47,7 +48,8 @@ export default function IncomingCall() {
   function handleAnswer(caseId: string, caseNumber: string) {
     answerCall(caseId)
     toast({ title: t('รับสายแล้ว'), message: t('กำลังสนทนากับผู้แจ้งเหตุ หมายเลข {caseNumber}', { caseNumber }), tone: 'success' })
-    navigate(`/dispatch/call/${caseId}`)
+    setDispatchCallCaseId(caseId)
+    navigate(`/dispatch/case/${caseId}`)
   }
 
   return (
@@ -102,7 +104,8 @@ export default function IncomingCall() {
                             icon={<Video className="size-4" />}
                             onClick={(e) => {
                               e.stopPropagation()
-                              navigate(`/dispatch/call/${c.id}`)
+                              setDispatchCallCaseId(c.id)
+                              navigate(`/dispatch/case/${c.id}`)
                             }}
                           >
                             {t('ไปยังหน้าการสนทนา')}
