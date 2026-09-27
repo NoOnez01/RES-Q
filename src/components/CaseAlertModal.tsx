@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Siren, Ambulance, Building2 } from 'lucide-react'
+import { Siren, Ambulance, Building2, UserX } from 'lucide-react'
 import clsx from 'clsx'
 import { Button } from './ui/Button'
 import type { HandoffAlert } from './NotificationAlertBridge'
@@ -12,10 +12,11 @@ registerTranslations({
   ดูรายละเอียด: 'View details',
 })
 
-const KIND_ICON: Record<HandoffAlert['kind'], React.ComponentType<{ className?: string }>> = {
-  dispatch: Siren,
-  rescue: Ambulance,
-  hospital: Building2,
+const EVENT_ICON: Record<HandoffAlert['event'], React.ComponentType<{ className?: string }>> = {
+  'case-new': Siren,
+  'rescue-rejected': UserX,
+  'rescue-assigned': Ambulance,
+  'hospital-incoming': Building2,
 }
 
 /**
@@ -51,7 +52,7 @@ export function CaseAlertModal({
 
   if (!alert) return null
 
-  const Icon = KIND_ICON[alert.kind]
+  const Icon = EVENT_ICON[alert.event]
 
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">

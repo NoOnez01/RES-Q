@@ -5,7 +5,7 @@ import { useTabVisibility } from '@/lib/useReducedMotion'
 import { initSupabaseCaseSync } from '@/lib/supabaseCaseSync'
 import { startRoadClosureSync } from '@/lib/roadClosures'
 import { ensureAnonymousSession, getCurrentUser, isAuthCallbackPath, isLiveSessionUser, onAuthChange } from '@/lib/auth'
-import { primeAudio } from '@/lib/alertSound'
+import { playUiSound, primeAudio } from '@/lib/sounds'
 import { initNativeNotifications } from '@/lib/nativeNotify'
 import { ToastViewport } from '@/components/ToastNotification'
 import { NotificationAlertBridge } from '@/components/NotificationAlertBridge'
@@ -73,6 +73,9 @@ import CaseHistory from '@/pages/CaseHistory'
 import CurrentCases from '@/pages/CurrentCases'
 import AllScreens from '@/pages/AllScreens'
 import NotFound from '@/pages/NotFound'
+
+const PRESSABLE =
+  'button, a[href], summary, select, input[type="checkbox"], input[type="radio"], [role="button"], [role="tab"], [role="option"], [role="switch"], [role="menuitem"], [role="radio"], [role="checkbox"]'
 
 export default function App() {
   const seedDemoData = useStore((s) => s.seedDemoData)
@@ -143,11 +146,20 @@ export default function App() {
 
   useEffect(() => {
     const unlock = () => primeAudio()
+    // Every control in the app answers a press with a tick -- one listener
+    // here rather than each kind of button wiring its own (a disabled
+    // button fires no click, so it stays silent).
+    const onPress = (e: MouseEvent) => {
+      const control = e.target instanceof Element ? e.target.closest(PRESSABLE) : null
+      if (control && control.getAttribute('aria-disabled') !== 'true' && !control.hasAttribute('data-no-tap-sound')) playUiSound('tap')
+    }
     window.addEventListener('pointerdown', unlock)
     window.addEventListener('keydown', unlock)
+    document.addEventListener('click', onPress, true)
     return () => {
       window.removeEventListener('pointerdown', unlock)
       window.removeEventListener('keydown', unlock)
+      document.removeEventListener('click', onPress, true)
     }
   }, [])
 

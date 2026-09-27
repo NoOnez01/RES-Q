@@ -168,6 +168,7 @@ Dispatch, rescue and hospital dashboards, and the current-cases / case-history l
 - **Style:** white background, Hairline Border stroke, `rounded-xl` corners, label above the field in navy semibold.
 - **Focus:** border shifts to Command Blue plus a `ring-4` Command-Blue-at-15% halo.
 - **Error:** border and message switch to Alert Red; error text always carries an icon (never color alone).
+- **Missing on submit:** a submit button stays pressable even while its form is incomplete. Pressing it plays the error sound and takes the person to the first missing field: scrolled to the middle of the screen, cursor in it (`revealMissingField`, src/lib/formErrors.ts). A disabled button that gives no reason is not used for "not filled in yet".
 
 ### Navigation
 - Sticky top bar, white at 90% opacity with backdrop blur, one persistent brand mark (favicon + "ResQ" wordmark) on the left. Active nav link gets a Command Blue underline bar and text color, not a background fill. Logged-in account access is a single dropdown menu (avatar + name + chevron) carrying every role-specific destination plus logout, rather than scattering icons across the bar.
@@ -187,6 +188,12 @@ Two role dashboards showing the same underlying data (case counts, a list) can s
 
 ### Signature Component: Animated Backgrounds
 Full-bleed decorative SVG/CSS backgrounds (heartbeat line, drifting particles, orbiting rings, mesh gradients) sit behind hero and public-page content at low opacity (never behind staff dashboards or case queues, where they compete with data), `pointer-events-none`, and respect `prefers-reduced-motion` by freezing in place. They exist to keep the "calm but alive" feeling ambient — never to compete with foreground content for attention.
+
+## Sound
+Every sound is synthesized in src/lib/sounds.ts (no audio files). Each kind has its own voice, so it can be told apart without looking at the screen:
+- **Interface** (the user can switch these off in Settings): a tiny dry tick on every press of a control, a two-note rising chime for success, a low hollow falling "uh-uh" for an error or missing information, and a double bell for a warning.
+- **Case alerts** (always on): the more urgent the case, the more it sounds like an alarm. Severity 1 is rising sweeps plus a fast hi-lo, 2 is hi-lo, 3 is a triple beep and a bell, 4 is two bells, 5 is one soft bell. A case not yet triaged gets a hi-lo alarm topped with a bell. A rescue team declining a case is a falling, hollow three-note phrase with two low pulses, unlike any new-case alarm. A patient on the way to a hospital is a rising bell arpeggio, like a paging chime. An alert keeps sounding every 10 s, for up to 5 minutes, until someone acknowledges it.
+- **Calls** (always on): an incoming call is a lively marimba phrase, loud enough to hear across a room. A caller waiting for an answer hears a soft, calm ringback. Connecting and ending each have a two-note chime. Nothing rings into a call already in progress.
 
 ## Do's and Don'ts
 

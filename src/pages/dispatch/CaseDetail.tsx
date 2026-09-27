@@ -19,6 +19,7 @@ import {
   ArrowUpCircle,
   Search,
   Share2,
+  AlertCircle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
@@ -38,7 +39,7 @@ import { ShareCaseModal } from '@/components/ShareCaseModal'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
-import { recommendAssignment, rankRescueTeams, requiredEquipmentFor, nextLevelUp } from '@/lib/rescueAssignment'
+import { recommendAssignment, rankRescueTeams, requiredEquipmentFor, nextLevelUp, teamMatchesQuery } from '@/lib/rescueAssignment'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { toast } from '@/lib/toast'
 import { VEHICLE_LEVEL_RANK } from '@/lib/types'
@@ -48,8 +49,12 @@ import { Textarea, Input, SearchableSelect } from '@/components/ui/Field'
 import { THAILAND_PROVINCE_COORDS } from '@/lib/thailandProvinces'
 import { checkCaseConsistency } from '@/lib/caseHealth'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
+  กรุณาเลือกหน่วยกู้ชีพที่จะมอบหมาย: 'Choose a rescue team to assign',
+  กรุณาเลือกหน่วยสนับสนุน: 'Choose a supporting team',
+  กรุณาบันทึกคำแนะนำที่ให้ก่อนปิดเหตุ: 'Note the advice given before closing the case',
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   ข้อมูลของเหตุไม่สอดคล้องกัน: 'Case data is inconsistent',
   'ข้อมูลของเหตุนี้ไม่สอดคล้องกับสถานะปัจจุบัน ซึ่งอาจทำให้ไม่แสดงขั้นตอนถัดไป กรุณาตรวจสอบและบันทึกข้อมูลที่เกี่ยวข้องอีกครั้ง':
@@ -99,7 +104,8 @@ registerTranslations({
   'เหตุนี้ได้รับการประเมินความรุนแรงแล้ว พร้อมค้นหาหน่วยกู้ชีพที่ใกล้ที่สุด': 'This case has been assessed — ready to search for the nearest rescue team',
   'เลือกหน่วยกู้ชีพที่ต้องการมอบหมาย (เรียงตามความพร้อมและระยะทาง)':
     'Choose which rescue team to assign to this case — sorted by availability and proximity',
-  ค้นหาชื่อหน่วยกู้ชีพ: 'Search rescue team name',
+  ค้นหาหน่วยกู้ชีพด้วยคำสำคัญ: 'Search rescue teams by keyword',
+  'พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ': 'Type any words: name, area, phone, unit code, vehicle level or equipment',
   'กรองตามจังหวัด (ไม่บังคับ)': 'Filter by province (optional)',
   พิมพ์ชื่อจังหวัดเพื่อค้นหา: 'Type a province name to search',
   ไม่พบจังหวัดที่ค้นหา: 'No matching province found',
@@ -218,6 +224,8 @@ export default function DispatchCaseDetail() {
   const [escalateConfirmOpen, setEscalateConfirmOpen] = useState(false)
   const [escalating, setEscalating] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  // Which of this page's forms was just submitted with its choice missing.
+  const [missing, setMissing] = useState<'team' | 'support' | 'close-note' | null>(null)
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null
@@ -259,7 +267,12 @@ export default function DispatchCaseDetail() {
   }
 
   function handleCloseAdvice() {
-    if (!id || !closeAdviceNote.trim()) return
+    if (!id) return
+    if (!closeAdviceNote.trim()) {
+      setMissing('close-note')
+      revealMissingField()
+      return
+    }
     setCloseAdviceLoading(true)
     setTimeout(() => {
       closeCaseWithAdvice(id, closeAdviceNote.trim())
@@ -286,9 +299,10 @@ export default function DispatchCaseDetail() {
         onChange={(e) => setCloseAdviceNote(e.target.value)}
         rows={2}
         placeholder={t('เช่น ให้คำแนะนำการปฐมพยาบาลเบื้องต้น ไม่ต้องส่งหน่วยกู้ชีพ')}
+        error={missing === 'close-note' && !closeAdviceNote.trim() ? t('กรุณาบันทึกคำแนะนำที่ให้ก่อนปิดเหตุ') : undefined}
       />
       <div className="flex gap-2">
-        <Button fullWidth disabled={!closeAdviceNote.trim()} loading={closeAdviceLoading} onClick={handleCloseAdvice}>
+        <Button fullWidth loading={closeAdviceLoading} onClick={handleCloseAdvice}>
           {t('ยืนยันการปิดเหตุ')}
         </Button>
         <Button variant="outline" onClick={() => setShowCloseAdvice(false)} disabled={closeAdviceLoading}>
@@ -355,7 +369,12 @@ export default function DispatchCaseDetail() {
 
   function handleAddSupport() {
     const team = supportCandidates.find((r) => r.team.id === addSupportTeamId)?.team
-    if (!team || !id) return
+    if (!team) {
+      setMissing('support')
+      revealMissingField()
+      return
+    }
+    if (!id) return
     setAddSupportLoading(true)
     setTimeout(() => {
       addSupportingRescueTeam(id, team)
@@ -600,14 +619,19 @@ export default function DispatchCaseDetail() {
                 <p className="text-sm text-muted">
                   {t('เลือกหน่วยกู้ชีพที่ต้องการมอบหมาย (เรียงตามความพร้อมและระยะทาง)')}
                 </p>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-                  <Input
-                    value={teamQuery}
-                    onChange={(e) => setTeamQuery(e.target.value)}
-                    placeholder={t('ค้นหาชื่อหน่วยกู้ชีพ')}
-                    className="pl-11"
-                  />
+                <div className="flex flex-col gap-1">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                    <Input
+                      type="search"
+                      value={teamQuery}
+                      onChange={(e) => setTeamQuery(e.target.value)}
+                      placeholder={t('ค้นหาหน่วยกู้ชีพด้วยคำสำคัญ')}
+                      aria-label={t('ค้นหาหน่วยกู้ชีพด้วยคำสำคัญ')}
+                      className="pl-11"
+                    />
+                  </div>
+                  <p className="text-xs text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
                 </div>
                 <SearchableSelect
                   label={t('กรองตามจังหวัด (ไม่บังคับ)')}
@@ -643,14 +667,19 @@ export default function DispatchCaseDetail() {
                     {t('เหตุนี้ต้องการอุปกรณ์: {list}', { list: recommendation.requiredEquipment.join(', ') })}
                   </p>
                 )}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3" data-field-error={missing === 'team' && !selectedTeamId ? '' : undefined}>
+                  {missing === 'team' && !selectedTeamId && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-emergency">
+                    <AlertCircle className="size-3.5" /> {t('กรุณาเลือกหน่วยกู้ชีพที่จะมอบหมาย')}
+                  </p>
+                )}
                   {(() => {
                     // The ranking already sorts available-first, so the top
                     // available team is the actual recommendation -- never
                     // spotlight an unavailable one just because it's first
                     // in the raw array (only happens if every team is busy).
                     const filtered = recommendation.ranked.filter((r) => {
-                      if (teamQuery.trim() && !r.team.name.toLowerCase().includes(teamQuery.trim().toLowerCase())) return false
+                      if (!teamMatchesQuery(r.team, teamQuery)) return false
                       return teamMatchesProvince(r.team, teamProvinceFilter)
                     })
                     const topAvailableId = filtered.find((r) => r.available)?.team.id
@@ -734,7 +763,17 @@ export default function DispatchCaseDetail() {
                   </div>
                 )}
 
-                <Button fullWidth disabled={!selectedTeamId} onClick={() => setConfirmOpen(true)}>
+                <Button
+                  fullWidth
+                  onClick={() => {
+                    if (!selectedTeamId) {
+                      setMissing('team')
+                      revealMissingField()
+                      return
+                    }
+                    setConfirmOpen(true)
+                  }}
+                >
                   {supportTeam ? t('มอบหมายทั้ง 2 หน่วย') : t('มอบหมายหน่วยนี้')}
                 </Button>
               </div>
@@ -842,14 +881,19 @@ export default function DispatchCaseDetail() {
                         {t('ต้องการอุปกรณ์: {list}', { list: requiredEquipment.join(', ') })}
                       </p>
                     )}
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-                      <Input
-                        value={supportTeamQuery}
-                        onChange={(e) => setSupportTeamQuery(e.target.value)}
-                        placeholder={t('ค้นหาชื่อหน่วยกู้ชีพ')}
-                        className="pl-11"
-                      />
+                    <div className="flex flex-col gap-1">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                        <Input
+                          type="search"
+                          value={supportTeamQuery}
+                          onChange={(e) => setSupportTeamQuery(e.target.value)}
+                          placeholder={t('ค้นหาหน่วยกู้ชีพด้วยคำสำคัญ')}
+                          aria-label={t('ค้นหาหน่วยกู้ชีพด้วยคำสำคัญ')}
+                          className="pl-11"
+                        />
+                      </div>
+                      <p className="text-xs text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
                     </div>
                     <SearchableSelect
                       label={t('กรองตามจังหวัด (ไม่บังคับ)')}
@@ -859,11 +903,15 @@ export default function DispatchCaseDetail() {
                       emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
                       options={PROVINCE_OPTIONS}
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2" data-field-error={missing === 'support' && !addSupportTeamId ? '' : undefined}>
+                      {missing === 'support' && !addSupportTeamId && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-emergency">
+                    <AlertCircle className="size-3.5" /> {t('กรุณาเลือกหน่วยสนับสนุน')}
+                  </p>
+                )}
                       {(() => {
                         const filteredSupport = supportCandidates.filter((r) => {
-                          if (supportTeamQuery.trim() && !r.team.name.toLowerCase().includes(supportTeamQuery.trim().toLowerCase()))
-                            return false
+                          if (!teamMatchesQuery(r.team, supportTeamQuery)) return false
                           return teamMatchesProvince(r.team, supportProvinceFilter)
                         })
                         if (filteredSupport.length === 0) {
@@ -899,7 +947,7 @@ export default function DispatchCaseDetail() {
                       })()}
                     </div>
                     <div className="flex gap-2">
-                      <Button fullWidth disabled={!addSupportTeamId} loading={addSupportLoading} onClick={handleAddSupport}>
+                      <Button fullWidth loading={addSupportLoading} onClick={handleAddSupport}>
                         {t('ยืนยันเพิ่มหน่วยสนับสนุน')}
                       </Button>
                       <Button

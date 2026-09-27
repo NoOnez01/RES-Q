@@ -103,7 +103,7 @@ export function SpeechToTextPanel({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-field-error={error ? '' : undefined}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-ink">{resolvedLabel}</p>
         {supported ? (
@@ -128,6 +128,7 @@ export function SpeechToTextPanel({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('พิมพ์หรือพูดเพื่อบันทึกข้อความ...')}
+        aria-invalid={error ? true : undefined}
         className={textareaClassName}
       />
       {error && (

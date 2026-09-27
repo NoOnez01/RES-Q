@@ -19,6 +19,7 @@ import { reverseGeocode, type Coords } from '@/lib/geolocation'
 import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
 import type { Severity } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   'มีสติ': 'Conscious',
@@ -136,6 +137,7 @@ export default function DispatchEmergencyAssessment() {
     if (!injuryDescription.trim()) errs.injuryDescription = t('กรุณาระบุลักษณะการบาดเจ็บ')
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
+      revealMissingField()
       setHighlight(true)
       window.setTimeout(() => setHighlight(false), 900)
       return
@@ -283,6 +285,7 @@ export default function DispatchEmergencyAssessment() {
 
           <Card
             className={clsx('flex flex-col gap-2 transition-all', highlight && errors.severity && 'animate-pulse')}
+            data-field-error={errors.severity ? '' : undefined}
           >
             <label className="text-sm font-semibold text-ink">
               {t('ระดับความรุนแรง')}<span className="ml-0.5 text-emergency">*</span>

@@ -6,6 +6,7 @@ import { AlertTriangle, ChevronDown, ClipboardList, Mic, MicOff, PhoneOff, Refre
 import type { CallParticipant, LiveKitCall } from '@/lib/useLiveKitCall'
 import type { EmergencyCase } from '@/lib/types'
 import { formatDuration } from '@/lib/utils'
+import { playCallSound, startRing, stopRing } from '@/lib/sounds'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { CallAvatar, callRoleOf, type CallRole } from './CallAvatar'
 
@@ -384,6 +385,25 @@ function useCallSeconds(answered: boolean, syncedSec: number): number {
   return Math.max(syncedSec, localSec)
 }
 
+/**
+ * What a phone does: a soft ringback while your call waits to be picked
+ * up, a chime when someone's actually on the line with you, and another
+ * when the call ends.
+ */
+function useCallSounds(open: boolean, ringingOut: boolean, withSomeone: boolean) {
+  useEffect(() => {
+    if (!ringingOut) return
+    startRing('outgoing')
+    return () => stopRing('outgoing')
+  }, [ringingOut])
+  const prev = useRef({ open, withSomeone })
+  useEffect(() => {
+    if (withSomeone && !prev.current.withSomeone) playCallSound('connected')
+    if (!open && prev.current.open) playCallSound('ended')
+    prev.current = { open, withSomeone }
+  }, [open, withSomeone])
+}
+
 export interface CallScreenProps {
   call: LiveKitCall
   emergencyCase: EmergencyCase
@@ -463,6 +483,7 @@ export function CallScreen({
   const failed = open && (call.connectionState === 'failed' || call.connectionState === 'disconnected')
   const hero = ended || failed || remotes.length === 0
   const seconds = useCallSeconds(open && !ringing, durationSec ?? 0)
+  useCallSounds(open, open && ringing, open && remotes.length > 0)
   // One person big, everyone else (you included) small; a focused person
   // who has left hands the big screen back to the first one still here.
   const focusId = focus === SELF || remotes.some((p) => p.identity === focus) ? focus : (remotes[0]?.identity ?? null)

@@ -8,6 +8,7 @@ import { RelativeContacts } from '@/components/RelativeContacts'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   ข้อมูลติดต่อกลับ: 'Callback details',
@@ -51,10 +52,12 @@ export default function ContactInfo() {
     const digits = phone.replace(/\D/g, '')
     if (!phone.trim()) {
       setPhoneError(t('กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อกลับ'))
+      revealMissingField()
       return
     }
     if (digits.length < 9 || digits.length > 10) {
       setPhoneError(t('เบอร์โทรศัพท์ไม่ถูกต้อง'))
+      revealMissingField()
       return
     }
     setReporterPhone(id!, phone.trim())

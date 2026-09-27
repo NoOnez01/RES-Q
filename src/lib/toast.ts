@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { uid } from './utils'
-import { playDingSound } from './alertSound'
-import { useStore } from './store'
+import { playUiSound, type UiSound } from './sounds'
 
 export type ToastTone = 'info' | 'success' | 'warning' | 'error'
 
@@ -10,6 +9,13 @@ export interface Toast {
   title: string
   message?: string
   tone: ToastTone
+}
+
+// Each outcome sounds like itself; plain information stays quiet.
+const TONE_SOUND: Partial<Record<ToastTone, UiSound>> = {
+  success: 'success',
+  warning: 'warning',
+  error: 'error',
 }
 
 interface ToastState {
@@ -23,12 +29,6 @@ export const useToastStore = create<ToastState>((set) => ({
   show: (t) => {
     const id = uid('toast')
     set((s) => ({ toasts: [...s.toasts, { ...t, id }] }))
-    // Sound feedback is reserved for staff (1669/rescue/hospital) working an
-    // active case load -- public-facing pages (reporting a case, taking
-    // photos, etc.) stay silent, same policy as Button's click sound.
-    const role = useStore.getState().currentUser?.role
-    const isStaff = role !== undefined && role !== 'public'
-    if (t.tone === 'success' && isStaff) playDingSound()
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) }))
     }, 4200)
@@ -36,6 +36,9 @@ export const useToastStore = create<ToastState>((set) => ({
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })),
 }))
 
-export function toast(t: Omit<Toast, 'id'>) {
+/** `silent`: the caller plays its own sound for this (e.g. a case alert). */
+export function toast({ silent, ...t }: Omit<Toast, 'id'> & { silent?: boolean }) {
   useToastStore.getState().show(t)
+  const sound = TONE_SOUND[t.tone]
+  if (sound && !silent) playUiSound(sound)
 }

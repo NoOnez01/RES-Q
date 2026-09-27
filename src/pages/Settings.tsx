@@ -36,6 +36,8 @@ import { clearAllSupabaseCases } from '@/lib/supabaseCaseSync'
 import { supabase } from '@/lib/supabase'
 import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
 import { isNativeApp } from '@/lib/nativeNotify'
+import { SoundSettingsCard } from '@/components/SoundSettingsCard'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   ตั้งค่า: 'Settings',
@@ -181,14 +183,17 @@ export default function Settings() {
     setPasswordError('')
     if (!hasRealEmail && !/^\S+@\S+\.\S+$/.test(newEmail)) {
       setPasswordError(t('กรุณากรอกอีเมลให้ถูกต้อง'))
+      revealMissingField()
       return
     }
     if (newPassword.length < 6) {
       setPasswordError(t('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'))
+      revealMissingField()
       return
     }
     if (newPassword !== confirmPassword) {
       setPasswordError(t('รหัสผ่านทั้งสองช่องไม่ตรงกัน'))
+      revealMissingField()
       return
     }
     if (!supabase) return
@@ -349,6 +354,8 @@ export default function Settings() {
           </div>
         </Card>
 
+        <SoundSettingsCard style={{ animationDelay: '22ms', animationFillMode: 'backwards' }} />
+
         {currentUser && !currentUser.isAnonymous && (
           <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}>
             <h3 className="flex items-center gap-2 font-bold text-ink">
@@ -447,7 +454,6 @@ export default function Settings() {
                 size="sm"
                 className="self-start"
                 loading={passwordLoading}
-                disabled={!newPassword || !confirmPassword || (!hasRealEmail && !newEmail)}
                 onClick={handleSaveEmailPassword}
               >
                 {hasRealEmail ? t('บันทึกรหัสผ่านใหม่') : t('บันทึก')}

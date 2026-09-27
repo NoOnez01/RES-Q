@@ -25,8 +25,10 @@ import { useSimulatedProgress } from '@/lib/useSimulatedProgress'
 import { CLOSURE_REASON_LABEL, reportRoadClosure, useRoadClosures, type ClosureReason } from '@/lib/roadClosures'
 import type { GeoLocation } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
+  กรุณาระบุอาการของผู้ป่วยก่อนบันทึก: "Describe the patient's condition before saving",
   แจ้งเส้นทางถูกปิด: 'Report road closed',
   'เจอถนนที่ผ่านไม่ได้ แจ้งไว้เพื่อให้ทุกหน่วยเลี่ยงเส้นทางนี้': "Found a road you can't get through? Report it so every unit avoids it",
   'ระบบจะบันทึกตำแหน่งปัจจุบันของรถเป็นจุดที่ถนนถูกปิด และคำนวณเส้นทางใหม่ที่เลี่ยงจุดนี้ให้ทุกหน่วย (หมดอายุอัตโนมัติใน 6 ชั่วโมง)':
@@ -84,6 +86,7 @@ export default function NavigationPage() {
   const t = useT()
 
   const [updateNote, setUpdateNote] = useState('')
+  const [updateMissing, setUpdateMissing] = useState(false)
   const [updateLoading, setUpdateLoading] = useState(false)
 
   // Real device GPS is opt-in (defaults to the existing simulated progress
@@ -240,7 +243,12 @@ export default function NavigationPage() {
   }
 
   function handleAddUpdate() {
-    if (!id || !updateNote.trim()) return
+    if (!id) return
+    if (!updateNote.trim()) {
+      setUpdateMissing(true)
+      revealMissingField()
+      return
+    }
     setUpdateLoading(true)
     setTimeout(() => {
       addPatientUpdate(id, updateNote.trim())
@@ -327,12 +335,12 @@ export default function NavigationPage() {
                 value={updateNote}
                 onChange={setUpdateNote}
                 label={t('มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)')}
+                error={updateMissing && !updateNote.trim() ? t('กรุณาระบุอาการของผู้ป่วยก่อนบันทึก') : undefined}
               />
               <Button
                 variant="secondary"
                 size="sm"
                 loading={updateLoading}
-                disabled={!updateNote.trim()}
                 onClick={handleAddUpdate}
               >
                 {t('บันทึกอาการ')}

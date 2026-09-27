@@ -115,3 +115,34 @@ export function recommendAssignment(
     : null
   return { ranked, requiredEquipment, primary, needsSupport, support }
 }
+
+// Built once per team object -- the list is filtered on every keystroke,
+// and a nationwide import runs to thousands of teams.
+const searchText = new WeakMap<RescueTeam, string>()
+
+function teamSearchText(team: RescueTeam): string {
+  let text = searchText.get(team)
+  if (text === undefined) {
+    const parts = [team.name, team.base.address, team.phone, team.phone.replace(/\D/g, '')]
+    for (const v of team.vehicles) {
+      parts.push(v.unitCode, v.vehicle, v.level ?? 'BLS', v.plateNumber ?? '', v.driverName ?? '', ...v.equipment)
+    }
+    text = parts.join(' ').toLowerCase()
+    searchText.set(team, text)
+  }
+  return text
+}
+
+/**
+ * Whether a team matches what 1669 typed to find it: every word has to
+ * appear somewhere in the team -- its name, where it's based, its phone
+ * number, or any of its vehicles (unit code, kind, level, plate, driver,
+ * equipment). So "นครพิงค์ ALS", "053", "เครื่องตัดถ่าง เชียงใหม่" all
+ * work, in any order.
+ */
+export function teamMatchesQuery(team: RescueTeam, query: string): boolean {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return true
+  const text = teamSearchText(team)
+  return words.every((w) => text.includes(w))
+}

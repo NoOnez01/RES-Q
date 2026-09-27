@@ -27,8 +27,11 @@ import { generateCaseSheetPdf } from '@/lib/caseSheetPdf'
 import type { CaseStatus } from '@/lib/types'
 import { Truck } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
+  กรุณาระบุอาการของผู้ป่วยก่อนบันทึก: "Describe the patient's condition before saving",
+  'กรุณาระบุจำนวนเจ้าหน้าที่อย่างน้อย 1 คน': 'Enter at least 1 crew member',
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
   เดินทาง: 'En route',
   ถึงจุดเกิดเหตุ: 'Arrived at scene',
@@ -172,6 +175,8 @@ export default function RescueCaseDetail() {
   const [updateLoading, setUpdateLoading] = useState(false)
   const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
   const [crewCount, setCrewCount] = useState('')
+  // Which form here was just submitted with something missing.
+  const [missing, setMissing] = useState<'crew' | 'update' | null>(null)
   const [exportingPdf, setExportingPdf] = useState(false)
 
   if (!id || !c) {
@@ -224,7 +229,12 @@ export default function RescueCaseDetail() {
   function handleConfirmVehicle() {
     const vehicle = ownVehicles.find((v) => v.id === pendingVehicleId)
     const count = Number(crewCount)
-    if (!vehicle || !c || !crewCount.trim() || Number.isNaN(count) || count < 1) return
+    if (!vehicle || !c) return
+    if (!crewCount.trim() || Number.isNaN(count) || count < 1) {
+      setMissing('crew')
+      revealMissingField()
+      return
+    }
     assignVehicle(c.id, vehicle, count)
     setPendingVehicleId(null)
     toast({ title: t('เลือกรถ/ทีมที่รับผิดชอบแล้ว'), message: t('{unit} · {n} คน', { unit: vehicle.unitCode, n: count }), tone: 'success' })
@@ -243,7 +253,11 @@ export default function RescueCaseDetail() {
   }
 
   function handleAddUpdate() {
-    if (!updateNote.trim()) return
+    if (!updateNote.trim()) {
+      setMissing('update')
+      revealMissingField()
+      return
+    }
     setUpdateLoading(true)
     setTimeout(() => {
       addPatientUpdate(c!.id, updateNote.trim())
@@ -398,11 +412,13 @@ export default function RescueCaseDetail() {
                         label={t('จำนวนเจ้าหน้าที่ที่ออกปฏิบัติงานจริง')}
                         type="number"
                         min={1}
+                        required
                         value={crewCount}
                         onChange={(e) => setCrewCount(e.target.value)}
+                        error={missing === 'crew' && !(Number(crewCount) >= 1) ? t('กรุณาระบุจำนวนเจ้าหน้าที่อย่างน้อย 1 คน') : undefined}
                       />
                       <div className="flex gap-2">
-                        <Button fullWidth onClick={handleConfirmVehicle} disabled={!crewCount.trim()}>
+                        <Button fullWidth onClick={handleConfirmVehicle}>
                           {t('ยืนยันการเลือกรถ/ทีม')}
                         </Button>
                         <Button variant="outline" onClick={() => setPendingVehicleId(null)}>
@@ -427,12 +443,12 @@ export default function RescueCaseDetail() {
                   value={updateNote}
                   onChange={setUpdateNote}
                   label={t('มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)')}
+                  error={missing === 'update' && !updateNote.trim() ? t('กรุณาระบุอาการของผู้ป่วยก่อนบันทึก') : undefined}
                 />
                 <Button
                   variant="secondary"
                   size="sm"
                   loading={updateLoading}
-                  disabled={!updateNote.trim()}
                   onClick={handleAddUpdate}
                 >
                   {t('บันทึกอาการ')}

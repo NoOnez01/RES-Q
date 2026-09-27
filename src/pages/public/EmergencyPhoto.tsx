@@ -18,6 +18,7 @@ import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import { supabaseEnabled } from '@/lib/supabase'
 import type { AudioRecording, Consciousness, PhotoCategory } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   'มีสติ รู้สึกตัวดี': 'Conscious, alert',
@@ -208,6 +209,7 @@ export default function EmergencyPhoto() {
     // (public/ContactInfo.tsx) -- nothing extra to type before reaching 1669.
     if (!consciousness) {
       setConsciousnessError(t('กรุณาระบุว่าผู้ป่วยยังมีสติหรือไม่'))
+      revealMissingField()
       return
     }
     setConsciousnessError(undefined)

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { ToastTone } from '@/lib/toast'
-import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/alertSound'
+import { playAlert, type AlertEvent } from '@/lib/sounds'
 import { showNativeNotification } from '@/lib/nativeNotify'
 import { CaseAlertModal } from './CaseAlertModal'
 import { useInLiveConversation } from '@/lib/useLiveKitCall'
@@ -34,6 +34,8 @@ export interface HandoffAlert {
   message: string
   urgent: boolean
   kind: 'dispatch' | 'rescue' | 'hospital'
+  /** What happened -- picks the alert's sound and icon. */
+  event: Exclude<AlertEvent, 'notice'>
   /**
    * Unique per distinct event, not just per (role, case) — a single case can
    * legitimately need to alert the same role more than once (e.g. dispatch
@@ -69,6 +71,7 @@ function handoffsFor(
         message: t('เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
+        event: 'case-new' as const,
         key: `dispatch-new:${c.id}`,
       }))
     const rejectedCases = cases
@@ -79,6 +82,7 @@ function handoffsFor(
         message: t('หน่วยกู้ชีพปฏิเสธเหตุหมายเลข {caseNumber} กรุณามอบหมายหน่วยใหม่', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'dispatch' as const,
+        event: 'rescue-rejected' as const,
         key: `dispatch-rejected:${c.id}:${c.rescueRejectedAt}`,
       }))
     return [...newCases, ...rejectedCases]
@@ -92,6 +96,7 @@ function handoffsFor(
         message: t('คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ', { caseNumber: c.caseNumber }),
         urgent: false,
         kind: 'rescue' as const,
+        event: 'rescue-assigned' as const,
         key: `rescue-assigned:${c.id}`,
       }))
   }
@@ -109,26 +114,23 @@ function handoffsFor(
         message: t('เหตุหมายเลข {caseNumber} จะนำส่งผู้ป่วยมายังโรงพยาบาลของท่าน กรุณาเตรียมทีมรักษา', { caseNumber: c.caseNumber }),
         urgent: true,
         kind: 'hospital' as const,
+        event: 'hospital-incoming' as const,
         key: `hospital-selected:${c.id}`,
       }))
   }
   return []
 }
 
-/**
- * Severity-specific alert when the case has been triaged, otherwise the
- * plain urgent/soft tone. Hospital handoffs get their own rising-pitch run
- * instead — more distinct and more urgent-reading than the flat patterns
- * used for dispatch/rescue.
- */
+/** Each event has its own sound; a triaged case's also says how urgent it is. */
 function playHandoffSound(h: HandoffAlert) {
-  if (h.kind === 'hospital') {
-    playHospitalAlert(h.case.assessment?.severity)
-    return
-  }
-  if (h.case.assessment) playSeverityAlert(h.case.assessment.severity)
-  else playAlertSound(h.urgent)
+  playAlert(h.event, h.case.assessment?.severity)
 }
+
+// An alert nobody has acknowledged sounds again this often, for up to
+// REPEAT_FOR_MS -- someone who stepped away from the screen still hears it
+// when they come back within reach.
+const REPEAT_EVERY_MS = 10_000
+const REPEAT_FOR_MS = 5 * 60_000
 
 function routeForHandoff(h: HandoffAlert): string {
   if (h.kind === 'dispatch') return `/dispatch/case/${h.case.id}`
@@ -181,10 +183,11 @@ export function NotificationAlertBridge() {
     for (const n of relevantNotifications) {
       if (seenNotificationIds.current.has(n.id)) continue
       seenNotificationIds.current.add(n.id)
-      toast({ title: n.title, message: n.message, tone: TONE_MAP[n.tone] })
-      // Sound is reserved for staff, same policy as Button clicks and toast
-      // dings -- public-facing pages stay silent regardless of tone.
-      if (isStaff && (n.tone === 'emergency' || n.tone === 'warning')) playAlertSound(n.tone === 'emergency')
+      // Staff hear an emergency or warning as an alert; everything else
+      // (and everything for a citizen) sounds like its toast.
+      const alert = isStaff && (n.tone === 'emergency' || n.tone === 'warning')
+      toast({ title: n.title, message: n.message, tone: TONE_MAP[n.tone], silent: alert })
+      if (alert) playAlert('notice')
       if (n.tone === 'emergency' || n.tone === 'warning') void showNativeNotification(n.title, n.message)
     }
 
@@ -212,6 +215,17 @@ export function NotificationAlertBridge() {
   // call screen, hang-up button included. Its sound has already played;
   // it shows the moment the call ends.
   const inConversation = useInLiveConversation()
+
+  // Keeps sounding until it's acknowledged (never into a call).
+  useEffect(() => {
+    if (!activeAlert || inConversation) return
+    const until = Date.now() + REPEAT_FOR_MS
+    const timer = setInterval(() => {
+      if (Date.now() > until) clearInterval(timer)
+      else playHandoffSound(activeAlert)
+    }, REPEAT_EVERY_MS)
+    return () => clearInterval(timer)
+  }, [activeAlert, inConversation])
 
   return (
     <CaseAlertModal

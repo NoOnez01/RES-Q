@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast'
 import { submitCaseFeedback } from '@/lib/caseFeedback'
 import type { EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   ให้คะแนนความพึงพอใจ: 'Rate your satisfaction',
@@ -59,13 +60,16 @@ export function CaseFeedbackForm({
   onSubmitted: () => void
 }) {
   const [rating, setRating] = useState(0)
+  const [ratingMissing, setRatingMissing] = useState(false)
   const [complaint, setComplaint] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const t = useT()
 
   async function handleSubmit() {
     if (rating === 0) {
-      toast({ title: t('กรุณาให้คะแนนก่อนส่ง'), tone: 'warning' })
+      setRatingMissing(true)
+      toast({ title: t('กรุณาให้คะแนนก่อนส่ง'), tone: 'warning', silent: true })
+      revealMissingField()
       return
     }
     setSubmitting(true)
@@ -92,7 +96,9 @@ export function CaseFeedbackForm({
         <p className="font-bold text-ink">{t('ให้คะแนนความพึงพอใจ')}</p>
         <p className="mt-0.5 text-sm text-muted">{t('ความคิดเห็นของท่านช่วยให้เราปรับปรุงบริการได้ดียิ่งขึ้น')}</p>
       </div>
-      <StarPicker value={rating} onChange={setRating} />
+      <div data-field-error={ratingMissing && rating === 0 ? '' : undefined}>
+        <StarPicker value={rating} onChange={setRating} />
+      </div>
       <Textarea
         label={t('ข้อเสนอแนะหรือข้อร้องเรียน (ถ้ามี)')}
         hint={t('ไม่บังคับ')}

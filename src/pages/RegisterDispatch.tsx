@@ -9,6 +9,7 @@ import { SuccessState } from '@/components/States'
 import { registerAccount } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   'กรุณากรอกชื่อ-นามสกุลเจ้าหน้าที่': "Please enter the staff member's full name",
@@ -69,7 +70,9 @@ export default function RegisterDispatch() {
     if (!form.password) next.password = t('กรุณากรอกรหัสผ่าน')
     else if (form.password.length < 6) next.password = t('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
     setErrors(next)
-    return Object.keys(next).length === 0
+    const ok = Object.keys(next).length === 0
+    if (!ok) revealMissingField()
+    return ok
   }
 
   async function handleSubmit(e: React.FormEvent) {

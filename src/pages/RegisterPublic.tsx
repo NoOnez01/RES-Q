@@ -11,6 +11,7 @@ import { useStore } from '@/lib/store'
 import { registerAccount, signIn, signInWithGoogle, signInWithLine } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   'กรุณากรอกชื่อ-นามสกุล': 'Please enter your full name',
@@ -80,7 +81,9 @@ export default function RegisterPublic() {
     else if (form.confirmPassword !== form.password) next.confirmPassword = t('รหัสผ่านไม่ตรงกัน')
     if (!agree) next.agree = t('กรุณายอมรับเงื่อนไขการใช้งาน')
     setErrors(next)
-    return Object.keys(next).length === 0
+    const ok = Object.keys(next).length === 0
+    if (!ok) revealMissingField()
+    return ok
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -226,10 +229,12 @@ export default function RegisterPublic() {
                 onChange={(e) => update('confirmPassword', e.target.value)}
                 error={errors.confirmPassword}
               />
-              <Checkbox checked={agree} onChange={setAgree} label={t('ยอมรับเงื่อนไขการใช้งาน')} />
-              {errors.agree && (
-                <p className="animate-fade-in text-xs font-medium text-emergency">{errors.agree}</p>
-              )}
+              <div className="flex flex-col gap-1.5" data-field-error={errors.agree ? '' : undefined}>
+                <Checkbox checked={agree} onChange={setAgree} label={t('ยอมรับเงื่อนไขการใช้งาน')} />
+                {errors.agree && (
+                  <p className="animate-fade-in text-xs font-medium text-emergency">{errors.agree}</p>
+                )}
+              </div>
               <Button type="submit" fullWidth loading={loading}>
                 {t('สมัครสมาชิก')}
               </Button>

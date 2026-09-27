@@ -28,6 +28,7 @@ import type {
   Severity,
 } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   'A - รู้สึกตัวดี': 'A - Alert',
@@ -410,6 +411,7 @@ export default function RescuePatientRecord() {
   function handleSubmit() {
     if (!firstAid.trim()) {
       setFirstAidError(t('กรุณาระบุการปฐมพยาบาลเบื้องต้น'))
+      revealMissingField()
       return
     }
     setFirstAidError('')
@@ -611,8 +613,12 @@ export default function RescuePatientRecord() {
 
         <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           <SectionHeader index={4} title={t('การปฐมพยาบาล')} />
-          <SpeechToTextPanel value={firstAid} onChange={setFirstAid} label={t('การปฐมพยาบาลเบื้องต้น (พิมพ์หรือพูด)')} />
-          {firstAidError && <p className="text-xs font-medium text-emergency">{firstAidError}</p>}
+          <SpeechToTextPanel
+            value={firstAid}
+            onChange={setFirstAid}
+            label={t('การปฐมพยาบาลเบื้องต้น (พิมพ์หรือพูด)')}
+            error={firstAidError || undefined}
+          />
         </Card>
 
         <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '230ms', animationFillMode: 'backwards' }}>

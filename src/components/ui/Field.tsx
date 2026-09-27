@@ -18,7 +18,8 @@ interface FieldShellProps {
 
 export function FieldShell({ label, hint, error, required, children }: FieldShellProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    // Marked so a failed submit can find and jump to it (lib/formErrors.ts).
+    <div className="flex flex-col gap-1.5" data-field-error={error ? '' : undefined}>
       {label && (
         <label className="text-sm font-semibold text-ink">
           {label}
@@ -54,6 +55,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <FieldShell label={label} hint={hint} error={error} required={required}>
       <input
         ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
           error ? 'border-emergency focus:ring-emergency/15' : 'border-border focus:border-primary',
@@ -80,6 +83,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
     <FieldShell label={label} hint={hint} error={error} required={required}>
       <textarea
         ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
           'min-h-[100px] resize-y',
@@ -107,6 +112,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
     <FieldShell label={label} hint={hint} error={error} required={required}>
       <select
         ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
           'appearance-none bg-[url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23667085" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>\')] bg-[right_0.9rem_center] bg-no-repeat pr-10',
@@ -232,6 +239,8 @@ export function SearchableSelect({
           }}
           placeholder={placeholder}
           autoComplete="off"
+          aria-invalid={error ? true : undefined}
+          aria-required={required || undefined}
           className={clsx(
             baseFieldClasses,
             'pr-10',

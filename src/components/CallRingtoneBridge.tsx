@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Camera, MapPin, User } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { startRingtone, stopRingtone } from '@/lib/alertSound'
+import { startRing, stopRing } from '@/lib/sounds'
 import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
-import { callRingStamp, isRingLive, isStillRinging, rescueCallRingStamp, ringFirstHeard } from '@/lib/calls'
+import { callRingStamp, isRingLive, rescueCallRingStamp, ringFirstHeard } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { IncomingCallScreen } from './call/IncomingCallScreen'
@@ -42,7 +42,6 @@ registerTranslations({
 export function CallRingtoneBridge() {
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
-  const activeCaseId = useStore((s) => s.activeCaseId)
   const answerCall = useStore((s) => s.answerCall)
   const setDispatchCallCaseId = useStore((s) => s.setDispatchCallCaseId)
   const acceptRescueCallInvite = useStore((s) => s.acceptRescueCallInvite)
@@ -101,31 +100,19 @@ export function CallRingtoneBridge() {
     )
   }, [cases, role, currentUser, now])
 
+  // Rings for a call coming in to this person -- staff for their queue, a
+  // citizen for rescue calling them. Their own outgoing call rings back
+  // softly from its call screen instead (CallScreen).
+  const incoming = ringingForMe.length > 0 || citizenIncoming !== null
   useEffect(() => {
-    let shouldRing = ringingForMe.length > 0
-    if (role === 'public') {
-      const activeCase = activeCaseId ? cases[activeCaseId] : null
-      // Either their outgoing call to 1669 still ringing, or rescue calling
-      // them on any case they reported (not only the "active" one). Only
-      // their *own* cases -- an admin working with a citizen profile has
-      // every case in the store and would otherwise ring for all of them.
-      shouldRing =
-        (activeCase?.callStatus === 'connecting' && isStillRinging(callRingStamp(activeCase), now)) ||
-        Object.values(cases).some(
-          (c) =>
-            c.reporterUserId === currentUser?.id &&
-            c.rescueCallStatus === 'connecting' &&
-            isRingLive(c.id, rescueCallRingStamp(c), now),
-        )
-    }
     // Never loop the ring into a call this device is already on: it drowns
     // out the conversation and the microphone carries it to the other side.
     // The on-screen alert below still shows the waiting call.
-    if (shouldRing && !inConversation) startRingtone()
-    else stopRingtone()
-  }, [ringingForMe, role, cases, activeCaseId, currentUser, now, inConversation])
+    if (incoming && !inConversation) startRing('incoming')
+    else stopRing('incoming')
+  }, [incoming, inConversation])
 
-  useEffect(() => stopRingtone, [])
+  useEffect(() => () => stopRing('incoming'), [])
 
   // Get the call ready while it rings -- answering then goes straight to
   // connecting instead of first loading the SDK and fetching a token.

@@ -34,6 +34,7 @@ import {
   type RewardInput,
 } from '@/lib/coins'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   จัดการระบบเหรียญ: 'Manage coin system',
@@ -126,7 +127,8 @@ function FoundationForm({ initial, onCancel, onSaved }: { initial: Foundation | 
 
   async function handleSave() {
     if (!form.name.trim()) {
-      toast({ title: t('กรุณากรอกชื่อมูลนิธิ'), tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อมูลนิธิ'), tone: 'error', silent: true })
+      revealMissingField()
       return
     }
     setSaving(true)
@@ -176,7 +178,8 @@ function RewardForm({ initial, onCancel, onSaved }: { initial: Reward | null; on
     const cost = Number(form.cost)
     const stock = form.stock.trim() === '' ? null : Number(form.stock)
     if (!form.name.trim() || !Number.isInteger(cost) || cost <= 0 || (stock !== null && (!Number.isInteger(stock) || stock < 0))) {
-      toast({ title: t('กรุณากรอกชื่อของรางวัลและราคาที่มากกว่า 0'), tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อของรางวัลและราคาที่มากกว่า 0'), tone: 'error', silent: true })
+      revealMissingField()
       return
     }
     const input: RewardInput = { name: form.name, description: form.description, cost, stock }

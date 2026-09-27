@@ -31,6 +31,7 @@ import {
   type Reward,
 } from '@/lib/coins'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   เหรียญของฉัน: 'My coins',
@@ -167,7 +168,10 @@ export default function Coins() {
       phone: validPhone(contactPhone) ? undefined : t('เบอร์โทรศัพท์ไม่ถูกต้อง'),
     }
     setContactError(errors)
-    if (errors.name || errors.phone) return
+    if (errors.name || errors.phone) {
+      revealMissingField()
+      return
+    }
     setSubmitting(true)
     try {
       await redeemReward(redeemTarget.id, contactName.trim(), contactPhone.trim())
@@ -192,6 +196,7 @@ export default function Coins() {
     const amount = Number(donateAmount)
     if (!Number.isInteger(amount) || amount <= 0 || amount > data.balance) {
       setDonateError(amount > data.balance ? t('เหรียญของคุณไม่พอ') : t('จำนวนเหรียญไม่ถูกต้อง'))
+      revealMissingField()
       return
     }
     setSubmitting(true)

@@ -14,6 +14,7 @@ import { roleLabel } from '@/lib/nav'
 import { toast } from '@/lib/toast'
 import { calculateAge } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   ข้อมูลส่วนตัว: 'Profile',
@@ -120,6 +121,7 @@ export default function Profile() {
     if (!currentUser) return
     if (!name.trim()) {
       setError(t('กรุณากรอกชื่อ-นามสกุล'))
+      revealMissingField()
       return
     }
     setError('')

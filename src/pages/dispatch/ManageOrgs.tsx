@@ -28,6 +28,7 @@ import type { RescueTeam, RescueVehicle, Hospital } from '@/lib/types'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { Ambulance, Building2, Plus, Pencil, Trash2, Truck } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์: 'Please enter the team name and phone number',
@@ -128,7 +129,8 @@ function RescueTeamForm({
 
   async function handleSave() {
     if (!form.name.trim() || !form.phone.trim()) {
-      toast({ title: t('กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์'), tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อหน่วยและเบอร์โทรศัพท์'), tone: 'error', silent: true })
+      revealMissingField()
       return
     }
     setSaving(true)
@@ -196,7 +198,8 @@ function VehicleForm({
 
   async function handleSave() {
     if (!form.unitCode.trim()) {
-      toast({ title: t('กรุณากรอกรหัสรถ/ทีม'), tone: 'error' })
+      toast({ title: t('กรุณากรอกรหัสรถ/ทีม'), tone: 'error', silent: true })
+      revealMissingField()
       return
     }
     setSaving(true)
@@ -289,7 +292,8 @@ function HospitalForm({
 
   async function handleSave() {
     if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast({ title: t('กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่ของโรงพยาบาล'), tone: 'error' })
+      toast({ title: t('กรุณากรอกชื่อ เบอร์โทรศัพท์ และที่อยู่ของโรงพยาบาล'), tone: 'error', silent: true })
+      revealMissingField()
       return
     }
     setSaving(true)

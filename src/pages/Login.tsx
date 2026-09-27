@@ -12,6 +12,7 @@ import { signIn, signOut, signInWithGoogle, signInWithLine } from '@/lib/auth'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 import type { Role } from '@/lib/types'
+import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
   กรุณากรอกอีเมล: 'Please enter your email',
@@ -70,7 +71,9 @@ export default function Login() {
     if (!email.trim()) next.email = t('กรุณากรอกอีเมล')
     if (!password) next.password = t('กรุณากรอกรหัสผ่าน')
     setErrors(next)
-    return Object.keys(next).length === 0
+    const ok = Object.keys(next).length === 0
+    if (!ok) revealMissingField()
+    return ok
   }
 
   async function handleSubmit(e: React.FormEvent) {
