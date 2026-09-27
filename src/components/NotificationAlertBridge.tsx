@@ -6,6 +6,7 @@ import type { ToastTone } from '@/lib/toast'
 import { playAlertSound, playSeverityAlert, playHospitalAlert } from '@/lib/alertSound'
 import { showNativeNotification } from '@/lib/nativeNotify'
 import { CaseAlertModal } from './CaseAlertModal'
+import { useInLiveConversation } from '@/lib/useLiveKitCall'
 import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -207,10 +208,14 @@ export function NotificationAlertBridge() {
   }, [notifications, cases, currentUser])
 
   const activeAlert = alertQueue[0] ?? null
+  // Held while this device is on a live call -- the modal would cover the
+  // call screen, hang-up button included. Its sound has already played;
+  // it shows the moment the call ends.
+  const inConversation = useInLiveConversation()
 
   return (
     <CaseAlertModal
-      alert={activeAlert}
+      alert={inConversation ? null : activeAlert}
       queueCount={alertQueue.length}
       onDismiss={() => setAlertQueue((q) => q.slice(1))}
       onView={() => {

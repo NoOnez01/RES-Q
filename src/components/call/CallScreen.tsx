@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import type { Track } from 'livekit-client'
-import { AlertTriangle, ChevronDown, Mic, MicOff, PhoneOff, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
+import { AlertTriangle, ChevronDown, Mic, MicOff, PhoneOff, RefreshCw, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
 import type { CallParticipant, LiveKitCall } from '@/lib/useLiveKitCall'
 import type { EmergencyCase } from '@/lib/types'
 import { formatDuration } from '@/lib/utils'
@@ -34,7 +34,19 @@ registerTranslations({
   แตะเพื่อเปิดเสียง: 'Tap to turn on sound',
   ปิดกล้องอยู่: 'Camera off',
   ปิดไมโครโฟนอยู่: 'Muted',
+  ขอสิทธิ์เข้าสายไม่สำเร็จ: 'Could not get permission to join the call',
+  โหลดระบบโทรไม่สำเร็จ: 'Could not load the calling system',
+  เชื่อมต่อเซิร์ฟเวอร์โทรไม่สำเร็จ: 'Could not reach the call server',
+  การเชื่อมต่อสายหลุด: 'The call connection dropped',
+  ลองเชื่อมต่ออีกครั้ง: 'Reconnect',
 })
+
+const FAILURE_LABEL = {
+  token: 'ขอสิทธิ์เข้าสายไม่สำเร็จ',
+  sdk: 'โหลดระบบโทรไม่สำเร็จ',
+  connect: 'เชื่อมต่อเซิร์ฟเวอร์โทรไม่สำเร็จ',
+  dropped: 'การเชื่อมต่อสายหลุด',
+} as const
 
 type Translate = ReturnType<typeof useT>
 
@@ -598,9 +610,28 @@ export function CallScreen({
                   {status}
                 </p>
                 {failed && (
-                  <p className="mx-auto mt-1 max-w-[260px] text-xs text-white/60">
-                    {t('ตรวจสอบสัญญาณอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง')}
-                  </p>
+                  <div className="mt-2 flex flex-col items-center gap-3">
+                    {call.failure && (
+                      <p className="max-w-xs text-sm text-white/85">
+                        {t(FAILURE_LABEL[call.failure.step])}
+                        {call.failure.detail && (
+                          <span className="mt-0.5 block break-words font-mono text-xs text-white/55">{call.failure.detail}</span>
+                        )}
+                      </p>
+                    )}
+                    <p className="max-w-[260px] text-xs text-white/60">{t('ตรวจสอบสัญญาณอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง')}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        call.retry()
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-navy shadow-card-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
+                    >
+                      <RefreshCw className="size-4" aria-hidden="true" />
+                      {t('ลองเชื่อมต่ออีกครั้ง')}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

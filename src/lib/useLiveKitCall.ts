@@ -39,6 +39,14 @@ export interface CallParticipant {
   sameUser: boolean
 }
 
+/** Which step of joining failed, and what it said -- shown on the call
+ * screen, so "couldn't connect" names its cause instead of hiding it in the
+ * console. */
+export interface CallFailure {
+  step: 'token' | 'sdk' | 'connect' | 'dropped'
+  detail?: string
+}
+
 export interface LiveKitCall {
   remotes: CallParticipant[]
   localVideoTrack: Track | null
@@ -56,32 +64,48 @@ export interface LiveKitCall {
   toggleMic: () => void
   switchCamera: () => void
   startAudio: () => void
+  /** Why the last join failed; null while connecting/connected. */
+  failure: CallFailure | null
+  /** Join again, without ending the call. */
+  retry: () => void
 }
 
-async function fetchToken(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<Credentials | null> {
-  if (!supabase) return null
-  const { data, error } = await supabase.functions.invoke<Credentials>('livekit-token', {
-    body: { caseId, roomKind, role: side },
-  })
-  if (error) {
-    // A non-2xx carries the function's own response -- its { error } body
-    // says which check refused the caller (unauthorized/forbidden/...).
-    const detail = error.context instanceof Response ? await error.context.text().catch(() => '') : ''
-    console.error('livekit-token failed:', error.message, detail)
-    return null
+type TokenResult = Credentials | { error: string }
+
+async function fetchToken(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<TokenResult> {
+  if (!supabase) return { error: 'supabase not configured' }
+  try {
+    const { data, error } = await supabase.functions.invoke<Credentials>('livekit-token', {
+      body: { caseId, roomKind, role: side },
+    })
+    if (error) {
+      // A non-2xx carries the function's own response -- its { error } body
+      // says which check refused the caller (unauthorized/forbidden/...).
+      const body = error.context instanceof Response ? await error.context.text().catch(() => '') : ''
+      console.error('livekit-token failed:', error.message, body)
+      let reason = error.message
+      try {
+        reason = (JSON.parse(body) as { error?: string }).error ?? reason
+      } catch {
+        // not JSON -- keep the SDK's message
+      }
+      return { error: reason }
+    }
+    if (!data?.token || !data.url) {
+      console.error('livekit-token returned no token/url')
+      return { error: 'no token returned' }
+    }
+    return data
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) }
   }
-  if (!data?.token || !data.url) {
-    console.error('livekit-token returned no token/url')
-    return null
-  }
-  return data
 }
 
 // Tokens fetched while a call is still ringing, each used once by the join
 // that follows (identities are per connection, so a token is single-use).
 // Well inside the token's 10-minute TTL.
 const PREFETCH_MAX_AGE_MS = 5 * 60_000
-const prefetched = new Map<string, { at: number; credentials: Promise<Credentials | null> }>()
+const prefetched = new Map<string, { at: number; credentials: Promise<TokenResult> }>()
 
 function prefetchKey(caseId: string, roomKind: CallRoomKind, side: CallSide): string {
   return `${caseId}|${roomKind}|${side}`
@@ -104,10 +128,12 @@ export function prepareCall(caseId: string, roomKind: CallRoomKind, side: CallSi
 /** The prefetched token if there's a fresh one, else a new fetch. Doesn't
  * remove it -- the join does that once it actually connects, so a join
  * cancelled straight away (a quick remount) leaves it for the next one. */
-function getCredentials(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<Credentials | null> {
+function getCredentials(caseId: string, roomKind: CallRoomKind, side: CallSide): Promise<TokenResult> {
   const hit = prefetched.get(prefetchKey(caseId, roomKind, side))
   if (!hit || Date.now() - hit.at >= PREFETCH_MAX_AGE_MS) return fetchToken(caseId, roomKind, side)
-  return hit.credentials.then((c) => c ?? fetchToken(caseId, roomKind, side))
+  // A prefetch that failed (e.g. while the ring was still syncing) is no
+  // verdict on now -- ask again.
+  return hit.credentials.then((c) => ('error' in c ? fetchToken(caseId, roomKind, side) : c))
 }
 
 function mediaErrorState(err: unknown): CameraState {
@@ -201,6 +227,12 @@ export function useLiveKitCall(
   const [audioBlocked, setAudioBlocked] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
   const [canSwitchCamera, setCanSwitchCamera] = useState(false)
+  const [failure, setFailure] = useState<CallFailure | null>(null)
+  // Bumped to join again (retry) without the call itself ending.
+  const [attempt, setAttempt] = useState(0)
+  // One automatic retry per call -- a blip shouldn't need a tap, but a real
+  // fault (bad key, blocked network) shouldn't loop either.
+  const autoRetriedRef = useRef(false)
   const roomRef = useRef<Room | null>(null)
   const liveKitRef = useRef<LiveKit | null>(null)
   const facingModeRef = useRef<'user' | 'environment'>('user')
@@ -214,6 +246,18 @@ export function useLiveKitCall(
     // publications mid-join would flash "camera off" for a moment on every
     // call -- hold the defaults until the first publish attempt is done.
     let mediaSettled = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
+    const fail = (f: CallFailure) => {
+      if (cancelled) return
+      setFailure(f)
+      setConnectionState('failed')
+      setCameraState('idle')
+      if (!autoRetriedRef.current) {
+        autoRetriedRef.current = true
+        retryTimer = setTimeout(() => setAttempt((a) => a + 1), 1500)
+      }
+    }
 
     // Counted once camera access is granted (before that, browsers hide
     // the device list) and again whenever a camera is plugged in or out.
@@ -230,24 +274,26 @@ export function useLiveKitCall(
     async function join() {
       setConnectionState('connecting')
       setCameraState('requesting')
+      setFailure(null)
       // Joining is several round trips to the LiveKit server, which may be
       // far away -- so the camera/mic start up while the token and connect
       // are in flight rather than after them.
       const media = loadLiveKit().then((lk) => openLocalMedia(lk, facingModeRef.current))
       media.catch(() => {}) // an SDK load failure is reported just below
       const discardMedia = () => void media.then(({ tracks }) => tracks.forEach((t) => t.stop())).catch(() => {})
-      const [lk, credentials] = await Promise.all([loadLiveKit(), getCredentials(caseId!, roomKind, side)]).catch(
-        (err: unknown) => {
+      let sdkError: unknown = null
+      const [lk, credentials] = await Promise.all([
+        loadLiveKit().catch((err: unknown) => {
           console.error('LiveKit SDK failed to load:', err)
-          return [null, null] as const
-        },
-      )
-      if (cancelled || !lk || !credentials) {
+          sdkError = err
+          return null
+        }),
+        getCredentials(caseId!, roomKind, side),
+      ])
+      if (cancelled || !lk || 'error' in credentials) {
         discardMedia()
-        if (!cancelled) {
-          setConnectionState('failed')
-          setCameraState('idle')
-        }
+        if (!lk) fail({ step: 'sdk', detail: sdkError instanceof Error ? sdkError.message : undefined })
+        else if ('error' in credentials) fail({ step: 'token', detail: credentials.error })
         return
       }
       prefetched.delete(prefetchKey(caseId!, roomKind, side))
@@ -255,6 +301,7 @@ export function useLiveKitCall(
       room = new lk.Room({ adaptiveStream: true, dynacast: true })
       roomRef.current = room
       const r = room
+      let joined = false
 
       const refresh = () => {
         if (cancelled) return
@@ -287,7 +334,12 @@ export function useLiveKitCall(
         if (!cancelled) setAudioBlocked(!r.canPlaybackAudio)
       })
       r.on(E.Disconnected, (reason) => {
-        if (!cancelled) console.warn('LiveKit disconnected:', reason === undefined ? 'unknown' : lk.DisconnectReason[reason])
+        if (cancelled) return
+        const name = reason === undefined ? 'unknown' : lk.DisconnectReason[reason]
+        console.warn('LiveKit disconnected:', name)
+        // Only after having been connected -- a failed connect() reports
+        // itself below.
+        if (joined) fail({ step: 'dropped', detail: name })
       })
       r.on(E.ConnectionStateChanged, (state) => {
         if (cancelled) return
@@ -302,12 +354,11 @@ export function useLiveKitCall(
       } catch (err) {
         console.error('LiveKit connect failed:', err)
         discardMedia()
-        if (!cancelled) {
-          setConnectionState('failed')
-          setCameraState('idle')
-        }
+        fail({ step: 'connect', detail: err instanceof Error ? err.message : String(err) })
         return
       }
+      joined = true
+      autoRetriedRef.current = false
       if (cancelled) {
         discardMedia()
         return
@@ -338,6 +389,7 @@ export function useLiveKitCall(
     const instance = instanceRef.current
     return () => {
       cancelled = true
+      clearTimeout(retryTimer)
       navigator.mediaDevices?.removeEventListener('devicechange', countCameras)
       setConversing(instance, false)
       // `room` is still null if this runs while the SDK/token are loading --
@@ -356,8 +408,16 @@ export function useLiveKitCall(
       setCameraOn(true)
       setMicOn(true)
       setAudioBlocked(false)
+      setFailure(null)
     }
-  }, [active, caseId, roomKind, side])
+  }, [active, caseId, roomKind, side, attempt])
+
+  // A new call (not a retry within one) gets its own automatic retry.
+  useEffect(() => {
+    if (!active) autoRetriedRef.current = false
+  }, [active])
+
+  const retry = useCallback(() => setAttempt((a) => a + 1), [])
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current
@@ -428,6 +488,8 @@ export function useLiveKitCall(
     facingMode,
     canSwitchCamera,
     audioBlocked,
+    failure,
+    retry,
     toggleCamera,
     toggleMic,
     switchCamera,
