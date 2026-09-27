@@ -299,9 +299,11 @@ export function playUiSound(name: UiSound): void {
  * - case-new: a new emergency for 1669
  * - rescue-assigned: a case handed to this rescue team
  * - rescue-rejected: a rescue team turned a case down -- 1669 must reassign
+ * - severity-proposal: rescue re-assessed the level at the scene -- 1669
+ *   approves or declines it
  * - hospital-incoming: a patient on the way to this hospital
  * - notice: anything else worth a sound (an emergency-tone notification) */
-export type AlertEvent = 'case-new' | 'rescue-assigned' | 'rescue-rejected' | 'hospital-incoming' | 'notice'
+export type AlertEvent = 'case-new' | 'rescue-assigned' | 'rescue-rejected' | 'severity-proposal' | 'hospital-incoming' | 'notice'
 
 function renderAlert(c: AudioContext, event: AlertEvent, severity: Severity | undefined, at: number) {
   switch (event) {
@@ -325,6 +327,19 @@ function renderAlert(c: AudioContext, event: AlertEvent, severity: Severity | un
       tone(c, 233, at + 0.64, 0.13, { wave: 'square', gain: 0.22, cutoff: 1200, reverb: 0.1 })
       tone(c, 233, at + 0.84, 0.13, { wave: 'square', gain: 0.22, cutoff: 1200, reverb: 0.1 })
       break
+    case 'severity-proposal': {
+      // "Please review": three rising bells. A proposal to level 1-2 opens
+      // with a short hi-lo, since the case just got more serious.
+      let start = at
+      if (severity && severity <= 2) {
+        hiLo(c, at, 1175, 880, 1, 0.12, 0.22)
+        start = at + 0.3
+      }
+      for (const [i, f] of [784, 988, 1319].entries()) {
+        strike(c, f, start + i * 0.15, { gain: 0.28, partials: BELL, decay: i === 2 ? 1.4 : 0.8, reverb: 0.3 })
+      }
+      break
+    }
     case 'hospital-incoming': {
       // A paging chime: a rising bell arpeggio, more notes and lower for
       // the more urgent patient; the most urgent two ring it twice.

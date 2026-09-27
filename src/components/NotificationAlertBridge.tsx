@@ -11,6 +11,11 @@ import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  หน่วยกู้ชีพเสนอปรับระดับความรุนแรง: 'Rescue team proposed a severity change',
+  'เหตุหมายเลข {caseNumber}: หน่วยกู้ชีพประเมิน ณ จุดเกิดเหตุและเสนอปรับระดับความรุนแรง กรุณาพิจารณายืนยัน':
+    'Case {caseNumber}: the rescue team assessed the scene and proposed a severity change, please confirm',
+  ยืนยันระดับความรุนแรงแล้ว: 'Severity confirmed',
+  ไม่ยืนยันการปรับระดับความรุนแรง: 'Severity change declined',
   มีเหตุฉุกเฉินใหม่: 'New emergency case',
   'เหตุหมายเลข {caseNumber} เข้าสู่ระบบแล้ว รอการมอบหมายหน่วยกู้ชีพ': 'Case {caseNumber} has been submitted, awaiting rescue team assignment',
   หน่วยกู้ชีพปฏิเสธการรับเหตุ: 'Rescue team declined the case',
@@ -85,7 +90,20 @@ function handoffsFor(
         event: 'rescue-rejected' as const,
         key: `dispatch-rejected:${c.id}:${c.rescueRejectedAt}`,
       }))
-    return [...newCases, ...rejectedCases]
+    // Rescue re-assessed the level at the scene: 1669 approves or declines
+    // it right from the popup.
+    const proposals = cases
+      .filter((c) => c.rescueSeverityProposal)
+      .map((c) => ({
+        case: c,
+        title: t('หน่วยกู้ชีพเสนอปรับระดับความรุนแรง'),
+        message: t('เหตุหมายเลข {caseNumber}: หน่วยกู้ชีพประเมิน ณ จุดเกิดเหตุและเสนอปรับระดับความรุนแรง กรุณาพิจารณายืนยัน', { caseNumber: c.caseNumber }),
+        urgent: c.rescueSeverityProposal!.severity <= 2,
+        kind: 'dispatch' as const,
+        event: 'severity-proposal' as const,
+        key: `severity-proposal:${c.id}:${c.rescueSeverityProposal!.proposedAt}`,
+      }))
+    return [...newCases, ...rejectedCases, ...proposals]
   }
   if (role === 'rescue') {
     return cases
@@ -123,7 +141,8 @@ function handoffsFor(
 
 /** Each event has its own sound; a triaged case's also says how urgent it is. */
 function playHandoffSound(h: HandoffAlert) {
-  playAlert(h.event, h.case.assessment?.severity)
+  const severity = h.event === 'severity-proposal' ? h.case.rescueSeverityProposal?.severity : h.case.assessment?.severity
+  playAlert(h.event, severity)
 }
 
 // An alert nobody has acknowledged sounds again this often, for up to
@@ -158,6 +177,7 @@ export function NotificationAlertBridge() {
   const notifications = useStore((s) => s.notifications)
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
+  const confirmRescueSeverity = useStore((s) => s.confirmRescueSeverity)
   const navigate = useNavigate()
   const seenNotificationIds = useRef<Set<string>>(new Set())
   const alertedCaseKeys = useRef<Set<string>>(new Set())
@@ -216,6 +236,31 @@ export function NotificationAlertBridge() {
   // it shows the moment the call ends.
   const inConversation = useInLiveConversation()
 
+  // A proposal already answered -- on the case page, or by another
+  // dispatcher -- leaves the queue instead of asking again.
+  useEffect(() => {
+    setAlertQueue((q) => {
+      const next = q.filter(
+        (h) => h.event !== 'severity-proposal' || cases[h.case.id]?.rescueSeverityProposal?.proposedAt === h.case.rescueSeverityProposal?.proposedAt,
+      )
+      return next.length === q.length ? q : next
+    })
+  }, [cases])
+
+  function decideSeverity(accept: boolean) {
+    const h = activeAlert
+    const proposal = h?.case.rescueSeverityProposal
+    if (!h || !proposal) return
+    const current = cases[h.case.id]?.assessment?.severity
+    confirmRescueSeverity(h.case.id, accept)
+    setAlertQueue((q) => q.slice(1))
+    toast({ title: accept ? t('ยืนยันระดับความรุนแรงแล้ว') : t('ไม่ยืนยันการปรับระดับความรุนแรง'), tone: accept ? 'success' : 'info' })
+    // More serious than before: the case page offers a higher-level unit.
+    if (accept && current !== undefined && proposal.severity < current) {
+      navigate(`/dispatch/case/${h.case.id}`, { state: { offerEscalation: true } })
+    }
+  }
+
   // Keeps sounding until it's acknowledged (never into a call).
   useEffect(() => {
     if (!activeAlert || inConversation) return
@@ -236,6 +281,7 @@ export function NotificationAlertBridge() {
         if (activeAlert) navigate(routeForHandoff(activeAlert))
         setAlertQueue((q) => q.slice(1))
       }}
+      onDecide={decideSeverity}
     />
   )
 }

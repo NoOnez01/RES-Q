@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Phone,
   User,
@@ -239,6 +239,18 @@ export default function DispatchCaseDetail() {
   const [shareOpen, setShareOpen] = useState(false)
   // Which of this page's forms was just submitted with its choice missing.
   const [missing, setMissing] = useState<'team' | 'support' | 'close-note' | null>(null)
+  const location = useLocation()
+
+  // Approving a more serious level from the alert popup lands here with the
+  // same offer approving on this page makes: add a higher-level unit.
+  useEffect(() => {
+    if (!(location.state as { offerEscalation?: boolean } | null)?.offerEscalation) return
+    const level = emergencyCase?.assignedVehicle?.level
+    if (level && nextLevelUp(level)) setEscalateConfirmOpen(true)
+    // Asked once -- not again on refresh or back.
+    navigate(location.pathname, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per arrival
+  }, [location.key])
 
   const recommendation = useMemo(() => {
     if (!emergencyCase) return null

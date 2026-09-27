@@ -51,7 +51,6 @@ registerTranslations({
   'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล': 'Travels to help, records the patient condition, and transports to hospital',
   โรงพยาบาล: 'Hospital',
   เตรียมทีมรักษาและยืนยันการรับผู้ป่วย: 'Prepares the care team and confirms patient admission',
-  'เร็ว ๆ นี้': 'Coming soon',
   ระบบออกแบบเพื่อการประสานงานฉุกเฉิน: 'Built for emergency coordination',
   มีการแบ่งสิทธิ์ตามบทบาทผู้ใช้งาน: 'Access is scoped by user role',
   ข้อมูลผู้ป่วยควรได้รับการปกป้อง: 'Patient data is meant to be protected',
@@ -141,12 +140,17 @@ const CONNECTION_NODES = [
   },
 ] as const
 
-// `href: null` means the real account doesn't exist yet -- shows as a
-// disabled "เร็ว ๆ นี้" chip instead of linking somewhere fake. Fill in the
-// real LINE OA / Facebook Page link here once it exists.
-const CONTACT_LINKS: { key: string; label: string; href: string | null; icon: ReactNode }[] = [
-  { key: 'line', label: 'LINE Official', href: null, icon: <MessageCircle className="size-5" /> },
-  { key: 'facebook', label: 'Facebook', href: null, icon: <Facebook className="size-5" /> },
+// The team's own channels. LINE's /ti/p/ link opens the official account's
+// add-friend page (in the LINE app on a phone).
+const CONTACT_LINKS: { key: string; label: string; handle: string; href: string; icon: ReactNode }[] = [
+  { key: 'line', label: 'LINE Official', handle: '@resq', href: 'https://line.me/R/ti/p/@resq', icon: <MessageCircle className="size-5" /> },
+  {
+    key: 'facebook',
+    label: 'Facebook',
+    handle: 'Res-q Prc',
+    href: 'https://www.facebook.com/profile.php?id=61592842760131',
+    icon: <Facebook className="size-5" />,
+  },
 ]
 
 const TRUST_POINTS = [
@@ -493,30 +497,21 @@ export default function Home() {
             </p>
           </Reveal>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {CONTACT_LINKS.map((link) =>
-              link.href ? (
-                <a
-                  key={link.key}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold text-ink shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
-                >
-                  {link.icon}
+            {CONTACT_LINKS.map((link) => (
+              <a
+                key={link.key}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-5 py-3 text-left text-sm font-semibold text-ink shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
+              >
+                <span className="text-primary">{link.icon}</span>
+                <span className="flex flex-col leading-tight">
                   {link.label}
-                </a>
-              ) : (
-                <span
-                  key={link.key}
-                  aria-disabled="true"
-                  className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-surface/60 px-5 py-3 text-sm font-semibold text-muted"
-                >
-                  {link.icon}
-                  {link.label}
-                  <span className="text-xs font-normal">({t('เร็ว ๆ นี้')})</span>
+                  <span className="mt-0.5 text-xs font-normal text-muted">{link.handle}</span>
                 </span>
-              ),
-            )}
+              </a>
+            ))}
           </div>
         </div>
       </section>

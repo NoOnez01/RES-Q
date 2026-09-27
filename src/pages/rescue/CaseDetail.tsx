@@ -73,7 +73,7 @@ registerTranslations({
   จำนวนเจ้าหน้าที่ที่ออกปฏิบัติงานจริง: 'Actual crew size deployed',
   'ยืนยันการเลือกรถ/ทีม': 'Confirm vehicle/crew selection',
   ยกเลิก: 'Cancel',
-  รายงานอาการผู้ป่วย: "Update patient's condition",
+  รายงานอาการผู้ป่วย: 'Patient condition update',
   'มีการเปลี่ยนแปลงอาการหรือไม่ (พิมพ์หรือพูด)': 'Any change in condition? (type or speak)',
   บันทึกอาการ: 'Save update',
   โรงพยาบาลที่เลือก: 'Selected hospital',
