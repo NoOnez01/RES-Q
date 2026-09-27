@@ -117,7 +117,7 @@ registerTranslations({
   เหมาะสมที่สุด: 'Best match',
   'มีรถระดับ {level}': '{level}-level vehicle available',
   'ไม่มีรถระดับ {level}': 'No {level}-level vehicle',
-  'แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย': 'Showing the {limit} nearest units, out of {total} total',
+  'แสดง {limit} หน่วยที่แนะนำ จากทั้งหมด {total} หน่วย พิมพ์ค้นหาเพื่อดูหน่วยอื่น': 'Showing {limit} recommended units out of {total}. Search to see others',
   'หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่จำเป็น แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์ดังกล่าว':
     'The nearest unit lacks the right equipment — recommend assigning it alongside a unit that has it',
   'มอบหมายร่วมกับ {team} ({km} กม.)': 'Assign together with {team} ({km} km)',
@@ -186,6 +186,19 @@ const PROVINCE_OPTIONS = [
  * teams don't say "จังหวัด..." explicitly but do name the district/province
  * in plain text (e.g. "...อำเภอเมืองเชียงใหม่") -- a substring match on the
  * province name covers both without needing a dedicated column. */
+// The team list is a recommendation, not a directory: the few best placed
+// (available first, then nearest). Any other team is a keyword search away.
+const SHOWN_TEAMS = 5
+
+/** The top `SHOWN_TEAMS` of `list`, plus the chosen team if it isn't among
+ * them -- a team picked from a search stays in view after the search is
+ * cleared, so it's never assigned unseen. */
+function shownTeams<T extends { team: RescueTeam }>(list: T[], all: T[], chosenId: string | null): T[] {
+  const top = list.slice(0, SHOWN_TEAMS)
+  const chosen = chosenId ? all.find((r) => r.team.id === chosenId) : undefined
+  return chosen && !top.includes(chosen) ? [...top, chosen] : top
+}
+
 function teamMatchesProvince(team: RescueTeam, province: string): boolean {
   if (!province) return true
   return team.base.address.includes(province)
@@ -683,14 +696,8 @@ export default function DispatchCaseDetail() {
                       return teamMatchesProvince(r.team, teamProvinceFilter)
                     })
                     const topAvailableId = filtered.find((r) => r.available)?.team.id
-                    // Rendering every ranked team is fine for a handful of
-                    // local branches but not for the full NDEMS import
-                    // (thousands nationwide) -- available-first sorting
-                    // already means the nearest usable options survive the
-                    // cap; anything further down is either far away or busy.
-                    const RENDER_LIMIT = 20
-                    const visibleRanked = filtered.slice(0, RENDER_LIMIT)
-                    const overflowCount = filtered.length - visibleRanked.length
+                    const visibleRanked = shownTeams(filtered, recommendation.ranked, selectedTeamId)
+                    const overflowCount = filtered.length - Math.min(filtered.length, SHOWN_TEAMS)
                     if (filtered.length === 0) {
                       return <p className="py-4 text-center text-sm text-muted">{t('ไม่พบหน่วยกู้ชีพที่ตรงกับคำค้นหาหรือจังหวัดที่เลือก')}</p>
                     }
@@ -734,8 +741,8 @@ export default function DispatchCaseDetail() {
                         })}
                         {overflowCount > 0 && (
                           <p className="text-center text-xs text-muted">
-                            {t('แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย', {
-                              limit: RENDER_LIMIT,
+                            {t('แสดง {limit} หน่วยที่แนะนำ จากทั้งหมด {total} หน่วย พิมพ์ค้นหาเพื่อดูหน่วยอื่น', {
+                              limit: SHOWN_TEAMS,
                               total: filtered.length.toLocaleString('th-TH'),
                             })}
                           </p>
@@ -919,7 +926,7 @@ export default function DispatchCaseDetail() {
                         }
                         return (
                           <>
-                            {filteredSupport.slice(0, 20).map((r) => (
+                            {shownTeams(filteredSupport, supportCandidates, addSupportTeamId).map((r) => (
                               <RadioCard
                                 key={r.team.id}
                                 selected={addSupportTeamId === r.team.id}
@@ -934,10 +941,10 @@ export default function DispatchCaseDetail() {
                                 }
                               />
                             ))}
-                            {filteredSupport.length > 20 && (
+                            {filteredSupport.length > SHOWN_TEAMS && (
                               <p className="text-center text-xs text-muted">
-                                {t('แสดง {limit} หน่วยที่ใกล้ที่สุด จากทั้งหมด {total} หน่วย', {
-                                  limit: 20,
+                                {t('แสดง {limit} หน่วยที่แนะนำ จากทั้งหมด {total} หน่วย พิมพ์ค้นหาเพื่อดูหน่วยอื่น', {
+                                  limit: SHOWN_TEAMS,
                                   total: filteredSupport.length.toLocaleString('th-TH'),
                                 })}
                               </p>
