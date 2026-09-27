@@ -4,7 +4,7 @@ import { AlertTriangle, Camera, MapPin, User } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
 import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
-import { callRingStamp, isStillRinging, rescueCallRingStamp } from '@/lib/calls'
+import { callRingStamp, isRingLive, isStillRinging, rescueCallRingStamp, ringFirstHeard } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { IncomingCallScreen } from './call/IncomingCallScreen'
@@ -70,12 +70,12 @@ export function CallRingtoneBridge() {
   // Cases ringing for *this* user, i.e. the ones that get an on-screen alert.
   const ringingForMe = useMemo(() => {
     const all = Object.values(cases)
-    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting' && isStillRinging(callRingStamp(c), now))
+    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting' && isRingLive(c.id, callRingStamp(c), now))
     if (role === 'rescue' && myTeamId) {
       return all.filter(
         (c) =>
           c.rescueCallInvite?.status === 'ringing' &&
-          isStillRinging(c.rescueCallInvite.invitedAt, now) &&
+          isRingLive(c.id, c.rescueCallInvite.invitedAt, now) &&
           (c.assignedRescueTeam?.id === myTeamId || c.supportingRescueTeam?.id === myTeamId),
       )
     }
@@ -94,7 +94,7 @@ export function CallRingtoneBridge() {
           (c) =>
             c.reporterUserId === currentUser.id &&
             c.rescueCallStatus === 'connecting' &&
-            isStillRinging(rescueCallRingStamp(c), now),
+            isRingLive(c.id, rescueCallRingStamp(c), now),
         )
         .sort((a, b) => a.createdAt - b.createdAt)[0] ?? null
     )
@@ -114,7 +114,7 @@ export function CallRingtoneBridge() {
           (c) =>
             c.reporterUserId === currentUser?.id &&
             c.rescueCallStatus === 'connecting' &&
-            isStillRinging(rescueCallRingStamp(c), now),
+            isRingLive(c.id, rescueCallRingStamp(c), now),
         )
     }
     // Never loop the ring into a call this device is already on: it drowns
@@ -203,7 +203,7 @@ export function CallRingtoneBridge() {
         title={t('ศูนย์สั่งการ 1669 เชิญคุณเข้าร่วมการสนทนา')}
         caseNumber={c.caseNumber}
         details={details(null)}
-        ringingSince={c.rescueCallInvite?.invitedAt}
+        ringingSince={ringFirstHeard(c.id) ?? c.rescueCallInvite?.invitedAt}
         waitingCount={waitingCount}
         answerLabel={t('เข้าร่วม')}
         dismissLabel={t('ภายหลัง')}
@@ -238,7 +238,9 @@ export function CallRingtoneBridge() {
       title={t('สายเรียกเข้าใหม่')}
       caseNumber={c.caseNumber}
       details={details(callerLine(c, t))}
-      ringingSince={c.callRingStartedAt ?? callRingStamp(c)}
+      // Counted on this device's clock when it heard the ring start live;
+      // the caller's own clock may be off.
+      ringingSince={ringFirstHeard(c.id) ?? c.callRingStartedAt ?? callRingStamp(c)}
       waitingCount={waitingCount}
       answerLabel={t('รับสาย')}
       dismissLabel={t('ภายหลัง')}

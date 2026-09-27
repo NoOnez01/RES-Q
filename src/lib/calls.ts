@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useStore } from './store'
+import type { EmergencyCase } from './types'
 
 /**
  * How long a ring stays live without word from its caller. A call to 1669
@@ -33,6 +34,49 @@ export function callRingStamp(c: { callRingingAt?: number; updatedAt: number }):
 
 export function rescueCallRingStamp(c: { rescueCallRingingAt?: number; updatedAt: number }): number {
   return c.rescueCallRingingAt ?? c.updatedAt
+}
+
+// Ring stamps are written on the CALLER's clock and read on the receiver's,
+// so a phone running a minute behind the dispatch PC made every call look
+// already expired -- no ring, no popup. So each device also notes, on its
+// own clock, when a live update renewed a ring (the call started, or the
+// waiting caller re-stamped it). A live call keeps renewing; a caller who
+// left stops, and the ring goes quiet here too. Only live updates count --
+// a stale ring found on page load still has to pass the stamp check.
+const ringRenewedAt = new Map<string, number>()
+const ringFirstHeardAt = new Map<string, number>()
+
+type RingState = Pick<
+  EmergencyCase,
+  'callStatus' | 'callRingingAt' | 'rescueCallStatus' | 'rescueCallRingingAt' | 'rescueCallInvite' | 'updatedAt'
+>
+
+/** Called for every live (realtime) case update this device applies. */
+export function noteRingRenewal(caseId: string, prev: RingState | undefined, next: RingState): void {
+  const started =
+    (next.callStatus === 'connecting' && prev?.callStatus !== 'connecting') ||
+    (next.rescueCallStatus === 'connecting' && prev?.rescueCallStatus !== 'connecting') ||
+    (next.rescueCallInvite?.status === 'ringing' && prev?.rescueCallInvite?.status !== 'ringing')
+  const renewed =
+    started ||
+    (next.callStatus === 'connecting' && next.callRingingAt !== prev?.callRingingAt) ||
+    (next.rescueCallStatus === 'connecting' && next.rescueCallRingingAt !== prev?.rescueCallRingingAt) ||
+    (next.rescueCallInvite?.status === 'ringing' && next.rescueCallInvite.invitedAt !== prev?.rescueCallInvite?.invitedAt)
+  if (!renewed) return
+  const now = Date.now()
+  ringRenewedAt.set(caseId, now)
+  if (started) ringFirstHeardAt.set(caseId, now)
+}
+
+/** Whether a ring stamped `stamp` (caller's clock) for `caseId` is still
+ * live -- by the stamp, or by this device having heard it renewed lately. */
+export function isRingLive(caseId: string, stamp: number | undefined, now = Date.now()): boolean {
+  return isStillRinging(stamp, now) || isStillRinging(ringRenewedAt.get(caseId), now)
+}
+
+/** When this device first heard the current ring start, on its own clock. */
+export function ringFirstHeard(caseId: string): number | undefined {
+  return ringFirstHeardAt.get(caseId)
 }
 
 /**

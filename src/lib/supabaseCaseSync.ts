@@ -1,5 +1,6 @@
 import { supabase, supabaseEnabled } from './supabase'
 import { useStore } from './store'
+import { noteRingRenewal } from './calls'
 import type { EmergencyCase } from './types'
 
 const lastPushed = new Map<string, string>()
@@ -123,7 +124,8 @@ export function initSupabaseCaseSync(): void {
   teardown()
   useStore.setState({ cases: {} })
 
-  function applyRemote(remote: EmergencyCase) {
+  /** `live`: it came in over realtime just now (not the initial pull). */
+  function applyRemote(remote: EmergencyCase, live = false) {
     if (deletedIds.has(remote.id)) return
     const json = serialize(remote)
     if (lastPushed.get(remote.id) === json) return
@@ -133,6 +135,7 @@ export function initSupabaseCaseSync(): void {
     const local = useStore.getState().cases[remote.id]
     if (local && local.updatedAt > remote.updatedAt) return
     lastPulled.set(remote.id, json)
+    if (live) noteRingRenewal(remote.id, local, remote)
     useStore.setState((s) => ({ cases: { ...s.cases, [remote.id]: remote } }))
   }
 
@@ -216,11 +219,11 @@ export function initSupabaseCaseSync(): void {
     .channel(`cases-sync-${Date.now()}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cases' }, (payload) => {
       const row = payload.new as { data?: EmergencyCase }
-      if (row.data) applyRemote(row.data)
+      if (row.data) applyRemote(row.data, true)
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cases' }, (payload) => {
       const row = payload.new as { data?: EmergencyCase }
-      if (row.data) applyRemote(row.data)
+      if (row.data) applyRemote(row.data, true)
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cases' }, (payload) => {
       const row = payload.old as { data?: EmergencyCase }
