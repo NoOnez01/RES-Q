@@ -27,6 +27,8 @@ interface SidebarProps {
   onExitView?: () => void
   /** Signed in with a real account, not just an anonymous visitor session. */
   loggedIn: boolean
+  /** Where the brand goes: this role's own home (its overview). */
+  homePath: string
 }
 
 function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -47,15 +49,20 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
   )
 }
 
-export function Sidebar({ items, role, viewingAs, onExitView, loggedIn }: SidebarProps) {
+export function Sidebar({ items, role, viewingAs, onExitView, loggedIn, homePath }: SidebarProps) {
   const location = useLocation()
   const t = useT()
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
-      <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <img src={FAVICON_URL} alt="" className="size-8" />
-        <span className="text-lg font-extrabold text-ink">ResQ</span>
+      <div className="flex h-16 items-center border-b border-border px-4">
+        <Link
+          to={homePath}
+          className="flex items-center gap-2 rounded-xl px-2 py-1 transition-colors hover:bg-skyblue-light focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+        >
+          <img src={FAVICON_URL} alt="" className="size-8" />
+          <span className="text-lg font-extrabold text-ink">ResQ</span>
+        </Link>
       </div>
 
       {viewingAs && (

@@ -26,6 +26,8 @@ interface TopNavigationProps {
   variant: 'public' | 'flow' | 'dashboard'
   title?: string
   onMenuClick?: () => void
+  /** Where the brand goes -- a dashboard's is its role's own home. */
+  homePath?: string
   onBack?: () => void
   showBack?: boolean
 }
@@ -143,7 +145,7 @@ function AccountMenu({
   )
 }
 
-export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }: TopNavigationProps) {
+export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, homePath = '/' }: TopNavigationProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const notifications = useStore((s) => s.notifications)
@@ -190,7 +192,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack }:
 
       {/* On a wide dashboard the sidebar already carries the brand. */}
       {variant !== 'flow' && (
-        <Link to="/" className={clsx('flex shrink-0 items-center gap-2', variant === 'dashboard' && 'lg:hidden')}>
+        <Link to={homePath} aria-label="ResQ" className={clsx('flex shrink-0 items-center gap-2', variant === 'dashboard' && 'lg:hidden')}>
           <img src={FAVICON_URL} alt="" className="size-8" />
           <span className={clsx('text-lg font-extrabold text-ink', variant === 'dashboard' && title && 'hidden sm:inline')}>ResQ</span>
         </Link>
