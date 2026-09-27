@@ -5,7 +5,7 @@
 // as long as the page is open.
 import { nearbySegments, parseGraph, type RoadGraph } from './graph'
 import { GRAPH_REGION } from './region'
-import { computeRoute, type AStarRoute } from './router'
+import { computeRoute, type AStarRoute, type VehicleStart } from './router'
 
 export interface RouteRequest {
   id: number
@@ -13,6 +13,8 @@ export interface RouteRequest {
   destination: { lat: number; lng: number }
   /** Road closures in force right now (see lib/roadClosures.ts). */
   closures: { id: string; lat: number; lng: number }[]
+  /** Set when the origin is a moving vehicle's live GPS fix. */
+  vehicle?: VehicleStart
 }
 
 export interface RouteResponse {
@@ -54,11 +56,11 @@ function closedSegments(g: RoadGraph, closures: RouteRequest['closures']): Set<n
 }
 
 self.onmessage = async (event: MessageEvent<RouteRequest>) => {
-  const { id, origin, destination, closures } = event.data
+  const { id, origin, destination, closures, vehicle } = event.data
   let route: AStarRoute | null = null
   try {
     const g = await loadGraph()
-    route = await computeRoute(g, origin, destination, import.meta.env.VITE_LONGDO_MAP_KEY, undefined, closedSegments(g, closures))
+    route = await computeRoute(g, origin, destination, import.meta.env.VITE_LONGDO_MAP_KEY, undefined, closedSegments(g, closures), vehicle)
     if (import.meta.env.DEV && route) console.info('[A*]', route.stats, route.traffic)
   } catch (err) {
     console.error('A* route failed:', err)

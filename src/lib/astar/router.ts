@@ -1,4 +1,4 @@
-import { directedEdge, haversineM, nearbyNodes, nearbySegments, nearestNode, segmentShape, type RoadGraph } from './graph'
+import { bearing, directedEdge, haversineM, nearbyNodes, nearbySegments, nearestNode, segmentShape, type RoadGraph, type SegmentSnap } from './graph'
 import { aStarMulti, SIGNAL_SECONDS, type Endpoint, type PathResult } from './search'
 import { congestionFactor, sampleTraffic, trafficCoolingDown, trafficForWay, type TrafficSource } from './traffic'
 
@@ -21,6 +21,57 @@ const MAX_LOOKUPS_PER_ROUND = 15
 const MAX_LOOKUPS_PER_ROUTE = 30
 // Walking-pace cost for the stretch from the exact point to the road.
 const CONNECTOR_SPEED_MPS = 20 / 3.6
+
+/** A route starting from a moving vehicle's own GPS fix (live navigation). */
+export interface VehicleStart {
+  /** Degrees clockwise from north, when the device knows it. */
+  heading?: number
+  /** GPS accuracy radius, metres. */
+  accuracy?: number
+}
+
+// A vehicle's fix is already on a road -- the one it's driving -- give or
+// take GPS error. Unlike a person walking to the kerb, it can't hop to a
+// road across a median or canal, or turn up at a junction behind it; and it
+// can only set off the way it's facing.
+// How far past the nearest road a candidate may be: the fix's own accuracy
+// (a divided road's other carriageway is often only 10-15 m away).
+const VEHICLE_SNAP_SLACK_MIN_M = 5
+const VEHICLE_SNAP_SLACK_MAX_M = 50
+const VEHICLE_SNAP_SLACK_DEFAULT_M = 15
+// Within that, the nearer road is where the vehicle most likely is.
+const VEHICLE_OFFSET_SECONDS_PER_M = 2
+const HEADING_TOLERANCE_DEG = 75
+
+function angleBetween(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360
+  return d > 180 ? 360 - d : d
+}
+
+/** Which of these origin snaps, and which way along each, a vehicle could
+ * really be driving: the nearest road (plus GPS slack), facing its heading.
+ * Falls back to ignoring the heading when nothing matches it (a bad fix). */
+function vehicleStartFilter(
+  g: RoadGraph,
+  snaps: SegmentSnap[],
+  vehicle: VehicleStart,
+): (snap: SegmentSnap, forward: boolean) => boolean {
+  if (snaps.length === 0) return () => true
+  const nearest = Math.min(...snaps.map((s) => s.metres))
+  const slack = Math.min(VEHICLE_SNAP_SLACK_MAX_M, Math.max(VEHICLE_SNAP_SLACK_MIN_M, vehicle.accuracy ?? VEHICLE_SNAP_SLACK_DEFAULT_M))
+  const onRoad = (s: SegmentSnap) => s.metres <= nearest + slack
+  const facing = (s: SegmentSnap, forward: boolean) => {
+    if (vehicle.heading === undefined) return true
+    const { before, after } = shapeSplit(g, s.seg, s.along)
+    const next = forward ? after.find((p) => haversineM(s.lat, s.lng, p[0], p[1]) > 1) : [...before].reverse().find((p) => haversineM(s.lat, s.lng, p[0], p[1]) > 1)
+    if (!next) return true
+    return angleBetween(bearing(s.lat, s.lng, next[0], next[1]), vehicle.heading) <= HEADING_TOLERANCE_DEG
+  }
+  const anyFacing = snaps.some(
+    (s) => onRoad(s) && ((g.segOneway[s.seg] !== -1 && facing(s, true)) || (g.segOneway[s.seg] !== 1 && facing(s, false))),
+  )
+  return (s, forward) => onRoad(s) && (!anyFacing || facing(s, forward))
+}
 
 // Where a route may begin and end. Each end is snapped onto the road
 // segments near it -- the way OSRM does -- rather than to the nearest
@@ -64,17 +115,26 @@ function unusable(g: RoadGraph, seg: number, closed: ReadonlySet<number>): boole
   return g.segBlocked[seg] === 1 || closed.has(seg)
 }
 
-function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' | 'end', closed: ReadonlySet<number>): Snap[] {
+function snapEnds(
+  g: RoadGraph,
+  p: { lat: number; lng: number },
+  role: 'start' | 'end',
+  closed: ReadonlySet<number>,
+  vehicle?: VehicleStart,
+): Snap[] {
   const out: Snap[] = []
-  for (const snap of nearbySegments(g, p.lat, p.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)) {
+  const snaps = nearbySegments(g, p.lat, p.lng, SNAP_RADIUS_M, SNAP_SEGMENTS).filter((s) => !unusable(g, s.seg, closed))
+  const drivable = vehicle && role === 'start' ? vehicleStartFilter(g, snaps, vehicle) : () => true
+  const nearest = snaps.length > 0 ? Math.min(...snaps.map((s) => s.metres)) : 0
+  for (const snap of snaps) {
     const { seg, along } = snap
-    if (unusable(g, seg, closed)) continue
     const len = g.segLength[seg]
-    const walk = snap.metres / CONNECTOR_SPEED_MPS
+    const walk =
+      snap.metres / CONNECTOR_SPEED_MPS + (vehicle && role === 'start' ? (snap.metres - nearest) * VEHICLE_OFFSET_SECONDS_PER_M : 0)
     const proj: [number, number] = [snap.lat, snap.lng]
     const { before, after } = shapeSplit(g, seg, along)
-    const forward = g.segOneway[seg] !== -1
-    const backward = g.segOneway[seg] !== 1
+    const forward = g.segOneway[seg] !== -1 && drivable(snap, true)
+    const backward = g.segOneway[seg] !== 1 && drivable(snap, false)
     if (role === 'start') {
       // Already on the road heading this way: the search applies turn rules
       // to the first turn off it.
@@ -88,7 +148,8 @@ function snapEnds(g: RoadGraph, p: { lat: number; lng: number }, role: 'start' |
   }
   // Nearby intersections too, reached on foot: more choices can only make
   // the chosen route faster, and they cover a point whose nearest segments
-  // are all one dead-end street.
+  // are all one dead-end street. Not for a vehicle already on its road.
+  if (vehicle && role === 'start' && out.length > 0) return out
   for (const { node, metres } of nearbyNodes(g, p.lat, p.lng, NODE_RADIUS_M, NODE_CANDIDATES)) {
     const at: [number, number] = [g.nodeLat[node], g.nodeLng[node]]
     out.push({ node, seconds: metres / CONNECTOR_SPEED_MPS, points: [at], metres })
@@ -108,15 +169,19 @@ function sameSegmentRoute(
   origin: { lat: number; lng: number },
   destination: { lat: number; lng: number },
   closed: ReadonlySet<number>,
+  vehicle?: VehicleStart,
 ) {
   let best: { seconds: number; metres: number; points: [number, number][] } | null = null
   const ends = nearbySegments(g, destination.lat, destination.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)
-  for (const a of nearbySegments(g, origin.lat, origin.lng, SNAP_RADIUS_M, SNAP_SEGMENTS)) {
+  const starts = nearbySegments(g, origin.lat, origin.lng, SNAP_RADIUS_M, SNAP_SEGMENTS).filter((s) => !unusable(g, s.seg, closed))
+  const drivable = vehicle ? vehicleStartFilter(g, starts, vehicle) : () => true
+  for (const a of starts) {
     const b = ends.find((e) => e.seg === a.seg)
-    if (!b || unusable(g, a.seg, closed)) continue
+    if (!b) continue
     const onRoad = Math.abs(b.along - a.along)
-    const allowed = b.along >= a.along ? g.segOneway[a.seg] !== -1 : g.segOneway[a.seg] !== 1
-    if (!allowed) continue
+    const forward = b.along >= a.along
+    const allowed = forward ? g.segOneway[a.seg] !== -1 : g.segOneway[a.seg] !== 1
+    if (!allowed || !drivable(a, forward)) continue
     const seconds = (a.metres + b.metres) / CONNECTOR_SPEED_MPS + onRoad / freeFlowMps(g, a.seg)
     if (!best || seconds < best.seconds) {
       best = { seconds, metres: a.metres + onRoad + b.metres, points: [[a.lat, a.lng], [b.lat, b.lng]] }
@@ -145,9 +210,11 @@ export async function computeRoute(
   signal?: AbortSignal,
   /** Segments reported closed right now (road closures), avoided entirely. */
   closed: ReadonlySet<number> = new Set(),
+  /** Set when the origin is a moving vehicle's live GPS fix. */
+  vehicle?: VehicleStart,
 ): Promise<AStarRoute | null> {
   const started = performance.now()
-  const sources = snapEnds(g, origin, 'start', closed)
+  const sources = snapEnds(g, origin, 'start', closed, vehicle)
   const targets = snapEnds(g, destination, 'end', closed)
   if (sources.length === 0 || targets.length === 0) return null
 
@@ -189,7 +256,7 @@ export async function computeRoute(
     rounds++
   }
   if (signal?.aborted) return null
-  const direct = sameSegmentRoute(g, origin, destination, closed)
+  const direct = sameSegmentRoute(g, origin, destination, closed, vehicle)
   if (direct && (!path || direct.seconds <= path.seconds)) {
     return {
       points: [[origin.lat, origin.lng], ...direct.points, [destination.lat, destination.lng]],

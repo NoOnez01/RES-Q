@@ -1,5 +1,5 @@
 import { haversineKm } from './utils'
-import { routeWithAStar } from './astar'
+import { routeWithAStar, type VehicleStart } from './astar'
 import { closuresKey, getActiveClosures } from './roadClosures'
 import type { GeoLocation } from './types'
 
@@ -186,10 +186,13 @@ interface RouteCacheEntry {
   settled: boolean
 }
 const routeCache = new Map<string, RouteCacheEntry>()
-function cacheKey(origin: GeoLocation, destination: GeoLocation): string {
+function cacheKey(origin: GeoLocation, destination: GeoLocation, vehicle?: VehicleStart): string {
   const r = (n: number) => n.toFixed(4)
+  // A moving vehicle's route depends on which way it faces (to the nearest
+  // 45 degrees) -- the same spot facing the other way is another route.
+  const v = vehicle ? `|v${vehicle.heading === undefined ? '' : Math.round(vehicle.heading / 45) % 8}` : ''
   // Closures change the answer, so a route is cached per set of them.
-  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}|${closuresKey(getActiveClosures())}`
+  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}|${closuresKey(getActiveClosures())}${v}`
 }
 
 const ROUTE_TIMEOUT_MS = 8000
@@ -199,12 +202,17 @@ const ROUTE_TIMEOUT_MS = 8000
 // worker, so the next route has it).
 const ASTAR_TIMEOUT_MS = 6000
 
-function fetchRouteFromAStar(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
+function fetchRouteFromAStar(
+  origin: GeoLocation,
+  destination: GeoLocation,
+  signal: AbortSignal,
+  vehicle?: VehicleStart,
+): Promise<RouteResult | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS)
   const onAbort = () => controller.abort()
   signal.addEventListener('abort', onAbort, { once: true })
-  return routeWithAStar(origin, destination, controller.signal, getActiveClosures())
+  return routeWithAStar(origin, destination, controller.signal, getActiveClosures(), vehicle)
     .then((r): RouteResult | null =>
       r && r.points.length >= 2
         ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'astar', traffic: r.traffic }
@@ -234,8 +242,14 @@ function fetchRouteFromAStar(origin: GeoLocation, destination: GeoLocation, sign
  * that doesn't simply abort the underlying fetch out from under any other
  * caller sharing the same cached request.
  */
-export function fetchRoute(origin: GeoLocation, destination: GeoLocation, signal?: AbortSignal): Promise<RouteResult | null> {
-  const key = cacheKey(origin, destination)
+export function fetchRoute(
+  origin: GeoLocation,
+  destination: GeoLocation,
+  signal?: AbortSignal,
+  /** Set when the origin is a moving vehicle's live GPS fix (navigation). */
+  vehicle?: VehicleStart,
+): Promise<RouteResult | null> {
+  const key = cacheKey(origin, destination, vehicle)
   let entry = routeCache.get(key)
 
   if (!entry) {
@@ -245,7 +259,7 @@ export function fetchRoute(origin: GeoLocation, destination: GeoLocation, signal
     // if this exact entry gets cancelled+evicted and a fresh one created
     // for the same key before this settles, a by-key lookup would mark the
     // *new* entry settled instead, based on the *old* request's timing.
-    const promise = fetchRouteFromAStar(origin, destination, controller.signal)
+    const promise = fetchRouteFromAStar(origin, destination, controller.signal, vehicle)
       .then((astar) => astar ?? fetchRouteFromLongdo(origin, destination, controller.signal))
       .then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination, controller.signal))
       .finally(() => {
@@ -313,4 +327,52 @@ export function pointAlongRoute(points: [number, number][], ratio: number): { la
     covered += segLen
   }
   return { lat: points[points.length - 1][0], lng: points[points.length - 1][1] }
+}
+
+export type { VehicleStart }
+
+export interface RouteProgress {
+  /** What's left of the route, starting where the vehicle is on it. */
+  points: [number, number][]
+  remainingKm: number
+  remainingMin: number
+  /** How far the vehicle is from the route line, metres. */
+  offRouteM: number
+}
+
+/**
+ * Where `pos` is along `route`: the part still ahead (drawn from the
+ * vehicle, not from wherever the route was planned), and the distance and
+ * time left, scaled from the route's own totals. `offRouteM` is the
+ * distance to the route line -- large means the driver has left it.
+ */
+export function routeProgress(route: RouteResult, pos: { lat: number; lng: number }): RouteProgress {
+  const pts = route.points
+  const k = Math.cos((pos.lat * Math.PI) / 180)
+  const xy = (p: [number, number]) => [p[1] * k * 111_320, p[0] * 110_574] as const
+  const [px, py] = xy([pos.lat, pos.lng])
+  let total = 0
+  let best = { d: Infinity, along: 0, index: 0, point: pts[0] }
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = xy(pts[i - 1])
+    const [bx, by] = xy(pts[i])
+    const dx = bx - ax
+    const dy = by - ay
+    const len = Math.hypot(dx, dy)
+    const t = len > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (len * len))) : 0
+    const d = Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+    if (d < best.d) {
+      const a = pts[i - 1]
+      const b = pts[i]
+      best = { d, along: total + t * len, index: i, point: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] }
+    }
+    total += len
+  }
+  const fraction = total > 0 ? Math.max(0, (total - best.along) / total) : 0
+  return {
+    points: [best.point, ...pts.slice(best.index)],
+    remainingKm: route.distanceKm * fraction,
+    remainingMin: Math.max(1, Math.round(route.durationMin * fraction)),
+    offRouteM: best.d,
+  }
 }

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { watchPosition, toGeoLocation, type Coords } from './geolocation'
-import { fetchRoute, type RouteResult } from './routing'
+import { fetchRoute, routeProgress, type RouteProgress, type RouteResult, type VehicleStart } from './routing'
 import { haversineKm } from './utils'
 import { closuresKey, useRoadClosures } from './roadClosures'
 import type { GeoLocation } from './types'
@@ -8,6 +8,9 @@ import type { GeoLocation } from './types'
 export interface LiveRouteState {
   /** Real road route + ETA to `target`, from whichever origin is active. */
   route: RouteResult | null
+  /** GPS mode: what's left of `route` from where the vehicle is now --
+   * drawn from the vehicle, with the distance and time still to go. */
+  progress: RouteProgress | null
   /** The device's live GPS fix, once `gpsMode` has one. */
   gpsPos: Coords | null
   /** Untranslated message from the last GeolocationError, if watching
@@ -16,25 +19,53 @@ export interface LiveRouteState {
   gpsErrorMessage: string | null
 }
 
+// Off the route by more than this (or the fix's own accuracy radius, when
+// that's worse) means the driver has left it -- plan again from here.
+const OFF_ROUTE_M = 35
+const OFF_ROUTE_MAX_M = 80
+// Even on route, re-plan this often for fresh traffic.
+const REFRESH_MS = 120_000
+// After a failed attempt, try again no sooner than this.
+const RETRY_MS = 15_000
+// The GPS's own heading is only trusted while actually moving; otherwise
+// it's the direction from a fix at least this far back.
+const HEADING_MIN_SPEED_MPS = 2
+const HEADING_MIN_MOVE_M = 15
+
+function bearingDeg(a: Coords, b: Coords): number {
+  const rad = Math.PI / 180
+  const y = Math.sin((b.lng - a.lng) * rad) * Math.cos(b.lat * rad)
+  const x = Math.cos(a.lat * rad) * Math.sin(b.lat * rad) - Math.sin(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos((b.lng - a.lng) * rad)
+  return (Math.atan2(y, x) / rad + 360) % 360
+}
+
+interface Plan {
+  targetKey: string
+  closures: string
+  gpsMode: boolean
+  origin: Coords
+  at: number
+  ok: boolean
+}
+
 /**
  * Tracks a route to `target` from either a fixed `simulatedOrigin` or, when
- * `gpsMode` is on, the device's real live GPS position -- re-fetching the
- * route only once the active origin has moved past `rerouteThresholdKm`,
- * not on every raw GPS fix (which can arrive many times a second).
+ * `gpsMode` is on, the device's real live GPS position.
  *
- * Applies each response via a monotonic request id, *and* aborts the
- * previous in-flight request (via lib/routing.ts's reference-counted
- * cancellation) at the exact moment a new one actually supersedes it --
- * deliberately not via this effect's own cleanup function, which would
- * fire on every single GPS fix (most of which don't cross the reroute
- * threshold and so don't start a new request at all). Tying cancellation
- * to that would abort a request that's still the one we want, right after
- * starting it.
+ * With GPS, the route follows the vehicle rather than being re-requested
+ * on every fix: what's drawn is the part still ahead of it (`progress`),
+ * and a new route is planned only when the vehicle leaves the current one,
+ * the destination or road closures change, or it's been a couple of minutes
+ * (fresh traffic). A route that's still being worked out is never thrown
+ * away because the vehicle moved -- on a phone a route with live traffic
+ * can take several seconds, time enough to drive 100 m, and cancelling it
+ * each time meant no new route ever arrived while driving. It finishes and
+ * shows; if the vehicle has meanwhile left it, the next plan starts from
+ * the newest position straight away. Plans from a moving vehicle carry its
+ * heading and GPS accuracy, so the route sets off the way it's facing on
+ * the road it's actually on.
  *
- * Extracted out of Navigation.tsx (the first consumer) as its own hook
- * rather than page-local state, since "route from wherever I actually am
- * right now" vs "route from a fixed point" is a natural seam for any other
- * live-tracking screen (e.g. a dispatch-side view) to reuse later.
+ * `rerouteThresholdKm` still governs the simulated (fixed-origin) mode.
  */
 export function useLiveRoute({
   gpsMode,
@@ -58,25 +89,33 @@ export function useLiveRoute({
   // navigator.geolocation subscription on every single GPS fix.
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null)
   const [route, setRoute] = useState<RouteResult | null>(null)
-  const lastRouteOriginRef = useRef<Coords | null>(null)
   // A reported/cleared road closure changes the best route even when the
   // vehicle hasn't moved, so it re-plans on that too.
   const closures = closuresKey(useRoadClosures())
-  const lastClosuresRef = useRef(closures)
-  const routeRequestIdRef = useRef(0)
-  const activeControllerRef = useRef<AbortController | null>(null)
+  const recentFixesRef = useRef<Coords[]>([])
+  const planRef = useRef<Plan | null>(null)
+  const inFlightRef = useRef<AbortController | null>(null)
+  const wantReplanRef = useRef(false)
+  const routeRef = useRef<RouteResult | null>(null)
 
   const routeOrigin: Coords | null = gpsMode ? gpsPos : simulatedOrigin
+  const targetKey = target ? `${target.lat},${target.lng}` : ''
+  // Read by the async continuations below, which must act on the newest
+  // values rather than the ones captured when a request started.
+  const latestRef = useRef({ routeOrigin, target, targetKey, closures, gpsMode, rerouteThresholdKm })
+  latestRef.current = { routeOrigin, target, targetKey, closures, gpsMode, rerouteThresholdKm }
 
   useEffect(() => {
     if (!gpsMode || !active) {
       setGpsPos(null)
       setGpsErrorMessage(null)
+      recentFixesRef.current = []
       return
     }
     setGpsErrorMessage(null)
     const stop = watchPosition(
       (pos) => {
+        recentFixesRef.current = [...recentFixesRef.current.slice(-9), pos]
         setGpsPos(pos)
         setGpsErrorMessage(null)
       },
@@ -85,48 +124,104 @@ export function useLiveRoute({
     return stop
   }, [gpsMode, active])
 
-  useEffect(() => {
-    if (!active || !routeOrigin || !target) {
-      setRoute(null)
-      lastRouteOriginRef.current = null
-      activeControllerRef.current?.abort()
-      activeControllerRef.current = null
+  /** Which way the vehicle is going: the GPS's own heading while moving,
+   * else the direction from a fix far enough back to mean something. */
+  function headingOf(pos: Coords): number | undefined {
+    if (pos.heading !== undefined && (pos.speed ?? 0) >= HEADING_MIN_SPEED_MPS) return pos.heading
+    const back = [...recentFixesRef.current].reverse().find((f) => haversineKm(f, pos) * 1000 >= HEADING_MIN_MOVE_M)
+    return back ? bearingDeg(back, pos) : undefined
+  }
+
+  function needsPlan(): boolean {
+    const { routeOrigin: origin, targetKey: key, closures: cl, gpsMode: gps, rerouteThresholdKm: threshold } = latestRef.current
+    if (!origin) return false
+    const plan = planRef.current
+    if (!plan || plan.targetKey !== key || plan.closures !== cl || plan.gpsMode !== gps) return true
+    if (!plan.ok) return Date.now() - plan.at > RETRY_MS
+    if (!gps) return haversineKm(plan.origin, origin) >= threshold
+    const current = routeRef.current
+    if (!current) return false
+    const tolerance = Math.min(OFF_ROUTE_MAX_M, Math.max(OFF_ROUTE_M, origin.accuracy ?? 0))
+    // Only once it has actually moved since planning -- a route that doesn't
+    // start right at the vehicle (a fallback service's) mustn't re-plan in
+    // a loop while it's parked.
+    const moved = haversineKm(plan.origin, origin) * 1000
+    if (moved > tolerance && routeProgress(current, origin).offRouteM > tolerance) return true
+    return Date.now() - plan.at > REFRESH_MS && haversineKm(plan.origin, origin) * 1000 > 50
+  }
+
+  function plan() {
+    if (inFlightRef.current) {
+      // Let the route being worked out finish -- then plan again from here.
+      wantReplanRef.current = true
       return
     }
-    const last = lastRouteOriginRef.current
-    if (last && haversineKm(last, routeOrigin) < rerouteThresholdKm && lastClosuresRef.current === closures) return
-    lastRouteOriginRef.current = routeOrigin
-    lastClosuresRef.current = closures
-
-    // A genuinely new request supersedes whatever was previously in
-    // flight -- abort that one now, right as it's actually being replaced
-    // (see the hook doc comment for why this isn't done via effect
-    // cleanup instead).
-    activeControllerRef.current?.abort()
+    const { routeOrigin: origin, target: dest, targetKey: key, closures: cl, gpsMode: gps } = latestRef.current
+    if (!origin || !dest) return
     const controller = new AbortController()
-    activeControllerRef.current = controller
-
-    const requestId = ++routeRequestIdRef.current
-    void fetchRoute(toGeoLocation(routeOrigin), target, controller.signal).then((r) => {
-      if (routeRequestIdRef.current === requestId) setRoute(r)
+    inFlightRef.current = controller
+    wantReplanRef.current = false
+    const thisPlan: Plan = { targetKey: key, closures: cl, gpsMode: gps, origin, at: Date.now(), ok: false }
+    planRef.current = thisPlan
+    const vehicle: VehicleStart | undefined = gps ? { heading: headingOf(origin), accuracy: origin.accuracy } : undefined
+    void fetchRoute(toGeoLocation(origin), dest, controller.signal, vehicle).then((r) => {
+      if (inFlightRef.current !== controller) return // cancelled: new destination, or stopped
+      inFlightRef.current = null
+      thisPlan.at = Date.now()
+      thisPlan.ok = !!r
+      // A failed re-plan keeps showing the last good route.
+      if (r || !routeRef.current) {
+        routeRef.current = r
+        setRoute(r)
+      }
+      // The vehicle kept moving while this was worked out: if it has
+      // already left the new route, plan again from where it is now.
+      wantReplanRef.current = false
+      if (needsPlan()) plan()
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, routeOrigin?.lat, routeOrigin?.lng, target?.lat, target?.lng, rerouteThresholdKm, closures])
+  }
 
-  // Unmount-only cleanup -- separate from the per-run logic above so a
-  // component unmounting mid-request still cancels it, without that
-  // cleanup function also firing (and wrongly aborting a still-wanted
-  // request) on every ordinary re-run of the effect above.
+  function cancelInFlight() {
+    inFlightRef.current?.abort()
+    inFlightRef.current = null
+    wantReplanRef.current = false
+  }
+
+  useEffect(() => {
+    if (!active || !routeOrigin || !target) {
+      cancelInFlight()
+      planRef.current = null
+      routeRef.current = null
+      setRoute(null)
+      return
+    }
+    const current = planRef.current
+    // A new destination, closure set or origin mode makes the route being
+    // worked out pointless -- drop it (and the old route) and start over.
+    if (current && (current.targetKey !== targetKey || current.closures !== closures || current.gpsMode !== gpsMode)) {
+      cancelInFlight()
+      if (current.targetKey !== targetKey || current.gpsMode !== gpsMode) {
+        routeRef.current = null
+        setRoute(null)
+      }
+    }
+    if (needsPlan()) plan()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, routeOrigin?.lat, routeOrigin?.lng, targetKey, closures, gpsMode, rerouteThresholdKm])
+
+  // Unmount-only cleanup: a request still in flight is abandoned, and its
+  // plan mustn't count as done -- otherwise a remount that keeps these refs
+  // (React StrictMode's dev double-mount) never requests again and is left
+  // with no route at all.
   useEffect(() => {
     return () => {
-      activeControllerRef.current?.abort()
-      // The cancelled request never delivered, so its origin mustn't count
-      // as "already routed" -- otherwise a remount that keeps these refs
-      // (React StrictMode's dev double-mount) skips requesting again and is
-      // left with no route at all.
-      lastRouteOriginRef.current = null
+      cancelInFlight()
+      planRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return { route, gpsPos, gpsErrorMessage }
+  const progress = useMemo(() => (gpsMode && route && gpsPos ? routeProgress(route, gpsPos) : null), [gpsMode, route, gpsPos])
+
+  return { route, progress, gpsPos, gpsErrorMessage }
 }

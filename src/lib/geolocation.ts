@@ -3,6 +3,12 @@ import type { GeoLocation } from './types'
 export interface Coords {
   lat: number
   lng: number
+  /** Accuracy radius, metres (live fixes only). */
+  accuracy?: number
+  /** Direction of travel, degrees from north -- only while moving. */
+  heading?: number
+  /** Metres per second (live fixes only). */
+  speed?: number
 }
 
 /** Coords (a bare lat/lng, e.g. from getCurrentPosition/watchPosition) has
@@ -96,7 +102,15 @@ export function watchPosition(onUpdate: (pos: Coords) => void, onError?: (err: G
     return () => {}
   }
   const watchId = navigator.geolocation.watchPosition(
-    (pos) => onUpdate({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    (pos) =>
+      onUpdate({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        // Browsers report NaN/null while standing still.
+        heading: pos.coords.heading != null && Number.isFinite(pos.coords.heading) ? pos.coords.heading : undefined,
+        speed: pos.coords.speed ?? undefined,
+      }),
     (err) => {
       if (!onError) return
       if (err.code === err.PERMISSION_DENIED) {

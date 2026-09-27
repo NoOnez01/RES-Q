@@ -109,7 +109,7 @@ export default function NavigationPage() {
   // Route + live GPS tracking (see lib/useLiveRoute.ts) -- origin is the
   // device's real position in GPS mode, the rescue team's fixed base
   // otherwise, switching cleanly between the two as gpsMode toggles.
-  const { route, gpsPos, gpsErrorMessage } = useLiveRoute({
+  const { route, progress, gpsPos, gpsErrorMessage } = useLiveRoute({
     gpsMode,
     active: isNavigable,
     simulatedOrigin: base,
@@ -213,8 +213,10 @@ export default function NavigationPage() {
   // Real road distance + road-network ETA when available; the old
   // as-the-crow-flies estimate otherwise (straight-line from the real GPS
   // fix in GPS mode, from the simulated point in simulated mode).
-  const distanceKm = route ? route.distanceKm : haversineKm(livePos, target)
-  const etaMin = route ? route.durationMin : estimateEtaMin(distanceKm)
+  // With live GPS, what's left from where the vehicle is now -- it counts
+  // down as they drive instead of staying at the planned route's totals.
+  const distanceKm = progress ? progress.remainingKm : route ? route.distanceKm : haversineKm(livePos, target)
+  const etaMin = progress ? progress.remainingMin : route ? route.durationMin : estimateEtaMin(distanceKm)
   // Simulated mode "arrives" when the fake progress timer completes; GPS
   // mode arrives based on actual proximity to the target. Either way,
   // reaching this state only enables the button below -- confirming is
@@ -281,7 +283,7 @@ export default function NavigationPage() {
           <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={displayPct} routeProvider={route?.provider} routeTraffic={route?.traffic} />
 
           <Card className="!p-0 overflow-hidden">
-            <MapPanel pins={pins} showRoute routePoints={route?.points} height="360px" />
+            <MapPanel pins={pins} showRoute routePoints={progress?.points ?? route?.points} height="360px" />
           </Card>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">

@@ -1,9 +1,9 @@
 import type { GeoLocation } from '../types'
 import { inGraphRegion } from './region'
-import type { AStarRoute } from './router'
+import type { AStarRoute, VehicleStart } from './router'
 import type { RouteRequest, RouteResponse } from './worker'
 
-export type { AStarRoute } from './router'
+export type { AStarRoute, VehicleStart } from './router'
 
 let worker: Worker | null = null
 let nextId = 0
@@ -38,6 +38,7 @@ export function routeWithAStar(
   destination: Pick<GeoLocation, 'lat' | 'lng'>,
   signal?: AbortSignal,
   closures: { id: string; lat: number; lng: number }[] = [],
+  vehicle?: VehicleStart,
 ): Promise<AStarRoute | null> {
   if (!inGraphRegion(origin) || !inGraphRegion(destination) || typeof Worker === 'undefined') return Promise.resolve(null)
   return new Promise((resolve) => {
@@ -57,6 +58,7 @@ export function routeWithAStar(
       origin: { lat: origin.lat, lng: origin.lng },
       destination: { lat: destination.lat, lng: destination.lng },
       closures: closures.map((c) => ({ id: c.id, lat: c.lat, lng: c.lng })),
+      vehicle,
     }
     getWorker().postMessage(request)
   })
