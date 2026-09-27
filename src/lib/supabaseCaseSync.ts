@@ -131,9 +131,18 @@ export function initSupabaseCaseSync(): void {
     if (lastPushed.get(remote.id) === json) return
     // Belt-and-suspenders alongside the push-side debounce below: reject an
     // incoming version older than what's already applied locally, so a
-    // stale/out-of-order echo can't revert a case backwards.
+    // stale/out-of-order echo can't revert a case backwards. The row now
+    // holds that older version, though -- say a device missed an update and
+    // wrote over it -- and everyone else has it too; left there, this
+    // device and the rest disagree until the next change, and until its
+    // clock catches up this device ignores every change they make (rescue
+    // hanging up never ended the call on the citizen's phone). So put the
+    // newer version back.
     const local = useStore.getState().cases[remote.id]
-    if (local && local.updatedAt > remote.updatedAt) return
+    if (local && local.updatedAt > remote.updatedAt) {
+      schedulePush(remote.id)
+      return
+    }
     lastPulled.set(remote.id, json)
     if (live) noteRingRenewal(remote.id, local, remote)
     useStore.setState((s) => ({ cases: { ...s.cases, [remote.id]: remote } }))

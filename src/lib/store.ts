@@ -77,6 +77,19 @@ registerTranslations({
   กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว: 'The emergency response process is complete',
 })
 
+/**
+ * The updatedAt for a change to `c`. Sync keeps whichever copy of a case
+ * has the later updatedAt, but every device stamps with its own clock -- so
+ * a change made on a device whose clock runs behind came out "older" than
+ * the very version it changed, and everyone else threw it away (1669
+ * answering a phone whose clock ran ahead: the phone never heard the call
+ * was answered, kept ringing, and the call timer never started). A change
+ * is always stamped later than what it changed.
+ */
+function nextUpdatedAt(c: EmergencyCase): number {
+  return Math.max(Date.now(), c.updatedAt + 1)
+}
+
 function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): EmergencyCase {
   const meta = statusMeta(status)
   // Guard against a genuine no-op re-call (already at this exact status), not
@@ -98,7 +111,7 @@ function pushStatus(c: EmergencyCase, status: CaseStatus, note?: string): Emerge
           timestamp: Date.now(),
         },
       ]
-  return { ...c, status, timeline, updatedAt: Date.now() }
+  return { ...c, status, timeline, updatedAt: nextUpdatedAt(c) }
 }
 
 function makeNewCase(seq: number, reporterName?: string, reporterPhone?: string): EmergencyCase {
@@ -458,7 +471,7 @@ export const useStore = create<ResQState>()(
           const photos = category
             ? [...c.photos.filter((p) => p.category !== category), photo]
             : [...c.photos, photo]
-          return { cases: { ...s.cases, [caseId]: { ...c, photos, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, photos, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       removePhoto: (caseId, photoId) =>
@@ -468,7 +481,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, photos: c.photos.filter((p) => p.id !== photoId), updatedAt: Date.now() },
+              [caseId]: { ...c, photos: c.photos.filter((p) => p.id !== photoId), updatedAt: nextUpdatedAt(c) },
             },
           }
         }),
@@ -481,7 +494,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, audioRecordings: [...c.audioRecordings, recording], updatedAt: Date.now() },
+              [caseId]: { ...c, audioRecordings: [...c.audioRecordings, recording], updatedAt: nextUpdatedAt(c) },
             },
           }
         }),
@@ -496,7 +509,7 @@ export const useStore = create<ResQState>()(
               [caseId]: {
                 ...c,
                 audioRecordings: c.audioRecordings.filter((r) => r.id !== recordingId),
-                updatedAt: Date.now(),
+                updatedAt: nextUpdatedAt(c),
               },
             },
           }
@@ -513,14 +526,14 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, location, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, location, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       setCallStatus: (caseId, status, callerRole) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = { ...c, callStatus: status, updatedAt: Date.now() }
+          const updated = { ...c, callStatus: status, updatedAt: nextUpdatedAt(c) }
           if (status === 'connecting') updated.callRingingAt = updated.callRingStartedAt = Date.now()
           if (status === 'connecting' && callerRole) updated.activeCallerRole = callerRole
           // A crew invite only makes sense while that call is live.
@@ -545,7 +558,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c || c.callStatus !== 'connecting') return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, callStatus: 'in-call', updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, callStatus: 'in-call', updatedAt: nextUpdatedAt(c) } } }
         }),
 
       tickCallDuration: (caseId) =>
@@ -561,7 +574,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = { ...c, rescueCallStatus: status, updatedAt: Date.now() }
+          const updated = { ...c, rescueCallStatus: status, updatedAt: nextUpdatedAt(c) }
           if (status === 'connecting') {
             updated.rescueCallDurationSec = 0
             updated.rescueCallRingingAt = Date.now()
@@ -575,7 +588,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c || c.rescueCallStatus !== 'connecting') return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallStatus: 'in-call', updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallStatus: 'in-call', updatedAt: nextUpdatedAt(c) } } }
         }),
 
       tickRescueCallDuration: (caseId) =>
@@ -594,7 +607,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, rescueCallInvite: { status: 'ringing', invitedAt: Date.now() }, updatedAt: Date.now() },
+              [caseId]: { ...c, rescueCallInvite: { status: 'ringing', invitedAt: Date.now() }, updatedAt: nextUpdatedAt(c) },
             },
           }
         }),
@@ -606,7 +619,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, rescueCallInvite: { ...c.rescueCallInvite, status: 'joined' }, updatedAt: Date.now() },
+              [caseId]: { ...c, rescueCallInvite: { ...c.rescueCallInvite, status: 'joined' }, updatedAt: nextUpdatedAt(c) },
             },
           }
         }),
@@ -615,7 +628,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c?.rescueCallInvite) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallInvite: undefined, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, rescueCallInvite: undefined, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       finishCall: (caseId) =>
@@ -635,14 +648,14 @@ export const useStore = create<ResQState>()(
           // into incidentDetails.callbackPhone (what rescue/hospital read).
           // Keep that copy current, or they'd be left with a blank number.
           const incidentDetails = c.incidentDetails ? { ...c.incidentDetails, callbackPhone: phone } : c.incidentDetails
-          return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, incidentDetails, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, reporterPhone: phone, incidentDetails, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       setReporterConsciousness: (caseId, consciousness) =>
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, reporterConsciousness: consciousness, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, reporterConsciousness: consciousness, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       submitReport: (caseId) => {
@@ -671,7 +684,7 @@ export const useStore = create<ResQState>()(
             ...c,
             incidentDetails: { ...incident, callbackPhone: c.reporterPhone ?? '' },
             assessment: { severity, injuryDescription, assessedAt: Date.now() },
-            updatedAt: Date.now(),
+            updatedAt: nextUpdatedAt(c),
           }
           // A case reaching this page should already be 'received' (that's
           // what gates the dashboard/case-detail button that leads here),
@@ -737,7 +750,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, supportingRescueTeam: team, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, supportingRescueTeam: team, updatedAt: nextUpdatedAt(c) } } }
         })
         const c = get().cases[caseId]
         notify(set, {
@@ -760,7 +773,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          const updated = { ...c, rescueSeverityProposal: { severity, note, proposedAt: Date.now() }, updatedAt: Date.now() }
+          const updated = { ...c, rescueSeverityProposal: { severity, note, proposedAt: Date.now() }, updatedAt: nextUpdatedAt(c) }
           return { cases: { ...s.cases, [caseId]: updated } }
         })
         const c = get().cases[caseId]
@@ -784,9 +797,9 @@ export const useStore = create<ResQState>()(
                   ? { ...c.assessment, severity: c.rescueSeverityProposal.severity, severityConfirmedAt: Date.now() }
                   : c.assessment,
                 rescueSeverityProposal: null,
-                updatedAt: Date.now(),
+                updatedAt: nextUpdatedAt(c),
               }
-            : { ...c, rescueSeverityProposal: null, updatedAt: Date.now() }
+            : { ...c, rescueSeverityProposal: null, updatedAt: nextUpdatedAt(c) }
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
 
@@ -810,7 +823,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, relativeContacts: [...(c.relativeContacts ?? []), contact], updatedAt: Date.now() },
+              [caseId]: { ...c, relativeContacts: [...(c.relativeContacts ?? []), contact], updatedAt: nextUpdatedAt(c) },
             },
           }
         })
@@ -862,7 +875,7 @@ export const useStore = create<ResQState>()(
             ...c,
             assignedVehicle: vehicle,
             assignedVehicleCrewCount: crewCount ?? vehicle.members,
-            updatedAt: Date.now(),
+            updatedAt: nextUpdatedAt(c),
           }
           return { cases: { ...s.cases, [caseId]: updated } }
         }),
@@ -909,7 +922,7 @@ export const useStore = create<ResQState>()(
           return {
             cases: {
               ...s.cases,
-              [caseId]: { ...c, patientUpdates: [...(c.patientUpdates ?? []), update], updatedAt: Date.now() },
+              [caseId]: { ...c, patientUpdates: [...(c.patientUpdates ?? []), update], updatedAt: nextUpdatedAt(c) },
             },
           }
         })
@@ -937,7 +950,7 @@ export const useStore = create<ResQState>()(
           let updated: EmergencyCase = {
             ...c,
             hospitalDecision: { ...input, decidedAt: Date.now() },
-            updatedAt: Date.now(),
+            updatedAt: nextUpdatedAt(c),
           }
           if (input.hospital) updated = { ...updated, selectedHospital: input.hospital }
           if (input.type === 'declined-all') {
@@ -1063,7 +1076,7 @@ export const useStore = create<ResQState>()(
         set((s) => {
           const c = s.cases[caseId]
           if (!c) return {}
-          return { cases: { ...s.cases, [caseId]: { ...c, feedbackSubmitted: true, updatedAt: Date.now() } } }
+          return { cases: { ...s.cases, [caseId]: { ...c, feedbackSubmitted: true, updatedAt: nextUpdatedAt(c) } } }
         }),
 
       addNotification: (n) => notify(set, n),

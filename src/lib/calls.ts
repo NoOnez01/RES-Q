@@ -102,3 +102,21 @@ export function useKeepRinging(caseId: string | null | undefined, ringing: boole
     }
   }, [caseId, ringing, keepCallRinging])
 }
+
+/**
+ * A caller hears its call was answered from the case sync -- but whoever
+ * answers only joins the call once they have, so seeing them in it is the
+ * same news, and can't go missing on the way. A lost or late update left
+ * the caller's side ringing while the two were already talking: no call
+ * timer, and a rescue call hung itself up as unanswered.
+ */
+export function useAnsweredOnJoin(
+  caseId: string | null | undefined,
+  ringing: boolean,
+  answererJoined: boolean,
+  answer: (caseId: string) => void,
+): void {
+  useEffect(() => {
+    if (caseId && ringing && answererJoined) answer(caseId)
+  }, [caseId, ringing, answererJoined, answer])
+}

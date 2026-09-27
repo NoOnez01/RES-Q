@@ -360,6 +360,30 @@ function RoundIconButton({ label, onClick, disabled, children }: { label: string
 const ENDED_MS = 1500
 const CONTROLS_HIDE_MS = 4000
 
+/**
+ * How long the call has been going, counted on this device from when it
+ * saw the call answered. The count kept on the case is the caller's phone
+ * adding a second at a time over sync -- a phone in the background, or a
+ * slow or dropped update, froze it on everyone else's screen. Shows
+ * whichever is further along, so opening a call already under way picks up
+ * from the case's count.
+ */
+function useCallSeconds(answered: boolean, syncedSec: number): number {
+  const [localSec, setLocalSec] = useState(0)
+  const syncedRef = useRef(syncedSec)
+  syncedRef.current = syncedSec
+  useEffect(() => {
+    if (!answered) return
+    const start = Date.now() - syncedRef.current * 1000
+    const timer = setInterval(() => setLocalSec(Math.floor((Date.now() - start) / 1000)), 1000)
+    return () => {
+      clearInterval(timer)
+      setLocalSec(0)
+    }
+  }, [answered])
+  return Math.max(syncedSec, localSec)
+}
+
 export interface CallScreenProps {
   call: LiveKitCall
   emergencyCase: EmergencyCase
@@ -438,6 +462,7 @@ export function CallScreen({
   const remotes = call.remotes
   const failed = open && (call.connectionState === 'failed' || call.connectionState === 'disconnected')
   const hero = ended || failed || remotes.length === 0
+  const seconds = useCallSeconds(open && !ringing, durationSec ?? 0)
   // One person big, everyone else (you included) small; a focused person
   // who has left hands the big screen back to the first one still here.
   const focusId = focus === SELF || remotes.some((p) => p.identity === focus) ? focus : (remotes[0]?.identity ?? null)
@@ -521,7 +546,7 @@ export function CallScreen({
         : remotes.length === 0
           ? t('กำลังเชื่อมต่อ...')
           : durationSec !== undefined
-            ? formatDuration(durationSec)
+            ? formatDuration(seconds)
             : t('กำลังสนทนา')
   const cameraError =
     call.cameraState === 'denied'

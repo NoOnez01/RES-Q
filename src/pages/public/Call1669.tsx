@@ -10,7 +10,7 @@ import { CallScreen } from '@/components/call/CallScreen'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
-import { useKeepRinging } from '@/lib/calls'
+import { useAnsweredOnJoin, useKeepRinging } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -46,6 +46,7 @@ export default function Call1669() {
   const cases = useStore((s) => s.cases)
   const setCallStatus = useStore((s) => s.setCallStatus)
   const tickCallDuration = useStore((s) => s.tickCallDuration)
+  const answerCall = useStore((s) => s.answerCall)
   const finishCall = useStore((s) => s.finishCall)
   const submitReport = useStore((s) => s.submitReport)
   const t = useT()
@@ -78,6 +79,7 @@ export default function Call1669() {
   // responder answers or the citizen cancels, kept ringing on dispatch's
   // side for as long as this screen is waiting.
   useKeepRinging(activeCaseId, connecting)
+  useAnsweredOnJoin(activeCaseId, connecting, call.remotes.some((p) => p.role === 'dispatch'), answerCall)
 
   // The call ending is driven purely by the synced callStatus field, so this
   // fires whether the citizen hung up themselves or the dispatcher did on

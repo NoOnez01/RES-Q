@@ -12,7 +12,7 @@ import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { RING_TIMEOUT_MS } from '@/lib/calls'
+import { RING_TIMEOUT_MS, useAnsweredOnJoin } from '@/lib/calls'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -44,6 +44,7 @@ export default function RescueCallReporter() {
   const c = useStore((s) => (id ? s.cases[id] : undefined))
   const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
   const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
+  const answerRescueCall = useStore((s) => s.answerRescueCall)
   const t = useT()
 
   const hasShownEndedRef = useRef(false)
@@ -63,6 +64,8 @@ export default function RescueCallReporter() {
     const timer = setInterval(() => tickRescueCallDuration(caseId), 1000)
     return () => clearInterval(timer)
   }, [c?.rescueCallStatus, id, tickRescueCallDuration])
+
+  useAnsweredOnJoin(id, c?.rescueCallStatus === 'connecting', call.remotes.some((p) => p.role === 'public'), answerRescueCall)
 
   // An unanswered call ends itself rather than ringing forever on the
   // reporter's phone (see lib/calls.ts); counted from when the ring started.

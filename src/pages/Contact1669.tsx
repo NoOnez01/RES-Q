@@ -12,7 +12,7 @@ import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { useKeepRinging } from '@/lib/calls'
+import { useAnsweredOnJoin, useKeepRinging } from '@/lib/calls'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -39,6 +39,7 @@ export default function Contact1669() {
   const c = useStore((s) => (caseId ? s.cases[caseId] : undefined))
   const setCallStatus = useStore((s) => s.setCallStatus)
   const tickCallDuration = useStore((s) => s.tickCallDuration)
+  const answerCall = useStore((s) => s.answerCall)
   const t = useT()
 
   const isRescue = currentUser?.role === 'rescue'
@@ -64,6 +65,7 @@ export default function Contact1669() {
   // A call to 1669 rings until a responder answers or the caller cancels
   // -- kept ringing on dispatch's side for as long as this screen waits.
   useKeepRinging(caseId, c?.callStatus === 'connecting')
+  useAnsweredOnJoin(caseId, c?.callStatus === 'connecting', call.remotes.some((p) => p.role === 'dispatch'), answerCall)
 
   useEffect(() => {
     if (c?.callStatus !== 'ended' || hasShownEndedRef.current) return

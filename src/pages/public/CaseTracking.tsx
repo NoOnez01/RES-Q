@@ -105,21 +105,11 @@ export default function CaseTracking() {
   // the full-screen incoming call (CallRingtoneBridge), which brings the
   // citizen here; they join the room only once they have -- joining while it
   // rang would show rescue their camera before they'd picked up.
-  const tickRescueCallDuration = useStore((s) => s.tickRescueCallDuration)
+  // The call's length is counted by rescue, who placed it (CallScreen keeps
+  // its own count here) -- both sides adding a second each to the one
+  // synced number just overwrote each other.
   const rescueCallActive = !isRemoteOnly && activeCase?.rescueCallStatus === 'in-call'
   const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', 'public', rescueCallActive)
-
-  // Counts while the call is connected. Started and stopped by this effect
-  // alone, keyed on the case id rather than the case object (which changes
-  // with every tick) -- a ref-guarded interval stays "running" after a cleanup cleared
-  // it, so a remount or a re-run of the effect froze the timer.
-  const activeCaseId = activeCase?.id
-  useEffect(() => {
-    if (!rescueCallActive || !activeCaseId) return
-    const caseId = activeCaseId
-    const timer = setInterval(() => tickRescueCallDuration(caseId), 1000)
-    return () => clearInterval(timer)
-  }, [rescueCallActive, activeCaseId, tickRescueCallDuration])
 
   useEffect(() => {
     if (!activeCase) return
