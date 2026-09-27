@@ -414,11 +414,10 @@ export interface CallScreenProps {
   /** Who's on the other end -- names the call until they're actually in it. */
   peer: CallRole
   durationSec?: number
-  /** Hang up / cancel. Left out, there's no end button -- a citizen doesn't
-   * hang up on staff mid-call; staff end it. */
+  /** Hang up, or cancel while it's still ringing. */
   onEnd?: () => void
   endLabel?: string
-  /** A line above the controls, e.g. the ring timeout or who ends the call. */
+  /** A line above the controls, e.g. that the call rings until answered. */
   note?: string
   /** Top-right action, e.g. dispatch pulling the rescue team into the call. */
   action?: { label: string; onClick: () => void }

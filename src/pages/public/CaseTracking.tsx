@@ -34,7 +34,6 @@ registerTranslations({
   'กำลังค้นหาข้อมูลเหตุ...': 'Looking up the case...',
   ไม่พบเหตุนี้: 'Case not found',
   'ข้อมูลเหตุอาจถูกลบ หรือรหัสไม่ถูกต้อง': 'This case may have been deleted, or the code is incorrect',
-  หน่วยกู้ชีพจะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The rescue team will end the call when the conversation is finished',
   'การช่วยเหลือเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ': 'Response complete — thank you for using ResQ',
   ขอบคุณสำหรับความคิดเห็นของท่าน: 'Thank you for your feedback',
   ส่งต่อให้ญาติติดตามสถานะ: 'Share so family can track status',
@@ -108,6 +107,7 @@ export default function CaseTracking() {
   // The call's length is counted by rescue, who placed it (CallScreen keeps
   // its own count here) -- both sides adding a second each to the one
   // synced number just overwrote each other.
+  const setRescueCallStatus = useStore((s) => s.setRescueCallStatus)
   const rescueCallActive = !isRemoteOnly && activeCase?.rescueCallStatus === 'in-call'
   const rescueCall = useLiveKitCall(activeCase?.id ?? null, 'rescue-citizen', 'public', rescueCallActive)
 
@@ -258,17 +258,14 @@ export default function CaseTracking() {
         <AnimatedBackground variant="emergency" />
 
         <div className="relative z-10 flex flex-col gap-5 pb-8">
-          {/* Only rescue can end this call -- there is deliberately no
-              hang-up button for the reporter: staff controls when the call
-              is actually finished, not a citizen who may be distressed or
-              acting on impulse. */}
           <CallScreen
             call={rescueCall}
             emergencyCase={activeCase}
             open={rescueCallActive}
             peer="rescue"
             durationSec={activeCase.rescueCallDurationSec ?? 0}
-            note={t('หน่วยกู้ชีพจะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')}
+            onEnd={() => setRescueCallStatus(activeCase.id, 'ended')}
+            endLabel={t('วางสาย')}
           />
 
           {activeCase.status === 'completed' && (

@@ -31,7 +31,6 @@ registerTranslations({
   'แนบรูปภาพแล้ว {n} รูป': '{n} photo(s) attached',
   ไม่มีรูปภาพแนบ: 'No photos attached',
   ยกเลิกการโทร: 'Cancel call',
-  เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
   'สิ้นสุดการโทร ดำเนินการต่อ': 'End call and continue',
   'โทร 1669': 'Call 1669',
   'ยืนยันการโทร 1669': 'Confirm calling 1669',
@@ -240,16 +239,9 @@ export default function Call1669() {
         ringing={connecting}
         peer="dispatch"
         durationSec={activeCase.callDurationSec}
-        // Once connected, only 1669 ends the call -- staff controls when the
-        // conversation is actually finished, not a citizen who may still be
-        // distressed mid-call.
-        onEnd={connecting ? handleHangUp : undefined}
-        endLabel={t('ยกเลิกการโทร')}
-        note={
-          connecting
-            ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')
-            : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')
-        }
+        onEnd={handleHangUp}
+        endLabel={connecting ? t('ยกเลิกการโทร') : t('วางสาย')}
+        note={connecting ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก') : undefined}
       />
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">

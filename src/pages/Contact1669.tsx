@@ -19,7 +19,6 @@ registerTranslations({
   'สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก': 'The call keeps ringing until a 1669 responder answers, or you cancel',
   ยกเลิกการโทร: 'Cancel call',
   วางสาย: 'Hang up',
-  เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา: 'The responder will end the call when the conversation is finished',
 })
 
 /**
@@ -163,17 +162,9 @@ export default function Contact1669() {
         ringing={c.callStatus === 'connecting'}
         peer="dispatch"
         durationSec={c.callDurationSec}
-        // Once connected, only staff ends the call -- a citizen calling in
-        // doesn't get to hang up on 1669 mid-conversation.
-        onEnd={isRescue || c.callStatus === 'connecting' ? handleHangUp : undefined}
+        onEnd={handleHangUp}
         endLabel={c.callStatus === 'connecting' ? t('ยกเลิกการโทร') : t('วางสาย')}
-        note={
-          c.callStatus === 'connecting'
-            ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')
-            : isRescue
-              ? undefined
-              : t('เจ้าหน้าที่จะเป็นผู้วางสายเมื่อสิ้นสุดการสนทนา')
-        }
+        note={c.callStatus === 'connecting' ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก') : undefined}
       />
     </AppShell>
   )
