@@ -15,10 +15,24 @@ const RING_GRACE_MS = 15_000
 /** How often a waiting caller re-stamps its ring -- well inside the timeout. */
 const RING_HEARTBEAT_MS = 15_000
 
-/** Whether a call last stamped as ringing at `ringingAt` should still ring.
- * A call with no stamp predates this field and is treated as abandoned. */
+/** Whether a call last stamped as ringing at `ringingAt` should still ring. */
 export function isStillRinging(ringingAt: number | undefined, now = Date.now()): boolean {
   return ringingAt !== undefined && now - ringingAt < RING_TIMEOUT_MS + RING_GRACE_MS
+}
+
+/**
+ * When a case's call (or rescue's call to the reporter) was last stamped
+ * as ringing. An older app -- the Android build, or a tab opened before an
+ * update -- sends no stamp at all; its case's updatedAt is set the moment
+ * it starts the call, so that stands in. Treating "no stamp" as abandoned
+ * silenced every call from those apps: no ring, no popup.
+ */
+export function callRingStamp(c: { callRingingAt?: number; updatedAt: number }): number {
+  return c.callRingingAt ?? c.updatedAt
+}
+
+export function rescueCallRingStamp(c: { rescueCallRingingAt?: number; updatedAt: number }): number {
+  return c.rescueCallRingingAt ?? c.updatedAt
 }
 
 /**

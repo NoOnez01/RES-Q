@@ -4,7 +4,7 @@ import { AlertTriangle, Camera, MapPin, User } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { startRingtone, stopRingtone } from '@/lib/alertSound'
 import { prepareCall, useInLiveConversation } from '@/lib/useLiveKitCall'
-import { isStillRinging } from '@/lib/calls'
+import { callRingStamp, isStillRinging, rescueCallRingStamp } from '@/lib/calls'
 import { toast } from '@/lib/toast'
 import { IncomingCallAlert } from './IncomingCallAlert'
 import { IncomingCallScreen } from './call/IncomingCallScreen'
@@ -51,7 +51,10 @@ export function CallRingtoneBridge() {
   const [dismissedCallIds, setDismissedCallIds] = useState<Set<string>>(new Set())
   const t = useT()
 
-  const role = currentUser?.role ?? 'public'
+  // An admin browsing another role's dashboard ("view as") gets that
+  // role's calls, the same way the menus follow it.
+  const viewingRole = useStore((s) => s.viewingRole)
+  const role = (currentUser?.isAdmin && viewingRole ? viewingRole : currentUser?.role) ?? 'public'
   const myTeamId = currentUser?.rescueTeamId
   const inConversation = useInLiveConversation()
 
@@ -67,7 +70,7 @@ export function CallRingtoneBridge() {
   // Cases ringing for *this* user, i.e. the ones that get an on-screen alert.
   const ringingForMe = useMemo(() => {
     const all = Object.values(cases)
-    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting' && isStillRinging(c.callRingingAt, now))
+    if (role === 'dispatch') return all.filter((c) => c.callStatus === 'connecting' && isStillRinging(callRingStamp(c), now))
     if (role === 'rescue' && myTeamId) {
       return all.filter(
         (c) =>
@@ -91,7 +94,7 @@ export function CallRingtoneBridge() {
           (c) =>
             c.reporterUserId === currentUser.id &&
             c.rescueCallStatus === 'connecting' &&
-            isStillRinging(c.rescueCallRingingAt, now),
+            isStillRinging(rescueCallRingStamp(c), now),
         )
         .sort((a, b) => a.createdAt - b.createdAt)[0] ?? null
     )
@@ -106,12 +109,12 @@ export function CallRingtoneBridge() {
       // their *own* cases -- an admin working with a citizen profile has
       // every case in the store and would otherwise ring for all of them.
       shouldRing =
-        (activeCase?.callStatus === 'connecting' && isStillRinging(activeCase.callRingingAt, now)) ||
+        (activeCase?.callStatus === 'connecting' && isStillRinging(callRingStamp(activeCase), now)) ||
         Object.values(cases).some(
           (c) =>
             c.reporterUserId === currentUser?.id &&
             c.rescueCallStatus === 'connecting' &&
-            isStillRinging(c.rescueCallRingingAt, now),
+            isStillRinging(rescueCallRingStamp(c), now),
         )
     }
     // Never loop the ring into a call this device is already on: it drowns
@@ -235,7 +238,7 @@ export function CallRingtoneBridge() {
       title={t('สายเรียกเข้าใหม่')}
       caseNumber={c.caseNumber}
       details={details(callerLine(c, t))}
-      ringingSince={c.callRingStartedAt ?? c.callRingingAt}
+      ringingSince={c.callRingStartedAt ?? callRingStamp(c)}
       waitingCount={waitingCount}
       answerLabel={t('รับสาย')}
       dismissLabel={t('ภายหลัง')}
