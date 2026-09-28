@@ -2,6 +2,13 @@ import { supabase, supabaseEnabled } from './supabase'
 import { useStore } from './store'
 import { noteRingRenewal } from './calls'
 import type { EmergencyCase } from './types'
+import { toast } from './toast'
+import { registerTranslations, t } from './i18n'
+
+registerTranslations({
+  'บันทึกเหตุ {caseNumber} ขึ้นระบบไม่สำเร็จ': 'Case {caseNumber} could not be saved to the server',
+  หน่วยงานอื่นจะไม่เห็นเหตุนี้จนกว่าจะบันทึกได้: "Other teams won't see this case until it's saved",
+})
 
 const lastPushed = new Map<string, string>()
 const lastPulled = new Map<string, string>()
@@ -13,6 +20,9 @@ const PUSH_DEBOUNCE_MS = 250
 // the case via applyRemote(). Once an id is deleted in this tab it stays
 // deleted for the rest of the session.
 const deletedIds = new Set<string>()
+// Cases whose save failed and was reported this session -- said once, not
+// on every retry.
+const failedIds = new Set<string>()
 
 let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null
 let unsubscribeStore: (() => void) | null = null
@@ -99,6 +109,7 @@ function teardown() {
   lastPushed.clear()
   lastPulled.clear()
   deletedIds.clear()
+  failedIds.clear()
 }
 
 /**
@@ -179,7 +190,20 @@ export function initSupabaseCaseSync(): void {
       .from('cases')
       .upsert(row, { onConflict: 'case_id' })
       .then(({ error }) => {
-        if (error) console.error('Supabase case sync failed:', error.message)
+        if (!error) {
+          failedIds.delete(c.id)
+          return
+        }
+        console.error('Supabase case sync failed:', error.message)
+        // Was silent: the case showed on this screen but never reached
+        // anyone else (a database policy refusing the write, say).
+        if (failedIds.has(c.id)) return
+        failedIds.add(c.id)
+        toast({
+          title: t('บันทึกเหตุ {caseNumber} ขึ้นระบบไม่สำเร็จ', { caseNumber: c.caseNumber }),
+          message: t('หน่วยงานอื่นจะไม่เห็นเหตุนี้จนกว่าจะบันทึกได้'),
+          tone: 'error',
+        })
       })
   }
 
