@@ -170,10 +170,10 @@ unit's exact position). This is a read-only reference lookup, separate from
 the app's own rescue-team assignment flow (`src/lib/rescueAssignment.ts`),
 which still only assigns from `rescueTeams` registered directly in ResQ.
 
-# Road graph for A* routing (OpenStreetMap → `public/graphs/`)
+# Road graph for D* Lite routing (OpenStreetMap → `public/graphs/`)
 
-`build-road-graph.mjs` builds the road network the app's own A* router
-(`src/lib/astar/`) runs on: Chiang Mai's drivable roads from OpenStreetMap,
+`build-road-graph.mjs` builds the road network the app's own D* Lite router
+(`src/lib/pathfinding/`) runs on: Chiang Mai's drivable roads from OpenStreetMap,
 split into intersection-to-intersection segments with each road's class,
 free-flow speed (its `maxspeed` tag, else a default for the road class) and
 one-way rules, written as a compact binary file the browser loads on demand.
@@ -186,8 +186,8 @@ Service roads are included (not parking aisles or drive-throughs) so a
 route can start or end inside a hospital or campus.
 
 The file format is `RQG2`, parsed by `parseGraph` in
-`src/lib/astar/graph.ts`. When the format changes, bump its magic and the
-`?v=` in `src/lib/astar/region.ts` so browsers drop a cached old file.
+`src/lib/pathfinding/graph.ts`. When the format changes, bump its magic and the
+`?v=` in `src/lib/pathfinding/region.ts` so browsers drop a cached old file.
 
 ```
 node scripts/build-road-graph.mjs            # download from Overpass + build
@@ -195,10 +195,26 @@ node scripts/build-road-graph.mjs --cached   # rebuild from the last download
 ```
 
 - Covers the bounding box in `REGION` (keep it in sync with
-  `src/lib/astar/region.ts`). Routes with either end outside it use Longdo's
+  `src/lib/pathfinding/region.ts`). Routes with either end outside it use Longdo's
   / OSRM's routing instead.
 - Downloading can take several minutes — public Overpass servers are busy;
   the script tries each mirror in turn. The raw download is kept in
   `scripts/.cache/` (git-ignored) so `--cached` rebuilds instantly.
 - Commit the new `public/graphs/chiang-mai.bin` after rebuilding. Road data
   © OpenStreetMap contributors (ODbL); the map shows the attribution.
+
+## Checking the router
+
+```
+node scripts/check-router.mjs [seed]
+```
+
+Runs D* Lite (`src/lib/pathfinding/dstarlite.ts`) against the A* reference
+(`search.ts`) on the real graph: 50 random trips, each searched fresh and
+again after every change it repairs incrementally -- roads closed and
+reopened, traffic slowing roads, the vehicle driving on, a wrong turn. Every
+answer must match A* exactly and add up from its own roads. Prints the
+states each expanded (driving on along the route: ~30 for D* Lite vs ~22,000
+for A* from scratch). Run it after changing the router or rebuilding the
+graph -- the heuristic is scaled by the graph's own worst road length to
+straight line ratio (`heuristicScale`), which a rebuild can change.

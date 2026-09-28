@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { registerTranslations } from './i18n'
 
 // Road closures reported by rescue/dispatch staff (supabase-road-closures.sql).
-// Kept live app-wide: the A* router avoids them (lib/astar/), and every open
+// Kept live app-wide: the app's router avoids them (lib/pathfinding/), and every open
 // route re-plans the moment one is reported or cleared.
 
 registerTranslations({

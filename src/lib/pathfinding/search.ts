@@ -90,7 +90,10 @@ export function turnSeconds(g: RoadGraph, inEdge: number, outEdge: number): numb
 }
 
 /**
- * Turn-aware A* over the directed road graph. `edgeSeconds(seg)` is the
+ * Turn-aware A* over the directed road graph -- no longer what the app
+ * routes with (that's D* Lite, dstarlite.ts), but kept as the reference it
+ * is checked against: both must find equally fast routes
+ * (scripts/check-router.mjs). `edgeSeconds(seg)` is the
  * cost of travelling a segment (travel time under current traffic, plus
  * any traffic lights along it; Infinity = closed).
  *

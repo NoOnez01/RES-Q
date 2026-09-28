@@ -46,13 +46,23 @@ export function trafficForWay(way: number): Sample | null {
   return s && Date.now() - s.at < SAMPLE_TTL_MS ? s : null
 }
 
+/** Every road with a fresh sample and the speed it gives (null = Longdo
+ * had none) -- a kept search compares this with what it last priced to see
+ * which roads' costs have moved. */
+export function trafficSnapshot(): Map<number, number | null> {
+  const out = new Map<number, number | null>()
+  const now = Date.now()
+  for (const [way, s] of samples) if (now - s.at < SAMPLE_TTL_MS) out.set(way, s.mps)
+  return out
+}
+
 /**
  * How congested the area is right now: the median of sampled speed / free-
  * flow speed over every fresh sample (1 = free-flowing). Roads without a
  * sample of their own are slowed by this, so they compete fairly with the
  * sampled ones -- otherwise every unsampled side street would look faster
  * than a sampled, congested main road and the search would chase them.
- * Capped at 1 so no road is ever faster than free flow (keeps the A*
+ * Capped at 1 so no road is ever faster than free flow (keeps the search
  * heuristic admissible).
  */
 export function congestionFactor(): number {

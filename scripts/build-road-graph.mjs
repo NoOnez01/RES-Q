@@ -1,5 +1,5 @@
 // Builds the road graph that the in-browser A* router loads
-// (src/lib/astar/). Downloads the drivable roads inside the region's
+// (src/lib/pathfinding/). Downloads the drivable roads inside the region's
 // bounding box from OpenStreetMap (Overpass API), splits every way into
 // intersection-to-intersection segments, keeps only the largest connected
 // network (an isolated fragment cut off by the bbox edge would make a
@@ -45,7 +45,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-// Keep in sync with src/lib/astar/region.ts. Mueang Chiang Mai plus the
+// Keep in sync with src/lib/pathfinding/region.ts. Mueang Chiang Mai plus the
 // ring of districts around it (Mae Rim, San Sai, San Kamphaeng, Saraphi,
 // Hang Dong) -- where the main hospitals and rescue bases are.
 const REGION = { name: 'chiang-mai', south: 18.62, west: 98.84, north: 18.95, east: 99.12 }
@@ -53,7 +53,7 @@ const OUT_FILE = join(ROOT, 'public', 'graphs', `${REGION.name}.bin`)
 const CACHE_FILE = join(ROOT, 'scripts', '.cache', `${REGION.name}-osm.json`)
 
 // Order matters: the index is the class code stored in the file, and
-// src/lib/astar/graph.ts reads it back with the same list.
+// src/lib/pathfinding/graph.ts reads it back with the same list.
 const ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service']
 // Typical free-flow speeds (km/h) when a way has no usable maxspeed tag.
 const DEFAULT_SPEED = { motorway: 90, trunk: 80, primary: 60, secondary: 50, tertiary: 40, unclassified: 35, residential: 25, living_street: 15, service: 15 }

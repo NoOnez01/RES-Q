@@ -6,9 +6,9 @@ registerTranslations({
   เวลาที่คาดว่าจะถึงจุดหมาย: 'Estimated time to destination',
   เส้นทางที่เร็วที่สุดตามสภาพจราจร: 'Fastest route for current traffic',
   เส้นทางตามถนนจริง: 'Real road route',
-  'A* · สภาพจราจรปัจจุบัน': 'A* · live traffic',
-  'A* · สภาพจราจรคาดการณ์': 'A* · predicted traffic',
-  'A* · ความเร็วโดยประมาณ': 'A* · estimated speeds',
+  'D* Lite · สภาพจราจรปัจจุบัน': 'D* Lite · live traffic',
+  'D* Lite · สภาพจราจรคาดการณ์': 'D* Lite · predicted traffic',
+  'D* Lite · ความเร็วโดยประมาณ': 'D* Lite · estimated speeds',
   นาที: 'min',
   'ระยะทาง {km} กม.': 'Distance {km} km',
 })
@@ -29,9 +29,9 @@ export function ETAWidget({
    * real road route but typical-speed only, and undefined means neither
    * loaded yet (still a straight-line estimate). Shown as two different
    * badges so the label never overclaims what data backs the number.
-   * 'astar' is the app's own router (lib/astar/), labelled with the traffic
+   * 'dstarlite' is the app's own router (lib/pathfinding/), labelled with the traffic
    * data it actually used (routeTraffic). */
-  routeProvider?: 'astar' | 'longdo' | 'osrm'
+  routeProvider?: 'dstarlite' | 'longdo' | 'osrm'
   routeTraffic?: 'real-time' | 'predicted' | 'none'
   className?: string
 }) {
@@ -51,13 +51,13 @@ export function ETAWidget({
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <p className="text-xs text-muted">{t('เวลาที่คาดว่าจะถึงจุดหมาย')}</p>
-          {routeProvider === 'astar' && (
+          {routeProvider === 'dstarlite' && (
             <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
               {routeTraffic === 'real-time'
-                ? t('A* · สภาพจราจรปัจจุบัน')
+                ? t('D* Lite · สภาพจราจรปัจจุบัน')
                 : routeTraffic === 'predicted'
-                  ? t('A* · สภาพจราจรคาดการณ์')
-                  : t('A* · ความเร็วโดยประมาณ')}
+                  ? t('D* Lite · สภาพจราจรคาดการณ์')
+                  : t('D* Lite · ความเร็วโดยประมาณ')}
             </span>
           )}
           {routeProvider === 'longdo' && (

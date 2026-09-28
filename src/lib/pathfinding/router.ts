@@ -1,15 +1,17 @@
 import { bearing, directedEdge, haversineM, nearbyNodes, nearbySegments, nearestNode, segmentShape, type RoadGraph, type SegmentSnap } from './graph'
-import { aStarMulti, SIGNAL_SECONDS, type Endpoint, type PathResult } from './search'
-import { congestionFactor, sampleTraffic, trafficCoolingDown, trafficForWay, type TrafficSource } from './traffic'
+import { SIGNAL_SECONDS, type Endpoint, type PathResult } from './search'
+import { DStarLite } from './dstarlite'
+import { congestionFactor, sampleTraffic, trafficCoolingDown, trafficForWay, trafficSnapshot, type TrafficSource } from './traffic'
 
-export interface AStarRoute {
+export interface GraphRoute {
   points: [number, number][]
   distanceKm: number
   durationMin: number
   /** Which traffic data covers most of the route's main-road length;
    * 'none' when it mostly ran on estimated speeds. */
   traffic: TrafficSource | 'none'
-  stats: { expanded: number; rounds: number; lookups: number; congestion: number; ms: number }
+  /** `reused`: the trip's kept search was repaired rather than built afresh. */
+  stats: { expanded: number; rounds: number; lookups: number; congestion: number; ms: number; reused: boolean }
 }
 
 // Main roads (motorway .. tertiary) get their own traffic lookups; smaller
@@ -115,7 +117,7 @@ function unusable(g: RoadGraph, seg: number, closed: ReadonlySet<number>): boole
   return g.segBlocked[seg] === 1 || closed.has(seg)
 }
 
-function snapEnds(
+export function snapEnds(
   g: RoadGraph,
   p: { lat: number; lng: number },
   role: 'start' | 'end',
@@ -190,13 +192,119 @@ function sameSegmentRoute(
   return best
 }
 
+// What a segment costs to drive, for one kept search: the roads reported
+// closed, and the congestion factor unsampled roads are slowed by as of
+// when the search was built.
+interface CostContext {
+  closed: ReadonlySet<number>
+  factor: number
+}
+
+function segSeconds(g: RoadGraph, seg: number, ctx: CostContext): number {
+  if (unusable(g, seg, ctx.closed)) return Infinity
+  const sampled = trafficForWay(g.segWay[seg])?.mps
+  const drive = g.segLength[seg] / (sampled ?? (g.segSpeedKmh[seg] / 3.6) * ctx.factor)
+  return drive + g.segSignals[seg] * SIGNAL_SECONDS
+}
+
+const waySegments = new WeakMap<RoadGraph, Map<number, number[]>>()
+
+/** Every segment of these roads -- a traffic reading reprices a whole road. */
+function segmentsOfWays(g: RoadGraph, ways: Iterable<number>): number[] {
+  let byWay = waySegments.get(g)
+  if (!byWay) {
+    byWay = new Map()
+    for (let s = 0; s < g.segCount; s++) {
+      const list = byWay.get(g.segWay[s])
+      if (list) list.push(s)
+      else byWay.set(g.segWay[s], [s])
+    }
+    waySegments.set(g, byWay)
+  }
+  const out: number[] = []
+  for (const w of ways) for (const s of byWay.get(w) ?? []) out.push(s)
+  return out
+}
+
+// A D* Lite search is kept per trip -- a destination and the roads it can
+// be reached by. Live navigation re-plans the same trip over and over as
+// the vehicle moves, and a closure or a traffic reading changes a few of
+// its roads; the kept search is repaired rather than redone (dstarlite.ts).
+// Two are kept: the trip being driven, and one other.
+interface Trip {
+  key: string
+  planner: DStarLite
+  ctx: CostContext
+  /** The traffic it last priced, per road. */
+  priced: Map<number, number | null>
+  builtAt: number
+}
+const trips: Trip[] = []
+const MAX_TRIPS = 2
+// Built afresh after this long, or once the area's congestion has moved
+// on: unsampled roads are priced with the factor as it was when built.
+const TRIP_MAX_AGE_MS = 5 * 60_000
+const FACTOR_DRIFT = 0.1
+// Repairing costs more than searching afresh once more than a handful of
+// roads change at once (measured: see scripts/README.md).
+const REPAIR_MAX_SEGMENTS = 5
+
+type Point = { lat: number; lng: number }
+
+function buildPlanner(g: RoadGraph, trip: Pick<Trip, 'ctx'>, targets: Endpoint[], destination: Point, sources: Endpoint[], origin: Point) {
+  return new DStarLite(g, targets, destination, sources, origin, (seg) => segSeconds(g, seg, trip.ctx))
+}
+
+/** Brings a kept search up to date with the roads whose cost changed since
+ * it last planned -- repaired, or built afresh when too much changed. */
+function syncTrip(g: RoadGraph, trip: Trip, targets: Endpoint[], destination: Point, sources: Endpoint[], origin: Point, closed: ReadonlySet<number>) {
+  const now = trafficSnapshot()
+  const changedWays: number[] = []
+  for (const [way, mps] of now) if (trip.priced.get(way) !== mps) changedWays.push(way)
+  for (const way of trip.priced.keys()) if (!now.has(way)) changedWays.push(way)
+  trip.priced = now
+  const touched = new Set(segmentsOfWays(g, changedWays))
+  for (const s of trip.ctx.closed) if (!closed.has(s)) touched.add(s)
+  for (const s of closed) if (!trip.ctx.closed.has(s)) touched.add(s)
+  trip.ctx.closed = closed
+  const changed = trip.planner.changedSegments(touched)
+  if (changed.length > REPAIR_MAX_SEGMENTS) {
+    trip.ctx = { closed, factor: congestionFactor() }
+    trip.planner = buildPlanner(g, trip, targets, destination, sources, origin)
+    trip.builtAt = Date.now()
+  } else {
+    trip.planner.updateSegments(changed)
+  }
+}
+
+function tripFor(g: RoadGraph, destination: Point, targets: Endpoint[], sources: Endpoint[], origin: Point, closed: ReadonlySet<number>): { trip: Trip; reused: boolean } {
+  const key = `${destination.lat.toFixed(6)},${destination.lng.toFixed(6)}|${targets.map((t) => `${t.node}:${t.edge ?? ''}:${t.seconds.toFixed(3)}`).join(';')}`
+  const i = trips.findIndex((t) => t.key === key)
+  const kept = i >= 0 ? trips.splice(i, 1)[0] : null
+  if (kept && Date.now() - kept.builtAt < TRIP_MAX_AGE_MS && Math.abs(kept.ctx.factor - congestionFactor()) < FACTOR_DRIFT) {
+    trips.unshift(kept)
+    kept.planner.setStart(sources, origin)
+    syncTrip(g, kept, targets, destination, sources, origin, closed)
+    return { trip: kept, reused: true }
+  }
+  // The planner prices roads through this context object, which the trip
+  // keeps and updates (syncTrip).
+  const ctx: CostContext = { closed, factor: congestionFactor() }
+  const trip: Trip = { key, ctx, priced: trafficSnapshot(), builtAt: Date.now(), planner: buildPlanner(g, { ctx }, targets, destination, sources, origin) }
+  trips.unshift(trip)
+  trips.length = Math.min(trips.length, MAX_TRIPS)
+  return { trip, reused: false }
+}
+
 /**
- * Fastest route under current traffic, found with A* over the road graph.
+ * Fastest route under current traffic, found with D* Lite over the road
+ * graph (dstarlite.ts): the same route A* would find, but the search is
+ * kept per trip and repaired as the vehicle moves and roads change.
  *
  * Traffic speeds come from a per-point, rate-limited service, so asking for
  * every road up front would take thousands of requests. Instead the search
- * is lazy: A* runs, the traffic on main roads of the path it found that
- * haven't been sampled yet is looked up (one point per road), and A* runs
+ * is lazy: it runs, the traffic on main roads of the path it found that
+ * haven't been sampled yet is looked up (one point per road), and it runs
  * again with those speeds -- until the fastest path's main roads all have
  * traffic data, or the lookup budget is spent. Roads without a sample are
  * slowed by the area's measured congestion, so the search doesn't keep
@@ -212,21 +320,14 @@ export async function computeRoute(
   closed: ReadonlySet<number> = new Set(),
   /** Set when the origin is a moving vehicle's live GPS fix. */
   vehicle?: VehicleStart,
-): Promise<AStarRoute | null> {
+): Promise<GraphRoute | null> {
   const started = performance.now()
   const sources = snapEnds(g, origin, 'start', closed, vehicle)
   const targets = snapEnds(g, destination, 'end', closed)
   if (sources.length === 0 || targets.length === 0) return null
 
-  const search = (): PathResult | null => {
-    const factor = congestionFactor()
-    return aStarMulti(g, sources, targets, destination, (seg) => {
-      if (unusable(g, seg, closed)) return Infinity
-      const sampled = trafficForWay(g.segWay[seg])?.mps
-      const drive = g.segLength[seg] / (sampled ?? (g.segSpeedKmh[seg] / 3.6) * factor)
-      return drive + g.segSignals[seg] * SIGNAL_SECONDS
-    })
-  }
+  const { trip, reused } = tripFor(g, destination, targets, sources, origin, closed)
+  const search = (): PathResult | null => trip.planner.plan()
 
   let path = search()
   let expanded = path?.expanded ?? 0
@@ -251,6 +352,7 @@ export async function computeRoute(
       .map((way) => pick.get(way)!)
     await sampleTraffic(g, batch, longdoKey, signal)
     lookups += batch.length
+    syncTrip(g, trip, targets, destination, sources, origin, closed)
     path = search()
     expanded += path?.expanded ?? 0
     rounds++
@@ -263,7 +365,7 @@ export async function computeRoute(
       distanceKm: direct.metres / 1000,
       durationMin: Math.max(1, Math.round(direct.seconds / 60)),
       traffic: 'none',
-      stats: { expanded, rounds, lookups, congestion: Number(congestionFactor().toFixed(2)), ms: Math.round(performance.now() - started) },
+      stats: { expanded, rounds, lookups, congestion: Number(congestionFactor().toFixed(2)), ms: Math.round(performance.now() - started), reused },
     }
   }
   if (!path) return null
@@ -289,7 +391,7 @@ export async function computeRoute(
   const seconds = path.seconds
 
   const withData = mainRoad['real-time'] + mainRoad.predicted
-  const traffic: AStarRoute['traffic'] =
+  const traffic: GraphRoute['traffic'] =
     withData === 0 || withData < mainRoad.none ? 'none' : mainRoad['real-time'] >= mainRoad.predicted ? 'real-time' : 'predicted'
 
   return {
@@ -297,6 +399,6 @@ export async function computeRoute(
     distanceKm: metres / 1000,
     durationMin: Math.max(1, Math.round(seconds / 60)),
     traffic,
-    stats: { expanded, rounds, lookups, congestion: Number(congestionFactor().toFixed(2)), ms: Math.round(performance.now() - started) },
+    stats: { expanded, rounds, lookups, congestion: Number(congestionFactor().toFixed(2)), ms: Math.round(performance.now() - started), reused },
   }
 }

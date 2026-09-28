@@ -1,13 +1,13 @@
 import type { GeoLocation } from '../types'
 import { inGraphRegion } from './region'
-import type { AStarRoute, VehicleStart } from './router'
+import type { GraphRoute, VehicleStart } from './router'
 import type { RouteRequest, RouteResponse } from './worker'
 
-export type { AStarRoute, VehicleStart } from './router'
+export type { GraphRoute, VehicleStart } from './router'
 
 let worker: Worker | null = null
 let nextId = 0
-const pending = new Map<number, (route: AStarRoute | null) => void>()
+const pending = new Map<number, (route: GraphRoute | null) => void>()
 
 function getWorker(): Worker {
   if (worker) return worker
@@ -28,18 +28,18 @@ function getWorker(): Worker {
 }
 
 /**
- * Fastest route by A* over the prebuilt road graph, with Longdo traffic as
+ * Fastest route by D* Lite over the prebuilt road graph, with Longdo traffic as
  * the road weights (see router.ts). Resolves null -- never rejects -- when
  * either end is outside the graph's region or anything goes wrong, so the
  * caller can fall back to another provider.
  */
-export function routeWithAStar(
+export function routeWithDStarLite(
   origin: Pick<GeoLocation, 'lat' | 'lng'>,
   destination: Pick<GeoLocation, 'lat' | 'lng'>,
   signal?: AbortSignal,
   closures: { id: string; lat: number; lng: number }[] = [],
   vehicle?: VehicleStart,
-): Promise<AStarRoute | null> {
+): Promise<GraphRoute | null> {
   if (!inGraphRegion(origin) || !inGraphRegion(destination) || typeof Worker === 'undefined') return Promise.resolve(null)
   return new Promise((resolve) => {
     const id = ++nextId

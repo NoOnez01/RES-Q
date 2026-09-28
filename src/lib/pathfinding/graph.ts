@@ -40,7 +40,7 @@ export interface RoadGraph {
   adjTo: Uint32Array
   /** 1 when the edge runs the segment backwards (to -> from). */
   adjReverse: Uint8Array
-  /** Fastest free-flow speed anywhere in the graph -- the A* heuristic
+  /** Fastest free-flow speed anywhere in the graph -- the search heuristic
    * divides straight-line distance by this, so it never overestimates. */
   maxSpeedMps: number
   grid: { south: number; west: number; cell: number; cols: number; rows: number; start: Uint32Array; nodes: Uint32Array }

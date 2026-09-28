@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
-// Runs the A* router off the main thread: loading the ~4.5 MB graph and a
+// Runs the D* Lite router off the main thread: loading the ~4.5 MB graph and a
 // few searches over its ~75k intersections would otherwise stall scrolling and
 // the map on a phone. Keeps the parsed graph and the traffic samples for
 // as long as the page is open.
 import { nearbySegments, parseGraph, type RoadGraph } from './graph'
 import { GRAPH_REGION } from './region'
-import { computeRoute, type AStarRoute, type VehicleStart } from './router'
+import { computeRoute, type GraphRoute, type VehicleStart } from './router'
 
 export interface RouteRequest {
   id: number
@@ -19,7 +19,7 @@ export interface RouteRequest {
 
 export interface RouteResponse {
   id: number
-  route: AStarRoute | null
+  route: GraphRoute | null
 }
 
 let graph: Promise<RoadGraph> | null = null
@@ -57,13 +57,13 @@ function closedSegments(g: RoadGraph, closures: RouteRequest['closures']): Set<n
 
 self.onmessage = async (event: MessageEvent<RouteRequest>) => {
   const { id, origin, destination, closures, vehicle } = event.data
-  let route: AStarRoute | null = null
+  let route: GraphRoute | null = null
   try {
     const g = await loadGraph()
     route = await computeRoute(g, origin, destination, import.meta.env.VITE_LONGDO_MAP_KEY, undefined, closedSegments(g, closures), vehicle)
-    if (import.meta.env.DEV && route) console.info('[A*]', route.stats, route.traffic)
+    if (import.meta.env.DEV && route) console.info('[D* Lite]', route.stats, route.traffic)
   } catch (err) {
-    console.error('A* route failed:', err)
+    console.error('Route failed:', err)
   }
   self.postMessage({ id, route } satisfies RouteResponse)
 }

@@ -1,5 +1,5 @@
 import { haversineKm } from './utils'
-import { routeWithAStar, type VehicleStart } from './astar'
+import { routeWithDStarLite, type VehicleStart } from './pathfinding'
 import { closuresKey, getActiveClosures } from './roadClosures'
 import type { GeoLocation } from './types'
 
@@ -13,9 +13,9 @@ export interface RouteResult {
   durationMin: number
   /** Which routing service actually produced this result -- lets the UI say
    * "live traffic" only when that's true (see ETAWidget). */
-  provider: 'astar' | 'longdo' | 'osrm'
-  /** For 'astar': which traffic data weighted most of the route (see
-   * lib/astar/router.ts). */
+  provider: 'dstarlite' | 'longdo' | 'osrm'
+  /** For 'dstarlite': which traffic data weighted most of the route (see
+   * lib/pathfinding/router.ts). */
   traffic?: 'real-time' | 'predicted' | 'none'
 }
 
@@ -196,13 +196,13 @@ function cacheKey(origin: GeoLocation, destination: GeoLocation, vehicle?: Vehic
 }
 
 const ROUTE_TIMEOUT_MS = 8000
-// A*'s own budget, before falling back: its first route on a device also
+// The app's own router's budget, before falling back: its first route on a device also
 // downloads the ~3 MB road graph, which a slow phone connection shouldn't
 // be allowed to spend the whole budget on (the download carries on in the
 // worker, so the next route has it).
 const ASTAR_TIMEOUT_MS = 6000
 
-function fetchRouteFromAStar(
+function fetchRouteFromGraph(
   origin: GeoLocation,
   destination: GeoLocation,
   signal: AbortSignal,
@@ -212,10 +212,10 @@ function fetchRouteFromAStar(
   const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS)
   const onAbort = () => controller.abort()
   signal.addEventListener('abort', onAbort, { once: true })
-  return routeWithAStar(origin, destination, controller.signal, getActiveClosures(), vehicle)
+  return routeWithDStarLite(origin, destination, controller.signal, getActiveClosures(), vehicle)
     .then((r): RouteResult | null =>
       r && r.points.length >= 2
-        ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'astar', traffic: r.traffic }
+        ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'dstarlite', traffic: r.traffic }
         : null,
     )
     .finally(() => {
@@ -226,8 +226,8 @@ function fetchRouteFromAStar(
 
 /**
  * Real driving route between two points. Inside the prebuilt road graph's
- * region (Chiang Mai), the app's own A* router finds the fastest path with
- * Longdo traffic as the road weights (lib/astar/). Otherwise -- or if that
+ * region (Chiang Mai), the app's own D* Lite router finds the fastest path with
+ * Longdo traffic as the road weights (lib/pathfinding/). Otherwise -- or if that
  * fails -- prefers Longdo Map's route service (live Thailand traffic) when
  * VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
  * (free, keyless, typical-speed only) if there's no key or the Longdo
@@ -259,8 +259,8 @@ export function fetchRoute(
     // if this exact entry gets cancelled+evicted and a fresh one created
     // for the same key before this settles, a by-key lookup would mark the
     // *new* entry settled instead, based on the *old* request's timing.
-    const promise = fetchRouteFromAStar(origin, destination, controller.signal, vehicle)
-      .then((astar) => astar ?? fetchRouteFromLongdo(origin, destination, controller.signal))
+    const promise = fetchRouteFromGraph(origin, destination, controller.signal, vehicle)
+      .then((graph) => graph ?? fetchRouteFromLongdo(origin, destination, controller.signal))
       .then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination, controller.signal))
       .finally(() => {
         clearTimeout(timeout)
