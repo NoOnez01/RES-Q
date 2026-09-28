@@ -123,11 +123,11 @@ export default function App() {
       setUser(user)
       syncFor(user.id)
       // The mount-time refreshOrgs() above fires before this session exists,
-      // so on a fresh browser (no cached Supabase token) it hits rescue_
-      // vehicles/hospitals as the anon role -- which only rescue_teams
-      // grants -- and silently falls back to the 3 seed teams for the rest
-      // of the session, no retry. Re-running now that a real session
-      // exists is what actually lets a first-time visitor see real orgs.
+      // so on a fresh browser (no cached Supabase token) it runs as the anon
+      // role -- which rescue_vehicles didn't grant until
+      // supabase-rescue-vehicles-anon-read.sql -- and the whole load fell
+      // back to the 3 seed teams. Re-running now that a real session exists
+      // is what lets a first-time visitor see real orgs either way.
       void refreshOrgs()
     })
 
