@@ -259,8 +259,14 @@ export function initSupabaseCaseSync(): void {
       if (row.data) applyRemote(row.data, true)
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cases' }, (payload) => {
-      const row = payload.old as { data?: EmergencyCase }
-      if (row.data?.id) removeRemote(row.data.id)
+      // With row-level security on, Supabase sends only the deleted row's
+      // primary key -- case_id, the case number -- not its data. Going by
+      // data.id alone never removed anything, so a deleted case stayed on
+      // every other screen, and saving it there tried to create it again
+      // ("new row violates row-level security policy").
+      const row = payload.old as { case_id?: string; data?: EmergencyCase }
+      const id = row.data?.id ?? Object.values(useStore.getState().cases).find((c) => c.caseNumber === row.case_id)?.id
+      if (id) removeRemote(id)
     })
     .subscribe()
 
