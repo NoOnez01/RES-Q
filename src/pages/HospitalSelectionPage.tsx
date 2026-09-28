@@ -62,10 +62,7 @@ export default function HospitalSelectionPage() {
   // Each hospital's risk for this patient (lib/hospitalRisk.ts) -- from the
   // CBD and triage level, travel from the scene, and what the hospital can
   // do -- lowest risk first. The recommendation is the lowest-risk one.
-  const needs = useMemo(
-    () => patientNeeds(c?.incidentDetails?.incidentType, c?.assessment?.severity),
-    [c?.incidentDetails?.incidentType, c?.assessment?.severity],
-  )
+  const needs = useMemo(() => patientNeeds(c?.assessment?.severity), [c?.assessment?.severity])
   const travel = useHospitalTravel(c?.location, hospitals)
   const ranked = useMemo(() => (isFlowMode ? rankHospitals(hospitals, travel, needs) : null), [isFlowMode, hospitals, travel, needs])
   const assessments = useMemo(() => (ranked ? Object.fromEntries(ranked.map((r) => [r.hospital.id, r])) : undefined), [ranked])
@@ -128,7 +125,7 @@ export default function HospitalSelectionPage() {
                 name: recommended.hospital.name,
                 level: recommended.risk.level,
                 etaMin: recommended.travel.etaMin,
-                comparison: compareWithRecommended(chosen, recommended, needs),
+                comparison: compareWithRecommended(chosen, recommended),
               }
             : undefined,
       }
@@ -190,7 +187,7 @@ export default function HospitalSelectionPage() {
           )}
 
           {!decliningAll && chosen && recommended && (
-            <FamilyBriefing key={chosen.hospital.id} chosen={chosen} recommended={recommended} needs={needs}>
+            <FamilyBriefing key={chosen.hospital.id} chosen={chosen} recommended={recommended}>
               {chosen.hospital.id !== recommended.hospital.id && (
                 <Checkbox
                   checked={declinedRecommended}

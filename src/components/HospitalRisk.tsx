@@ -1,23 +1,26 @@
 import clsx from 'clsx'
-import { AlertTriangle, CheckCircle2, Clock, ShieldAlert, ShieldCheck, Stethoscope, Users, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, ShieldAlert, ShieldCheck, Users, XCircle } from 'lucide-react'
 import { Card } from './ui/Card'
 import { SeverityBadge } from './SeverityBadge'
-import {
-  CAPABILITY_LABEL,
-  compareWithRecommended,
-  type PatientNeeds,
-  type RankedHospital,
-  type RiskLevel,
-  type RiskReason,
-} from '@/lib/hospitalRisk'
+import { compareWithRecommended, type PatientNeeds, type RankedHospital, type RiskLevel, type RiskReason } from '@/lib/hospitalRisk'
 import type { HospitalDecision } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
   ความเสี่ยงต่ำ: 'Low risk',
+  'ถึงภายในประมาณ {eta} นาที ทันเวลาสำหรับระดับความฉุกเฉินนี้ ({window} นาที)': 'About {eta} min away, within the window for this triage level ({window} min)',
+  'ใช้เวลาเดินทางประมาณ {eta} นาที เกินเวลาที่ควรได้พบแพทย์ ({window} นาที)': 'About {eta} min away, longer than this level should wait for a doctor ({window} min)',
+  'ควรได้พบแพทย์ภายใน {n} นาที': 'Should see a doctor within {n} min',
+  'ยังไม่ได้ประเมินระดับความฉุกเฉิน ใช้เวลาของระดับ 3 ไปก่อน': 'Not triaged yet: using level 3 for now',
+  'ความเสี่ยงคิดจากระดับความฉุกเฉินและเวลาเดินทาง: ถึงภายในเวลานี้ = ต่ำ, ไม่เกิน 2 เท่า = ปานกลาง, เกิน 2 เท่า = สูง':
+    'Risk is judged from the triage level and travel time: arriving within this time = low, up to twice = moderate, longer = high',
+  'เวลาอ้างอิงจาก Canadian Triage and Acuity Scale (CTAS) ต้นแบบของ MOPH ED Triage (ระดับ 1 "ทันที" ใช้ 10 นาที) ใช้ประกอบการตัดสินใจ ไม่แทนดุลยพินิจของเจ้าหน้าที่':
+    'Times from the Canadian Triage and Acuity Scale (CTAS), the basis of MOPH ED Triage (level 1, "immediately", uses 10 min). A guide for the decision, not a replacement for the crew’s judgement',
   ความเสี่ยงปานกลาง: 'Moderate risk',
   ความเสี่ยงสูง: 'High risk',
-  // Reasons (lib/hospitalRisk.ts)
+  // Reasons (lib/hospitalRisk.ts). The ones about specialties and the
+  // nearest ER are from before the risk was judged on triage level and
+  // travel time alone -- kept so decisions saved then still read.
   ห้องฉุกเฉินพร้อมรับผู้ป่วย: 'ER ready for patients',
   'ห้องฉุกเฉินเต็ม อาจต้องรอหรือถูกส่งต่อ': 'ER full: may have to wait or be sent on',
   'ถึงภายในประมาณ {eta} นาที ทันเวลาสำหรับระดับความรุนแรงนี้': 'About {eta} min away, in time for this severity',
@@ -113,7 +116,7 @@ export function RiskReasons({ reasons, limit, className }: { reasons: RiskReason
   )
 }
 
-/** What this patient needs from a hospital, from the CBD and triage level. */
+/** The case, its triage level and how the hospitals' risk is judged. */
 export function PatientNeedsCard({
   caseNumber,
   incidentType,
@@ -124,7 +127,6 @@ export function PatientNeedsCard({
   needs: PatientNeeds
 }) {
   const t = useT()
-  const known = needs.cbd !== undefined || needs.severity !== undefined
   return (
     <Card className="flex flex-col gap-4 animate-fade-in-up">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -136,43 +138,18 @@ export function PatientNeedsCard({
       </div>
 
       <div className="flex flex-col gap-2 rounded-xl bg-skyblue-pale/60 p-3.5">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-          <Stethoscope className="size-3.5" aria-hidden="true" /> {t('การดูแลที่ผู้ป่วยต้องการ')}
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {needs.primary.length === 0 && needs.secondary.length === 0 ? (
-            <span className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-ink">{t('ห้องฉุกเฉินทั่วไป')}</span>
-          ) : (
-            <>
-              {needs.primary.map((cap) => (
-                <span key={cap} className="rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-white">
-                  {t(CAPABILITY_LABEL[cap])}
-                </span>
-              ))}
-              {needs.secondary.map((cap) => (
-                <span key={cap} className="rounded-full border border-primary/30 bg-surface px-2.5 py-1 text-xs font-semibold text-primary">
-                  {t(CAPABILITY_LABEL[cap])}
-                </span>
-              ))}
-            </>
-          )}
-        </div>
-        <p className="flex items-center gap-1.5 text-sm text-ink">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
           <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
-          {t('ควรถึงโรงพยาบาลภายใน {n} นาที', { n: needs.targetMin })}
+          {t('ควรได้พบแพทย์ภายใน {n} นาที', { n: needs.windowMin })}
         </p>
-        {needs.nearestFirst && (
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-emergency">
-            <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
-            {t('ภาวะนี้ควรนำส่งห้องฉุกเฉินที่ใกล้ที่สุดก่อน')}
-          </p>
-        )}
+        {!needs.severity && <p className="text-xs text-muted">{t('ยังไม่ได้ประเมินระดับความฉุกเฉิน ใช้เวลาของระดับ 3 ไปก่อน')}</p>}
+        <p className="text-sm text-ink">
+          {t('ความเสี่ยงคิดจากระดับความฉุกเฉินและเวลาเดินทาง: ถึงภายในเวลานี้ = ต่ำ, ไม่เกิน 2 เท่า = ปานกลาง, เกิน 2 เท่า = สูง')}
+        </p>
       </div>
 
       <p className="text-xs leading-relaxed text-muted">
-        {known
-          ? t('ประเมินจาก CBD ระดับความรุนแรง เวลาเดินทาง ความพร้อมของห้องฉุกเฉิน และศักยภาพที่โรงพยาบาลระบุไว้ ใช้ประกอบการตัดสินใจ ไม่แทนดุลยพินิจของเจ้าหน้าที่')
-          : t('ยังไม่มีข้อมูล CBD หรือระดับความรุนแรง ประเมินจากเวลาเดินทางและความพร้อมของห้องฉุกเฉินเท่านั้น')}
+        {t('เวลาอ้างอิงจาก Canadian Triage and Acuity Scale (CTAS) ต้นแบบของ MOPH ED Triage (ระดับ 1 "ทันที" ใช้ 10 นาที) ใช้ประกอบการตัดสินใจ ไม่แทนดุลยพินิจของเจ้าหน้าที่')}
       </p>
     </Card>
   )
@@ -185,18 +162,16 @@ export function PatientNeedsCard({
 export function FamilyBriefing({
   chosen,
   recommended,
-  needs,
   children,
 }: {
   chosen: RankedHospital
   recommended: RankedHospital
-  needs: PatientNeeds
   /** The family's acknowledgement (checkbox), under the comparison. */
   children?: React.ReactNode
 }) {
   const t = useT()
   const isRecommended = chosen.hospital.id === recommended.hospital.id
-  const comparison = isRecommended ? [] : compareWithRecommended(chosen, recommended, needs)
+  const comparison = isRecommended ? [] : compareWithRecommended(chosen, recommended)
   return (
     <Card className="flex flex-col gap-4 border-primary/30 animate-scale-in" role="status">
       <h3 className="flex items-center gap-2 font-bold text-ink">
