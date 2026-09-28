@@ -11,6 +11,9 @@ import type { AppNotification, EmergencyCase, Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
+  ได้รับมอบหมายเป็นหน่วยสนับสนุน: 'Assigned as a support unit',
+  'เหตุหมายเลข {caseNumber} ต้องการหน่วยสนับสนุนจากหน่วยของคุณ กรุณาเตรียมออกปฏิบัติงาน':
+    'Case {caseNumber} needs your team as backup. Please get ready to go',
   หน่วยกู้ชีพเสนอปรับระดับความรุนแรง: 'Rescue team proposed a severity change',
   'เหตุหมายเลข {caseNumber}: หน่วยกู้ชีพประเมิน ณ จุดเกิดเหตุและเสนอปรับระดับความรุนแรง กรุณาพิจารณายืนยัน':
     'Case {caseNumber}: the rescue team assessed the scene and proposed a severity change, please confirm',
@@ -61,10 +64,25 @@ export interface HandoffAlert {
  * a case is "actionable for this role" independent of who or which tab moved
  * it.
  */
+/** When the case last reached `status` -- tells one assignment from the
+ * next (declined, then assigned to the same team again). */
+function reachedAt(c: EmergencyCase, status: EmergencyCase['status']): number {
+  for (let i = c.timeline.length - 1; i >= 0; i--) if (c.timeline[i].status === status) return c.timeline[i].timestamp
+  return c.updatedAt
+}
+
+interface Scope {
+  rescueTeamId?: string
+  hospitalId?: string
+  /** An admin viewing a role sees every team's / hospital's cases, as that
+   * role's dashboard does for them. */
+  allOrgs: boolean
+}
+
 function handoffsFor(
   role: Role | 'public',
   cases: EmergencyCase[],
-  currentUser: { rescueTeamId?: string; hospitalId?: string } | null,
+  scope: Scope,
   t: (text: string, vars?: Record<string, string | number>) => string,
 ): HandoffAlert[] {
   if (role === 'dispatch') {
@@ -106,23 +124,39 @@ function handoffsFor(
     return [...newCases, ...rejectedCases, ...proposals]
   }
   if (role === 'rescue') {
-    return cases
-      .filter((c) => c.status === 'rescue-assigned' && c.assignedRescueTeam?.id === currentUser?.rescueTeamId)
+    const ours = (team: { id: string } | null | undefined) => !!team && (scope.allOrgs || team.id === scope.rescueTeamId)
+    const assigned = cases
+      .filter((c) => c.status === 'rescue-assigned' && ours(c.assignedRescueTeam))
       .map((c) => ({
         case: c,
         title: t('ได้รับมอบหมายเหตุใหม่'),
         message: t('คุณได้รับมอบหมายเหตุหมายเลข {caseNumber} กรุณายืนยันการรับเหตุ', { caseNumber: c.caseNumber }),
-        urgent: false,
+        urgent: (c.assessment?.severity ?? 3) <= 2,
         kind: 'rescue' as const,
         event: 'rescue-assigned' as const,
-        key: `rescue-assigned:${c.id}`,
+        key: `rescue-assigned:${c.id}:${reachedAt(c, 'rescue-assigned')}`,
       }))
+    // Called in to back up another team -- as soon as it's assigned, not
+    // only when the case is first handed out.
+    const supporting = cases
+      .filter((c) => c.status !== 'completed' && ours(c.supportingRescueTeam))
+      .map((c) => ({
+        case: c,
+        title: t('ได้รับมอบหมายเป็นหน่วยสนับสนุน'),
+        message: t('เหตุหมายเลข {caseNumber} ต้องการหน่วยสนับสนุนจากหน่วยของคุณ กรุณาเตรียมออกปฏิบัติงาน', { caseNumber: c.caseNumber }),
+        urgent: (c.assessment?.severity ?? 3) <= 2,
+        kind: 'rescue' as const,
+        event: 'rescue-assigned' as const,
+        key: `rescue-support:${c.id}:${c.supportingRescueTeam!.id}`,
+      }))
+    return [...assigned, ...supporting]
   }
   if (role === 'hospital') {
     return cases
       .filter(
         (c) =>
-          c.selectedHospital?.id === currentUser?.hospitalId &&
+          !!c.selectedHospital &&
+          (scope.allOrgs || c.selectedHospital.id === scope.hospitalId) &&
           c.status !== 'hospital-received' &&
           c.status !== 'completed',
       )
@@ -177,26 +211,46 @@ export function NotificationAlertBridge() {
   const notifications = useStore((s) => s.notifications)
   const cases = useStore((s) => s.cases)
   const currentUser = useStore((s) => s.currentUser)
+  const viewingRole = useStore((s) => s.viewingRole)
   const confirmRescueSeverity = useStore((s) => s.confirmRescueSeverity)
   const navigate = useNavigate()
   const seenNotificationIds = useRef<Set<string>>(new Set())
   const alertedCaseKeys = useRef<Set<string>>(new Set())
-  const isFirstRun = useRef(true)
+  // Whose alerts were last worked out -- a new sign-in, or an admin switching
+  // the role they're viewing, starts fresh.
+  const lastScope = useRef<string | null>(null)
   const [alertQueue, setAlertQueue] = useState<HandoffAlert[]>([])
   const t = useT()
 
   useEffect(() => {
-    const audience = currentUser?.role ?? 'public'
+    // The role on screen: an admin viewing the rescue screens gets rescue's
+    // alerts, as they get its ringing calls (CallRingtoneBridge).
+    const audience = (currentUser?.isAdmin && viewingRole ? viewingRole : currentUser?.role) ?? 'public'
     const isStaff = audience !== 'public'
     const relevantNotifications = notifications.filter((n) => n.audience === audience || n.audience === 'all')
-    const handoffs = handoffsFor(audience, Object.values(cases), currentUser, t)
+    const handoffs = handoffsFor(
+      audience,
+      Object.values(cases),
+      { rescueTeamId: currentUser?.rescueTeamId, hospitalId: currentUser?.hospitalId, allOrgs: !!currentUser?.isAdmin && !!viewingRole },
+      t,
+    )
 
-    if (isFirstRun.current) {
-      // Don't alert for anything that already existed on mount (seeded demo
-      // data, or cases/notifications from before this component was ready).
+    // A queued alert whose reason has passed -- the team accepted, the
+    // proposal was answered, someone else reassigned the case -- leaves
+    // the queue instead of asking again.
+    const live = new Set(handoffs.map((h) => h.key))
+    setAlertQueue((q) => {
+      const next = q.filter((h) => live.has(h.key))
+      return next.length === q.length ? q : next
+    })
+
+    const scope = `${currentUser?.id ?? ''}:${audience}`
+    if (lastScope.current !== scope) {
+      // Don't alert for what was already there (seeded demo data, or cases
+      // from before this component, this sign-in or this view).
       for (const n of relevantNotifications) seenNotificationIds.current.add(n.id)
       for (const h of handoffs) alertedCaseKeys.current.add(h.key)
-      isFirstRun.current = false
+      lastScope.current = scope
       return
     }
 
@@ -228,24 +282,13 @@ export function NotificationAlertBridge() {
     // underlying data changes. A language switch not immediately relabeling
     // an already-queued alert is an acceptable tradeoff for that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications, cases, currentUser])
+  }, [notifications, cases, currentUser, viewingRole])
 
   const activeAlert = alertQueue[0] ?? null
   // Held while this device is on a live call -- the modal would cover the
   // call screen, hang-up button included. Its sound has already played;
   // it shows the moment the call ends.
   const inConversation = useInLiveConversation()
-
-  // A proposal already answered -- on the case page, or by another
-  // dispatcher -- leaves the queue instead of asking again.
-  useEffect(() => {
-    setAlertQueue((q) => {
-      const next = q.filter(
-        (h) => h.event !== 'severity-proposal' || cases[h.case.id]?.rescueSeverityProposal?.proposedAt === h.case.rescueSeverityProposal?.proposedAt,
-      )
-      return next.length === q.length ? q : next
-    })
-  }, [cases])
 
   function decideSeverity(accept: boolean) {
     const h = activeAlert

@@ -170,6 +170,9 @@ Dispatch, rescue and hospital dashboards, and the current-cases / case-history l
 - **Error:** border and message switch to Alert Red; error text always carries an icon (never color alone).
 - **Missing on submit:** a submit button stays pressable even while its form is incomplete. Pressing it plays the error sound and takes the person to the first missing field: scrolled to the middle of the screen, cursor in it (`revealMissingField`, src/lib/formErrors.ts). A disabled button that gives no reason is not used for "not filled in yet".
 
+### Docked call
+1669's live call docks on the left of a wide screen (`--call-dock-w`: 340–460 px, 30vw) with the page beside it; the sidebar gives way and the menu opens from the top bar. Viewport breakpoints don't know the page lost that width, so a page with a multi-column layout at `lg` adds `docked:` variants (Tailwind plugin, `html[data-call-docked] &`) to stay single-column beside the dock until `2xl`.
+
 ### Navigation
 - Sticky top bar, white at 90% opacity with backdrop blur, one persistent brand mark (favicon + "ResQ" wordmark) on the left. Active nav link gets a Command Blue underline bar and text color, not a background fill. Logged-in account access is a single dropdown menu (avatar + name + chevron) carrying every role-specific destination plus logout, rather than scattering icons across the bar.
 

@@ -175,5 +175,10 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `docked:` -- while 1669's call is docked beside the page on a wide
+    // screen (CallScreen), the page has that much less width than the
+    // viewport breakpoints think.
+    ({ addVariant }) => addVariant('docked', 'html[data-call-docked] &'),
+  ],
 }

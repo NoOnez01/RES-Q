@@ -54,7 +54,8 @@ export function Sidebar({ items, role, viewingAs, onExitView, loggedIn, homePath
   const t = useT()
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
+    // The docked call takes the sidebar's place; the menu opens from the top bar.
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex docked:lg:hidden">
       <div className="flex h-16 items-center border-b border-border px-4">
         <Link
           to={homePath}

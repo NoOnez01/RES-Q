@@ -93,6 +93,7 @@ export function DispatchCallHost() {
       call={call}
       emergencyCase={c}
       open={isActive}
+      dockable
       peer={c.activeCallerRole === 'rescue' ? 'rescue' : 'public'}
       durationSec={c.callDurationSec}
       onEnd={() => setCallStatus(caseId, 'ended')}

@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import type { Track } from 'livekit-client'
-import { AlertTriangle, ChevronDown, ClipboardList, Mic, MicOff, PhoneOff, RefreshCw, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ClipboardList, Maximize2, Mic, MicOff, PanelLeft, PhoneOff, RefreshCw, SwitchCamera, UserPlus, Video, VideoOff, Volume2 } from 'lucide-react'
 import type { CallParticipant, LiveKitCall } from '@/lib/useLiveKitCall'
 import type { EmergencyCase } from '@/lib/types'
 import { formatDuration } from '@/lib/utils'
@@ -11,6 +11,8 @@ import { useT, registerTranslations } from '@/lib/i18n'
 import { CallAvatar, callRoleOf, type CallRole } from './CallAvatar'
 
 registerTranslations({
+  ขยายหน้าจอสายเต็มจอ: 'Expand the call to full screen',
+  แสดงสายคู่กับหน้าเหตุ: 'Show the call beside the case',
   'ศูนย์สั่งการ 1669': 'Dispatch Center 1669',
   หน่วยกู้ชีพ: 'Rescue team',
   ผู้แจ้งเหตุ: 'Reporter',
@@ -167,8 +169,16 @@ function useCornerDrag(initial: Corner) {
       gesture.current = null
       if (!g?.moved) return
       const r = e.currentTarget.getBoundingClientRect()
-      const top = r.top + r.height / 2 < window.innerHeight / 2
-      const left = r.left + r.width / 2 < window.innerWidth / 2
+      // Snaps within the call's own area -- the whole window, or the panel
+      // it's docked in.
+      const area = e.currentTarget.closest('[data-call-stage]')?.getBoundingClientRect() ?? {
+        left: 0,
+        top: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }
+      const top = r.top + r.height / 2 < area.top + area.height / 2
+      const left = r.left + r.width / 2 < area.left + area.width / 2
       setCorner(`${top ? 't' : 'b'}${left ? 'l' : 'r'}`)
       setOffset(null)
       swallowClick.current = true
@@ -359,6 +369,17 @@ function RoundIconButton({ label, onClick, disabled, children }: { label: string
 }
 
 const ENDED_MS = 1500
+
+// Wide enough to dock the call beside the page (lg).
+const WIDE_QUERY = '(min-width: 1024px)'
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(WIDE_QUERY)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+function useWideScreen(): boolean {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE_QUERY).matches)
+}
 const CONTROLS_HIDE_MS = 4000
 
 /**
@@ -426,6 +447,10 @@ export interface CallScreenProps {
   details?: { label: string; onOpen: () => void }
   /** A status pill under the header, e.g. an invite that's ringing. */
   banner?: { text: string; actionLabel?: string; onAction?: () => void }
+  /** On a wide screen, sit docked to the left of the page instead of
+   * covering it -- 1669 working the case, on the right, while talking. It
+   * can still go full screen, or down to the floating tile. */
+  dockable?: boolean
 }
 
 /**
@@ -452,9 +477,13 @@ export function CallScreen({
   action,
   details,
   banner,
+  dockable = false,
 }: CallScreenProps) {
   const t = useT()
   const [minimized, setMinimized] = useState(false)
+  // Docked rather than full screen, where the screen is wide enough.
+  const [docked, setDocked] = useState(true)
+  const wide = useWideScreen()
   // Who's on the big screen: SELF, a remote identity, or null for the first
   // person you're talking to.
   const [focus, setFocus] = useState<string | null>(null)
@@ -465,6 +494,7 @@ export function CallScreen({
     setEndedAt(open ? null : Date.now())
     if (open) {
       setMinimized(false)
+      setDocked(true)
       setFocus(null)
     }
   }
@@ -532,16 +562,27 @@ export function CallScreen({
     }
   }, [open])
 
+  const isDocked = dockable && wide && docked && expanded
+  // The page makes room for the docked call (index.css, `docked:` variant).
+  useEffect(() => {
+    if (!isDocked) return
+    document.documentElement.dataset.callDocked = ''
+    return () => {
+      delete document.documentElement.dataset.callDocked
+    }
+  }, [isDocked])
+
   const dialogRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!expanded) return
+    // Docked, the page beside it stays scrollable and keeps the focus.
+    if (!expanded || isDocked) return
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     dialogRef.current?.focus()
     return () => {
       document.body.style.overflow = previous
     }
-  }, [expanded])
+  }, [expanded, isDocked])
 
   const pipDrag = useCornerDrag('tr')
   const miniDrag = useCornerDrag('br')
@@ -613,11 +654,16 @@ export function CallScreen({
   return createPortal(
     <div
       ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
+      data-call-stage
+      role={isDocked ? 'region' : 'dialog'}
+      aria-modal={isDocked ? undefined : true}
       aria-label={title}
       tabIndex={-1}
-      className="fixed inset-0 z-[95] flex select-none flex-col overflow-hidden bg-navy text-white outline-none animate-fade-in"
+      className={clsx(
+        'fixed z-[95] flex select-none flex-col overflow-hidden bg-navy text-white outline-none animate-fade-in',
+        // transform-gpu makes the panel the frame its floating tiles sit in.
+        isDocked ? 'inset-y-0 left-0 w-[var(--call-dock-w)] transform-gpu border-r border-white/10' : 'inset-0',
+      )}
       onClick={() => {
         if (!autoHide) return
         if (controlsShown) {
@@ -630,7 +676,7 @@ export function CallScreen({
       }}
       onFocusCapture={autoHide ? showControls : undefined}
       onKeyDown={(e) => {
-        if (e.key === 'Escape' && !ended) setMinimized(true)
+        if (e.key === 'Escape' && !ended && !isDocked) setMinimized(true)
       }}
     >
       {/* Stage */}
@@ -700,12 +746,21 @@ export function CallScreen({
           controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
       >
-        <div className="justify-self-start">
+        <div className="flex items-center gap-2 justify-self-start">
           <RoundIconButton label={t('ย่อหน้าจอสาย')} onClick={() => setMinimized(true)} disabled={ended}>
             <ChevronDown />
           </RoundIconButton>
+          {dockable && wide && (
+            <RoundIconButton
+              label={isDocked ? t('ขยายหน้าจอสายเต็มจอ') : t('แสดงสายคู่กับหน้าเหตุ')}
+              onClick={() => setDocked(!isDocked)}
+              disabled={ended}
+            >
+              {isDocked ? <Maximize2 /> : <PanelLeft />}
+            </RoundIconButton>
+          )}
         </div>
-        <div className="min-w-0 max-w-[46vw] pt-0.5 text-center">
+        <div className={clsx('min-w-0 pt-0.5 text-center', isDocked ? 'max-w-[10rem]' : 'max-w-[46vw]')}>
           {!hero && (
             <>
               <p className="flex items-center justify-center gap-1.5 font-bold">
@@ -728,13 +783,16 @@ export function CallScreen({
               title={details.label}
               disabled={ended}
               onClick={() => {
-                setMinimized(true)
+                // Wide: the case opens beside the call. Otherwise the call
+                // shrinks to its tile over the case.
+                if (dockable && wide) setDocked(true)
+                else setMinimized(true)
                 details.onOpen()
               }}
               className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-white/15 px-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 disabled:opacity-40 sm:px-4"
             >
               <ClipboardList className="size-5" aria-hidden="true" />
-              <span className="hidden sm:inline">{details.label}</span>
+              <span className={clsx('hidden', !isDocked && 'sm:inline')}>{details.label}</span>
             </button>
           )}
           {action && (

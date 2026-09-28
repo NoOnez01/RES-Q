@@ -47,7 +47,7 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] lg:hidden">
+    <div className="fixed inset-0 z-[90] lg:hidden docked:lg:left-[var(--call-dock-w)] docked:lg:block">
       <div className="absolute inset-0 bg-navy/50 animate-fade-in" onClick={onClose} />
       <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs overflow-y-auto bg-surface p-5 shadow-card-lg animate-fade-in-up">
         <div className="flex items-center justify-between">

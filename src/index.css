@@ -13,6 +13,8 @@
   (see tailwind.config.js) since it's used as a fixed dark accent, not text.
 */
 :root {
+  /* 1669's call docked beside the page (CallScreen). */
+  --call-dock-w: clamp(340px, 30vw, 460px);
   --color-primary: 11 110 189;
   --color-primary-bright: 20 121 201;
   --color-navy: 18 48 74;
@@ -206,5 +208,13 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* 1669's call docked to the left of the page on a wide screen: the page
+   makes room for it (see CallScreen, and the `docked:` variant). */
+@media (min-width: 1024px) {
+  html[data-call-docked] body {
+    padding-left: var(--call-dock-w);
   }
 }

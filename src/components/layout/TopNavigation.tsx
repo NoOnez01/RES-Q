@@ -171,7 +171,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
         <button
           onClick={onMenuClick}
           aria-label={t('เปิดเมนู')}
-          className="rounded-lg p-2 text-ink hover:bg-skyblue-light lg:hidden"
+          className="rounded-lg p-2 text-ink hover:bg-skyblue-light lg:hidden docked:lg:inline-flex"
         >
           <Menu className="size-5" />
         </button>

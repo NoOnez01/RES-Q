@@ -453,8 +453,9 @@ export default function DispatchCaseDetail() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-2">
+      {/* Beside a docked call there's room for one column until a very wide screen. */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 docked:lg:grid-cols-1 docked:2xl:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2 docked:lg:col-span-1 docked:2xl:col-span-2">
           <Card>
             <h2 className="mb-4 text-base font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h2>
             {details ? (
@@ -610,7 +611,7 @@ export default function DispatchCaseDetail() {
           </Card>
         </div>
 
-        <div className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-6 lg:self-start">
+        <div className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-6 lg:self-start docked:lg:order-first docked:lg:static docked:2xl:order-none docked:2xl:sticky">
           <Card>
             <h2 className="mb-4 text-base font-bold text-ink">{t('การดำเนินการ')}</h2>
 
