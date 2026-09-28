@@ -18,6 +18,7 @@ import { ErrorState, SuccessState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { HospitalDecisionCard } from '@/components/HospitalRisk'
 
 registerTranslations({
   ยังไม่ระบุเบอร์ติดต่อกลับ: 'No callback number provided',
@@ -179,6 +180,10 @@ export default function HospitalCaseDetail() {
         )}
 
         {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
+
+        {c.selectedHospital && c.hospitalDecision?.risk && (
+          <HospitalDecisionCard decision={c.hospitalDecision} hospitalName={c.selectedHospital.name} />
+        )}
 
         <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />
 

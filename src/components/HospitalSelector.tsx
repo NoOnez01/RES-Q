@@ -2,6 +2,8 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import { Building2, BedDouble, Navigation, PhoneCall, CheckCircle2, Search, AlertTriangle } from 'lucide-react'
 import type { Hospital } from '@/lib/types'
+import type { RankedHospital } from '@/lib/hospitalRisk'
+import { RiskBadge, RiskReasons } from './HospitalRisk'
 import { Input } from './ui/Field'
 import { EmptyState } from './States'
 import { ConfirmationModal } from './ConfirmationModal'
@@ -17,6 +19,7 @@ registerTranslations({
   ห้องฉุกเฉินเต็ม: 'ER full',
   'เตียงว่าง {n}': '{n} beds available',
   '{km} กม. · {eta} นาที': '{km} km · {eta} min',
+  ประมาณการ: 'estimated',
   โรงพยาบาลนี้: 'this hospital',
   'ขณะนี้ห้องฉุกเฉินของ{name}เต็ม ต้องการเลือกโรงพยาบาลนี้หรือไม่': "{name}'s emergency room is currently full. Confirm you still want to select this hospital?",
   ยืนยันเลือกโรงพยาบาลนี้: 'Confirm this hospital',
@@ -27,6 +30,7 @@ export function HospitalSelector({
   hospitals,
   selectedId,
   recommendedId,
+  assessments,
   onSelect,
 }: {
   hospitals: Hospital[]
@@ -34,6 +38,9 @@ export function HospitalSelector({
   /** The top-ranked hospital (ER available, then nearest) -- rendered as a
    * bigger, full-width, spotlighted card instead of an equal-size tile. */
   recommendedId?: string
+  /** Risk and travel from this incident, per hospital id -- when there's a
+   * case to assess against (lib/hospitalRisk.ts). */
+  assessments?: Record<string, RankedHospital>
   onSelect: (h: Hospital) => void
 }) {
   // Some rescuers/reporters already know exactly which hospital they want
@@ -76,6 +83,10 @@ export function HospitalSelector({
           {filtered.map((h) => {
             const selected = h.id === selectedId
             const isTop = h.id === recommendedId
+            const assessed = assessments?.[h.id]
+            // From this incident when assessed; else the hospital's stored figures.
+            const km = assessed?.travel.distanceKm ?? h.distanceKm
+            const eta = assessed?.travel.etaMin ?? h.etaMin
             return (
               <button
                 key={h.id}
@@ -91,10 +102,15 @@ export function HospitalSelector({
                     <CheckCircle2 className="size-4" />
                   </span>
                 )}
-                {isTop && (
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
-                    {t('เหมาะสมที่สุด')}
-                  </span>
+                {(isTop || assessed) && (
+                  <div className="flex flex-wrap items-center gap-2 pr-8">
+                    {isTop && (
+                      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
+                        {t('เหมาะสมที่สุด')}
+                      </span>
+                    )}
+                    {assessed && <RiskBadge level={assessed.risk.level} />}
+                  </div>
                 )}
                 <div className="flex items-start gap-3 pr-8">
                   <div
@@ -112,21 +128,27 @@ export function HospitalSelector({
                 </div>
 
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <span
-                    className={clsx(
-                      'rounded-full px-2.5 py-1 font-semibold',
-                      h.erAvailable ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted',
-                    )}
-                  >
-                    {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับผู้ป่วย') : t('ห้องฉุกเฉินเต็ม')}
-                  </span>
+                  {/* When assessed, the reasons below say it -- and what a full ER means. */}
+                  {!assessed && (
+                    <span
+                      className={clsx(
+                        'rounded-full px-2.5 py-1 font-semibold',
+                        h.erAvailable ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted',
+                      )}
+                    >
+                      {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับผู้ป่วย') : t('ห้องฉุกเฉินเต็ม')}
+                    </span>
+                  )}
                   <span className="flex items-center gap-1 rounded-full bg-skyblue-pale px-2.5 py-1 font-semibold text-primary">
                     <BedDouble className="size-3.5" /> {t('เตียงว่าง {n}', { n: h.bedsAvailable })}
                   </span>
                   <span className="flex items-center gap-1 rounded-full bg-skyblue-pale px-2.5 py-1 font-semibold text-primary">
-                    <Navigation className="size-3.5" /> {t('{km} กม. · {eta} นาที', { km: h.distanceKm.toFixed(1), eta: h.etaMin })}
+                    <Navigation className="size-3.5" /> {t('{km} กม. · {eta} นาที', { km: km.toFixed(1), eta })}
+                    {assessed?.travel.source === 'estimate' && <span className="font-normal opacity-80">· {t('ประมาณการ')}</span>}
                   </span>
                 </div>
+
+                {assessed && <RiskReasons reasons={assessed.risk.reasons} limit={isTop ? undefined : 3} />}
 
                 <div className="flex flex-wrap gap-1.5">
                   {h.specialties.map((s) => (

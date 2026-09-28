@@ -366,6 +366,25 @@ export interface Hospital {
  * documentation trail (see signatureUrl). */
 export type HospitalDecisionType = 'selected' | 'declined-all' | 'declined-nearest-chose-own'
 
+/** A line of a hospital risk explanation (lib/hospitalRisk.ts): a Thai
+ * i18n key and its variables, so it reads in either language later. */
+export interface HospitalRiskReason {
+  tone: 'good' | 'warn' | 'bad'
+  key: string
+  vars?: Record<string, string | number>
+}
+
+/** The risk assessment a hospital decision was made on -- what the crew
+ * told the family, kept with the decision. */
+export interface HospitalDecisionRisk {
+  level: 'low' | 'moderate' | 'high'
+  etaMin: number
+  reasons: HospitalRiskReason[]
+  /** The lowest-risk hospital at the time, when a different one was chosen,
+   * and how the chosen one compared. */
+  recommended?: { name: string; level: 'low' | 'moderate' | 'high'; etaMin: number; comparison: HospitalRiskReason[] }
+}
+
 export interface HospitalDecision {
   type: HospitalDecisionType
   /** Absent only for 'declined-all' -- every other type ends with a real
@@ -378,6 +397,8 @@ export interface HospitalDecision {
   decidedAt: number
   /** The relative's name, if captured alongside the signature. */
   decidedBy?: string
+  /** Absent for 'declined-all', and on decisions made before assessment. */
+  risk?: HospitalDecisionRisk
 }
 
 export interface EmergencyCase {

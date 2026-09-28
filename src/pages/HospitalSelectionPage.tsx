@@ -7,13 +7,14 @@ import { Card, Checkbox } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
 import { HospitalSelector } from '@/components/HospitalSelector'
-import { SeverityBadge } from '@/components/SeverityBadge'
+import { FamilyBriefing, PatientNeedsCard } from '@/components/HospitalRisk'
 import { SignaturePad } from '@/components/SignaturePad'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
-import { haversineKm } from '@/lib/utils'
+import { compareWithRecommended, patientNeeds, rankHospitals } from '@/lib/hospitalRisk'
+import { useHospitalTravel } from '@/lib/useHospitalTravel'
 import { uploadCaseSignature } from '@/lib/storageUploads'
-import type { Hospital } from '@/lib/types'
+import type { Hospital, HospitalDecisionRisk } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -25,8 +26,8 @@ registerTranslations({
   รอรายละเอียดเหตุการณ์: 'Awaiting incident details',
   หน้านี้ใช้สำหรับเลือกโรงพยาบาลระหว่างขั้นตอนการช่วยเหลือเหตุฉุกเฉิน: "This page is used to select a hospital during an emergency case's rescue process",
   'เลือก {name} แล้ว พร้อมยืนยันการนำส่ง': 'Selected {name}, ready to confirm transport',
-  'ญาติไม่ประสงค์นำส่ง {nearest} (โรงพยาบาลที่ใกล้ที่สุด) และเลือก {chosen} แทน':
-    'Family declined {nearest} (the nearest hospital) and chose {chosen} themselves',
+  'ญาติรับทราบความเสี่ยง และเลือก {chosen} แทน {recommended} (โรงพยาบาลที่แนะนำ)':
+    'The family understands the risk and chose {chosen} over {recommended} (recommended)',
   ญาติไม่ประสงค์นำส่งโรงพยาบาล: 'Family declines hospital transport',
   'ญาติไม่ประสงค์นำส่งโรงพยาบาล เหตุนี้จะถูกปิดโดยไม่นำส่งโรงพยาบาล':
     'Family declines hospital transport — this case will be closed as complete without hospital transport',
@@ -35,6 +36,8 @@ registerTranslations({
   'ลงชื่อรับทราบการปฏิเสธ (จำเป็น)': 'Signature acknowledging the refusal (required)',
   ยืนยันการปิดเหตุ: 'Confirm closing case',
   ยืนยันเลือกโรงพยาบาล: 'Confirm hospital selection',
+  บันทึกลายเซ็นไม่สำเร็จ: "Couldn't save the signature",
+  กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง: 'Check the internet connection and try again',
 })
 
 export default function HospitalSelectionPage() {
@@ -50,40 +53,46 @@ export default function HospitalSelectionPage() {
   const [selected, setSelected] = useState<Hospital | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [decliningAll, setDecliningAll] = useState(false)
-  const [declinedNearest, setDeclinedNearest] = useState(false)
+  const [declinedRecommended, setDeclinedRecommended] = useState(false)
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null)
   const [decidedByName, setDecidedByName] = useState('')
 
   const isFlowMode = !!caseId && !!c
 
-  // The static Hospital.distanceKm seed field isn't relative to this
-  // incident -- "nearest" has to be computed against the actual location.
-  const nearestHospital = useMemo(() => {
-    if (!c?.location || hospitals.length === 0) return null
-    return hospitals.reduce((closest, h) =>
-      haversineKm(c.location!, h.location) < haversineKm(c.location!, closest.location) ? h : closest,
-    )
-  }, [c?.location, hospitals])
+  // Each hospital's risk for this patient (lib/hospitalRisk.ts) -- from the
+  // CBD and triage level, travel from the scene, and what the hospital can
+  // do -- lowest risk first. The recommendation is the lowest-risk one.
+  const needs = useMemo(
+    () => patientNeeds(c?.incidentDetails?.incidentType, c?.assessment?.severity),
+    [c?.incidentDetails?.incidentType, c?.assessment?.severity],
+  )
+  const travel = useHospitalTravel(c?.location, hospitals)
+  const ranked = useMemo(() => (isFlowMode ? rankHospitals(hospitals, travel, needs) : null), [isFlowMode, hospitals, travel, needs])
+  const assessments = useMemo(() => (ranked ? Object.fromEntries(ranked.map((r) => [r.hospital.id, r])) : undefined), [ranked])
+  const rankedHospitals = ranked ? ranked.map((r) => r.hospital) : hospitals
+  const recommended = ranked?.[0] ?? null
+  const recommendedHospitalId = recommended?.hospital.id ?? hospitals.find((h) => h.erAvailable)?.id
+  const chosen = selected ? assessments?.[selected.id] : undefined
 
-  // "Recommended" mirrors the same philosophy as rescue-team ranking:
-  // available (ER not full) first, then nearest -- surfaced to
-  // HospitalSelector as a sorted list plus which one to spotlight, rather
-  // than leaving hospitals in whatever arbitrary order the store holds them.
-  const rankedHospitals = useMemo(() => {
-    if (!c?.location) return hospitals
-    return [...hospitals].sort((a, b) => {
-      if (a.erAvailable !== b.erAvailable) return a.erAvailable ? -1 : 1
-      return haversineKm(c.location!, a.location) - haversineKm(c.location!, b.location)
-    })
-  }, [c?.location, hospitals])
-  const recommendedHospitalId = rankedHospitals.find((h) => h.erAvailable)?.id ?? rankedHospitals[0]?.id
-
-  const isDecliningNearest = !!selected && !!nearestHospital && selected.id !== nearestHospital.id && declinedNearest
+  const isDecliningRecommended = !!selected && !!recommended && selected.id !== recommended.hospital.id && declinedRecommended
   // Signature is required for any refusal of recommended care -- declining
   // transport entirely or declining the nearest hospital in favor of one
   // the family picked themselves -- regardless of severity, since it's a
   // consent record, not just a high-acuity safeguard.
-  const needsSignature = decliningAll || isDecliningNearest
+  const needsSignature = decliningAll || isDecliningRecommended
+
+  // The signature is the record of the family's decision: if it can't be
+  // saved, say so and let the crew try again rather than failing silently.
+  // null = it failed.
+  async function saveSignature(): Promise<string | undefined | null> {
+    if (!signatureDataUrl) return undefined
+    try {
+      return await uploadCaseSignature(c!.caseNumber, signatureDataUrl)
+    } catch {
+      toast({ title: t('บันทึกลายเซ็นไม่สำเร็จ'), message: t('กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง'), tone: 'error' })
+      return null
+    }
+  }
 
   async function handleConfirm() {
     if (!caseId) return
@@ -91,7 +100,8 @@ export default function HospitalSelectionPage() {
       if (needsSignature && !signatureDataUrl) return
       setLoading(true)
       try {
-        const signatureUrl = signatureDataUrl ? await uploadCaseSignature(c!.caseNumber, signatureDataUrl) : undefined
+        const signatureUrl = await saveSignature()
+        if (signatureUrl === null) return
         recordHospitalDecision(caseId, { type: 'declined-all', signatureUrl, decidedBy: decidedByName.trim() || undefined })
         toast({ title: t('บันทึกการปฏิเสธนำส่งโรงพยาบาลแล้ว'), message: t('ปิดเหตุนี้เรียบร้อยแล้ว'), tone: 'success' })
         navigate('/rescue/dashboard')
@@ -105,12 +115,29 @@ export default function HospitalSelectionPage() {
     if (needsSignature && !signatureDataUrl) return
     setLoading(true)
     try {
-      const signatureUrl = signatureDataUrl ? await uploadCaseSignature(c!.caseNumber, signatureDataUrl) : undefined
+      const signatureUrl = await saveSignature()
+      if (signatureUrl === null) return
+      // The assessment the decision was made on -- what the family was told.
+      const risk: HospitalDecisionRisk | undefined = chosen && {
+        level: chosen.risk.level,
+        etaMin: chosen.travel.etaMin,
+        reasons: chosen.risk.reasons,
+        recommended:
+          recommended && recommended.hospital.id !== chosen.hospital.id
+            ? {
+                name: recommended.hospital.name,
+                level: recommended.risk.level,
+                etaMin: recommended.travel.etaMin,
+                comparison: compareWithRecommended(chosen, recommended, needs),
+              }
+            : undefined,
+      }
       recordHospitalDecision(caseId, {
-        type: isDecliningNearest ? 'declined-nearest-chose-own' : 'selected',
+        type: isDecliningRecommended ? 'declined-nearest-chose-own' : 'selected',
         hospital: selected,
         signatureUrl,
         decidedBy: decidedByName.trim() || undefined,
+        risk,
       })
       toast({ title: t('เลือกโรงพยาบาลเรียบร้อยแล้ว'), message: t('เลือกนำส่งผู้ป่วยไปยัง {name}', { name: selected.name }), tone: 'success' })
       navigate(`/rescue/case/${caseId}`)
@@ -125,15 +152,7 @@ export default function HospitalSelectionPage() {
         <AnimatedBackground variant="hospital" />
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
           {isFlowMode && c ? (
-            <Card className="flex flex-wrap items-center justify-between gap-3 animate-fade-in-up">
-              <div>
-                <p className="font-mono text-sm font-bold text-primary">{c.caseNumber}</p>
-                <p className="mt-1 font-semibold text-ink">
-                  {c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}
-                </p>
-              </div>
-              {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
-            </Card>
+            <PatientNeedsCard caseNumber={c.caseNumber} incidentType={c.incidentDetails?.incidentType} needs={needs} />
           ) : (
             <Card className="flex items-start gap-3 bg-skyblue-pale animate-fade-in-up">
               <Info className="mt-0.5 size-5 shrink-0 text-primary" />
@@ -149,6 +168,7 @@ export default function HospitalSelectionPage() {
                 hospitals={rankedHospitals}
                 selectedId={selected?.id}
                 recommendedId={recommendedHospitalId}
+                assessments={assessments}
                 onSelect={setSelected}
               />
             </div>
@@ -166,17 +186,22 @@ export default function HospitalSelectionPage() {
                   {t('เลือก {name} แล้ว พร้อมยืนยันการนำส่ง', { name: selected.name })}
                 </p>
               </div>
-              {nearestHospital && selected.id !== nearestHospital.id && (
+            </div>
+          )}
+
+          {!decliningAll && chosen && recommended && (
+            <FamilyBriefing key={chosen.hospital.id} chosen={chosen} recommended={recommended} needs={needs}>
+              {chosen.hospital.id !== recommended.hospital.id && (
                 <Checkbox
-                  checked={declinedNearest}
-                  onChange={setDeclinedNearest}
-                  label={t('ญาติไม่ประสงค์นำส่ง {nearest} (โรงพยาบาลที่ใกล้ที่สุด) และเลือก {chosen} แทน', {
-                    nearest: nearestHospital.name,
-                    chosen: selected.name,
+                  checked={declinedRecommended}
+                  onChange={setDeclinedRecommended}
+                  label={t('ญาติรับทราบความเสี่ยง และเลือก {chosen} แทน {recommended} (โรงพยาบาลที่แนะนำ)', {
+                    chosen: chosen.hospital.name,
+                    recommended: recommended.hospital.name,
                   })}
                 />
               )}
-            </div>
+            </FamilyBriefing>
           )}
 
           {isFlowMode && !decliningAll && (

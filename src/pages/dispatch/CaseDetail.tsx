@@ -50,6 +50,7 @@ import { THAILAND_PROVINCE_COORDS } from '@/lib/thailandProvinces'
 import { checkCaseConsistency } from '@/lib/caseHealth'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { revealMissingField } from '@/lib/formErrors'
+import { HospitalDecisionCard } from '@/components/HospitalRisk'
 
 registerTranslations({
   กรุณาเลือกหน่วยกู้ชีพที่จะมอบหมาย: 'Choose a rescue team to assign',
@@ -576,6 +577,14 @@ export default function DispatchCaseDetail() {
           <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
 
           {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
+
+          {c.selectedHospital && (
+            <HospitalDecisionCard
+              decision={c.hospitalDecision}
+              hospitalName={c.selectedHospital.name}
+              address={c.selectedHospital.location.address}
+            />
+          )}
 
           {c.location && (
             <Card className="p-0 overflow-hidden">

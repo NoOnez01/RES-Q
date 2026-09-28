@@ -28,6 +28,7 @@ import type { CaseStatus } from '@/lib/types'
 import { Truck } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { revealMissingField } from '@/lib/formErrors'
+import { HospitalDecisionCard } from '@/components/HospitalRisk'
 
 registerTranslations({
   กรุณาระบุอาการของผู้ป่วยก่อนบันทึก: "Describe the patient's condition before saving",
@@ -459,11 +460,11 @@ export default function RescueCaseDetail() {
         )}
 
         {c.selectedHospital && (
-          <Card className="space-y-1">
-            <h3 className="font-bold text-ink">{t('โรงพยาบาลที่เลือก')}</h3>
-            <p className="text-sm text-ink">{c.selectedHospital.name}</p>
-            <p className="text-xs text-muted">{c.selectedHospital.location.address}</p>
-          </Card>
+          <HospitalDecisionCard
+            decision={c.hospitalDecision}
+            hospitalName={c.selectedHospital.name}
+            address={c.selectedHospital.location.address}
+          />
         )}
 
         <Card>

@@ -24,6 +24,7 @@ import type {
   RescueVehicle,
   Severity,
   HospitalDecisionType,
+  HospitalDecisionRisk,
 } from './types'
 import { statusMeta } from './types'
 import { DEFAULT_INCIDENT_LOCATION, MOCK_HOSPITALS, MOCK_RESCUE_TEAMS } from './mockData'
@@ -301,7 +302,7 @@ interface ResQState {
    * 'declined-all' takes the case straight to `completed`. */
   recordHospitalDecision: (
     caseId: string,
-    input: { type: HospitalDecisionType; hospital?: Hospital; signatureUrl?: string; decidedBy?: string },
+    input: { type: HospitalDecisionType; hospital?: Hospital; signatureUrl?: string; decidedBy?: string; risk?: HospitalDecisionRisk },
   ) => void
   startTransport: (caseId: string) => void
   markHospitalArrived: (caseId: string) => void
