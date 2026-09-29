@@ -226,28 +226,37 @@ export function initSupabaseCaseSync(): void {
     pendingPushTimers.set(caseId, timer)
   }
 
-  // Initial pull — RLS on `cases` already limits this to whatever the
-  // current session is authorized to see (dispatch/admin: everything;
+  // Pull — RLS on `cases` already limits this to whatever the current
+  // session is authorized to see (dispatch/admin: everything;
   // rescue/hospital: their own org's cases; public: their own report), so
   // there's no client-side team/hospital filter to add here. Realtime
   // subscriptions only deliver changes from the moment they're established,
   // not what's already in the table, hence the separate pull.
-  void client
-    .from('cases')
-    .select('data')
-    .then(({ data: rows, error }) => {
-      if (error) {
-        console.error('Supabase initial case fetch failed:', error.message)
-        return
-      }
-      for (const row of rows ?? []) {
-        if (row.data) applyRemote(row.data as EmergencyCase)
-      }
-      // Push whatever's already in the local store on startup (e.g. seeded
-      // demo data) once the initial pull has settled.
-      for (const c of Object.values(useStore.getState().cases)) pushCase(c)
-    })
+  function pull(initial: boolean) {
+    void client
+      .from('cases')
+      .select('data')
+      .then(({ data: rows, error }) => {
+        if (error) {
+          console.error('Supabase case fetch failed:', error.message)
+          return
+        }
+        for (const row of rows ?? []) {
+          if (row.data) applyRemote(row.data as EmergencyCase)
+        }
+        // Push whatever's already in the local store on startup (e.g. seeded
+        // demo data) once the initial pull has settled.
+        if (initial) for (const c of Object.values(useStore.getState().cases)) pushCase(c)
+      })
+  }
+  pull(true)
 
+  // The socket drops whenever the page is frozen -- a phone backgrounding
+  // the app, the browser's back-forward cache, a network blip -- and
+  // rejoins on its own afterwards, but realtime doesn't replay what changed
+  // meanwhile: a case assigned while this screen was away never showed up.
+  // Every rejoin after the first join pulls again to catch up.
+  let joined = false
   channel = client
     .channel(`cases-sync-${Date.now()}`)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cases' }, (payload) => {
@@ -268,7 +277,11 @@ export function initSupabaseCaseSync(): void {
       const id = row.data?.id ?? Object.values(useStore.getState().cases).find((c) => c.caseNumber === row.case_id)?.id
       if (id) removeRemote(id)
     })
-    .subscribe()
+    .subscribe((status) => {
+      if (status !== 'SUBSCRIBED') return
+      if (joined) pull(false)
+      joined = true
+    })
 
   unsubscribeStore = useStore.subscribe((state, prevState) => {
     if (state.cases === prevState.cases) return

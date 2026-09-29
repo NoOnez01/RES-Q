@@ -92,10 +92,18 @@ export function startRoadClosureSync(): void {
   if (started || !supabase) return
   started = true
   void refresh()
+  // Every rejoin after the socket dropped (page frozen, back-forward cache,
+  // network) reloads too: realtime doesn't replay the changes missed
+  // meanwhile.
+  let joined = false
   supabase
     .channel('road-closures')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'road_closures' }, () => void refresh())
-    .subscribe()
+    .subscribe((status) => {
+      if (status !== 'SUBSCRIBED') return
+      if (joined) void refresh()
+      joined = true
+    })
   // Expiry happens without any database change, so check the clock too.
   setInterval(publish, 60_000)
 }
