@@ -136,6 +136,28 @@ function getCredentials(caseId: string, roomKind: CallRoomKind, side: CallSide):
   return hit.credentials.then((c) => ('error' in c ? fetchToken(caseId, roomKind, side) : c))
 }
 
+/**
+ * The camera, always opened at 720p -- including when it's switched or
+ * turned back on. Left unsaid, the browser picks its own default (often
+ * 640x480), and flipping to the back camera to show 1669 the scene is
+ * exactly when the picture matters most.
+ */
+function cameraCapture(lk: LiveKit) {
+  return { resolution: lk.VideoPresets.h720.resolution }
+}
+
+/**
+ * How the camera is sent. On a weak connection the browser has to give
+ * something up: keep the picture sharp and drop frames, rather than blur it
+ * -- a wound or a scene has to be readable, not smooth.
+ */
+function cameraPublish(lk: LiveKit) {
+  return {
+    videoEncoding: lk.VideoPresets.h720.encoding,
+    degradationPreference: 'maintain-resolution' as const,
+  }
+}
+
 function mediaErrorState(err: unknown): CameraState {
   return (err as DOMException)?.name === 'NotFoundError' ? 'unavailable' : 'denied'
 }
@@ -150,7 +172,7 @@ async function openLocalMedia(
   facingMode: 'user' | 'environment',
 ): Promise<{ tracks: LocalTrack[]; cameraState: CameraState }> {
   try {
-    return { tracks: await lk.createLocalTracks({ audio: true, video: { facingMode } }), cameraState: 'ready' }
+    return { tracks: await lk.createLocalTracks({ audio: true, video: { ...cameraCapture(lk), facingMode } }), cameraState: 'ready' }
   } catch (err) {
     const cameraState = mediaErrorState(err)
     try {
@@ -298,7 +320,15 @@ export function useLiveKitCall(
       }
       prefetched.delete(prefetchKey(caseId!, roomKind, side))
       liveKitRef.current = lk
-      room = new lk.Room({ adaptiveStream: true, dynacast: true })
+      room = new lk.Room({
+        // Each viewer is sent the quality its video box needs, counting the
+        // screen's real pixels -- a 1669 desk monitor or a phone is sharp,
+        // not upscaled from a layer sized for a low-density screen.
+        adaptiveStream: { pixelDensity: 'screen' },
+        dynacast: true,
+        videoCaptureDefaults: cameraCapture(lk),
+        publishDefaults: cameraPublish(lk),
+      })
       roomRef.current = room
       const r = room
       let joined = false
@@ -373,7 +403,7 @@ export function useLiveKitCall(
       setCameraState(mediaState)
       await Promise.all(
         tracks.map((t) =>
-          r.localParticipant.publishTrack(t).catch((err: unknown) => {
+          r.localParticipant.publishTrack(t, t.kind === lk.Track.Kind.Video ? cameraPublish(lk) : undefined).catch((err: unknown) => {
             console.error('LiveKit publish failed:', err)
             t.stop()
           }),
@@ -421,10 +451,11 @@ export function useLiveKitCall(
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current
-    if (!room) return
+    const lk = liveKitRef.current
+    if (!room || !lk) return
     const next = !room.localParticipant.isCameraEnabled
     void room.localParticipant
-      .setCameraEnabled(next, { facingMode: facingModeRef.current })
+      .setCameraEnabled(next, { ...cameraCapture(lk), facingMode: facingModeRef.current }, cameraPublish(lk))
       .catch((err) => console.error('toggleCamera failed:', err))
   }, [])
 
@@ -451,7 +482,7 @@ export function useLiveKitCall(
       // phone lists each back lens (wide, ultra-wide, zoom) as its own camera.
       const next = facingModeRef.current === 'user' ? 'environment' : 'user'
       track
-        .restartTrack({ facingMode: next })
+        .restartTrack({ ...cameraCapture(lk), facingMode: next })
         .then(() => {
           facingModeRef.current = next
           setFacingMode(next)
@@ -469,7 +500,7 @@ export function useLiveKitCall(
         const at = cameras.findIndex((d) => d.deviceId === settings.deviceId)
         // Exact: a bare id is only a preference, and Chrome keeps the
         // camera it already had.
-        return track.restartTrack({ deviceId: { exact: cameras[(at + 1) % cameras.length].deviceId } })
+        return track.restartTrack({ ...cameraCapture(lk), deviceId: { exact: cameras[(at + 1) % cameras.length].deviceId } })
       })
       .catch((err) => console.error('switchCamera failed:', err))
   }, [])
