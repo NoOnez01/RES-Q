@@ -57,8 +57,13 @@ export function DispatchCallHost() {
     }
     wasActiveRef.current = false
     toast({ title: t('การโทรสิ้นสุดแล้ว'), tone: 'info' })
-    const casePath = `/dispatch/case/${caseId}`
-    if (!location.pathname.endsWith(casePath)) navigate(casePath, { replace: location.pathname.includes('/dispatch/call/') })
+    // Already on a page for this case -- its details, or filling in the
+    // assessment from what the caller said -- stays put: moving on threw
+    // away a half-filled form the moment the call ended.
+    const onThisCase = location.pathname.split('/').includes(caseId)
+    if (!onThisCase || location.pathname.includes('/dispatch/call/')) {
+      navigate(`/dispatch/case/${caseId}`, { replace: location.pathname.includes('/dispatch/call/') })
+    }
     const timer = setTimeout(() => setDispatchCallCaseId(null), ENDED_HOLD_MS)
     return () => clearTimeout(timer)
     // `t`/location intentionally omitted: this runs on the call's own state

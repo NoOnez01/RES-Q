@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Activity, MapPin, Phone, ClipboardCheck, Image as ImageIcon } from 'lucide-react'
 import clsx from 'clsx'
@@ -77,6 +77,41 @@ const CONSCIOUS_LABEL: Record<Exclude<Conscious, ''>, string> = {
 
 const INJURY_SOFT_LIMIT = 500
 
+/** What's been typed in but not saved yet -- kept per case for the tab, so
+ * leaving the form mid-call (opening the case, the call ending, a reload)
+ * doesn't make the dispatcher fill it in again. */
+interface Draft {
+  incidentType: string
+  location: string
+  coords: Coords | null
+  patientCount: string
+  conscious: Conscious
+  notes: string
+  severity: Severity | null
+  injuryDescription: string
+}
+
+const draftKey = (id: string) => `resq:assessment-draft:${id}`
+
+function readDraft(id: string | undefined): Partial<Draft> {
+  if (!id) return {}
+  try {
+    return JSON.parse(sessionStorage.getItem(draftKey(id)) ?? '{}') as Partial<Draft>
+  } catch {
+    return {}
+  }
+}
+
+function saveDraft(id: string, draft: Draft | null) {
+  try {
+    if (draft) sessionStorage.setItem(draftKey(id), JSON.stringify(draft))
+    else sessionStorage.removeItem(draftKey(id))
+  } catch {
+    // Storage unavailable (private mode, full): the form still works, it
+    // just isn't kept.
+  }
+}
+
 export default function DispatchEmergencyAssessment() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -88,18 +123,38 @@ export default function DispatchEmergencyAssessment() {
   const details = c?.incidentDetails
   const isEditing = !!details
 
-  const [incidentType, setIncidentType] = useState(details?.incidentType ?? '')
-  const [location, setLocationText] = useState(details?.location ?? c?.location?.address ?? '')
-  const [coords, setCoords] = useState<Coords | null>(c?.location ? { lat: c.location.lat, lng: c.location.lng } : null)
+  // What the form starts from without a draft: the case as saved.
+  const [saved] = useState<Draft>(() => ({
+    incidentType: details?.incidentType ?? '',
+    location: details?.location ?? c?.location?.address ?? '',
+    coords: c?.location ? { lat: c.location.lat, lng: c.location.lng } : null,
+    patientCount: details ? String(details.patientCount) : '1',
+    // Prefilled from what the reporter said during the photo step (they're
+    // the one actually with the patient) -- still fully editable here, e.g.
+    // if the photos suggest otherwise.
+    conscious: details?.conscious ?? c?.reporterConsciousness ?? '',
+    notes: details?.notes ?? '',
+    severity: c?.assessment?.severity ?? null,
+    injuryDescription: c?.assessment?.injuryDescription ?? '',
+  }))
+  const [initial] = useState<Draft>(() => ({ ...saved, ...readDraft(id) }))
+
+  const [incidentType, setIncidentType] = useState(initial.incidentType)
+  const [location, setLocationText] = useState(initial.location)
+  const [coords, setCoords] = useState<Coords | null>(initial.coords)
   const [showMap, setShowMap] = useState(false)
-  const [patientCount, setPatientCount] = useState(details ? String(details.patientCount) : '1')
-  // Prefilled from what the reporter said during the photo step (they're
-  // the one actually with the patient) -- still fully editable here, e.g.
-  // if the photos suggest otherwise.
-  const [conscious, setConscious] = useState<Conscious>(details?.conscious ?? c?.reporterConsciousness ?? '')
-  const [notes, setNotes] = useState(details?.notes ?? '')
-  const [severity, setSeverity] = useState<Severity | null>(c?.assessment?.severity ?? null)
-  const [injuryDescription, setInjuryDescription] = useState(c?.assessment?.injuryDescription ?? '')
+  const [patientCount, setPatientCount] = useState(initial.patientCount)
+  const [conscious, setConscious] = useState<Conscious>(initial.conscious)
+  const [notes, setNotes] = useState(initial.notes)
+  const [severity, setSeverity] = useState<Severity | null>(initial.severity)
+  const [injuryDescription, setInjuryDescription] = useState(initial.injuryDescription)
+
+  useEffect(() => {
+    if (!id) return
+    const draft: Draft = { incidentType, location, coords, patientCount, conscious, notes, severity, injuryDescription }
+    // Only what differs from the saved case is a draft worth keeping.
+    saveDraft(id, JSON.stringify(draft) === JSON.stringify(saved) ? null : draft)
+  }, [id, saved, incidentType, location, coords, patientCount, conscious, notes, severity, injuryDescription])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [highlight, setHighlight] = useState(false)
@@ -159,6 +214,7 @@ export default function DispatchEmergencyAssessment() {
         injuryDescription: injuryDescription.trim(),
       })
       setSubmitting(false)
+      saveDraft(id, null)
       toast({
         title: isEditing ? t('บันทึกการแก้ไขแล้ว') : t('บันทึกรายละเอียดและการประเมินแล้ว'),
         message: t('เหตุหมายเลข {caseNumber} พร้อมค้นหาหน่วยกู้ชีพแล้ว', { caseNumber: c.caseNumber }),
@@ -339,7 +395,16 @@ export default function DispatchEmergencyAssessment() {
             >
               {isEditing ? t('บันทึกการแก้ไข') : t('บันทึกรายละเอียดและการประเมิน')}
             </Button>
-            <Button variant="outline" size="lg" fullWidth disabled={submitting} onClick={() => navigate(`/dispatch/case/${id}`)}>
+            <Button
+              variant="outline"
+              size="lg"
+              fullWidth
+              disabled={submitting}
+              onClick={() => {
+                saveDraft(id, null)
+                navigate(`/dispatch/case/${id}`)
+              }}
+            >
               {t('ยกเลิก')}
             </Button>
           </div>
