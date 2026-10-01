@@ -37,6 +37,7 @@ import { supabase } from '@/lib/supabase'
 import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
 import { isNativeApp } from '@/lib/nativeNotify'
 import { SoundSettingsCard } from '@/components/SoundSettingsCard'
+import { MapSettingsCard } from '@/components/MapSettingsCard'
 import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
@@ -355,6 +356,8 @@ export default function Settings() {
         </Card>
 
         <SoundSettingsCard style={{ animationDelay: '22ms', animationFillMode: 'backwards' }} />
+
+        <MapSettingsCard style={{ animationDelay: '26ms', animationFillMode: 'backwards' }} />
 
         {currentUser && !currentUser.isAnonymous && (
           <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}>

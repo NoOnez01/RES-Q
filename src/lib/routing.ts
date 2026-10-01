@@ -2,6 +2,7 @@ import { haversineKm } from './utils'
 import { routeWithDStarLite, type VehicleStart } from './pathfinding'
 import { closuresKey, getActiveClosures } from './roadClosures'
 import type { GeoLocation } from './types'
+import { longdoKey } from './map/longdo'
 
 export interface RouteResult {
   /** [lat, lng] pairs tracing the actual road geometry, in travel order. */
@@ -65,7 +66,7 @@ interface LongdoGeoJsonResponse {
 }
 
 async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
-  const key = import.meta.env.VITE_LONGDO_MAP_KEY
+  const key = longdoKey
   if (!key) return null
 
   const params = new URLSearchParams({
@@ -224,17 +225,42 @@ function fetchRouteFromGraph(
     })
 }
 
+interface RoutingProvider {
+  id: RouteResult['provider']
+  route(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal, vehicle?: VehicleStart): Promise<RouteResult | null>
+}
+
 /**
- * Real driving route between two points. Inside the prebuilt road graph's
- * region (Chiang Mai), the app's own D* Lite router finds the fastest path with
- * Longdo traffic as the road weights (lib/pathfinding/). Otherwise -- or if that
- * fails -- prefers Longdo Map's route service (live Thailand traffic) when
- * VITE_LONGDO_MAP_KEY is configured, falling back to OSRM
- * (free, keyless, typical-speed only) if there's no key or the Longdo
- * request fails for any reason. Returns null (never throws) only if both
- * fail, so every caller can fall back further to its own straight-line
- * estimate -- this is an enhancement over that baseline, not a hard
- * dependency.
+ * The routing providers, best first; each answers null when it can't (out of
+ * its area, no key, a failed request) and the next one is asked:
+ * - the app's own D* Lite router, inside the prebuilt road graph's region
+ *   (Chiang Mai) -- Longdo traffic as road weights, reported road closures
+ *   avoided (lib/pathfinding/);
+ * - Longdo Map's route service -- anywhere in Thailand, live traffic, needs
+ *   VITE_LONGDO_MAP_KEY;
+ * - OSRM -- free and keyless, typical speeds only.
+ */
+const ROUTING_PROVIDERS: RoutingProvider[] = [
+  { id: 'dstarlite', route: fetchRouteFromGraph },
+  { id: 'longdo', route: (o, d, signal) => fetchRouteFromLongdo(o, d, signal) },
+  { id: 'osrm', route: (o, d, signal) => fetchRouteFromOsrm(o, d, signal) },
+]
+
+async function firstRoute(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal, vehicle?: VehicleStart): Promise<RouteResult | null> {
+  for (const provider of ROUTING_PROVIDERS) {
+    if (signal.aborted) return null
+    const route = await provider.route(origin, destination, signal, vehicle)
+    if (route) return route
+  }
+  return null
+}
+
+/**
+ * Real driving route between two points, from the first routing provider
+ * that has one (ROUTING_PROVIDERS above). Returns null (never throws) only
+ * if every provider fails, so every caller can fall back further to its own
+ * straight-line estimate -- this is an enhancement over that baseline, not a
+ * hard dependency.
  *
  * `signal`, if passed, lets a caller give up on this specific request (e.g.
  * a live GPS position that's moved on to a newer one before the old
@@ -259,13 +285,10 @@ export function fetchRoute(
     // if this exact entry gets cancelled+evicted and a fresh one created
     // for the same key before this settles, a by-key lookup would mark the
     // *new* entry settled instead, based on the *old* request's timing.
-    const promise = fetchRouteFromGraph(origin, destination, controller.signal, vehicle)
-      .then((graph) => graph ?? fetchRouteFromLongdo(origin, destination, controller.signal))
-      .then((longdo) => longdo ?? fetchRouteFromOsrm(origin, destination, controller.signal))
-      .finally(() => {
-        clearTimeout(timeout)
-        entry!.settled = true
-      })
+    const promise = firstRoute(origin, destination, controller.signal, vehicle).finally(() => {
+      clearTimeout(timeout)
+      entry!.settled = true
+    })
     entry = { promise, controller, refCount: 0, pinned: false, settled: false }
     routeCache.set(key, entry)
   }

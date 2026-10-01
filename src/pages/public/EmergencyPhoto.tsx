@@ -13,7 +13,8 @@ import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDuration } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
-import { watchPosition, reverseGeocode } from '@/lib/geolocation'
+import { watchPosition } from '@/lib/geolocation'
+import { reverseGeocode } from '@/lib/map/geocoding'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import { supabaseEnabled } from '@/lib/supabase'
 import type { AudioRecording, Consciousness, PhotoCategory } from '@/lib/types'
@@ -187,9 +188,7 @@ export default function EmergencyPhoto() {
         if (now - lastCallTime < MIN_INTERVAL_MS) return
         lastCallTime = now
         setGpsStatus('ready')
-        reverseGeocode(pos)
-          .then((address) => setLocation(caseId, { ...pos, address }))
-          .catch(() => setLocation(caseId, { ...pos, address: `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}` }))
+        void reverseGeocode(pos).then((address) => setLocation(caseId, { ...pos, address }))
       },
       () => setGpsStatus('failed'),
     )

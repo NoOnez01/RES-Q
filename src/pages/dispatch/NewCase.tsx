@@ -13,7 +13,8 @@ import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { INCIDENT_TYPES, DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
-import { reverseGeocode, type Coords } from '@/lib/geolocation'
+import type { Coords } from '@/lib/geolocation'
+import { reverseGeocode } from '@/lib/map/geocoding'
 import { SEVERITY_OPTIONS } from '@/lib/severityOptions'
 import type { Severity } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -91,7 +92,7 @@ export default function DispatchNewCase() {
   async function handlePickOnMap(lat: number, lng: number) {
     const pos = { lat, lng }
     setCoords(pos)
-    const address = await reverseGeocode(pos).catch(() => `${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+    const address = await reverseGeocode(pos)
     setLocationText(address)
   }
 

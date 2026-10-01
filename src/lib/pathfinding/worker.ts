@@ -6,6 +6,7 @@
 import { nearbySegments, parseGraph, type RoadGraph } from './graph'
 import { GRAPH_REGION } from './region'
 import { computeRoute, type GraphRoute, type VehicleStart } from './router'
+import { longdoKey } from '../map/longdo'
 
 export interface RouteRequest {
   id: number
@@ -60,7 +61,7 @@ self.onmessage = async (event: MessageEvent<RouteRequest>) => {
   let route: GraphRoute | null = null
   try {
     const g = await loadGraph()
-    route = await computeRoute(g, origin, destination, import.meta.env.VITE_LONGDO_MAP_KEY, undefined, closedSegments(g, closures), vehicle)
+    route = await computeRoute(g, origin, destination, longdoKey, undefined, closedSegments(g, closures), vehicle)
     if (import.meta.env.DEV && route) console.info('[D* Lite]', route.stats, route.traffic)
   } catch (err) {
     console.error('Route failed:', err)

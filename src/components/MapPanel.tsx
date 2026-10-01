@@ -1,13 +1,116 @@
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { MapPin, Ambulance, Building2, Ban } from 'lucide-react'
+import clsx from 'clsx'
+import { MapPin, Ambulance, Building2, Ban, Layers, Check } from 'lucide-react'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { BASEMAPS, noteTileError, noteTileLoaded, setBasemap, useBasemap } from '@/lib/map/basemaps'
 
 registerTranslations({
   'เส้นทางการเดินทางไปยัง {label}': 'Route to {label}',
   จุดหมาย: 'destination',
+  เลือกแผนที่: 'Choose map',
+  'แผนที่ Longdo': 'Longdo Map',
+  'ชื่อถนนและสถานที่ภาษาไทย': 'Thai street and place names',
+  ภาพดาวเทียม: 'Satellite',
+  'THAICHOTE จาก GISTDA เห็นสภาพพื้นที่จริง': "GISTDA's THAICHOTE imagery: see the ground as it is",
+  'แผนที่เปิดของชุมชน ใช้ได้เสมอโดยไม่ต้องใช้คีย์': 'Community open map, always available with no key',
+  '{label} ไม่ตอบสนอง กำลังใช้ OpenStreetMap แทน': '{label} is not responding; using OpenStreetMap instead',
 })
+
+// The app's theme is the `.dark` class on <html> (ThemeBridge).
+function subscribeDark(listener: () => void) {
+  const observer = new MutationObserver(listener)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  return () => observer.disconnect()
+}
+function useDarkTheme(): boolean {
+  return useSyncExternalStore(subscribeDark, () => document.documentElement.classList.contains('dark'))
+}
+
+/** Every map's base layer, from the provider the user picked (lib/map/basemaps). */
+function BaseLayer() {
+  const { active } = useBasemap()
+  const dark = useDarkTheme()
+  return (
+    <TileLayer
+      // A new provider is a new layer, not new URLs on the old one.
+      key={`${active.id}:${dark}`}
+      url={active.url(dark)}
+      attribution={active.attribution}
+      maxNativeZoom={active.maxNativeZoom}
+      maxZoom={20}
+      eventHandlers={{ tileload: () => noteTileLoaded(active.id), tileerror: () => noteTileError(active.id) }}
+    />
+  )
+}
+
+function BasemapPicker() {
+  const t = useT()
+  const { chosen, failedOver } = useBasemap()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const options = BASEMAPS.filter((b) => b.available)
+
+  useEffect(() => {
+    if (!open) return
+    const close = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [open])
+
+  // Nothing to choose between without a Longdo key.
+  if (options.length < 2) return null
+
+  return (
+    <div ref={ref} className="absolute right-2.5 top-2.5 z-[1000] flex flex-col items-end gap-1.5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={t('เลือกแผนที่')}
+        title={t('เลือกแผนที่')}
+        className="flex size-9 items-center justify-center rounded-xl border border-border bg-surface text-ink shadow-card transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      >
+        <Layers className="size-4" />
+      </button>
+      {open && (
+        <div role="menu" className="w-60 rounded-xl border border-border bg-surface p-1.5 shadow-card-lg">
+          {options.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={chosen.id === b.id}
+              onClick={() => {
+                setBasemap(b.id)
+                setOpen(false)
+              }}
+              className={clsx(
+                'flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-skyblue-pale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+                chosen.id === b.id && 'bg-skyblue-pale',
+              )}
+            >
+              <Check className={clsx('mt-0.5 size-4 shrink-0 text-primary', chosen.id !== b.id && 'invisible')} />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-ink">{t(b.label)}</span>
+                <span className="block text-xs text-muted">{t(b.description)}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {failedOver && !open && (
+        <p className="max-w-[15rem] rounded-lg bg-surface/95 px-2.5 py-1.5 text-xs text-ink shadow-card">
+          {t('{label} ไม่ตอบสนอง กำลังใช้ OpenStreetMap แทน', { label: t(chosen.label) })}
+        </p>
+      )}
+    </div>
+  )
+}
 
 export interface MapPin {
   id: string
@@ -113,6 +216,7 @@ export function MapPanel({
     <div
       className={className}
       style={{
+        position: 'relative',
         height,
         borderRadius: 20,
         overflow: 'hidden',
@@ -120,6 +224,7 @@ export function MapPanel({
         cursor: onPickLocation ? 'crosshair' : undefined,
       }}
     >
+      <BasemapPicker />
       <MapContainer
         center={resolvedCenter}
         zoom={zoom}
@@ -127,10 +232,7 @@ export function MapPanel({
         style={{ width: '100%', height: '100%' }}
       >
         {onPickLocation && <ClickHandler onPick={onPickLocation} />}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <BaseLayer />
         {showRoute && routePoints && routePoints.length > 1 && (
           // The real road route once it's loaded -- solid, not dashed, since
           // this is an actual path a vehicle drives, not a placeholder.
