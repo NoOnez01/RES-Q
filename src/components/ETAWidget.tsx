@@ -1,14 +1,11 @@
 import { Clock3, Navigation } from 'lucide-react'
 import clsx from 'clsx'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { routeBadge } from '@/lib/map/routing/providers'
+import type { RouteResult } from '@/lib/routing'
 
 registerTranslations({
   เวลาที่คาดว่าจะถึงจุดหมาย: 'Estimated time to destination',
-  เส้นทางที่เร็วที่สุดตามสภาพจราจร: 'Fastest route for current traffic',
-  เส้นทางตามถนนจริง: 'Real road route',
-  'D* Lite · สภาพจราจรปัจจุบัน': 'D* Lite · live traffic',
-  'D* Lite · สภาพจราจรคาดการณ์': 'D* Lite · predicted traffic',
-  'D* Lite · ความเร็วโดยประมาณ': 'D* Lite · estimated speeds',
   นาที: 'min',
   'ระยะทาง {km} กม.': 'Distance {km} km',
 })
@@ -17,22 +14,15 @@ export function ETAWidget({
   etaMin,
   distanceKm,
   progressPct,
-  routeProvider,
-  routeTraffic,
+  route,
   className,
 }: {
   etaMin: number
   distanceKm?: number
   progressPct?: number
-  /** Which routing provider produced this ETA (see lib/routing.ts) --
-   * 'longdo' means the ETA reflects live Thailand traffic, 'osrm' means a
-   * real road route but typical-speed only, and undefined means neither
-   * loaded yet (still a straight-line estimate). Shown as two different
-   * badges so the label never overclaims what data backs the number.
-   * 'dstarlite' is the app's own router (lib/pathfinding/), labelled with the traffic
-   * data it actually used (routeTraffic). */
-  routeProvider?: 'dstarlite' | 'longdo' | 'osrm'
-  routeTraffic?: 'real-time' | 'predicted' | 'none'
+  /** The route behind this ETA; its provider says what data backs the
+   * number (map/routing). Absent while it's still a straight-line estimate. */
+  route?: Pick<RouteResult, 'provider' | 'traffic'> | null
   className?: string
 }) {
   const t = useT()
@@ -51,24 +41,8 @@ export function ETAWidget({
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <p className="text-xs text-muted">{t('เวลาที่คาดว่าจะถึงจุดหมาย')}</p>
-          {routeProvider === 'dstarlite' && (
-            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              {routeTraffic === 'real-time'
-                ? t('D* Lite · สภาพจราจรปัจจุบัน')
-                : routeTraffic === 'predicted'
-                  ? t('D* Lite · สภาพจราจรคาดการณ์')
-                  : t('D* Lite · ความเร็วโดยประมาณ')}
-            </span>
-          )}
-          {routeProvider === 'longdo' && (
-            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              {t('เส้นทางที่เร็วที่สุดตามสภาพจราจร')}
-            </span>
-          )}
-          {routeProvider === 'osrm' && (
-            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">
-              {t('เส้นทางตามถนนจริง')}
-            </span>
+          {route && (
+            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">{t(routeBadge(route))}</span>
           )}
         </div>
         <p key={etaMin} className="animate-fade-in text-xl font-extrabold text-ink">

@@ -14,6 +14,14 @@ interface ImportMetaEnv {
    * this the same way as the other VITE_ vars above. Routing silently falls
    * back to OSRM (no live traffic, but free and keyless) when unset. */
   readonly VITE_LONGDO_MAP_KEY?: string
+  /** Google Maps browser key for the Routes API -- optional, see
+   * lib/map/routing/google.ts. Restrict it to this app's domains in Google
+   * Cloud Console, like any browser key. */
+  readonly VITE_GOOGLE_MAPS_KEY?: string
+  /** Routing providers to ask, in order: comma-separated ids from
+   * lib/map/routing/providers.ts (dstarlite, longdo, google, osrm).
+   * Optional; the default order is used when unset. */
+  readonly VITE_ROUTING_PROVIDERS?: string
 }
 
 interface ImportMeta {

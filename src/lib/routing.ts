@@ -1,168 +1,12 @@
 import { haversineKm } from './utils'
-import { routeWithDStarLite, type VehicleStart } from './pathfinding'
+import type { VehicleStart } from './pathfinding'
 import { closuresKey, getActiveClosures } from './roadClosures'
 import type { GeoLocation } from './types'
-import { longdoKey } from './map/longdo'
+import { DSTARLITE_TIMEOUT_MS } from './map/routing/dstarlite'
+import { routingChain, routingChainKey } from './map/routing/providers'
+import type { RouteResult } from './map/routing/types'
 
-export interface RouteResult {
-  /** [lat, lng] pairs tracing the actual road geometry, in travel order. */
-  points: [number, number][]
-  distanceKm: number
-  /** Route duration in minutes. Reflects live Thailand traffic when
-   * `provider === 'longdo'`; otherwise the road network's typical-speed
-   * estimate (see the module doc below for why). */
-  durationMin: number
-  /** Which routing service actually produced this result -- lets the UI say
-   * "live traffic" only when that's true (see ETAWidget). */
-  provider: 'dstarlite' | 'longdo' | 'osrm'
-  /** For 'dstarlite': which traffic data weighted most of the route (see
-   * lib/pathfinding/router.ts). */
-  traffic?: 'real-time' | 'predicted' | 'none'
-}
-
-interface OsrmResponse {
-  code: string
-  routes?: { geometry: string; distance: number; duration: number }[]
-}
-
-// Real road-following routing via OSRM's free public demo server -- no API
-// key, no billing account, callable straight from the browser. The
-// tradeoff for "free and keyless": this reflects the road network's
-// typical speeds, not live traffic conditions (that data genuinely isn't
-// available from any provider without a paid, billed API -- see the
-// google-directions Edge Function this replaced, kept in git history if
-// a future call ever wants to revisit that tradeoff). The demo server's
-// own usage policy asks that production traffic be modest or self-hosted
-// (https://project-osrm.org/docs/v5.24.0/api/#general-options) -- fine for
-// this app's per-case route lookups, worth revisiting with a self-hosted
-// OSRM instance if usage grows a lot.
-const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/driving'
-
-// Longdo Map's Route Service -- Thailand-specific, and (unlike OSRM) able to
-// factor in live traffic conditions for the ETA, which is the whole reason
-// to prefer it over OSRM when a key is configured. Needs a free key from
-// https://map.longdo.com/console (VITE_LONGDO_MAP_KEY) -- until one is set,
-// fetchRoute() below skips straight to the OSRM path, so this integration
-// ships "wired but dormant" and turns on the moment a key is added.
-//
-// Uses the GeoJSON variant of the route endpoint rather than the plain JSON
-// `route/guide` one -- confirmed against a live key that `route/guide`'s
-// `guide[]` entries carry turn-by-turn text (name/distance/interval) but no
-// lat/lon at all, so distance/duration would come back fine but `points`
-// would always end up empty (falling back to OSRM with no visible error).
-// The `geojson/route` endpoint returns the same segment list, but each
-// segment carries its own `geometry.coordinates` ([lon,lat] pairs) alongside
-// the same `properties.distance`/`interval` -- one request gets both the
-// real road-following geometry and accurate totals.
-const LONGDO_ROUTE_URL = 'https://api.longdo.com/RouteService/geojson/route'
-
-interface LongdoRouteFeature {
-  geometry?: { coordinates?: [number, number][] }
-  properties?: { distance?: number; interval?: number }
-}
-
-interface LongdoGeoJsonResponse {
-  features?: LongdoRouteFeature[]
-}
-
-async function fetchRouteFromLongdo(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
-  const key = longdoKey
-  if (!key) return null
-
-  const params = new URLSearchParams({
-    flon: String(origin.lng),
-    flat: String(origin.lat),
-    tlon: String(destination.lng),
-    tlat: String(destination.lat),
-    mode: 't', // fastest route, traffic-aware
-    type: 'A', // driving
-    locale: 'th',
-    key,
-  })
-
-  try {
-    const res = await fetch(`${LONGDO_ROUTE_URL}?${params}`, { signal })
-    if (!res.ok) return null
-    const data = (await res.json()) as LongdoGeoJsonResponse
-    const features = data.features
-    if (!features || features.length === 0) return null
-
-    const points: [number, number][] = []
-    let distanceM = 0
-    let durationS = 0
-    for (const feature of features) {
-      distanceM += feature.properties?.distance ?? 0
-      durationS += feature.properties?.interval ?? 0
-      for (const [lon, lat] of feature.geometry?.coordinates ?? []) {
-        if (typeof lat === 'number' && typeof lon === 'number') {
-          points.push([lat, lon])
-        }
-      }
-    }
-    if (points.length < 2 || distanceM <= 0) return null
-
-    return {
-      points,
-      distanceKm: distanceM / 1000,
-      durationMin: Math.max(1, Math.round(durationS / 60)),
-      provider: 'longdo',
-    } satisfies RouteResult
-  } catch {
-    return null
-  }
-}
-
-// Standard Google/OSRM polyline algorithm (both use the same precision-5
-// encoding) -- encodes a lat/lng path as a compact ASCII string. No
-// library needed for the decode side; this is the well-known reference
-// implementation.
-function decodePolyline(encoded: string): [number, number][] {
-  const points: [number, number][] = []
-  let index = 0
-  let lat = 0
-  let lng = 0
-
-  while (index < encoded.length) {
-    let shift = 0
-    let result = 0
-    let byte: number
-    do {
-      byte = encoded.charCodeAt(index++) - 63
-      result |= (byte & 0x1f) << shift
-      shift += 5
-    } while (byte >= 0x20)
-    lat += result & 1 ? ~(result >> 1) : result >> 1
-
-    shift = 0
-    result = 0
-    do {
-      byte = encoded.charCodeAt(index++) - 63
-      result |= (byte & 0x1f) << shift
-      shift += 5
-    } while (byte >= 0x20)
-    lng += result & 1 ? ~(result >> 1) : result >> 1
-
-    points.push([lat / 1e5, lng / 1e5])
-  }
-  return points
-}
-
-function fetchRouteFromOsrm(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal): Promise<RouteResult | null> {
-  const url = `${OSRM_BASE_URL}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=polyline`
-  return fetch(url, { signal })
-    .then((res) => (res.ok ? (res.json() as Promise<OsrmResponse>) : null))
-    .then((data) => {
-      const route = data?.code === 'Ok' ? data.routes?.[0] : undefined
-      if (!route) return null
-      return {
-        points: decodePolyline(route.geometry),
-        distanceKm: route.distance / 1000,
-        durationMin: Math.max(1, Math.round(route.duration / 60)),
-        provider: 'osrm',
-      } satisfies RouteResult
-    })
-    .catch(() => null)
-}
+export type { RouteResult }
 
 // One in-memory cache entry per origin/destination pair (rounded to ~11m
 // precision) for this tab's lifetime -- the map re-renders/polls far more
@@ -192,62 +36,15 @@ function cacheKey(origin: GeoLocation, destination: GeoLocation, vehicle?: Vehic
   // A moving vehicle's route depends on which way it faces (to the nearest
   // 45 degrees) -- the same spot facing the other way is another route.
   const v = vehicle ? `|v${vehicle.heading === undefined ? '' : Math.round(vehicle.heading / 45) % 8}` : ''
-  // Closures change the answer, so a route is cached per set of them.
-  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}|${closuresKey(getActiveClosures())}${v}`
+  // Closures and the providers asked change the answer, so a route is cached per set of each.
+  return `${r(origin.lat)},${r(origin.lng)}->${r(destination.lat)},${r(destination.lng)}|${closuresKey(getActiveClosures())}|${routingChainKey()}${v}`
 }
 
 const ROUTE_TIMEOUT_MS = 8000
-// The app's own router's budget, before falling back: its first route on a device also
-// downloads the ~3 MB road graph, which a slow phone connection shouldn't
-// be allowed to spend the whole budget on (the download carries on in the
-// worker, so the next route has it).
-const ASTAR_TIMEOUT_MS = 6000
 
-function fetchRouteFromGraph(
-  origin: GeoLocation,
-  destination: GeoLocation,
-  signal: AbortSignal,
-  vehicle?: VehicleStart,
-): Promise<RouteResult | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS)
-  const onAbort = () => controller.abort()
-  signal.addEventListener('abort', onAbort, { once: true })
-  return routeWithDStarLite(origin, destination, controller.signal, getActiveClosures(), vehicle)
-    .then((r): RouteResult | null =>
-      r && r.points.length >= 2
-        ? { points: r.points, distanceKm: r.distanceKm, durationMin: r.durationMin, provider: 'dstarlite', traffic: r.traffic }
-        : null,
-    )
-    .finally(() => {
-      clearTimeout(timeout)
-      signal.removeEventListener('abort', onAbort)
-    })
-}
-
-interface RoutingProvider {
-  id: RouteResult['provider']
-  route(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal, vehicle?: VehicleStart): Promise<RouteResult | null>
-}
-
-/**
- * The routing providers, best first; each answers null when it can't (out of
- * its area, no key, a failed request) and the next one is asked:
- * - the app's own D* Lite router, inside the prebuilt road graph's region
- *   (Chiang Mai) -- Longdo traffic as road weights, reported road closures
- *   avoided (lib/pathfinding/);
- * - Longdo Map's route service -- anywhere in Thailand, live traffic, needs
- *   VITE_LONGDO_MAP_KEY;
- * - OSRM -- free and keyless, typical speeds only.
- */
-const ROUTING_PROVIDERS: RoutingProvider[] = [
-  { id: 'dstarlite', route: fetchRouteFromGraph },
-  { id: 'longdo', route: (o, d, signal) => fetchRouteFromLongdo(o, d, signal) },
-  { id: 'osrm', route: (o, d, signal) => fetchRouteFromOsrm(o, d, signal) },
-]
-
+/** The first route any provider in the chain has (map/routing/providers). */
 async function firstRoute(origin: GeoLocation, destination: GeoLocation, signal: AbortSignal, vehicle?: VehicleStart): Promise<RouteResult | null> {
-  for (const provider of ROUTING_PROVIDERS) {
+  for (const provider of routingChain()) {
     if (signal.aborted) return null
     const route = await provider.route(origin, destination, signal, vehicle)
     if (route) return route
@@ -257,7 +54,7 @@ async function firstRoute(origin: GeoLocation, destination: GeoLocation, signal:
 
 /**
  * Real driving route between two points, from the first routing provider
- * that has one (ROUTING_PROVIDERS above). Returns null (never throws) only
+ * that has one (map/routing/providers). Returns null (never throws) only
  * if every provider fails, so every caller can fall back further to its own
  * straight-line estimate -- this is an enhancement over that baseline, not a
  * hard dependency.
@@ -280,7 +77,7 @@ export function fetchRoute(
 
   if (!entry) {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), ASTAR_TIMEOUT_MS + ROUTE_TIMEOUT_MS)
+    const timeout = setTimeout(() => controller.abort(), DSTARLITE_TIMEOUT_MS + ROUTE_TIMEOUT_MS)
     // Captured by the closure below rather than re-looked-up by `key` --
     // if this exact entry gets cancelled+evicted and a fresh one created
     // for the same key before this settles, a by-key lookup would mark the

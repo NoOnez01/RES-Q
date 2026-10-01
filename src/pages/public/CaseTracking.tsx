@@ -23,6 +23,7 @@ import { closuresKey, useRoadClosures } from '@/lib/roadClosures'
 import { supabase, supabaseEnabled } from '@/lib/supabase'
 import { formatDateTime, estimateEtaMin, haversineKm, clamp } from '@/lib/utils'
 import { fetchRoute, pointAlongRoute, type RouteResult } from '@/lib/routing'
+import { routeBadge } from '@/lib/map/routing/providers'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import type { EmergencyCase } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -362,7 +363,7 @@ export default function CaseTracking() {
                     </span>
                     {route && (
                       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                        {t('เส้นทางตามถนนจริง')}
+                        {t(routeBadge(route))}
                       </span>
                     )}
                   </div>
