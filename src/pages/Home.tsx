@@ -29,6 +29,8 @@ import { useInView } from '@/lib/useInView'
 import { useCountUp } from '@/lib/useCountUp'
 import { FAVICON_URL } from '@/lib/utils'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { PrivacyLink } from '@/components/PrivacyLink'
+import { PRIVACY_NOTE_GENERAL } from '@/lib/privacyNotice'
 
 registerTranslations({
   ติดต่อเจ้าหน้าที่: 'Contact responders',
@@ -518,6 +520,7 @@ export default function Home() {
 
       <footer className="border-t border-border px-4 py-8 text-center sm:px-6">
         <p className="text-xs text-muted">{t('ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง')}</p>
+        <PrivacyLink note={PRIVACY_NOTE_GENERAL} className="mt-2 justify-center" />
         <button
           type="button"
           onClick={() => navigate('/all-screens')}

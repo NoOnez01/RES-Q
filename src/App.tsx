@@ -20,6 +20,7 @@ import { LoadingState } from '@/components/States'
 
 import Home from '@/pages/Home'
 import HowItWorks from '@/pages/HowItWorks'
+import Privacy from '@/pages/Privacy'
 import RoleSelection from '@/pages/RoleSelection'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
@@ -176,6 +177,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/role-selection" element={<RoleSelection />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

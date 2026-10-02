@@ -15,6 +15,8 @@ import { formatDuration } from '@/lib/utils'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
 import { watchPosition } from '@/lib/geolocation'
 import { reverseGeocode } from '@/lib/map/geocoding'
+import { PrivacyLink } from '@/components/PrivacyLink'
+import { PRIVACY_NOTE_REPORT } from '@/lib/privacyNotice'
 import { uploadCasePhoto, uploadCaseAudio } from '@/lib/storageUploads'
 import { supabaseEnabled } from '@/lib/supabase'
 import type { AudioRecording, Consciousness, PhotoCategory } from '@/lib/types'
@@ -348,6 +350,7 @@ export default function EmergencyPhoto() {
               </span>
             )}
           </div>
+          <PrivacyLink note={PRIVACY_NOTE_REPORT} />
 
           <Card>
             <Select

@@ -38,6 +38,8 @@ import { fetchProfile, signInWithLine, unlinkLineIdentity } from '@/lib/auth'
 import { isNativeApp } from '@/lib/nativeNotify'
 import { SoundSettingsCard } from '@/components/SoundSettingsCard'
 import { MapSettingsCard } from '@/components/MapSettingsCard'
+import { PrivacyLink } from '@/components/PrivacyLink'
+import { PRIVACY_NOTE_GENERAL } from '@/lib/privacyNotice'
 import { revealMissingField } from '@/lib/formErrors'
 
 registerTranslations({
@@ -514,6 +516,7 @@ export default function Settings() {
               <li key={notice}>{t(notice)}</li>
             ))}
           </ul>
+          <PrivacyLink note={PRIVACY_NOTE_GENERAL} />
         </Card>
 
         {canReset && (

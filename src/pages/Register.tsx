@@ -4,6 +4,8 @@ import { AppShell } from '@/components/layout/AppShell'
 import { RoleCard } from '@/components/RoleCard'
 import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useT, registerTranslations } from '@/lib/i18n'
+import { PrivacyLink } from '@/components/PrivacyLink'
+import { PRIVACY_NOTE_SIGNUP } from '@/lib/privacyNotice'
 
 registerTranslations({
   สมัครสมาชิก: 'Sign up',
@@ -71,6 +73,7 @@ export default function Register() {
               </div>
             ))}
           </div>
+          <PrivacyLink note={PRIVACY_NOTE_SIGNUP} className="mt-5" />
         </div>
       </div>
     </AppShell>
