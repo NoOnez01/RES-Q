@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import type { ToastTone } from '@/lib/toast'
@@ -185,6 +185,17 @@ function playHandoffSound(h: HandoffAlert) {
 const REPEAT_EVERY_MS = 10_000
 const REPEAT_FOR_MS = 5 * 60_000
 
+/**
+ * 1669 filling in a case form -- the assessment from a call, or a phoned-in
+ * case. A new case popping up there covers the form mid-sentence; it waits
+ * (silently) until the form is saved or left, then shows and sounds as usual.
+ * Only new cases wait: a rejected case or a severity proposal still shows.
+ */
+function onDispatchForm(pathname: string): boolean {
+  return pathname.startsWith('/dispatch/emergency-details/') || pathname === '/dispatch/new-case'
+}
+const waitsForForm = (h: HandoffAlert) => h.event === 'case-new'
+
 function routeForHandoff(h: HandoffAlert): string {
   if (h.kind === 'dispatch') return `/dispatch/case/${h.case.id}`
   if (h.kind === 'rescue') return `/rescue/case/${h.case.id}`
@@ -221,6 +232,12 @@ export function NotificationAlertBridge() {
   const lastScope = useRef<string | null>(null)
   const [alertQueue, setAlertQueue] = useState<HandoffAlert[]>([])
   const t = useT()
+  const onForm = onDispatchForm(useLocation().pathname)
+  // Read inside the detection effect, which doesn't re-run on navigation.
+  const onFormRef = useRef(onForm)
+  onFormRef.current = onForm
+  // Alerts that arrived while held on a form: they sound when they show.
+  const unsounded = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     // The role on screen: an admin viewing the rescue screens gets rescue's
@@ -273,6 +290,10 @@ export function NotificationAlertBridge() {
       // exactly the events where missing the notification has real
       // consequences, unlike a generic info/success toast.
       setAlertQueue((q) => [...q, h])
+      if (onFormRef.current && waitsForForm(h)) {
+        unsounded.current.add(h.key)
+        continue
+      }
       playHandoffSound(h)
       void showNativeNotification(h.title, h.message)
     }
@@ -284,7 +305,8 @@ export function NotificationAlertBridge() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, cases, currentUser, viewingRole])
 
-  const activeAlert = alertQueue[0] ?? null
+  const activeAlert = (onForm ? alertQueue.find((h) => !waitsForForm(h)) : alertQueue[0]) ?? null
+  const dismiss = (h: HandoffAlert) => setAlertQueue((q) => q.filter((x) => x.key !== h.key))
   // Held while this device is on a live call -- the modal would cover the
   // call screen, hang-up button included. Its sound has already played;
   // it shows the moment the call ends.
@@ -296,13 +318,20 @@ export function NotificationAlertBridge() {
     if (!h || !proposal) return
     const current = cases[h.case.id]?.assessment?.severity
     confirmRescueSeverity(h.case.id, accept)
-    setAlertQueue((q) => q.slice(1))
+    dismiss(h)
     toast({ title: accept ? t('ยืนยันระดับความรุนแรงแล้ว') : t('ไม่ยืนยันการปรับระดับความรุนแรง'), tone: accept ? 'success' : 'info' })
     // More serious than before: the case page offers a higher-level unit.
     if (accept && current !== undefined && proposal.severity < current) {
       navigate(`/dispatch/case/${h.case.id}`, { state: { offerEscalation: true } })
     }
   }
+
+  // One held on a form sounds now that it shows.
+  useEffect(() => {
+    if (!activeAlert || inConversation || !unsounded.current.delete(activeAlert.key)) return
+    playHandoffSound(activeAlert)
+    void showNativeNotification(activeAlert.title, activeAlert.message)
+  }, [activeAlert, inConversation])
 
   // Keeps sounding until it's acknowledged (never into a call).
   useEffect(() => {
@@ -319,10 +348,11 @@ export function NotificationAlertBridge() {
     <CaseAlertModal
       alert={inConversation ? null : activeAlert}
       queueCount={alertQueue.length}
-      onDismiss={() => setAlertQueue((q) => q.slice(1))}
+      onDismiss={() => activeAlert && dismiss(activeAlert)}
       onView={() => {
-        if (activeAlert) navigate(routeForHandoff(activeAlert))
-        setAlertQueue((q) => q.slice(1))
+        if (!activeAlert) return
+        navigate(routeForHandoff(activeAlert))
+        dismiss(activeAlert)
       }}
       onDecide={decideSeverity}
     />
