@@ -1,8 +1,6 @@
 import clsx from 'clsx'
-import { CheckCircle2, Clock, Loader2, Siren } from 'lucide-react'
 import type { CaseStatus } from '@/lib/types'
 import { statusMeta } from '@/lib/types'
-import { PulseRing } from './backgrounds/PulseRing'
 import { useT, registerTranslations } from '@/lib/i18n'
 
 registerTranslations({
@@ -26,41 +24,31 @@ registerTranslations({
   ระบบ: 'System',
 })
 
-function toneFor(status: CaseStatus): { classes: string; icon: React.ElementType } {
-  if (status === 'completed') return { classes: 'bg-success/10 text-success border-success/30', icon: CheckCircle2 }
+/** Text + dot tone per stage: red while the report is still reaching
+ * 1669, amber while 1669 is finding a team, blue while help is under way,
+ * green once it's done. */
+function toneFor(status: CaseStatus): { classes: string; dot: string } {
+  if (status === 'completed') return { classes: 'bg-success/10 text-success-ink border-success/25', dot: 'bg-success' }
   if (status === 'received' || status === 'finding-rescue')
-    return { classes: 'bg-warning/10 text-warning border-warning/30', icon: Loader2 }
+    return { classes: 'bg-warning/10 text-warning-ink border-warning/25', dot: 'bg-warning' }
   if (status === 'contacted' || status === 'photos-taken' || status === 'called-1669')
-    return { classes: 'bg-emergency/10 text-emergency-dark border-emergency/30', icon: Siren }
-  return { classes: 'bg-primary/10 text-primary border-primary/30', icon: Clock }
+    return { classes: 'bg-emergency/[0.07] text-emergency-dark border-emergency/25 dark:text-emergency', dot: 'bg-emergency' }
+  return { classes: 'bg-primary/[0.07] text-primary border-primary/20', dot: 'bg-primary' }
 }
-
-const LIVE_STATUSES: CaseStatus[] = [
-  'finding-rescue',
-  'rescue-assigned',
-  'rescue-en-route',
-  'rescue-arrived',
-  'assisted',
-  'transporting',
-  'hospital-arrived',
-]
 
 export function StatusBadge({ status, className }: { status: CaseStatus; className?: string }) {
   const meta = statusMeta(status)
-  const { classes, icon: Icon } = toneFor(status)
-  const spinning = status === 'finding-rescue' || status === 'rescue-en-route' || status === 'transporting'
-  const isLive = LIVE_STATUSES.includes(status)
+  const { classes, dot } = toneFor(status)
   const t = useT()
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold whitespace-nowrap',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold leading-5',
         classes,
         className,
       )}
     >
-      {isLive && <PulseRing tone="primary" size="sm" />}
-      <Icon className={clsx('size-3.5', spinning && 'animate-spin-slow')} />
+      <span className={clsx('size-1.5 shrink-0 rounded-full', dot)} aria-hidden="true" />
       {t(meta.label)}
     </span>
   )

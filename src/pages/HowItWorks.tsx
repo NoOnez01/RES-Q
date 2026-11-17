@@ -12,8 +12,6 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { InteractiveMapGrid } from '@/components/backgrounds/InteractiveMapGrid'
 import { Button } from '@/components/ui/Button'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -143,10 +141,10 @@ function StepPreview({ step }: { step: number }) {
   if (step === 0) {
     return (
       <div className="flex flex-col items-center gap-3">
-        <div className="flex size-[140px] items-center justify-center rounded-full bg-emergency text-white shadow-red-glow animate-pulse-glow">
-          <PhoneCall className="size-10" strokeWidth={2.2} />
+        <div className="flex size-[132px] items-center justify-center rounded-full bg-emergency text-white shadow-red-glow ring-8 ring-emergency/[0.08]">
+          <PhoneCall className="size-9" strokeWidth={2} />
         </div>
-        <p className="text-sm font-bold text-ink">{t('ติดต่อเจ้าหน้าที่')}</p>
+        <p className="text-sm font-semibold text-ink">{t('ติดต่อเจ้าหน้าที่')}</p>
       </div>
     )
   }
@@ -154,17 +152,17 @@ function StepPreview({ step }: { step: number }) {
   if (step === 1) {
     return (
       <div className="flex w-full max-w-[240px] flex-col items-center gap-3">
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-navy">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-navy">
           <span className="absolute left-2 top-2 size-5 border-l-2 border-t-2 border-white/70" aria-hidden="true" />
           <span className="absolute right-2 top-2 size-5 border-r-2 border-t-2 border-white/70" aria-hidden="true" />
           <span className="absolute bottom-2 left-2 size-5 border-b-2 border-l-2 border-white/70" aria-hidden="true" />
           <span className="absolute bottom-2 right-2 size-5 border-b-2 border-r-2 border-white/70" aria-hidden="true" />
           <Camera className="absolute inset-0 m-auto size-10 text-white/70" />
         </div>
-        <div className="flex h-9 w-32 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+        <div className="flex h-9 w-32 items-center justify-center rounded-lg bg-primary-fill text-xs font-medium text-white">
           {t('ถ่ายภาพ')}
         </div>
-        <div className="w-full rounded-lg bg-warning/10 px-3 py-2 text-center text-[11px] leading-relaxed text-warning">
+        <div className="w-full rounded-lg border border-warning/30 bg-warning/[0.08] px-3 py-2 text-center text-[11px] leading-relaxed text-warning-ink">
           {t('กรุณาถ่ายภาพเฉพาะจุดเกิดเหตุ ไม่ถ่ายใบหน้าผู้บาดเจ็บ')}
         </div>
       </div>
@@ -175,7 +173,7 @@ function StepPreview({ step }: { step: number }) {
     const bars = [10, 18, 26, 16, 22]
     return (
       <div className="flex flex-col items-center gap-3">
-        <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-sm font-extrabold text-primary">
+        <div className="flex size-14 items-center justify-center rounded-full border border-primary/25 text-sm font-semibold tabular-nums text-primary">
           1669
         </div>
         <p className="text-sm font-semibold text-ink">{t('กำลังติดต่อศูนย์สั่งการ 1669')}</p>
@@ -184,8 +182,8 @@ function StepPreview({ step }: { step: number }) {
           {bars.map((h, i) => (
             <span
               key={i}
-              className="w-1.5 animate-pulse rounded-full bg-primary"
-              style={{ height: h, animationDelay: `${i * 0.15}s` }}
+              className="w-1 rounded-full bg-primary/70"
+              style={{ height: h }}
             />
           ))}
         </div>
@@ -196,13 +194,13 @@ function StepPreview({ step }: { step: number }) {
   if (step === 3) {
     return (
       <div className="flex w-full max-w-[260px] flex-col gap-3">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-skyblue-light">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-skyblue-light">
           <div className="h-full w-3/4 rounded-full bg-primary" />
         </div>
         <div className="h-3 w-full rounded bg-skyblue-light" />
         <div className="h-3 w-5/6 rounded bg-skyblue-light" />
         <div className="h-3 w-2/3 rounded bg-skyblue-light" />
-        <div className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white">
+        <div className="mt-2 flex h-10 w-full items-center justify-center rounded-lg bg-primary-fill text-sm font-medium text-white">
           {t('ส่งข้อมูล')}
         </div>
       </div>
@@ -211,12 +209,21 @@ function StepPreview({ step }: { step: number }) {
 
   if (step === 4) {
     return (
-      <div className="relative h-52 w-full max-w-[280px] overflow-hidden rounded-2xl border border-border">
-        <InteractiveMapGrid className="absolute inset-0" />
-        <div className="absolute left-1/2 top-1/2 flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-emergency text-white shadow-red-glow">
-          <Ambulance className="size-5" />
+      <div className="relative h-52 w-full max-w-[280px] overflow-hidden rounded-xl border border-border bg-surface-alt">
+        {/* A schematic street map: a few roads and the route along them. */}
+        <svg className="absolute inset-0 size-full text-border" viewBox="0 0 280 208" preserveAspectRatio="none" aria-hidden="true">
+          <g stroke="currentColor" strokeWidth="10" fill="none">
+            <path d="M0 60 H280" />
+            <path d="M0 150 H280" />
+            <path d="M70 0 V208" />
+            <path d="M200 0 V208" />
+          </g>
+          <path d="M70 208 V150 H200 V60 H280" fill="none" stroke="rgb(var(--color-primary))" strokeWidth="3" strokeLinejoin="round" />
+        </svg>
+        <div className="absolute left-[71%] top-1/2 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-emergency text-white ring-4 ring-surface">
+          <Ambulance className="size-4" />
         </div>
-        <div className="absolute right-2 top-2 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-card">
+        <div className="absolute right-2 top-2 rounded-md border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold text-ink">
           {t('ถึงใน 5 นาที')}
         </div>
       </div>
@@ -225,12 +232,12 @@ function StepPreview({ step }: { step: number }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex size-14 items-center justify-center rounded-full bg-skyblue-light text-primary">
-        <Hospital className="size-7" />
+      <div className="flex size-12 items-center justify-center rounded-full border border-border text-primary">
+        <Hospital className="size-6" />
       </div>
-      <p className="text-sm font-bold text-ink">{t('โรงพยาบาลจุฬาลงกรณ์')}</p>
+      <p className="text-sm font-semibold text-ink">{t('โรงพยาบาลจุฬาลงกรณ์')}</p>
       <p className="text-xs text-muted">{t('ผู้ป่วยถึงแล้ว')}</p>
-      <div className="flex size-10 items-center justify-center rounded-full bg-success text-white animate-scale-in">
+      <div className="flex size-9 items-center justify-center rounded-full bg-success-ink text-white animate-scale-in">
         <Check className="size-5" />
       </div>
     </div>
@@ -252,16 +259,12 @@ function ConnectionFlow() {
               aria-expanded={active === i}
               aria-label={t('{label}: ดูรายละเอียดบทบาท', { label: t(node.label) })}
               className={clsx(
-                'flex min-h-[48px] w-full flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
-                active === i
-                  ? 'border-primary bg-skyblue-light shadow-card-lg'
-                  : 'border-border bg-surface hover:border-primary/40 hover:shadow-card-lg',
+                'flex min-h-[48px] w-full flex-col items-center gap-2 rounded-xl border px-3 py-3.5 transition-colors',
+                active === i ? 'border-primary bg-primary/[0.04] ring-1 ring-primary' : 'border-border bg-surface hover:border-input hover:bg-surface-alt',
               )}
             >
-              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                {node.icon}
-              </span>
-              <span className="text-xs font-bold text-ink sm:text-sm">{t(node.label)}</span>
+              <span className="text-primary [&>svg]:size-5">{node.icon}</span>
+              <span className="text-xs font-semibold text-ink sm:text-sm">{t(node.label)}</span>
             </button>
             <div
               className={clsx(
@@ -274,8 +277,8 @@ function ConnectionFlow() {
           </div>
           {i < CONNECTION_NODES.length - 1 && (
             <div className="flex items-center justify-center py-1 sm:mt-5 sm:py-0">
-              <ArrowRight aria-hidden="true" className="hidden size-5 shrink-0 animate-pulse text-primary/60 sm:block" />
-              <ChevronDown aria-hidden="true" className="size-5 shrink-0 animate-pulse text-primary/60 sm:hidden" />
+              <ArrowRight aria-hidden="true" className="hidden size-4 shrink-0 text-muted/60 sm:block" />
+              <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-muted/60 sm:hidden" />
             </div>
           )}
         </Fragment>
@@ -310,20 +313,22 @@ function StepIndicator({ step, onSelect }: { step: number; onSelect: (i: number)
                 aria-current={i === step ? 'step' : undefined}
                 aria-label={t('ไปยังขั้นตอนที่ {n}: {title}', { n: i + 1, title: t(s.title) })}
                 className={clsx(
-                  'flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
-                  i < step && 'border-primary bg-primary text-white',
-                  i === step && 'border-primary bg-primary text-white animate-pulse-glow',
-                  i > step && 'border-border bg-surface text-muted hover:border-primary/40',
+                  'flex size-8 shrink-0 items-center justify-center rounded-full border text-[13px] font-semibold tabular-nums transition-colors',
+                  i < step && 'border-primary bg-primary-fill text-white',
+                  i === step && 'border-primary bg-surface text-primary ring-4 ring-primary/15',
+                  i > step && 'border-input bg-surface text-muted hover:border-muted hover:text-ink',
                 )}
               >
-                {i < step ? <Check className="size-5" /> : i + 1}
+                {i < step ? <Check className="size-4" /> : i + 1}
               </button>
-              <span className="text-center text-[11px] font-medium leading-tight text-ink">{t(s.title)}</span>
+              <span className={clsx('text-center text-[11px] leading-tight', i === step ? 'font-semibold text-ink' : 'font-medium text-muted')}>
+                {t(s.title)}
+              </span>
             </div>
             {i < STEPS.length - 1 && (
               <div
                 className={clsx(
-                  'mt-6 h-1 w-8 shrink-0 rounded-full transition-colors duration-300 sm:w-auto sm:flex-1 sm:shrink',
+                  'mt-4 h-px w-8 shrink-0 transition-colors duration-300 sm:w-auto sm:flex-1 sm:shrink',
                   i < step ? 'bg-primary' : 'bg-border',
                 )}
               />
@@ -343,18 +348,17 @@ export default function HowItWorks() {
   const t = useT()
 
   return (
-    <AppShell variant="public" title={t('การทำงานของ ResQ')}>
-      <section className="relative overflow-hidden px-4 py-14 sm:px-6 sm:py-16">
-        <AnimatedBackground variant="howto" />
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <h1 className="text-3xl font-extrabold leading-tight text-ink sm:text-4xl">{t('การทำงานของ ResQ')}</h1>
-          <p className="mt-3 text-muted">{t('เชื่อมต่อทุกการช่วยเหลือ ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล')}</p>
+    <AppShell variant="public">
+      <section className="border-b border-border bg-surface px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-5xl">
+          <h1 className="text-[1.75rem] font-bold leading-snug tracking-tight text-ink sm:text-display">{t('การทำงานของ ResQ')}</h1>
+          <p className="mt-2 max-w-2xl text-body text-muted">{t('เชื่อมต่อทุกการช่วยเหลือ ตั้งแต่แจ้งเหตุจนถึงโรงพยาบาล')}</p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 pb-8 sm:px-6">
+      <section className="mx-auto max-w-5xl px-4 pb-8 pt-10 sm:px-6">
         <StepIndicator step={step} onSelect={setStep} />
-        <p className="mt-4 text-center text-sm font-semibold text-muted">
+        <p className="mt-4 text-center text-meta font-medium text-muted">
           {t('ขั้นตอนที่ {n} จาก {total}', { n: step + 1, total: STEPS.length })}
         </p>
       </section>
@@ -362,17 +366,17 @@ export default function HowItWorks() {
       <section className="mx-auto max-w-5xl px-4 pb-14 sm:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center lg:gap-10">
           <div>
-            <span className="inline-flex items-center rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-              {t('ขั้นตอนที่ {n}', { n: step + 1 })}
-            </span>
-            <h2 className="mt-3 text-2xl font-extrabold text-ink">{t(current.title)}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted">{t(current.description)}</p>
-            <div className="mt-4 rounded-xl border border-border bg-skyblue-pale/60 p-4">
-              <p className="text-xs font-bold text-primary">{t('การดำเนินการ')}</p>
+            <h2 className="text-title text-ink">
+              <span className="mr-2 tabular-nums text-muted">{step + 1}.</span>
+              {t(current.title)}
+            </h2>
+            <p className="mt-3 text-body text-muted">{t(current.description)}</p>
+            <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+              <p className="text-meta font-medium text-muted">{t('การดำเนินการ')}</p>
               <p className="mt-1 text-sm font-medium text-ink">{t(current.action)}</p>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-2">
               {step > 0 && (
                 <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
                   {t('ขั้นตอนก่อนหน้า')}
@@ -400,17 +404,17 @@ export default function HowItWorks() {
 
           <div
             key={step}
-            className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-3xl border border-border bg-surface p-6 shadow-card animate-fade-in"
+            className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-border bg-surface p-6 animate-fade-in"
           >
             <StepPreview step={step} />
           </div>
         </div>
       </section>
 
-      <section className="bg-skyblue-pale/60 px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-xl font-bold text-ink sm:text-2xl">{t('การเชื่อมต่อทุกฝ่ายในระบบ ResQ')}</h2>
-          <p className="mt-2 text-center text-sm text-muted">{t('แตะที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่าย')}</p>
+      <section className="border-t border-border bg-surface px-4 py-12 sm:px-6 sm:py-14">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-[1.375rem] font-bold leading-snug text-ink">{t('การเชื่อมต่อทุกฝ่ายในระบบ ResQ')}</h2>
+          <p className="mt-2 text-small text-muted">{t('แตะที่แต่ละจุดเพื่อดูบทบาทของแต่ละฝ่าย')}</p>
           <div className="mt-8">
             <ConnectionFlow />
           </div>

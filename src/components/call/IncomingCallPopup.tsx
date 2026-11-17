@@ -73,7 +73,7 @@ export function IncomingCallPopup({
 
   return createPortal(
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-navy/55 backdrop-blur-[2px] animate-fade-in" aria-hidden="true" />
+      <div className="absolute inset-0 bg-navy/55 animate-fade-in" aria-hidden="true" />
       <div
         role="alertdialog"
         aria-modal="true"
@@ -83,7 +83,7 @@ export function IncomingCallPopup({
         <div className="flex flex-col items-center gap-3 text-center">
           <CallAvatar role={callerRole} size="md" ringing />
           <div>
-            <p id="incoming-call-popup-title" className="text-lg font-bold">
+            <p id="incoming-call-popup-title" className="text-lg font-semibold">
               {title}
             </p>
             <p className="font-mono text-sm tabular-nums text-white/80">{caseNumber}</p>
@@ -118,7 +118,7 @@ export function IncomingCallPopup({
             ref={answerRef}
             type="button"
             onClick={onAnswer}
-            className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-success text-sm font-bold transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
+            className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-success text-sm font-semibold transition-colors hover:bg-success/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
           >
             <Phone className="size-4.5" aria-hidden="true" />
             {answerLabel}

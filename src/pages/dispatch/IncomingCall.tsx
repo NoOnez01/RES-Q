@@ -5,8 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { EmergencyCaseCard } from '@/components/EmergencyCaseCard'
 import { EmptyState } from '@/components/States'
 import { Button } from '@/components/ui/Button'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -55,9 +54,8 @@ export default function IncomingCall() {
   return (
     <AppShell variant="dashboard" title={t('สายเรียกเข้า')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
+        <div>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-md bg-success/10 px-2.5 py-1 text-xs font-semibold text-success-ink">
             <PulseRing tone="success" size="sm" />
             {t('ระบบกำลังรอรับสายเรียกเข้า')}
           </div>
@@ -77,7 +75,7 @@ export default function IncomingCall() {
                     className="relative animate-fade-in-up"
                     style={{ animationDelay: `${Math.min(index, 8) * 80}ms`, animationFillMode: 'backwards' }}
                   >
-                    <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-emergency px-3 py-1 text-xs font-bold text-white shadow-card animate-pulse">
+                    <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1.5 rounded-md bg-emergency px-2 py-0.5 text-xs font-semibold text-white animate-pulse">
                       <PulseRing tone="emergency" size="sm" />
                       {ringing ? t('สายเรียกเข้าใหม่') : t('กำลังสนทนา')}
                     </span>

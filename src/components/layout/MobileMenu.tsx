@@ -48,19 +48,27 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
 
   return createPortal(
     <div className="fixed inset-0 z-[90] lg:hidden docked:lg:left-[var(--call-dock-w)] docked:lg:block">
-      <div className="absolute inset-0 bg-navy/50 animate-fade-in" onClick={onClose} />
-      <div className="absolute inset-y-0 left-0 w-[82%] max-w-xs overflow-y-auto bg-surface p-5 shadow-card-lg animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={FAVICON_URL} alt="" className="size-8" />
-            <span className="text-lg font-extrabold text-ink">ResQ</span>
+      <div className="absolute inset-0 bg-navy/45 animate-fade-in" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="absolute inset-y-0 left-0 flex w-[84%] max-w-[18rem] flex-col overflow-y-auto border-r border-border bg-surface shadow-overlay animate-slide-in-left"
+      >
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-3">
+          <div className="flex items-center gap-2 px-1.5">
+            <img src={FAVICON_URL} alt="" className="size-6" />
+            <span className="text-[15px] font-bold tracking-tight text-ink">ResQ</span>
           </div>
-          <button onClick={onClose} aria-label={t('ปิดเมนู')} className="rounded-lg p-2 text-ink hover:bg-skyblue-light">
+          <button
+            onClick={onClose}
+            aria-label={t('ปิดเมนู')}
+            className="inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-skyblue-light hover:text-ink"
+          >
             <X className="size-5" />
           </button>
         </div>
 
-        <nav className="mt-6 flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5 p-2">
           {items.map((item) => {
             const Icon = item.icon
             const active = location.pathname === item.path
@@ -69,12 +77,13 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
+                aria-current={active ? 'page' : undefined}
                 className={clsx(
-                  'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold',
-                  active ? 'bg-primary text-white' : 'text-ink hover:bg-skyblue-light',
+                  'flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
+                  active ? 'bg-skyblue-light font-semibold text-primary' : 'font-medium text-ink/80 hover:bg-skyblue-light hover:text-ink',
                 )}
               >
-                <Icon className="size-4.5" />
+                <Icon className={clsx('size-4', active ? 'text-primary' : 'text-muted')} />
                 {t(item.label)}
               </Link>
             )
@@ -82,17 +91,17 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
           <Link
             to="/all-screens"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
+            className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-skyblue-light hover:text-ink"
           >
-            <LayoutGrid className="size-4.5" />
+            <LayoutGrid className="size-4 text-muted" />
             {t('ดูหน้าทั้งหมด')}
           </Link>
           <Link
             to="/how-it-works"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
+            className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-skyblue-light hover:text-ink"
           >
-            <HelpCircle className="size-4.5" />
+            <HelpCircle className="size-4 text-muted" />
             {t('ดูวิธีการใช้งาน')}
           </Link>
           {showAuthLinks && (
@@ -100,17 +109,17 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
               <Link
                 to="/#features"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
+                className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-skyblue-light hover:text-ink"
               >
-                <Sparkles className="size-4.5" />
+                <Sparkles className="size-4 text-muted" />
                 {t('คุณสมบัติของระบบ')}
               </Link>
               <Link
                 to="/#contact"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
+                className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-skyblue-light hover:text-ink"
               >
-                <PhoneCall className="size-4.5" />
+                <PhoneCall className="size-4 text-muted" />
                 {t('ติดต่อเรา')}
               </Link>
             </>
@@ -118,11 +127,11 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
         </nav>
 
         {loggedInUser ? (
-          <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
+          <div className="mt-auto flex flex-col gap-2 border-t border-border p-3">
             <Link
               to="/profile"
               onClick={onClose}
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-ink hover:bg-skyblue-light"
+              className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-skyblue-light hover:text-ink"
             >
               {loggedInUser.avatarUrl ? (
                 <img src={loggedInUser.avatarUrl} alt="" className="size-6 shrink-0 rounded-full object-cover" />
@@ -136,30 +145,30 @@ export function MobileMenu({ open, onClose, items, showAuthLinks, loggedInUser }
                 onClose()
                 logout()
               }}
-              className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-ink hover:bg-skyblue-light"
+              className="flex h-10 items-center justify-center gap-2 rounded-lg border border-input text-sm font-medium text-ink transition-colors hover:bg-surface-alt"
             >
-              <LogOut className="size-4.5" /> {t('ออกจากระบบ')}
+              <LogOut className="size-4" /> {t('ออกจากระบบ')}
             </button>
           </div>
         ) : (
           showAuthLinks && (
-            <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
+            <div className="mt-auto flex flex-col gap-2 border-t border-border p-3">
               {location.pathname !== '/login' && (
                 <Link
                   to="/login"
                   onClick={onClose}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-ink hover:bg-skyblue-light"
+                  className="flex h-10 items-center justify-center gap-2 rounded-lg border border-input text-sm font-medium text-ink transition-colors hover:bg-surface-alt"
                 >
-                  <LogIn className="size-4.5" /> {t('เข้าสู่ระบบ')}
+                  <LogIn className="size-4" /> {t('เข้าสู่ระบบ')}
                 </Link>
               )}
               {!location.pathname.startsWith('/register') && (
                 <Link
                   to="/register"
                   onClick={onClose}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-bright"
+                  className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-white transition-colors hover:bg-primary-bright"
                 >
-                  <UserPlus className="size-4.5" /> {t('สมัครสมาชิก')}
+                  <UserPlus className="size-4" /> {t('สมัครสมาชิก')}
                 </Link>
               )}
             </div>

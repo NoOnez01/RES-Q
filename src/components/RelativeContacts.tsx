@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Phone, Plus, UserRound, Users } from 'lucide-react'
+import { Phone, Plus, UserRound } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
@@ -57,8 +57,8 @@ export function RelativeContacts({ caseId, contacts }: { caseId: string; contact
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="flex items-center gap-2 font-bold text-ink">
-          <Users className="size-4 text-primary" /> {t('เบอร์ติดต่อญาติผู้ป่วย')}
+        <h3 className="text-heading text-ink">
+          {t('เบอร์ติดต่อญาติผู้ป่วย')}
         </h3>
         {!adding && (
           <Button variant="outline" size="sm" icon={<Plus className="size-3.5" />} onClick={() => setAdding(true)}>

@@ -43,7 +43,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
           <Star
             className={clsx(
               'size-8 transition-colors',
-              (hover || value) >= n ? 'fill-warning text-warning' : 'fill-transparent text-border',
+              (hover || value) >= n ? 'fill-warning text-warning-ink' : 'fill-transparent text-border',
             )}
           />
         </button>
@@ -93,7 +93,7 @@ export function CaseFeedbackForm({
   return (
     <Card className="flex flex-col gap-4">
       <div>
-        <p className="font-bold text-ink">{t('ให้คะแนนความพึงพอใจ')}</p>
+        <p className="font-semibold text-ink">{t('ให้คะแนนความพึงพอใจ')}</p>
         <p className="mt-0.5 text-sm text-muted">{t('ความคิดเห็นของท่านช่วยให้เราปรับปรุงบริการได้ดียิ่งขึ้น')}</p>
       </div>
       <div data-field-error={ratingMissing && rating === 0 ? '' : undefined}>

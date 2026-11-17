@@ -9,7 +9,6 @@ import { Input, Select, SearchableSelect, Textarea } from '@/components/ui/Field
 import { RadioCard } from '@/components/ui/RadioCard'
 import { MapPanel } from '@/components/MapPanel'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { INCIDENT_TYPES, DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
@@ -152,17 +151,16 @@ export default function DispatchNewCase() {
   return (
     <AppShell variant="dashboard" title={t('บันทึกเหตุใหม่')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
+        <div className="mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('บันทึกเหตุที่รับแจ้งทางโทรศัพท์')}</h1>
+            <h1 className="text-title text-ink">{t('บันทึกเหตุที่รับแจ้งทางโทรศัพท์')}</h1>
             <p className="mt-1.5 text-sm text-muted">
               {t('สำหรับเหตุที่รับแจ้งโดยตรงโดยไม่ผ่านแอปพลิเคชัน กรุณากรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ')}
             </p>
           </div>
 
           <Card className="space-y-3">
-            <h2 className="text-sm font-bold text-ink">{t('ข้อมูลผู้แจ้งเหตุ')}</h2>
+            <h2 className="text-subheading text-ink">{t('ข้อมูลผู้แจ้งเหตุ')}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input label={t('ชื่อผู้แจ้งเหตุ')} value={reporterName} onChange={(e) => setReporterName(e.target.value)} />
               <Input
@@ -260,7 +258,7 @@ export default function DispatchNewCase() {
 
           <Card className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
-              <Activity className="size-4 text-primary" />
+              <Activity className="size-4 text-muted" />
               <label className="text-sm font-semibold text-ink">
                 {t('ลักษณะการบาดเจ็บ')}<span className="ml-0.5 text-emergency">*</span>
               </label>

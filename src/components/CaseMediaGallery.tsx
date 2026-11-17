@@ -28,7 +28,7 @@ export function CaseMediaGallery({
 
   return (
     <Card className="space-y-4">
-      <h3 className="font-bold text-ink">{t('ภาพและเสียงจากที่เกิดเหตุ')}</h3>
+      <h3 className="text-heading text-ink">{t('ภาพและเสียงจากที่เกิดเหตุ')}</h3>
 
       {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -48,7 +48,7 @@ export function CaseMediaGallery({
           {audioRecordings.map((r) => (
             <div key={r.id} className="flex flex-col gap-2 rounded-xl border border-border bg-bg p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <Mic className="size-4 shrink-0 text-primary" />
+                <Mic className="size-4 shrink-0 text-muted" />
                 <div>
                   <p className="font-semibold text-ink">{t(SOURCE_LABEL[r.recordedBy ?? 'public'])}</p>
                   <p className="text-xs text-muted">

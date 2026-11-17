@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Info, CheckCircle2, HeartCrack } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card, Checkbox } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
@@ -146,12 +145,11 @@ export default function HospitalSelectionPage() {
   return (
     <AppShell variant="public" title={t('เลือกโรงพยาบาล')}>
       <div className="relative">
-        <AnimatedBackground variant="hospital" />
-        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6 sm:py-8">
           {isFlowMode && c ? (
             <PatientNeedsCard caseNumber={c.caseNumber} incidentType={c.incidentDetails?.incidentType} needs={needs} />
           ) : (
-            <Card className="flex items-start gap-3 bg-skyblue-pale animate-fade-in-up">
+            <Card className="flex items-start gap-3 bg-skyblue-pale">
               <Info className="mt-0.5 size-5 shrink-0 text-primary" />
               <p className="text-sm text-ink">
                 {t('หน้านี้ใช้สำหรับเลือกโรงพยาบาลระหว่างขั้นตอนการช่วยเหลือเหตุฉุกเฉิน')}
@@ -160,7 +158,7 @@ export default function HospitalSelectionPage() {
           )}
 
           {!decliningAll && (
-            <div className="animate-fade-in-up" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
+            <div>
               <HospitalSelector
                 hospitals={rankedHospitals}
                 selectedId={selected?.id}
@@ -178,7 +176,7 @@ export default function HospitalSelectionPage() {
               className="flex flex-col gap-2 rounded-xl border border-success/20 bg-success/5 px-4 py-3 animate-scale-in"
             >
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-5 shrink-0 text-success" />
+                <CheckCircle2 className="size-5 shrink-0 text-success-ink" />
                 <p className="text-sm font-semibold text-ink">
                   {t('เลือก {name} แล้ว พร้อมยืนยันการนำส่ง', { name: selected.name })}
                 </p>
@@ -208,9 +206,9 @@ export default function HospitalSelectionPage() {
           )}
 
           {decliningAll && (
-            <Card className="flex flex-col gap-3 border-warning/30 bg-warning/5 animate-fade-in-up">
+            <Card className="flex flex-col gap-3 border-warning/30 bg-warning/5">
               <p className="flex items-start gap-2 text-sm font-semibold text-ink">
-                <HeartCrack className="mt-0.5 size-4 shrink-0 text-warning" />
+                <HeartCrack className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                 {t('ญาติไม่ประสงค์นำส่งโรงพยาบาล เหตุนี้จะถูกปิดโดยไม่นำส่งโรงพยาบาล')}
               </p>
               <Button variant="ghost" size="sm" className="self-start" onClick={() => setDecliningAll(false)}>
@@ -220,7 +218,7 @@ export default function HospitalSelectionPage() {
           )}
 
           {needsSignature && (
-            <div className="flex flex-col gap-3 animate-fade-in-up">
+            <div className="flex flex-col gap-3">
               <Input
                 label={t('ชื่อญาติผู้ลงนาม (ถ้ามี)')}
                 value={decidedByName}

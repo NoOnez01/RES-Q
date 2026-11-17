@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Accessibility,
@@ -7,7 +7,9 @@ import {
   ArrowRight,
   Building2,
   Camera,
+  ChevronRight,
   Clock,
+  ExternalLink,
   Facebook,
   Lock,
   MessageCircle,
@@ -17,17 +19,9 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react'
-import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { HeroSection } from '@/components/HeroSection'
 import { EmergencyContactCircle } from '@/components/EmergencyContactCircle'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { InfoModal } from '@/components/ui/InfoModal'
-import { useInView } from '@/lib/useInView'
-import { useCountUp } from '@/lib/useCountUp'
-import { FAVICON_URL } from '@/lib/utils'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { PrivacyLink } from '@/components/PrivacyLink'
 import { PRIVACY_NOTE_GENERAL } from '@/lib/privacyNotice'
@@ -58,7 +52,6 @@ registerTranslations({
   ข้อมูลผู้ป่วยควรได้รับการปกป้อง: 'Patient data is meant to be protected',
   มีการแสดงสถานะและประวัติการดำเนินงาน: 'Status and history are visible throughout',
   ออกแบบให้ใช้งานง่ายบนมือถือ: 'Designed to be easy to use on mobile',
-  '{label}: ดูรายละเอียด': '{label}: view details',
   เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย: 'Connecting every step of emergency help, fast and safely',
   'พร้อมให้ความช่วยเหลือตลอด 24 ชั่วโมง': 'Available 24/7',
   ติดตามสถานะตามเวลาจริง: 'Real-time status tracking',
@@ -67,9 +60,9 @@ registerTranslations({
   ดูวิธีการใช้งาน: 'How it works',
   ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน: 'Keeping every step of the response connected',
   'ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน': 'From the first report to the final follow-up, everyone sees the same data',
+  ขั้นตอนการขอความช่วยเหลือ: 'Getting help, step by step',
   เริ่มต้นใช้งานทันที: 'Get started now',
   ดูรายละเอียดทั้งหมด: 'See all the details',
-  'แตะที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับระบบต้นแบบ': 'Tap a point to see details · Simulated data for this prototype',
   ความปลอดภัยและความน่าเชื่อถือ: 'Security & trust',
   ติดต่อเรา: 'Contact us',
   'สอบถามหรือติดต่อทีมงาน ResQ ได้ทางช่องทางด้านล่าง (กรณีเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบน)':
@@ -80,87 +73,64 @@ registerTranslations({
     'This system is a demonstration/research prototype and does not replace professional medical assessment.',
 })
 
-const FEATURES = [
+const STEPS = [
   {
     id: 'contact',
-    icon: <PhoneCall className="size-5" />,
+    icon: PhoneCall,
     title: 'ติดต่อเจ้าหน้าที่',
     description: 'เริ่มต้นการขอความช่วยเหลือได้อย่างรวดเร็ว',
     extra: 'แตะปุ่มเดียว ระบบจะนำไปสู่ขั้นตอนการแจ้งเหตุทันที',
   },
   {
     id: 'photo',
-    icon: <Camera className="size-5" />,
+    icon: Camera,
     title: 'ถ่ายภาพจุดเกิดเหตุ',
     description: 'ส่งภาพเพื่อช่วยให้เจ้าหน้าที่ประเมินสถานการณ์',
     extra: 'ถ่ายภาพ หรือข้ามขั้นตอนนี้ได้',
   },
   {
     id: 'call1669',
-    icon: <PhoneIncoming className="size-5" />,
+    icon: PhoneIncoming,
     title: 'โทร 1669',
     description: 'เชื่อมต่อศูนย์รับแจ้งเหตุและสั่งการการแพทย์ฉุกเฉิน',
     extra: 'สายด่วนการแพทย์ฉุกเฉินพร้อมรับสายตลอด 24 ชั่วโมง',
   },
   {
     id: 'tracking',
-    icon: <Activity className="size-5" />,
+    icon: Activity,
     title: 'ติดตามสถานะการช่วยเหลือ',
     description: 'ดูความคืบหน้าตั้งแต่รับแจ้งเหตุจนเสร็จสิ้น',
     extra: 'แสดงสถานะทุกขั้นตอนโดยอัตโนมัติตามเวลาจริง',
   },
 ] as const
 
-const CONNECTION_NODES = [
-  {
-    key: 'public',
-    label: 'บุคคลทั่วไป',
-    icon: <Users className="size-5" />,
-    detail: 'แจ้งเหตุ ถ่ายภาพ และติดตามสถานะการช่วยเหลือ',
-    count: 7,
-  },
-  {
-    key: 'center',
-    label: 'ศูนย์สั่งการ 1669',
-    icon: <PhoneCall className="size-5" />,
-    detail: 'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ',
-    count: 24,
-  },
-  {
-    key: 'rescue',
-    label: 'หน่วยกู้ชีพ',
-    icon: <Ambulance className="size-5" />,
-    detail: 'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล',
-    count: 18,
-  },
-  {
-    key: 'hospital',
-    label: 'โรงพยาบาล',
-    icon: <Building2 className="size-5" />,
-    detail: 'เตรียมทีมรักษาและยืนยันการรับผู้ป่วย',
-    count: 12,
-  },
+/** The response chain the product runs: one case record, four parties. */
+const CHAIN = [
+  { key: 'public', label: 'บุคคลทั่วไป', icon: Users, detail: 'แจ้งเหตุ ถ่ายภาพ และติดตามสถานะการช่วยเหลือ' },
+  { key: 'center', label: 'ศูนย์สั่งการ 1669', icon: PhoneCall, detail: 'รับแจ้งเหตุ ประเมินความรุนแรง และมอบหมายหน่วยกู้ชีพ' },
+  { key: 'rescue', label: 'หน่วยกู้ชีพ', icon: Ambulance, detail: 'เดินทางไปช่วยเหลือ บันทึกอาการ และนำส่งโรงพยาบาล' },
+  { key: 'hospital', label: 'โรงพยาบาล', icon: Building2, detail: 'เตรียมทีมรักษาและยืนยันการรับผู้ป่วย' },
 ] as const
 
 // The team's own channels. LINE's /ti/p/ link opens the official account's
 // add-friend page (in the LINE app on a phone).
 const CONTACT_LINKS: { key: string; label: string; handle: string; href: string; icon: ReactNode }[] = [
-  { key: 'line', label: 'LINE Official', handle: '@resq', href: 'https://line.me/R/ti/p/@resq', icon: <MessageCircle className="size-5" /> },
+  { key: 'line', label: 'LINE Official', handle: '@resq', href: 'https://line.me/R/ti/p/@resq', icon: <MessageCircle className="size-[18px]" /> },
   {
     key: 'facebook',
     label: 'Facebook',
     handle: 'Res-q Prc',
     href: 'https://www.facebook.com/profile.php?id=61592842760131',
-    icon: <Facebook className="size-5" />,
+    icon: <Facebook className="size-[18px]" />,
   },
 ]
 
 const TRUST_POINTS = [
-  { icon: <Shield className="size-5" />, text: 'ระบบออกแบบเพื่อการประสานงานฉุกเฉิน' },
-  { icon: <Lock className="size-5" />, text: 'มีการแบ่งสิทธิ์ตามบทบาทผู้ใช้งาน' },
-  { icon: <ShieldCheck className="size-5" />, text: 'ข้อมูลผู้ป่วยควรได้รับการปกป้อง' },
-  { icon: <Clock className="size-5" />, text: 'มีการแสดงสถานะและประวัติการดำเนินงาน' },
-  { icon: <Accessibility className="size-5" />, text: 'ออกแบบให้ใช้งานง่ายบนมือถือ' },
+  { icon: Shield, text: 'ระบบออกแบบเพื่อการประสานงานฉุกเฉิน' },
+  { icon: Lock, text: 'มีการแบ่งสิทธิ์ตามบทบาทผู้ใช้งาน' },
+  { icon: ShieldCheck, text: 'ข้อมูลผู้ป่วยควรได้รับการปกป้อง' },
+  { icon: Clock, text: 'มีการแสดงสถานะและประวัติการดำเนินงาน' },
+  { icon: Accessibility, text: 'ออกแบบให้ใช้งานง่ายบนมือถือ' },
 ] as const
 
 function openHeroCta() {
@@ -170,182 +140,11 @@ function openHeroCta() {
   window.setTimeout(() => el.click(), 400)
 }
 
-function Reveal({
-  children,
-  delayMs = 0,
-  className,
-}: {
-  children: ReactNode
-  delayMs?: number
-  className?: string
-}) {
-  const [ref, inView] = useInView<HTMLDivElement>()
+function SectionHeading({ title, description }: { title: string; description?: string }) {
   return (
-    <div
-      ref={ref}
-      className={clsx(inView ? 'animate-fade-in-up' : 'opacity-0', className)}
-      style={inView ? { animationDelay: `${delayMs}ms`, animationFillMode: 'backwards' } : undefined}
-    >
-      {children}
-    </div>
-  )
-}
-
-/** One step in the case journey (contact -> photo -> 1669 -> rescue ->
- * patient record -> tracking) -- rendered as a row along a connecting
- * spine rather than an identical icon-card, since the six items aren't
- * independent options, they're a sequence, and the layout should say so.
- * The detail text used to only reveal on :hover, which never fires on a
- * touch device -- it's always visible now so phone users get the same
- * information as desktop. */
-function FlowStep({
-  index,
-  icon,
-  title,
-  description,
-  extra,
-  onClick,
-}: {
-  index: number
-  icon: ReactNode
-  title: string
-  description: string
-  extra: string
-  onClick: () => void
-}) {
-  const t = useT()
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative z-10 flex w-full items-start gap-4 rounded-2xl p-3 text-left transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:gap-5 sm:p-4"
-    >
-      <span className="relative flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-primary/25 bg-surface text-primary shadow-card transition-colors duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-white sm:size-16">
-        {icon}
-        <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-navy text-[10px] font-extrabold text-white shadow-card">
-          {index}
-        </span>
-      </span>
-      <span className="flex flex-1 flex-col gap-1 pt-1.5 sm:pt-2.5">
-        <span className="font-bold text-ink">{t(title)}</span>
-        <span className="text-sm leading-relaxed text-muted">{t(description)}</span>
-        <span className="text-xs font-medium leading-relaxed text-primary/80">{t(extra)}</span>
-      </span>
-      <ArrowRight
-        aria-hidden="true"
-        className="mt-4 size-4 shrink-0 -translate-x-1 text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 sm:mt-5"
-      />
-    </button>
-  )
-}
-
-function OrbitRing({
-  sizePct,
-  rotate,
-  scaleY,
-  opacity,
-  spin,
-}: {
-  sizePct: number
-  rotate: number
-  scaleY: number
-  opacity: number
-  spin: 'animate-orbit-slow' | 'animate-orbit-slower'
-}) {
-  return (
-    <span
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary"
-      style={{
-        width: `${sizePct}%`,
-        height: `${sizePct}%`,
-        transform: `translate(-50%, -50%) rotate(${rotate}deg) scaleY(${scaleY})`,
-        borderColor: `rgba(11, 110, 189, ${opacity})`,
-      }}
-    >
-      <span className={clsx('bg-fx absolute inset-0', spin)}>
-        <span className="absolute -top-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-primary/50" />
-      </span>
-    </span>
-  )
-}
-
-const HUB_SATELLITE_LAYOUT = [
-  { style: { top: '-2%', left: '16%' }, float: 'animate-float-a' as const, delay: '0s' },
-  { style: { top: '6%', right: '-4%' }, float: 'animate-float-b' as const, delay: '1s' },
-  { style: { bottom: '2%', left: '-6%' }, float: 'animate-float-c' as const, delay: '2s' },
-  { style: { bottom: '-4%', right: '10%' }, float: 'animate-float-a' as const, delay: '1.5s' },
-]
-
-function HubSatellite({
-  icon,
-  count,
-  label,
-  style,
-  float,
-  delay,
-  onClick,
-}: {
-  icon: ReactNode
-  count: number
-  label: string
-  style: { top?: string; bottom?: string; left?: string; right?: string }
-  float: 'animate-float-a' | 'animate-float-b' | 'animate-float-c'
-  delay: string
-  onClick: () => void
-}) {
-  const value = useCountUp(count, true)
-  const t = useT()
-  return (
-    <span className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={style}>
-      <span className={clsx('bg-fx block', float)} style={{ animationDelay: delay }}>
-        <button
-          type="button"
-          onClick={onClick}
-          aria-label={t('{label}: ดูรายละเอียด', { label: t(label) })}
-          className="relative flex size-11 items-center justify-center rounded-full bg-surface text-primary shadow-card transition-shadow duration-200 hover:bg-skyblue-light hover:shadow-card-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:size-12"
-        >
-          {icon}
-          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-extrabold tabular-nums text-white shadow-card">
-            {String(value).padStart(2, '0')}
-          </span>
-        </button>
-      </span>
-    </span>
-  )
-}
-
-function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[number]) => void }) {
-  const t = useT()
-  return (
-    <div className="hero-grid-hub mt-4 flex flex-col items-center gap-3">
-      <div className="relative mx-auto flex size-64 items-center justify-center sm:size-72 lg:size-80">
-        <div className="bg-fx-layer" aria-hidden="true">
-          <span className="bg-fx absolute inset-12 rounded-full bg-primary/10 blur-2xl" />
-          <OrbitRing sizePct={60} rotate={-12} scaleY={0.55} opacity={0.22} spin="animate-orbit-slow" />
-          <OrbitRing sizePct={82} rotate={16} scaleY={0.6} opacity={0.15} spin="animate-orbit-slower" />
-          <OrbitRing sizePct={100} rotate={-24} scaleY={0.65} opacity={0.1} spin="animate-orbit-slow" />
-        </div>
-
-        {CONNECTION_NODES.map((node, i) => (
-          <HubSatellite
-            key={node.key}
-            icon={node.icon}
-            count={node.count}
-            label={node.label}
-            onClick={() => onSelect(node)}
-            {...HUB_SATELLITE_LAYOUT[i]}
-          />
-        ))}
-
-        <div
-          className="relative z-10 flex size-24 items-center justify-center rounded-full bg-surface/90 shadow-card-lg backdrop-blur-sm sm:size-28 lg:size-32"
-          aria-hidden="true"
-        >
-          <span className="bg-fx absolute inset-0 rounded-full bg-primary/15 animate-ping-slow" />
-          <img src={FAVICON_URL} alt="" className="relative size-14 sm:size-16 lg:size-[72px]" />
-        </div>
-      </div>
-      <p className="text-center text-xs text-muted">{t('แตะที่แต่ละจุดเพื่อดูรายละเอียด · ข้อมูลจำลองสำหรับระบบต้นแบบ')}</p>
+    <div className="max-w-2xl">
+      <h2 className="text-[1.375rem] font-bold leading-snug text-ink sm:text-2xl">{title}</h2>
+      {description && <p className="mt-2 text-body text-muted">{description}</p>}
     </div>
   )
 }
@@ -353,7 +152,6 @@ function LogoHub({ onSelect }: { onSelect: (node: (typeof CONNECTION_NODES)[numb
 export default function Home() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [activeHubNode, setActiveHubNode] = useState<(typeof CONNECTION_NODES)[number] | null>(null)
   const t = useT()
 
   useEffect(() => {
@@ -362,7 +160,7 @@ export default function Home() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [location.hash])
 
-  function handleFeatureClick(id: string) {
+  function handleStepClick(id: string) {
     switch (id) {
       case 'contact':
         openHeroCta()
@@ -380,170 +178,174 @@ export default function Home() {
 
   return (
     <AppShell variant="public">
-      <div className="relative bg-gradient-to-b from-skyblue-light via-skyblue-pale to-bg">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute left-[-10%] top-[22%] size-[560px] rounded-full bg-primary/[0.08] blur-3xl" />
-          <div className="absolute right-[-10%] top-[50%] size-[460px] rounded-full bg-primary/[0.08] blur-3xl" />
-          <div className="absolute left-[-8%] top-[76%] size-96 rounded-full bg-primary/[0.08] blur-3xl" />
-        </div>
-
-        <HeroSection wide background={false} fullScreen decoration={<AnimatedBackground variant="home" />}>
-        <div className="hero-grid relative z-10 w-full">
-          <div className="hero-grid-headline flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-ink sm:text-4xl lg:text-5xl">
+      {/* Hero: the claim on the left, the one emergency control on the right
+          (above it on a phone, where it's the first thing within reach). */}
+      <section className="border-b border-border bg-surface">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:py-20">
+          <div className="order-2 flex flex-col items-center text-center lg:order-1 lg:items-start lg:text-left">
+            <h1 className="max-w-xl text-[1.875rem] font-bold leading-[1.3] tracking-tight text-ink sm:text-[2.25rem] lg:text-[2.625rem]">
               {t('เชื่อมต่อทุกการช่วยเหลืออย่างรวดเร็วและปลอดภัย')}
             </h1>
-          </div>
+            <p className="mt-4 max-w-lg text-body text-muted sm:text-base">
+              {t('ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน')}
+            </p>
 
-          <div id="emergency-circle" className="hero-grid-circle flex items-center justify-center">
-            <EmergencyContactCircle />
-          </div>
-
-          <LogoHub onSelect={setActiveHubNode} />
-
-          <div className="hero-grid-actions flex flex-col items-center gap-5 lg:items-start">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 lg:justify-start">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-                <Clock className="size-4 text-primary" />
+            <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-small text-ink/80 lg:justify-start">
+              <li className="flex items-center gap-1.5">
+                <Clock className="size-4 text-primary" aria-hidden="true" />
                 {t('พร้อมให้ความช่วยเหลือตลอด 24 ชั่วโมง')}
-              </span>
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-                <Activity className="size-4 text-primary" />
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Activity className="size-4 text-primary" aria-hidden="true" />
                 {t('ติดตามสถานะตามเวลาจริง')}
-              </span>
-            </div>
+              </li>
+            </ul>
 
-            <div className="flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
-              <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+              <Button variant="outline" onClick={() => navigate('/login')}>
                 {t('เข้าสู่ระบบ')}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/register')}>
+              <Button variant="outline" onClick={() => navigate('/register')}>
                 {t('สมัครสมาชิก')}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/how-it-works')}>
+              <Button variant="ghost" onClick={() => navigate('/how-it-works')} iconRight={<ArrowRight />}>
                 {t('ดูวิธีการใช้งาน')}
               </Button>
             </div>
           </div>
-        </div>
-      </HeroSection>
 
-      <section id="features" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <Reveal className="text-center">
-          <h2 className="text-2xl font-bold text-ink sm:text-3xl">{t('ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน')}</h2>
-          <p className="mt-2 text-sm text-muted">{t('ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน')}</p>
-        </Reveal>
-
-        <div className="relative mt-12">
-          <div
-            aria-hidden="true"
-            className="absolute bottom-8 left-10 top-8 w-px bg-gradient-to-b from-primary/30 via-primary/15 to-transparent sm:left-12"
-          />
-          <div className="flex flex-col gap-1">
-            {FEATURES.map((f, i) => (
-              <Reveal key={f.id} delayMs={i * 80}>
-                <FlowStep
-                  index={i + 1}
-                  icon={f.icon}
-                  title={f.title}
-                  description={f.description}
-                  extra={f.extra}
-                  onClick={() => handleFeatureClick(f.id)}
-                />
-              </Reveal>
-            ))}
+          <div id="emergency-circle" className="order-1 flex justify-center lg:order-2">
+            <EmergencyContactCircle />
           </div>
         </div>
-
-        <Reveal delayMs={FEATURES.length * 80} className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button onClick={openHeroCta} iconRight={<ArrowRight className="size-4" />}>
-            {t('เริ่มต้นใช้งานทันที')}
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/how-it-works')}>
-            {t('ดูรายละเอียดทั้งหมด')}
-          </Button>
-        </Reveal>
       </section>
 
-      <section id="trust" className="bg-skyblue-pale/60 px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <Reveal className="text-center">
-            <h2 className="text-2xl font-bold text-ink sm:text-3xl">{t('ความปลอดภัยและความน่าเชื่อถือ')}</h2>
-          </Reveal>
+      {/* The chain: four parties on one record, read left to right. */}
+      <section id="features" className="mx-auto max-w-6xl scroll-mt-16 px-4 py-14 sm:px-6 sm:py-16">
+        <SectionHeading
+          title={t('ช่วยให้ทุกขั้นตอนการช่วยเหลือเชื่อมต่อกัน')}
+          description={t('ตั้งแต่แจ้งเหตุจนถึงติดตามผล ทุกฝ่ายเห็นข้อมูลชุดเดียวกัน')}
+        />
+        <ol className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          {CHAIN.map((node, i) => (
+            <li key={node.key} className="flex flex-col gap-3 bg-surface p-5">
+              <div className="flex items-center justify-between">
+                <span className="flex size-9 items-center justify-center rounded-lg border border-border text-primary">
+                  <node.icon className="size-[18px]" aria-hidden="true" />
+                </span>
+                {i < CHAIN.length - 1 && <ChevronRight className="hidden size-4 text-muted/60 lg:block" aria-hidden="true" />}
+              </div>
+              <div>
+                <p className="text-subheading text-ink">{t(node.label)}</p>
+                <p className="mt-1 text-small text-muted">{t(node.detail)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-          <Reveal delayMs={80}>
-            <Card className="mt-8 flex flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
-              {TRUST_POINTS.map((point) => (
-                <div key={point.text} className="flex flex-1 items-center gap-3 px-2 py-4 text-left sm:flex-col sm:gap-2.5 sm:px-4 sm:text-center">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary">
-                    {point.icon}
+      {/* Getting help: a numbered sequence, because it is one. */}
+      <section className="border-y border-border bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <SectionHeading title={t('ขั้นตอนการขอความช่วยเหลือ')} />
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Button onClick={openHeroCta} iconRight={<ArrowRight />}>
+                {t('เริ่มต้นใช้งานทันที')}
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/how-it-works')}>
+                {t('ดูรายละเอียดทั้งหมด')}
+              </Button>
+            </div>
+          </div>
+
+          <ol className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+            {STEPS.map((step, i) => (
+              <li key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(step.id)}
+                  className="group flex w-full items-start gap-4 px-4 py-4 text-left transition-colors hover:bg-surface-alt sm:px-5"
+                >
+                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-input text-xs font-semibold tabular-nums text-muted group-hover:border-primary group-hover:text-primary">
+                    {i + 1}
                   </span>
-                  <p className="text-sm font-medium leading-snug text-ink">{t(point.text)}</p>
-                </div>
-              ))}
-            </Card>
-          </Reveal>
-
-          <p className="mx-auto mt-8 max-w-xl text-center text-xs leading-relaxed text-muted">
-            {t('ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์')}
-          </p>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="flex items-center gap-2 text-subheading text-ink">
+                      <step.icon className="size-4 text-primary" aria-hidden="true" />
+                      {t(step.title)}
+                    </span>
+                    <span className="text-small text-muted">{t(step.description)}</span>
+                    <span className="text-meta text-ink/60">{t(step.extra)}</span>
+                  </span>
+                  <ChevronRight
+                    className="mt-1 size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink"
+                    aria-hidden="true"
+                  />
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      <section id="contact" className="px-4 py-16 sm:px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <Reveal>
-            <h2 className="text-xl font-bold text-ink sm:text-2xl">{t('ติดต่อเรา')}</h2>
-            <p className="mt-2 text-sm text-muted">
-              {t('สอบถามหรือติดต่อทีมงาน ResQ ได้ทางช่องทางด้านล่าง (กรณีเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบน)')}
-            </p>
-          </Reveal>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <section id="trust" className="mx-auto max-w-6xl scroll-mt-16 px-4 py-14 sm:px-6 sm:py-16">
+        <SectionHeading title={t('ความปลอดภัยและความน่าเชื่อถือ')} />
+        <ul className="mt-8 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-5">
+          {TRUST_POINTS.map((point) => (
+            <li key={point.text} className="flex items-start gap-3 border-t border-border pt-4 lg:flex-col lg:gap-2.5">
+              <point.icon className="size-[18px] shrink-0 text-primary" aria-hidden="true" />
+              <p className="text-small font-medium text-ink">{t(point.text)}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-8 max-w-2xl text-meta text-muted">
+          {t('ระบบนี้เป็นต้นแบบสำหรับการสาธิตและการวิจัย ไม่ทดแทนการประเมินทางการแพทย์')}
+        </p>
+      </section>
+
+      <section id="contact" className="scroll-mt-16 border-t border-border bg-surface">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-14 sm:px-6 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeading
+            title={t('ติดต่อเรา')}
+            description={t('สอบถามหรือติดต่อทีมงาน ResQ ได้ทางช่องทางด้านล่าง (กรณีเหตุฉุกเฉิน กรุณาใช้ปุ่ม "ติดต่อเจ้าหน้าที่" ด้านบน)')}
+          />
+          <div className="flex flex-wrap gap-2">
             {CONTACT_LINKS.map((link) => (
               <a
                 key={link.key}
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-5 py-3 text-left text-sm font-semibold text-ink shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card-lg"
+                className="group flex min-w-[12rem] items-center gap-3 rounded-xl border border-input bg-surface px-4 py-2.5 text-left shadow-card transition-colors hover:bg-surface-alt"
               >
                 <span className="text-primary">{link.icon}</span>
-                <span className="flex flex-col leading-tight">
-                  {link.label}
-                  <span className="mt-0.5 text-xs font-normal text-muted">{link.handle}</span>
+                <span className="flex flex-1 flex-col">
+                  <span className="text-sm font-medium text-ink">{link.label}</span>
+                  <span className="text-meta text-muted">{link.handle}</span>
                 </span>
+                <ExternalLink className="size-3.5 text-muted group-hover:text-ink" aria-hidden="true" />
               </a>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-border px-4 py-8 text-center sm:px-6">
-        <p className="text-xs text-muted">{t('ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง')}</p>
-        <PrivacyLink note={PRIVACY_NOTE_GENERAL} className="mt-2 justify-center" />
-        <button
-          type="button"
-          onClick={() => navigate('/all-screens')}
-          className="mt-2 text-xs font-semibold text-primary hover:underline"
-        >
-          {t('ดูหน้าทั้งหมด (สำหรับนักพัฒนา)')}
-        </button>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 py-6 text-center sm:flex-row sm:justify-between sm:px-6 sm:text-left">
+          <p className="text-meta text-muted">{t('ข้อมูลในระบบเป็นข้อมูลจำลองและไม่ใช่ข้อมูลผู้ป่วยจริง')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <PrivacyLink note={PRIVACY_NOTE_GENERAL} />
+            <button
+              type="button"
+              onClick={() => navigate('/all-screens')}
+              className="-my-2 inline-block py-2 text-meta font-medium text-muted hover:text-ink hover:underline"
+            >
+              {t('ดูหน้าทั้งหมด (สำหรับนักพัฒนา)')}
+            </button>
+          </div>
+        </div>
       </footer>
-      </div>
-
-      <InfoModal
-        open={activeHubNode !== null}
-        title={activeHubNode ? t(activeHubNode.label) : ''}
-        message={activeHubNode ? t(activeHubNode.detail) : ''}
-        icon={
-          activeHubNode && (
-            <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-              {activeHubNode.icon}
-            </span>
-          )
-        }
-        onClose={() => setActiveHubNode(null)}
-      />
     </AppShell>
   )
 }

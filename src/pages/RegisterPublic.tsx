@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card, Checkbox } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
@@ -159,9 +158,8 @@ export default function RegisterPublic() {
   return (
     <AppShell variant="public" title={t('สมัครสมาชิกประชาชน')}>
       <div className="relative">
-        <AnimatedBackground variant="auth" />
-        <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
-          <Card className="animate-fade-in-up">
+        <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
+          <Card>
             <div className="flex flex-col gap-2.5">
               <Button
                 variant="outline"

@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BarChart3, Camera, ChevronRight, Loader2, UserCircle2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Input, Select, Textarea } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
@@ -150,48 +149,49 @@ export default function Profile() {
   return (
     <AppShell variant="dashboard" title={t('ข้อมูลส่วนตัว')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 mx-auto flex max-w-md flex-col gap-5">
-          <Card className="flex flex-col items-center gap-3 animate-fade-in-up">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="group relative size-24 shrink-0 overflow-hidden rounded-full border-4 border-skyblue-pale bg-skyblue-pale"
-              aria-label={t('เปลี่ยนรูปประจำตัว')}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="size-full object-cover" />
-              ) : (
-                <UserCircle2 className="size-full text-primary/40" />
-              )}
-              <span className="absolute inset-0 flex items-center justify-center bg-navy/50 opacity-0 transition-opacity group-hover:opacity-100">
-                {avatarUploading ? (
-                  <Loader2 className="size-6 animate-spin text-white" />
+        <div className="mx-auto flex max-w-xl flex-col gap-5">
+          {/* Identity and the one place to go from here, as one panel. */}
+          <Card className="divide-y divide-border p-0">
+            <div className="flex items-center gap-4 p-5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="group relative size-16 shrink-0 overflow-hidden rounded-full border border-border bg-surface-alt"
+                aria-label={t('เปลี่ยนรูปประจำตัว')}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="size-full object-cover" />
                 ) : (
-                  <Camera className="size-6 text-white" />
+                  <UserCircle2 className="size-full text-muted/40" strokeWidth={1.25} />
                 )}
-              </span>
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-            <p className="text-xs text-muted">{t('แตะที่รูปเพื่อเปลี่ยนรูปประจำตัว')}</p>
+                <span className="absolute inset-0 flex items-center justify-center bg-navy/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {avatarUploading ? (
+                    <Loader2 className="size-5 animate-spin text-white" />
+                  ) : (
+                    <Camera className="size-5 text-white" />
+                  )}
+                </span>
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <div className="min-w-0">
+                <p className="truncate text-heading text-ink">{currentUser.name}</p>
+                <p className="text-small text-muted">{t(roleLabel(currentUser.role))}</p>
+                <p className="mt-0.5 text-meta text-muted">{t('แตะที่รูปเพื่อเปลี่ยนรูปประจำตัว')}</p>
+              </div>
+            </div>
+            <Link to="/personal-stats" className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-surface-alt">
+              <BarChart3 className="size-4 shrink-0 text-muted" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-ink">{t('สถิติของฉัน')}</p>
+                <p className="text-meta text-muted">{t('ดูภาพรวมและแนวโน้มของเหตุที่เกี่ยวข้องกับคุณ')}</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </Card>
 
-          <Link to="/personal-stats">
-            <Card className="flex animate-fade-in-up items-center gap-3 transition-shadow hover:shadow-card-lg">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary">
-                <BarChart3 className="size-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-ink">{t('สถิติของฉัน')}</p>
-                <p className="text-xs text-muted">{t('ดูภาพรวมและแนวโน้มของเหตุที่เกี่ยวข้องกับคุณ')}</p>
-              </div>
-              <ChevronRight className="size-5 shrink-0 text-muted" />
-            </Card>
-          </Link>
-
-          <Card className="space-y-4 animate-fade-in-up">
-            <h3 className="flex items-center gap-2 font-bold text-ink">
-              <UserCircle2 className="size-4 text-primary" /> {t('แก้ไขข้อมูลส่วนตัว')}
+          <Card className="space-y-4">
+            <h3 className="text-heading text-ink">
+              {t('แก้ไขข้อมูลส่วนตัว')}
             </h3>
 
             <div className="rounded-xl bg-skyblue-pale p-3 text-sm">
@@ -216,8 +216,8 @@ export default function Profile() {
             />
           </Card>
 
-          <Card className="space-y-4 animate-fade-in-up">
-            <h3 className="font-bold text-ink">{t('ข้อมูลทางการแพทย์')}</h3>
+          <Card className="space-y-4">
+            <h3 className="text-heading text-ink">{t('ข้อมูลทางการแพทย์')}</h3>
             <p className="text-xs text-muted">{t('ใช้เพื่อประโยชน์ในการช่วยเหลือกรณีฉุกเฉินเท่านั้น')}</p>
             <Select label={t('หมู่เลือด')} value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
               <option value="">{t('ไม่ทราบ / ไม่ระบุ')}</option>

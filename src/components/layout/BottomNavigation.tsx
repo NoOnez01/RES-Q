@@ -11,7 +11,7 @@ export function BottomNavigation({ items }: { items: NavItem[] }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label={t('เมนูหลัก')}
     >
       {items.filter((item) => !item.tool).map((item) => {
@@ -22,12 +22,14 @@ export function BottomNavigation({ items }: { items: NavItem[] }) {
             key={item.path}
             to={item.path}
             className={clsx(
-              'flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition-colors',
-              active ? 'text-primary' : 'text-muted',
+              'relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium leading-tight transition-colors',
+              active ? 'text-primary' : 'text-muted hover:text-ink',
             )}
+            aria-current={active ? 'page' : undefined}
           >
-            <Icon className={clsx('size-5', active && 'scale-110')} />
-            {t(item.label)}
+            {active && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b bg-primary" aria-hidden="true" />}
+            <Icon className="size-5 shrink-0" />
+            <span className="block max-w-full truncate">{t(item.label)}</span>
           </Link>
         )
       })}

@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Field'
 import { PhotoCaptureModal, type PhotoSlotConfig } from '@/components/PhotoCaptureModal'
 import { AudioRecorder } from '@/components/AudioRecorder'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { formatDuration } from '@/lib/utils'
@@ -306,46 +305,42 @@ export default function EmergencyPhoto() {
   return (
     <AppShell variant="flow" title={t('ถ่ายภาพจุดเกิดเหตุ')} showBack onBack={handleBack}>
       <div className="relative">
-        <AnimatedBackground variant="emergency" />
 
-        <div className="relative z-10 flex flex-col gap-5 pb-28">
+        <div className="flex flex-col gap-5 pb-28">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-bold text-ink">{t('ถ่ายภาพจุดเกิดเหตุ')}</h1>
-              <p className="mt-1.5 text-sm text-muted">{t('แตะ "เริ่มถ่ายภาพ" แล้วถ่ายตามหัวข้อทีละขั้นตอน')}</p>
-            </div>
+            <p className="max-w-md text-body text-ink/80">{t('แตะ "เริ่มถ่ายภาพ" แล้วถ่ายตามหัวข้อทีละขั้นตอน')}</p>
             <span
               key={filledCount}
-              className="inline-flex shrink-0 animate-count-pop items-center gap-1.5 rounded-full border border-primary/30 bg-skyblue-light px-3 py-1.5 text-xs font-bold text-primary whitespace-nowrap"
+              className="inline-flex shrink-0 animate-count-pop items-center gap-1.5 whitespace-nowrap rounded-md border border-primary/20 bg-primary/[0.06] px-2 py-0.5 text-xs font-semibold tabular-nums text-primary"
             >
               {t('รูปภาพ: {n}/{total}', { n: filledCount, total: PHOTO_CATEGORIES.length })}
             </span>
           </div>
 
-          <Button variant="ghost" size="sm" className="self-start" onClick={proceed} disabled={submitting}>
+          <Button variant="ghost" size="sm" className="-ml-3 -mt-2 self-start text-muted hover:text-ink" onClick={proceed} disabled={submitting}>
             {t('ข้ามขั้นตอนนี้')}
           </Button>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-surface p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-surface px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-ink">
               <MapPin
-                className={clsx('size-4 shrink-0 text-primary', gpsStatus === 'locating' && 'animate-bounce')}
-                style={{ animationDuration: '2s' }}
+                className="size-4 shrink-0 text-muted"
+                aria-hidden="true"
               />
               <span>{activeCase?.location?.address ?? DEFAULT_INCIDENT_LOCATION.address}</span>
             </div>
             {gpsStatus === 'locating' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning-ink whitespace-nowrap">
                 {t('กำลังค้นหาตำแหน่ง...')}
               </span>
             )}
             {gpsStatus === 'ready' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-bold text-success whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-xs font-semibold text-success-ink whitespace-nowrap">
                 {t('สัญญาณ GPS พร้อมใช้งาน')}
               </span>
             )}
             {gpsStatus === 'failed' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-muted/30 bg-muted/10 px-2.5 py-1 text-xs font-bold text-muted whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface-alt px-2 py-0.5 text-xs font-semibold text-muted whitespace-nowrap">
                 {t('ใช้ตำแหน่งโดยประมาณ')}
               </span>
             )}
@@ -371,32 +366,31 @@ export default function EmergencyPhoto() {
             </Select>
           </Card>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
             {slots.map((slot, i) => (
               <button
                 key={slot.key}
                 type="button"
                 onClick={() => setCaptureKey(slot.key)}
                 className={clsx(
-                  'flex items-center gap-3 rounded-2xl border p-3 text-left transition-colors',
-                  slot.photo ? 'border-success/30 bg-success/5' : 'border-border bg-surface hover:border-primary/40',
+                  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-alt',
                 )}
               >
                 {slot.photo ? (
-                  <img src={slot.photo.dataUrl} alt={t(slot.label)} className="size-12 shrink-0 rounded-xl object-cover" />
+                  <img src={slot.photo.dataUrl} alt={t(slot.label)} className="size-11 shrink-0 rounded-lg border border-border object-cover" />
                 ) : (
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-sm font-bold text-primary">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-dashed border-input text-sm font-semibold tabular-nums text-muted">
                     {i + 1}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                     {t(slot.label)}
-                    {slot.photo && <Check className="size-3.5 text-success" />}
+                    {slot.photo && <Check className="size-3.5 text-success-ink" />}
                   </p>
-                  <p className="truncate text-xs text-muted">{t(slot.hint)}</p>
+                  <p className="mt-0.5 line-clamp-2 text-meta text-muted">{t(slot.hint)}</p>
                 </div>
-                <span className="shrink-0 text-xs font-semibold text-primary">{slot.photo ? t('ถ่ายใหม่') : t('ถ่ายภาพ')}</span>
+                <span className="shrink-0 text-[13px] font-medium text-primary">{slot.photo ? t('ถ่ายใหม่') : t('ถ่ายภาพ')}</span>
               </button>
             ))}
           </div>
@@ -421,7 +415,7 @@ export default function EmergencyPhoto() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                  className="flex min-h-10 items-center justify-center gap-1.5 text-small font-medium text-primary hover:underline"
                 >
                   <Upload className="size-3.5" />
                   {t('หรืออัปโหลดภาพจากอุปกรณ์แทน')}
@@ -432,9 +426,9 @@ export default function EmergencyPhoto() {
 
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-bold text-ink">{t('บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)')}</p>
+              <p className="text-sm font-semibold text-ink">{t('บันทึกเสียงอธิบายเหตุการณ์ (ถ้ามี)')}</p>
               {audioRecordings.length > 0 && (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-skyblue-light px-3 py-1.5 text-xs font-bold text-primary">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary/30 bg-skyblue-light px-2.5 py-1 text-xs font-semibold text-primary">
                   {t('เสียง: {n}', { n: audioRecordings.length })}
                 </span>
               )}
@@ -455,7 +449,7 @@ export default function EmergencyPhoto() {
           </div>
 
           <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
-            <ShieldAlert className="mt-0.5 size-5 shrink-0 animate-pulse text-warning" />
+            <ShieldAlert className="mt-0.5 size-5 shrink-0 animate-pulse text-warning-ink" />
             <p className="text-sm font-medium text-ink">
               {t('กรุณาถ่ายภาพเฉพาะเมื่ออยู่ในจุดที่ปลอดภัย และไม่เข้าใกล้จุดเกิดเหตุหากมีความเสี่ยง')}
             </p>
@@ -463,7 +457,7 @@ export default function EmergencyPhoto() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <Button variant="primary" size="lg" fullWidth loading={submitting} onClick={proceed}>
             {t('ดำเนินการต่อเพื่อโทร 1669')}

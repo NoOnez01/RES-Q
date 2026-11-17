@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { AlertTriangle, CheckCircle2, Clock, ShieldAlert, ShieldCheck, Users, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react'
 import { Card } from './ui/Card'
 import { SeverityBadge } from './SeverityBadge'
 import { compareWithRecommended, type PatientNeeds, type RankedHospital, type RiskLevel, type RiskReason } from '@/lib/hospitalRisk'
@@ -67,8 +67,8 @@ registerTranslations({
 })
 
 const LEVEL: Record<RiskLevel, { label: string; className: string; Icon: typeof ShieldCheck }> = {
-  low: { label: 'ความเสี่ยงต่ำ', className: 'border-success/30 bg-success/10 text-success', Icon: ShieldCheck },
-  moderate: { label: 'ความเสี่ยงปานกลาง', className: 'border-warning/30 bg-warning/10 text-warning', Icon: AlertTriangle },
+  low: { label: 'ความเสี่ยงต่ำ', className: 'border-success/30 bg-success/10 text-success-ink', Icon: ShieldCheck },
+  moderate: { label: 'ความเสี่ยงปานกลาง', className: 'border-warning/30 bg-warning/10 text-warning-ink', Icon: AlertTriangle },
   high: { label: 'ความเสี่ยงสูง', className: 'border-emergency/30 bg-emergency/10 text-emergency', Icon: ShieldAlert },
 }
 
@@ -76,7 +76,7 @@ export function RiskBadge({ level, className }: { level: RiskLevel; className?: 
   const t = useT()
   const { label, className: tone, Icon } = LEVEL[level]
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-bold', tone, className)}>
+    <span className={clsx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold', tone, className)}>
       <Icon className="size-3.5" aria-hidden="true" />
       {t(label)}
     </span>
@@ -84,8 +84,8 @@ export function RiskBadge({ level, className }: { level: RiskLevel; className?: 
 }
 
 const TONE: Record<RiskReason['tone'], { Icon: typeof CheckCircle2; className: string }> = {
-  good: { Icon: CheckCircle2, className: 'text-success' },
-  warn: { Icon: AlertTriangle, className: 'text-warning' },
+  good: { Icon: CheckCircle2, className: 'text-success-ink' },
+  warn: { Icon: AlertTriangle, className: 'text-warning-ink' },
   bad: { Icon: XCircle, className: 'text-emergency' },
 }
 
@@ -131,7 +131,7 @@ export function PatientNeedsCard({
     <Card className="flex flex-col gap-4 animate-fade-in-up">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-sm font-bold text-primary">{caseNumber}</p>
+          <p className="font-mono text-sm font-semibold text-primary">{caseNumber}</p>
           <p className="mt-1 font-semibold text-ink">{incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
         </div>
         {needs.severity && <SeverityBadge severity={needs.severity} />}
@@ -139,7 +139,7 @@ export function PatientNeedsCard({
 
       <div className="flex flex-col gap-2 rounded-xl bg-skyblue-pale/60 p-3.5">
         <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-          <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
+          <Clock className="size-4 shrink-0 text-muted" aria-hidden="true" />
           {t('ควรได้พบแพทย์ภายใน {n} นาที', { n: needs.windowMin })}
         </p>
         {!needs.severity && <p className="text-xs text-muted">{t('ยังไม่ได้ประเมินระดับความฉุกเฉิน ใช้เวลาของระดับ 3 ไปก่อน')}</p>}
@@ -174,8 +174,8 @@ export function FamilyBriefing({
   const comparison = isRecommended ? [] : compareWithRecommended(chosen, recommended)
   return (
     <Card className="flex flex-col gap-4 border-primary/30 animate-scale-in" role="status">
-      <h3 className="flex items-center gap-2 font-bold text-ink">
-        <Users className="size-4 text-primary" aria-hidden="true" /> {t('ข้อมูลสำหรับแจ้งญาติ')}
+      <h3 className="text-heading text-ink">
+        {t('ข้อมูลสำหรับแจ้งญาติ')}
       </h3>
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -185,7 +185,7 @@ export function FamilyBriefing({
         <RiskReasons reasons={chosen.risk.reasons} />
       </div>
       {isRecommended ? (
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-success">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-success-ink">
           <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" /> {t('โรงพยาบาลนี้เป็นทางเลือกที่แนะนำ')}
         </p>
       ) : (
@@ -210,7 +210,7 @@ export function HospitalDecisionCard({ decision, hospitalName, address }: { deci
     <Card className="flex flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-bold text-ink">{t('โรงพยาบาลที่เลือก')}</h3>
+          <h3 className="text-heading text-ink">{t('โรงพยาบาลที่เลือก')}</h3>
           <p className="mt-1 text-sm text-ink">{hospitalName}</p>
           {address && <p className="text-xs text-muted">{address}</p>}
         </div>

@@ -123,51 +123,41 @@ export default function AllScreens() {
   return (
     <AppShell variant="public" title={t('หน้าทั้งหมด')}>
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8">
-        {STATIC_GROUPS.map((group, gi) => (
-          <section
-            key={group.title}
-            className="animate-fade-in-up"
-            style={{ animationDelay: `${gi * 50}ms`, animationFillMode: 'backwards' }}
-          >
-            <h2 className="mb-3 text-lg font-bold text-ink">{t(group.title)}</h2>
+        {STATIC_GROUPS.map((group) => (
+          <section key={group.title}>
+            <h2 className="mb-3 text-heading text-ink">{t(group.title)}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {group.items.map((item, ii) => (
+              {group.items.map((item) => (
                 <ScreenButton
                   key={item.path}
                   label={t(item.label)}
                   onClick={() => navigate(item.path)}
-                  delayMs={ii * 30}
                 />
               ))}
             </div>
           </section>
         ))}
 
-        <section
-          className="animate-fade-in-up"
-          style={{ animationDelay: `${STATIC_GROUPS.length * 50}ms`, animationFillMode: 'backwards' }}
-        >
-          <h2 className="mb-3 text-lg font-bold text-ink">{t('ตัวอย่างเหตุ')}</h2>
+        <section>
+          <h2 className="mb-3 text-heading text-ink">{t('ตัวอย่างเหตุ')}</h2>
           {caseItems ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {caseItems.map((item, ii) => (
+              {caseItems.map((item) => (
                 <ScreenButton
                   key={item.path}
                   label={t(item.label)}
                   onClick={() => navigate(item.path)}
-                  delayMs={ii * 30}
                 />
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {caseScreens('demo').map((item, ii) => (
+              {caseScreens('demo').map((item) => (
                 <ScreenButton
                   key={item.path}
                   label={t(item.label)}
                   disabled
                   note={t('ต้องมีเหตุตัวอย่างก่อน กรุณาเริ่มจากปุ่มติดต่อเจ้าหน้าที่ที่หน้าหลัก')}
-                  delayMs={ii * 30}
                 />
               ))}
             </div>
@@ -183,13 +173,11 @@ function ScreenButton({
   onClick,
   disabled,
   note,
-  delayMs = 0,
 }: {
   label: string
   onClick?: () => void
   disabled?: boolean
   note?: string
-  delayMs?: number
 }) {
   return (
     <button
@@ -197,16 +185,12 @@ function ScreenButton({
       disabled={disabled}
       aria-label={note ? `${label} — ${note}` : label}
       className={clsx(
-        'flex w-full min-h-[48px] items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left shadow-card transition-all animate-fade-in-up',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30',
-        disabled
-          ? 'cursor-not-allowed opacity-60'
-          : 'hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card-lg active:scale-[0.98]',
+        'flex min-h-12 w-full items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors',
+        disabled ? 'cursor-not-allowed opacity-60' : 'hover:border-input hover:bg-surface-alt',
       )}
-      style={{ animationDelay: `${delayMs}ms`, animationFillMode: 'backwards' }}
     >
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">{label}</p>
+        <p className="text-sm font-medium text-ink">{label}</p>
         {note && <p className="mt-1 text-xs text-muted">{note}</p>}
       </div>
       {disabled ? (

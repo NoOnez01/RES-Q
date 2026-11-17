@@ -105,7 +105,7 @@ export function SpeechToTextPanel({
   return (
     <div className="space-y-2" data-field-error={error ? '' : undefined}>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-ink">{resolvedLabel}</p>
+        <p className="text-label text-ink">{resolvedLabel}</p>
         {supported ? (
           <Button
             variant={listening ? 'danger' : 'secondary'}
@@ -120,7 +120,7 @@ export function SpeechToTextPanel({
         )}
       </div>
       {errorLabel && (
-        <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-warning-ink">
           <AlertTriangle className="size-3.5 shrink-0" /> {errorLabel}
         </p>
       )}

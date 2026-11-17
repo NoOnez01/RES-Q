@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ScanLine } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Field'
@@ -124,10 +123,10 @@ registerTranslations({
 function SectionHeader({ index, title }: { index: number; title: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-input text-xs font-semibold tabular-nums text-muted">
         {index}
       </span>
-      <h3 className="font-bold text-ink">{title}</h3>
+      <h3 className="text-heading text-ink">{title}</h3>
     </div>
   )
 }
@@ -163,9 +162,9 @@ function OptionButtonGrid<V>({
           aria-pressed={value === opt.value}
           className={clsx(
             'border font-semibold transition-colors',
-            size === 'md' ? 'rounded-xl px-3 py-2.5 text-sm' : 'rounded-lg px-2.5 py-1.5 text-xs',
+            size === 'md' ? 'min-h-11 rounded-xl px-3 py-2.5 text-sm' : 'min-h-9 rounded-lg px-2.5 py-1.5 text-xs',
             value === opt.value
-              ? 'border-primary bg-primary text-white'
+              ? 'border-primary bg-primary-fill text-white'
               : 'border-border bg-surface text-ink hover:border-primary hover:text-primary',
           )}
         >
@@ -449,9 +448,8 @@ export default function RescuePatientRecord() {
   return (
     <AppShell variant="dashboard" title={t('บันทึกข้อมูลผู้ป่วย')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
-        <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+        <div className="mx-auto flex max-w-2xl flex-col gap-5">
+        <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionHeader index={1} title={t('ข้อมูลผู้ป่วย')} />
             <Button variant="outline" size="sm" icon={<ScanLine className="size-4" />} onClick={() => setScannerOpen(true)}>
@@ -481,7 +479,7 @@ export default function RescuePatientRecord() {
           }}
         />
 
-        <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '80ms', animationFillMode: 'backwards' }}>
+        <Card className="space-y-4">
           <SectionHeader index={2} title={t('การประเมินเบื้องต้น (G-R-X-A-B-C-D-E)')} />
 
           <div className="flex flex-col gap-1.5">
@@ -530,7 +528,7 @@ export default function RescuePatientRecord() {
                           : 'border-border bg-surface hover:border-primary/40',
                       )}
                     >
-                      <p className="font-bold text-ink">{opt.title}</p>
+                      <p className="font-semibold text-ink">{opt.title}</p>
                       <p className="text-muted">{t(opt.description)}</p>
                     </button>
                   ))}
@@ -553,7 +551,7 @@ export default function RescuePatientRecord() {
             <div className="flex items-center justify-between gap-2">
               <label className="text-sm font-semibold text-ink">{t('Glasgow Coma Scale (GCS) — ไม่บังคับ')}</label>
               {gcs.eye !== undefined && gcs.verbal !== undefined && gcs.motor !== undefined && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                   {t('รวม {n}/15', { n: gcsTotal({ eye: gcs.eye, verbal: gcs.verbal, motor: gcs.motor }) })}
                 </span>
               )}
@@ -580,7 +578,7 @@ export default function RescuePatientRecord() {
           </div>
         </Card>
 
-        <Card className="animate-fade-in-up space-y-4" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>
+        <Card className="space-y-4">
           <SectionHeader index={3} title={t('สัญญาณชีพ')} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
@@ -611,7 +609,7 @@ export default function RescuePatientRecord() {
           </div>
         </Card>
 
-        <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+        <Card className="space-y-3">
           <SectionHeader index={4} title={t('การปฐมพยาบาล')} />
           <SpeechToTextPanel
             value={firstAid}
@@ -621,7 +619,7 @@ export default function RescuePatientRecord() {
           />
         </Card>
 
-        <Card className="animate-fade-in-up space-y-3" style={{ animationDelay: '230ms', animationFillMode: 'backwards' }}>
+        <Card className="space-y-3">
           <SectionHeader index={5} title={t('เสนอปรับระดับความรุนแรง (ถ้าจำเป็น)')} />
           <p className="text-xs text-muted">
             {t('เลือกเฉพาะเมื่อผลการประเมิน ณ จุดเกิดเหตุแตกต่างจากที่ศูนย์สั่งการ 1669 ประเมินไว้ทางโทรศัพท์')}
@@ -648,7 +646,7 @@ export default function RescuePatientRecord() {
           )}
         </Card>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: '260ms', animationFillMode: 'backwards' }}>
+        <div>
           <AudioRecorder label={t('บันทึกเสียงเพิ่มเติม (ถ้ามี)')} onSave={handleSaveAudio} />
         </div>
 

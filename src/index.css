@@ -5,52 +5,76 @@
 @tailwind utilities;
 
 /*
-  Design tokens as RGB triplets (space-separated, no `rgb()` wrapper -- that's
-  added in tailwind.config.js so utilities like bg-surface/90 keep working).
-  :root holds the light "Calm Command Center" palette unchanged from before
-  dark mode existed; .dark overrides only what needs to invert for legibility
-  on a dark ground. `navy` deliberately keeps the same value in both blocks
-  (see tailwind.config.js) since it's used as a fixed dark accent, not text.
+  Design tokens as RGB triplets (no rgb() wrapper -- tailwind.config.js adds
+  it, so opacity modifiers like bg-surface/90 keep working).
+
+  Light: a cool neutral ground, white working surfaces, hairline borders.
+  The brand anchors from PRODUCT.md are fixed: Command Blue #0B6EBD (hover
+  #1479C9), navy #12304A text, Alert Red #D92D20 / #B42318, green #12B76A,
+  amber #F79009, yellow #F5C542, slate #667085. Neutrals around them carry
+  structure, never decoration.
 */
 :root {
   /* 1669's call docked beside the page (CallScreen). */
   --call-dock-w: clamp(340px, 30vw, 460px);
+
   --color-primary: 11 110 189;
   --color-primary-bright: 20 121 201;
+  --color-primary-foreground: 255 255 255;
+  /* Filled controls (white text on it) -- the brand blue itself in light. */
+  --color-primary-fill: 11 110 189;
+  --color-primary-fill-hover: 20 121 201;
   --color-navy: 18 48 74;
   --color-ink: 18 48 74;
-  --color-skyblue-light: 234 246 255;
-  --color-skyblue-pale: 244 250 254;
-  --color-bg: 246 250 253;
-  --color-border: 217 231 242;
   --color-muted: 102 112 133;
+
+  --color-bg: 245 247 250;
+  --color-surface: 255 255 255;
+  --color-surface-alt: 248 250 252;
+  --color-border: 227 232 239;
+  --color-input: 205 213 223;
+  /* Hover (light) and selected (pale) tints -- a whisper of the brand blue. */
+  --color-skyblue-light: 237 243 250;
+  --color-skyblue-pale: 245 248 252;
+
   --color-emergency: 217 45 32;
   --color-emergency-dark: 180 35 24;
   --color-warning: 247 144 9;
+  --color-warning-ink: 181 71 8;
   --color-moderate: 245 197 66;
+  --color-moderate-ink: 138 109 0;
   --color-success: 18 183 106;
-  --color-surface: 255 255 255;
-  --color-surface-alt: 248 251 253;
+  --color-success-ink: 6 118 71;
 }
 
 .dark {
   color-scheme: dark;
-  --color-primary: 59 158 219;
-  --color-primary-bright: 92 184 237;
+  --color-primary: 64 156 224;
+  --color-primary-bright: 99 177 236;
+  --color-primary-foreground: 255 255 255;
+  /* Deeper than the text blue above, so white labels keep 4.5:1. */
+  --color-primary-fill: 26 115 193;
+  --color-primary-fill-hover: 33 128 209;
   --color-navy: 18 48 74;
-  --color-ink: 224 235 246;
-  --color-skyblue-light: 28 54 84;
-  --color-skyblue-pale: 23 46 71;
-  --color-bg: 11 20 32;
-  --color-border: 36 61 87;
-  --color-muted: 140 160 186;
+  --color-ink: 228 234 242;
+  --color-muted: 148 161 180;
+
+  --color-bg: 11 15 21;
+  --color-surface: 19 25 34;
+  --color-surface-alt: 24 31 42;
+  --color-border: 37 46 59;
+  --color-input: 54 66 83;
+  --color-skyblue-light: 30 40 54;
+  --color-skyblue-pale: 24 32 44;
+
   --color-emergency: 240 68 56;
   --color-emergency-dark: 217 45 32;
   --color-warning: 253 176 34;
+  --color-warning-ink: 253 176 34;
   --color-moderate: 247 203 84;
+  --color-moderate-ink: 247 203 84;
   --color-success: 50 213 131;
-  --color-surface: 20 36 55;
-  --color-surface-alt: 27 46 69;
+  --color-success-ink: 50 213 131;
 }
 
 html,
@@ -61,13 +85,18 @@ body,
 
 html {
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   @apply bg-bg text-ink antialiased;
   font-feature-settings: 'kern' 1;
-  overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  /* clip, not hidden: hidden makes body a scroll container of its own (html
+     already is one), and every position: sticky inside -- the top bar, the
+     sidebar, a case's action panel -- stops sticking. */
+  overflow-x: clip;
+  caret-color: rgb(var(--color-primary));
 }
 
 * {
@@ -75,23 +104,49 @@ body {
 }
 
 ::selection {
-  @apply bg-primary/20;
+  background-color: rgb(var(--color-primary) / 0.18);
 }
 
-/* Scrollbars: slim + branded, non-intrusive */
+/* One focus treatment for everything keyboard-reachable. Components that
+   draw their own ring (outline-none + ring-*) still win. */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+/* Numbers that get compared down a column line up. */
+table,
+time,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: rgb(var(--color-primary));
+}
+
+/* Scrollbars: slim, neutral, out of the way. */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: rgb(var(--color-border));
+  background-color: rgb(var(--color-input) / 0.7);
+  border: 2px solid transparent;
+  background-clip: content-box;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(var(--color-primary) / 0.35);
+  background-color: rgb(var(--color-muted) / 0.6);
 }
 
 .leaflet-container {
@@ -101,16 +156,20 @@ body {
   z-index: 0;
 }
 
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
 .resq-marker-pin {
-  filter: drop-shadow(0 4px 8px rgba(18, 48, 74, 0.35));
+  filter: drop-shadow(0 2px 4px rgba(16, 24, 40, 0.3));
 }
 
 .resq-marker-pulse {
   position: absolute;
   inset: -10px;
   border-radius: 9999px;
-  background: rgba(217, 45, 32, 0.35);
-  animation: ping-slow 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  background: rgba(217, 45, 32, 0.3);
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 @layer utilities {
@@ -123,84 +182,12 @@ body {
   }
 }
 
-/*
-  Shared decorative-background layer.
-  Every AnimatedBackground primitive marks its animated elements with `.bg-fx`
-  so motion preference and tab-visibility can be governed from one place
-  instead of every component re-implementing the same media queries.
-*/
-.bg-fx-layer {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.bg-grid-dots {
-  background-image: radial-gradient(circle, rgba(11, 110, 189, 0.16) 1px, transparent 1px);
-  background-size: 26px 26px;
-}
-
-.bg-grid-lines {
-  background-image: linear-gradient(rgba(11, 110, 189, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(11, 110, 189, 0.08) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-.bg-shimmer-text {
-  background-image: linear-gradient(
-    100deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.7) 45%,
-    transparent 60%
-  );
-  background-size: 200% 100%;
-}
-
+/* Animations that only signal a live state stop while the tab is hidden. */
 [data-tab-hidden='true'] .bg-fx {
   animation-play-state: paused !important;
 }
 
-/*
-  Hero content grid: mobile stacks headline -> circle -> logo hub -> actions;
-  desktop pairs headline+actions in a left column beside the circle, with the
-  logo hub spanning full width below both. Named areas keep the two layouts
-  in sync without duplicating markup.
-*/
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-areas: 'headline' 'circle' 'hub' 'actions';
-  gap: 2.5rem;
-}
-@media (min-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas: 'headline circle' 'actions circle' 'hub hub';
-    align-items: center;
-    column-gap: 2.5rem;
-    row-gap: 1.5rem;
-  }
-}
-.hero-grid-headline {
-  grid-area: headline;
-}
-.hero-grid-circle {
-  grid-area: circle;
-}
-.hero-grid-hub {
-  grid-area: hub;
-}
-.hero-grid-actions {
-  grid-area: actions;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bg-fx,
-  .bg-fx * {
-    animation: none !important;
-  }
   *,
   *::before,
   *::after {

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { RelativeContacts } from '@/components/RelativeContacts'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { revealMissingField } from '@/lib/formErrors'
@@ -69,12 +68,10 @@ export default function ContactInfo() {
     // there's nothing to go back and change.
     <AppShell variant="flow" title={t('ข้อมูลติดต่อกลับ')} showBack={false}>
       <div className="relative">
-        <AnimatedBackground variant="emergency" />
 
-        <div className="relative z-10 flex flex-col gap-5 pb-28">
+        <div className="flex flex-col gap-5 pb-28">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('ข้อมูลติดต่อกลับ')}</h1>
-            <p className="mt-1.5 text-sm text-muted">
+            <p className="text-body text-ink/80">
               {t('ศูนย์สั่งการ 1669 และหน่วยกู้ชีพจะใช้หมายเลขนี้ติดต่อคุณ หากต้องการข้อมูลเพิ่มเติม')}
             </p>
           </div>
@@ -104,7 +101,7 @@ export default function ContactInfo() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <Button variant="primary" size="lg" fullWidth onClick={proceed}>
             {t('ไปยังหน้าติดตามการช่วยเหลือ')}

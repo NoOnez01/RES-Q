@@ -1,26 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import {
-  Phone,
-  User,
-  Users,
-  Activity,
-  FileText,
-  StickyNote,
-  Truck,
-  Hash,
-  CheckCircle2,
-  ClipboardList,
-  Pencil,
-  Wrench,
-  AlertTriangle,
-  IdCard,
-  XCircle,
-  ArrowUpCircle,
-  Search,
-  Share2,
-  AlertCircle,
-} from 'lucide-react'
+import { Truck, CheckCircle2, ClipboardList, Pencil, Wrench, AlertTriangle, XCircle, Search, Share2, AlertCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
@@ -36,8 +16,6 @@ import { MapPanel } from '@/components/MapPanel'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { ErrorState, SuccessState } from '@/components/States'
 import { ShareCaseModal } from '@/components/ShareCaseModal'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
 import { useStore } from '@/lib/store'
 import { recommendAssignment, rankRescueTeams, requiredEquipmentFor, nextLevelUp, teamMatchesQuery } from '@/lib/rescueAssignment'
 import { DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
@@ -319,7 +297,7 @@ export default function DispatchCaseDetail() {
     </Button>
   ) : (
     <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
-      <p className="text-sm font-semibold text-ink">{t('บันทึกคำแนะนำที่ให้ทางโทรศัพท์')}</p>
+      <p className="mt-0.5 text-sm font-medium text-ink">{t('บันทึกคำแนะนำที่ให้ทางโทรศัพท์')}</p>
       <Textarea
         value={closeAdviceNote}
         onChange={(e) => setCloseAdviceNote(e.target.value)}
@@ -414,22 +392,15 @@ export default function DispatchCaseDetail() {
   return (
     <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
+        <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-lg font-extrabold text-primary">{c.caseNumber}</p>
-          <p className="text-sm text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: new Date(c.createdAt).toLocaleString('th-TH') })}</p>
+          <h1 className="font-mono text-xl font-semibold tracking-tight text-ink">{c.caseNumber}</h1>
+          <p className="mt-0.5 text-small text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: new Date(c.createdAt).toLocaleString('th-TH') })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
-          <span className="inline-flex items-center gap-1.5" aria-label={t('สถานะของเหตุแสดงผลตามเวลาจริง')}>
-            <PulseRing
-              tone={c.status === 'completed' ? 'success' : c.status === 'called-1669' ? 'emergency' : 'primary'}
-              size="sm"
-            />
-            <StatusBadge status={c.status} />
-          </span>
+          <StatusBadge status={c.status} />
           <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
             {t('ส่งต่อ QR Code/ลิงก์')}
           </Button>
@@ -438,9 +409,9 @@ export default function DispatchCaseDetail() {
 
       {healthIssues.length > 0 && (
         <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/40 bg-warning/[0.06] p-4">
-          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning-ink" />
           <div className="min-w-0">
-            <p className="font-bold text-ink">{t('ข้อมูลของเหตุไม่สอดคล้องกัน')}</p>
+            <p className="font-semibold text-ink">{t('ข้อมูลของเหตุไม่สอดคล้องกัน')}</p>
             <p className="mt-0.5 text-sm text-muted">
               {t('ข้อมูลของเหตุนี้ไม่สอดคล้องกับสถานะปัจจุบัน ซึ่งอาจทำให้ไม่แสดงขั้นตอนถัดไป กรุณาตรวจสอบและบันทึกข้อมูลที่เกี่ยวข้องอีกครั้ง')}
             </p>
@@ -454,46 +425,41 @@ export default function DispatchCaseDetail() {
       )}
 
       {/* Beside a docked call there's room for one column until a very wide screen. */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 docked:lg:grid-cols-1 docked:2xl:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-2 docked:lg:col-span-1 docked:2xl:col-span-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3 docked:lg:grid-cols-1 docked:2xl:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-5 lg:col-span-2 docked:lg:col-span-1 docked:2xl:col-span-2">
           <Card>
-            <h2 className="mb-4 text-base font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h2>
+            <h2 className="mb-4 text-heading text-ink">{t('รายละเอียดเหตุการณ์')}</h2>
             {details ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex items-start gap-2.5">
-                  <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div>
                   <div>
-                    <p className="text-xs text-muted">{t('ประเภทเหตุการณ์')}</p>
-                    <p className="text-sm font-semibold text-ink">{details.incidentType}</p>
+                    <p className="text-meta text-muted">{t('ประเภทเหตุการณ์')}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{details.incidentType}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <Users className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div>
                   <div>
-                    <p className="text-xs text-muted">{t('จำนวนผู้ป่วย')}</p>
-                    <p className="text-sm font-semibold text-ink">{t('{n} คน', { n: details.patientCount })}</p>
+                    <p className="text-meta text-muted">{t('จำนวนผู้ป่วย')}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{t('{n} คน', { n: details.patientCount })}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <User className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div>
                   <div>
-                    <p className="text-xs text-muted">{t('ระดับความรู้สึกตัว')}</p>
-                    <p className="text-sm font-semibold text-ink">{t(CONSCIOUS_LABEL[details.conscious] ?? details.conscious)}</p>
+                    <p className="text-meta text-muted">{t('ระดับความรู้สึกตัว')}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{t(CONSCIOUS_LABEL[details.conscious] ?? details.conscious)}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div>
                   <div>
-                    <p className="text-xs text-muted">{t('เบอร์ติดต่อกลับ')}</p>
-                    <p className="text-sm font-semibold text-ink">{details.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</p>
+                    <p className="text-meta text-muted">{t('เบอร์ติดต่อกลับ')}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{details.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</p>
                   </div>
                 </div>
                 {details.notes && (
-                  <div className="flex items-start gap-2.5 sm:col-span-2">
-                    <StickyNote className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div className="sm:col-span-2">
                     <div>
-                      <p className="text-xs text-muted">{t('หมายเหตุเพิ่มเติม')}</p>
-                      <p className="text-sm font-semibold text-ink">{details.notes}</p>
+                      <p className="text-meta text-muted">{t('หมายเหตุเพิ่มเติม')}</p>
+                      <p className="mt-0.5 text-sm font-medium text-ink">{details.notes}</p>
                     </div>
                   </div>
                 )}
@@ -505,7 +471,7 @@ export default function DispatchCaseDetail() {
 
           <Card>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-bold text-ink">{t('การประเมินความรุนแรง (ศูนย์สั่งการ 1669)')}</h2>
+              <h2 className="text-heading text-ink">{t('การประเมินความรุนแรง (ศูนย์สั่งการ 1669)')}</h2>
               {c.assessment && c.status !== 'completed' && (
                 <Button
                   variant="outline"
@@ -519,11 +485,10 @@ export default function DispatchCaseDetail() {
             </div>
             {c.assessment ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex items-start gap-2.5 sm:col-span-2">
-                  <FileText className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div className="sm:col-span-2">
                   <div>
-                    <p className="text-xs text-muted">{t('ลักษณะการบาดเจ็บ')}</p>
-                    <p className="text-sm font-semibold text-ink">{c.assessment.injuryDescription}</p>
+                    <p className="text-meta text-muted">{t('ลักษณะการบาดเจ็บ')}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{c.assessment.injuryDescription}</p>
                   </div>
                 </div>
               </div>
@@ -543,19 +508,18 @@ export default function DispatchCaseDetail() {
 
           {c.rescueSeverityProposal && (
             <Card className="border-warning/30 bg-warning/5">
-              <h2 className="mb-3 flex items-center gap-1.5 text-base font-bold text-ink">
-                <AlertTriangle className="size-4 text-warning" />
+              <h2 className="mb-3 text-heading text-ink">
                 {t('หน่วยกู้ชีพเสนอปรับระดับความรุนแรง')}
               </h2>
               <div className="flex flex-wrap items-center gap-3">
                 {c.assessment && (
                   <div className="flex flex-col items-start gap-1">
-                    <p className="text-xs text-muted">{t('เดิม')}</p>
+                    <p className="text-meta text-muted">{t('เดิม')}</p>
                     <SeverityBadge severity={c.assessment.severity} />
                   </div>
                 )}
                 <div className="flex flex-col items-start gap-1">
-                  <p className="text-xs text-muted">{t('เสนอโดยหน่วยกู้ชีพ')}</p>
+                  <p className="text-meta text-muted">{t('เสนอโดยหน่วยกู้ชีพ')}</p>
                   <SeverityBadge severity={c.rescueSeverityProposal.severity} />
                 </div>
               </div>
@@ -590,6 +554,7 @@ export default function DispatchCaseDetail() {
           {c.location && (
             <Card className="p-0 overflow-hidden">
               <MapPanel
+                className="!rounded-none !border-0"
                 pins={[
                   {
                     id: 'incident',
@@ -601,19 +566,19 @@ export default function DispatchCaseDetail() {
                 ]}
                 height="280px"
               />
-              <p className="p-4 text-sm text-muted">{c.location.address}</p>
+              <p className="border-t border-border px-5 py-3 text-small text-muted">{c.location.address}</p>
             </Card>
           )}
 
           <Card>
-            <h2 className="mb-4 text-base font-bold text-ink">{t('ลำดับเหตุการณ์')}</h2>
+            <h2 className="mb-4 text-heading text-ink">{t('ลำดับเหตุการณ์')}</h2>
             <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
           </Card>
         </div>
 
-        <div className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-6 lg:self-start docked:lg:order-first docked:lg:static docked:2xl:order-none docked:2xl:sticky">
+        <div className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-[4.5rem] lg:self-start docked:lg:order-first docked:lg:static docked:2xl:order-none docked:2xl:sticky">
           <Card>
-            <h2 className="mb-4 text-base font-bold text-ink">{t('การดำเนินการ')}</h2>
+            <h2 className="mb-4 text-heading text-ink">{t('การดำเนินการ')}</h2>
 
             {c.status === 'received' && !c.assessment && (
               <div className="flex flex-col gap-3">
@@ -666,7 +631,7 @@ export default function DispatchCaseDetail() {
                       className="pl-11"
                     />
                   </div>
-                  <p className="text-xs text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
+                  <p className="text-meta text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
                 </div>
                 <SearchableSelect
                   label={t('กรองตามจังหวัด (ไม่บังคับ)')}
@@ -742,7 +707,7 @@ export default function DispatchCaseDetail() {
                           badge={
                             <span className="flex flex-col items-end gap-1">
                               {isTop && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-primary-fill px-2.5 py-1 text-[11px] font-semibold text-white">
                                   {t('เหมาะสมที่สุด')}
                                 </span>
                               )}
@@ -750,7 +715,7 @@ export default function DispatchCaseDetail() {
                                 <span
                                   className={clsx(
                                     'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                    r.hasVehicleAtLevel ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+                                    r.hasVehicleAtLevel ? 'bg-success/10 text-success-ink' : 'bg-warning/10 text-warning-ink',
                                   )}
                                 >
                                   {r.hasVehicleAtLevel ? t('มีรถระดับ {level}', { level: selectedLevel }) : t('ไม่มีรถระดับ {level}', { level: selectedLevel })}
@@ -777,7 +742,7 @@ export default function DispatchCaseDetail() {
                 {recommendation.needsSupport && recommendation.support && (
                   <div className="flex flex-col gap-2 rounded-xl border border-warning/30 bg-warning/5 p-3.5">
                     <p className="flex items-start gap-2 text-sm font-semibold text-ink">
-                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                       {t('หน่วยที่ใกล้ที่สุดไม่มีอุปกรณ์ที่จำเป็น แนะนำให้มอบหมายร่วมกับหน่วยที่มีอุปกรณ์ดังกล่าว')}
                     </p>
                     <label className="flex items-center gap-2 text-sm text-ink">
@@ -813,58 +778,53 @@ export default function DispatchCaseDetail() {
                 {justAssigned && (
                   <div
                     role="status"
-                    className="animate-scale-in flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5 text-sm font-semibold text-success"
+                    className="animate-scale-in flex items-center gap-2.5 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5 text-sm font-semibold text-success-ink"
                   >
                     <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
                     {t('มอบหมายหน่วยกู้ชีพสำเร็จแล้ว')}
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div>
                     <div>
-                      <p className="text-xs text-muted">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</p>
-                      <p className="text-sm font-semibold text-ink">{c.assignedRescueTeam.name}</p>
+                      <p className="text-meta text-muted">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</p>
+                      <p className="mt-0.5 text-sm font-medium text-ink">{c.assignedRescueTeam.name}</p>
                     </div>
                   </div>
                   {c.assignedVehicle ? (
                     <>
-                      <div className="flex items-start gap-2.5">
-                        <Hash className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <div>
                         <div>
-                          <p className="text-xs text-muted">{t('รหัสรถ/ทีม')}</p>
-                          <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                          <p className="text-meta text-muted">{t('รหัสรถ/ทีม')}</p>
+                          <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-ink">
                             {c.assignedVehicle.unitCode}
                             <VehicleLevelBadge level={c.assignedVehicle.level} />
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-2.5">
-                        <Activity className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <div>
                         <div>
-                          <p className="text-xs text-muted">{t('ยานพาหนะ')}</p>
-                          <p className="text-sm font-semibold text-ink">
+                          <p className="text-meta text-muted">{t('ยานพาหนะ')}</p>
+                          <p className="mt-0.5 text-sm font-medium text-ink">
                             {t('{vehicle} · {n} คน', { vehicle: c.assignedVehicle.vehicle, n: c.assignedVehicleCrewCount ?? c.assignedVehicle.members })}
                           </p>
                         </div>
                       </div>
                     </>
                   ) : (
-                    <p className="text-xs text-muted">{t('หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ')}</p>
+                    <p className="text-meta text-muted">{t('หน่วยกู้ชีพยังไม่ได้เลือกรถ/ทีมที่รับผิดชอบ')}</p>
                   )}
-                  <div className="flex items-start gap-2.5">
-                    <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div>
                     <div>
-                      <p className="text-xs text-muted">{t('เบอร์ติดต่อ')}</p>
-                      <p className="text-sm font-semibold text-ink">{c.assignedRescueTeam.phone}</p>
+                      <p className="text-meta text-muted">{t('เบอร์ติดต่อ')}</p>
+                      <p className="mt-0.5 text-sm font-medium text-ink">{c.assignedRescueTeam.phone}</p>
                     </div>
                   </div>
                   {c.status !== 'rescue-assigned' && c.assignedVehicle?.driverName && (
-                    <div className="flex items-start gap-2.5">
-                      <IdCard className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <div>
                       <div>
-                        <p className="text-xs text-muted">{t('คนขับ · ทะเบียนรถ')}</p>
-                        <p className="text-sm font-semibold text-ink">
+                        <p className="text-meta text-muted">{t('คนขับ · ทะเบียนรถ')}</p>
+                        <p className="mt-0.5 text-sm font-medium text-ink">
                           {t('{driver} · {plate} · สังกัด {unit}', {
                             driver: c.assignedVehicle.driverName,
                             plate: c.assignedVehicle.plateNumber ?? '',
@@ -879,8 +839,8 @@ export default function DispatchCaseDetail() {
                   <div className="flex items-start gap-2.5 rounded-xl border border-border p-3">
                     <Wrench className="mt-0.5 size-4 shrink-0 text-primary" />
                     <div>
-                      <p className="text-xs text-muted">{t('หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)')}</p>
-                      <p className="text-sm font-semibold text-ink">{c.supportingRescueTeam.name}</p>
+                      <p className="text-meta text-muted">{t('หน่วยสนับสนุน (มีอุปกรณ์เฉพาะทาง)')}</p>
+                      <p className="mt-0.5 text-sm font-medium text-ink">{c.supportingRescueTeam.name}</p>
                     </div>
                   </div>
                 )}
@@ -901,7 +861,7 @@ export default function DispatchCaseDetail() {
 
                 {canAddSupport && showAddSupport && (
                   <div className="flex flex-col gap-2.5 rounded-xl border border-border p-3">
-                    <p className="text-sm font-semibold text-ink">
+                    <p className="mt-0.5 text-sm font-medium text-ink">
                       {escalating ? t('เลือกหน่วยสนับสนุนระดับสูงขึ้น (แนะนำ ALS/CLS)') : t('เลือกหน่วยสนับสนุน')}
                     </p>
                     {requiredEquipment.length > 0 && (
@@ -922,7 +882,7 @@ export default function DispatchCaseDetail() {
                           className="pl-11"
                         />
                       </div>
-                      <p className="text-xs text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
+                      <p className="text-meta text-muted">{t('พิมพ์ชื่อ พื้นที่ เบอร์โทร รหัสรถ ระดับรถ หรืออุปกรณ์ ได้หลายคำ')}</p>
                     </div>
                     <SearchableSelect
                       label={t('กรองตามจังหวัด (ไม่บังคับ)')}

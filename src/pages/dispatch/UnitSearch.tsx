@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { Search, MapPin, Users, Building2, Navigation as NavigationIcon } from 'lucide-react'
+import { Search, MapPin, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Input, Select, SearchableSelect } from '@/components/ui/Field'
 import { LoadingState, EmptyState, ErrorState } from '@/components/States'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { VehicleLevelBadge, VEHICLE_LEVEL_SELECTED_CLASSES } from '@/components/VehicleLevelBadge'
 import { useStore } from '@/lib/store'
 import { fetchAllIdemUnits, estimateUnitDistanceKm, unitHasLevel, STAFF_CERTIFICATION_FIELDS, type IdemUnit } from '@/lib/idemUnits'
@@ -41,56 +40,53 @@ registerTranslations({
 
 const RESULT_LIMIT = 60
 
-function UnitCard({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | null }) {
+/** One unit as a directory row: who and where, what it can send, who
+ * crews it, and how far it is. Columns from lg; stacked below. */
+function UnitRow({ unit, distanceKm }: { unit: IdemUnit; distanceKm: number | null }) {
   const staffCerts = STAFF_CERTIFICATION_FIELDS.map((f) => ({ ...f, count: unit[f.key] as number | null })).filter(
     (f) => f.count && f.count > 0,
   )
+  const levels = (['CLS', 'ALS', 'BLS'] as VehicleLevel[]).filter((lvl) => unitHasLevel(unit, lvl))
   const t = useT()
 
   return (
-    <Card className="flex flex-col gap-3 animate-fade-in-up">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-bold text-ink">{unit.unitName || unit.unitCode}</p>
-          <p className="text-xs text-muted">{unit.unitCode}</p>
-        </div>
-        {distanceKm !== null && (
-          <div className="flex shrink-0 items-center gap-1 rounded-full bg-skyblue-light px-2.5 py-1 text-xs font-bold text-primary">
-            <NavigationIcon className="size-3" />~{distanceKm < 10 ? distanceKm.toFixed(1) : Math.round(distanceKm)} {t('กม.')}
-          </div>
+    <li className="grid gap-x-6 gap-y-2 px-5 py-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_8rem_minmax(0,1.4fr)_5rem] lg:items-center">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-ink">{unit.unitName || unit.unitCode}</p>
+        <p className="font-mono text-[11px] text-muted">{unit.unitCode}</p>
+      </div>
+      <p className="flex min-w-0 items-center gap-1.5 text-small text-ink/80">
+        <MapPin className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+        <span className="truncate">{unit.province || '—'}</span>
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {levels.length > 0 ? (
+          levels.map((lvl) => <VehicleLevelBadge key={lvl} level={lvl} />)
+        ) : (
+          <span className="text-meta text-muted">{t('ไม่มีข้อมูลรถพยาบาล')}</span>
         )}
       </div>
-
-      {unit.province && (
-        <p className="flex items-center gap-1.5 text-xs text-muted">
-          <MapPin className="size-3.5 shrink-0" />
-          {unit.province}
-          {distanceKm !== null && <span className="text-muted/70">{t('ระยะทางโดยประมาณระดับจังหวัด')}</span>}
-        </p>
-      )}
-
-      <div className="flex flex-wrap gap-1.5">
-        {(['CLS', 'ALS', 'BLS'] as VehicleLevel[])
-          .filter((lvl) => unitHasLevel(unit, lvl))
-          .map((lvl) => (
-            <VehicleLevelBadge key={lvl} level={lvl} />
-          ))}
-        {!unitHasLevel(unit, 'CLS') && !unitHasLevel(unit, 'ALS') && !unitHasLevel(unit, 'BLS') && (
-          <span className="text-xs text-muted">{t('ไม่มีข้อมูลรถพยาบาล')}</span>
-        )}
-      </div>
-
-      {staffCerts.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 border-t border-border pt-2.5 text-xs text-muted">
-          <Users className="size-3.5 shrink-0 translate-y-0.5 text-primary" />
-          {staffCerts.map((f) => (
+      <p className="flex min-w-0 flex-wrap gap-x-3 gap-y-0.5 text-meta text-muted">
+        {staffCerts.length > 0 ? (
+          staffCerts.map((f) => (
             <span key={f.label}>
-              {f.label} <span className="font-bold text-ink">{f.count}</span>
+              {f.label} <span className="font-semibold tabular-nums text-ink">{f.count}</span>
             </span>
-          ))}
-        </div>
-      )}
-    </Card>
+          ))
+        ) : (
+          <span>—</span>
+        )}
+      </p>
+      <p className="text-sm tabular-nums text-ink lg:text-right" title={distanceKm !== null ? t('ระยะทางโดยประมาณระดับจังหวัด') : undefined}>
+        {distanceKm !== null ? (
+          <>
+            ~{distanceKm < 10 ? distanceKm.toFixed(1) : Math.round(distanceKm)} <span className="text-meta text-muted">{t('กม.')}</span>
+          </>
+        ) : (
+          <span className="text-muted">—</span>
+        )}
+      </p>
+    </li>
   )
 }
 
@@ -186,69 +182,71 @@ export default function DispatchUnitSearch() {
   return (
     <AppShell variant="dashboard" title={t('ค้นหาหน่วยปฏิบัติการ (NDEMS)')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('ค้นหาหน่วยปฏิบัติการทั่วประเทศ')}</h1>
-            <p className="mt-1.5 text-sm text-muted">
+            <h1 className="text-title text-ink">{t('ค้นหาหน่วยปฏิบัติการทั่วประเทศ')}</h1>
+            <p className="mt-1 max-w-3xl text-small text-muted">
               {t('ทำเนียบหน่วยปฏิบัติการจากระบบ NDEMS ค้นหาด้วยชื่อหรือรหัส กรองตามจังหวัดหรือระดับรถ และเรียงตามระยะทางโดยประมาณจากเหตุที่เลือก')}
             </p>
           </div>
 
           <Card className="flex flex-col gap-4">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('ค้นหาด้วยชื่อหน่วย รหัสหน่วย หรือจังหวัด')}
-                className="pl-11"
+                className="pl-9"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold text-ink">{t('กรองตามระดับรถ (เลือกได้หลายระดับ)')}</p>
-              <div className="flex gap-2">
-                {VEHICLE_LEVEL_RANK.map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => toggleLevel(lvl)}
-                    className={clsx(
-                      'flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
-                      levelFilters.has(lvl)
-                        ? VEHICLE_LEVEL_SELECTED_CLASSES[lvl]
-                        : 'border-border bg-surface text-muted hover:border-primary/40',
-                    )}
-                  >
-                    {lvl}
-                  </button>
-                ))}
+            <div className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+              <div className="flex flex-col gap-1.5">
+                <p className="text-label text-ink">{t('กรองตามระดับรถ (เลือกได้หลายระดับ)')}</p>
+                <div role="group" className="inline-flex h-10 rounded-lg border border-input bg-surface-alt p-0.5">
+                  {VEHICLE_LEVEL_RANK.map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      aria-pressed={levelFilters.has(lvl)}
+                      onClick={() => toggleLevel(lvl)}
+                      className={clsx(
+                        'min-w-14 flex-1 rounded-md px-3 font-mono text-[13px] font-semibold tracking-wide transition-colors',
+                        levelFilters.has(lvl)
+                          ? clsx('border bg-surface shadow-card', VEHICLE_LEVEL_SELECTED_CLASSES[lvl])
+                          : 'text-muted hover:text-ink',
+                      )}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <SearchableSelect
+                label={t('กรองตามจังหวัด (ไม่บังคับ)')}
+                value={provinceFilter}
+                onChange={setProvinceFilter}
+                placeholder={t('พิมพ์ชื่อจังหวัดเพื่อค้นหา')}
+                emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
+                options={[{ value: '', label: t('ทุกจังหวัด') }, ...provinceOptions.map((p) => ({ value: p, label: p }))]}
+              />
+
+              <Select
+                label={t('คำนวณระยะทางโดยประมาณจากเหตุ (ไม่บังคับ)')}
+                value={referenceCaseId}
+                onChange={(e) => setReferenceCaseId(e.target.value)}
+                hint={casesWithLocation.length === 0 ? t('ยังไม่มีเหตุที่มีข้อมูลตำแหน่งสำหรับอ้างอิง') : undefined}
+              >
+                <option value="">{t('ไม่ระบุ (เรียงตามชื่อหน่วย)')}</option>
+                {casesWithLocation.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.caseNumber} — {c.location?.address}
+                  </option>
+                ))}
+              </Select>
             </div>
-
-            <SearchableSelect
-              label={t('กรองตามจังหวัด (ไม่บังคับ)')}
-              value={provinceFilter}
-              onChange={setProvinceFilter}
-              placeholder={t('พิมพ์ชื่อจังหวัดเพื่อค้นหา')}
-              emptyLabel={t('ไม่พบจังหวัดที่ค้นหา')}
-              options={[{ value: '', label: t('ทุกจังหวัด') }, ...provinceOptions.map((p) => ({ value: p, label: p }))]}
-            />
-
-            <Select
-              label={t('คำนวณระยะทางโดยประมาณจากเหตุ (ไม่บังคับ)')}
-              value={referenceCaseId}
-              onChange={(e) => setReferenceCaseId(e.target.value)}
-              hint={casesWithLocation.length === 0 ? t('ยังไม่มีเหตุที่มีข้อมูลตำแหน่งสำหรับอ้างอิง') : undefined}
-            >
-              <option value="">{t('ไม่ระบุ (เรียงตามชื่อหน่วย)')}</option>
-              {casesWithLocation.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.caseNumber} — {c.location?.address}
-                </option>
-              ))}
-            </Select>
           </Card>
 
           {loading ? (
@@ -267,15 +265,15 @@ export default function DispatchUnitSearch() {
             />
           ) : (
             <>
-              <p className="text-xs text-muted">
+              <p className="text-meta text-muted">
                 {t('พบ {n} หน่วย', { n: results.length.toLocaleString('th-TH') })}
                 {results.length > RESULT_LIMIT && ` ${t('(แสดง {n} หน่วยแรก)', { n: RESULT_LIMIT })}`}
               </p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="-mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
                 {visibleResults.map(({ unit, distanceKm }) => (
-                  <UnitCard key={unit.unitCode} unit={unit} distanceKm={distanceKm} />
+                  <UnitRow key={unit.unitCode} unit={unit} distanceKm={distanceKm} />
                 ))}
-              </div>
+              </ul>
             </>
           )}
         </div>

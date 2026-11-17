@@ -1,7 +1,5 @@
 import { useEffect } from 'react'
-import { ShieldCheck } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { Card } from '@/components/ui/Card'
 import { useT } from '@/lib/i18n'
 import { PRIVACY_INTRO, PRIVACY_PROTOTYPE, PRIVACY_SECTIONS, PRIVACY_TITLE, PRIVACY_UPDATED, PRIVACY_UPDATED_LABEL } from '@/lib/privacyNotice'
 
@@ -13,37 +11,36 @@ export default function Privacy() {
     window.scrollTo(0, 0)
   }, [])
   return (
-    <AppShell variant="public" title={t(PRIVACY_TITLE)}>
-      <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-8 sm:px-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="flex items-center gap-2 text-xl font-bold text-ink">
-            <ShieldCheck className="size-5 shrink-0 text-primary" aria-hidden="true" /> {t(PRIVACY_TITLE)}
-          </h1>
-          <p className="text-xs text-muted">{t(PRIVACY_UPDATED_LABEL, { date: PRIVACY_UPDATED })}</p>
-          <p className="text-sm leading-relaxed text-ink">{t(PRIVACY_INTRO)}</p>
-          <p className="rounded-xl bg-skyblue-pale px-3.5 py-2.5 text-sm text-ink">{t(PRIVACY_PROTOTYPE)}</p>
-        </div>
+    <AppShell variant="public">
+      <article className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
+        <header className="border-b border-border pb-6">
+          <h1 className="text-[1.625rem] font-bold leading-snug tracking-tight text-ink">{t(PRIVACY_TITLE)}</h1>
+          <p className="mt-1 text-meta text-muted">{t(PRIVACY_UPDATED_LABEL, { date: PRIVACY_UPDATED })}</p>
+          <p className="mt-4 text-body leading-relaxed text-ink">{t(PRIVACY_INTRO)}</p>
+          <p className="mt-4 rounded-xl border border-border bg-surface px-4 py-3 text-small text-ink/80">{t(PRIVACY_PROTOTYPE)}</p>
+        </header>
 
         {PRIVACY_SECTIONS.map((section, i) => (
-          <Card key={section.id} id={section.id} className="space-y-2.5">
-            <h2 className="font-bold text-ink">
-              {i + 1}. {t(section.title)}
+          <section key={section.id} id={section.id} className="scroll-mt-20 border-b border-border py-6 last:border-0">
+            <h2 className="text-heading text-ink">
+              <span className="mr-1.5 tabular-nums text-muted">{i + 1}.</span>
+              {t(section.title)}
             </h2>
             {section.paragraphs?.map((p) => (
-              <p key={p} className="text-sm leading-relaxed text-ink">
+              <p key={p} className="mt-2.5 text-body leading-relaxed text-ink/90">
                 {t(p)}
               </p>
             ))}
             {section.items && (
-              <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink">
+              <ul className="mt-2.5 list-disc space-y-1.5 pl-5 text-body leading-relaxed text-ink/90 marker:text-muted">
                 {section.items.map((item) => (
                   <li key={item}>{t(item)}</li>
                 ))}
               </ul>
             )}
-          </Card>
+          </section>
         ))}
-      </div>
+      </article>
     </AppShell>
   )
 }

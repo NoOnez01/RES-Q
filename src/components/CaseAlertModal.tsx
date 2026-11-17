@@ -70,12 +70,12 @@ export function CaseAlertModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-navy/50 backdrop-blur-[2px] animate-fade-in" onClick={onDismiss} />
+      <div className="absolute inset-0 bg-navy/45 animate-fade-in" onClick={onDismiss} />
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="case-alert-title"
-        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface p-6 shadow-card-lg animate-scale-in"
+        className="relative w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-surface p-6 shadow-overlay animate-scale-in"
       >
         <div
           className={clsx(
@@ -85,7 +85,7 @@ export function CaseAlertModal({
         >
           <Icon className="size-6" />
         </div>
-        <h2 id="case-alert-title" className="mt-4 text-lg font-bold text-ink">
+        <h2 id="case-alert-title" className="mt-4 text-lg font-semibold text-ink">
           {alert.title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{alert.message}</p>

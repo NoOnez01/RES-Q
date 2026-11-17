@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { ArrowDownLeft, ArrowUpRight, Coins as CoinsIcon, Gift, HandHeart, History, RotateCcw } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
@@ -89,8 +88,8 @@ interface WalletData {
 }
 
 const REDEMPTION_STATUS: Record<RedemptionStatus, { label: string; className: string }> = {
-  pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning' },
-  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success' },
+  pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning-ink' },
+  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success-ink' },
   cancelled: { label: 'ยกเลิก (คืนเหรียญแล้ว)', className: 'bg-bg text-muted' },
 }
 
@@ -101,8 +100,8 @@ function validPhone(phone: string): boolean {
 
 function CoinAmount({ value, className }: { value: number; className?: string }) {
   return (
-    <span className={clsx('inline-flex items-center gap-1 font-bold tabular-nums', className)}>
-      <CoinsIcon className="size-4 text-warning" aria-hidden="true" />
+    <span className={clsx('inline-flex items-center gap-1 font-semibold tabular-nums', className)}>
+      <CoinsIcon className="size-4 text-warning-ink" aria-hidden="true" />
       {value.toLocaleString()}
     </span>
   )
@@ -240,8 +239,8 @@ export default function Coins() {
       <div className="flex flex-col gap-5">
         <Card className="flex flex-col gap-1.5">
           <p className="text-sm font-medium text-muted">{t('เหรียญของฉัน')}</p>
-          <p className="flex items-center gap-2.5 text-4xl font-extrabold tabular-nums text-ink">
-            <CoinsIcon className="size-8 text-warning" aria-hidden="true" />
+          <p className="flex items-center gap-2.5 text-4xl font-semibold tabular-nums text-ink">
+            <CoinsIcon className="size-8 text-warning-ink" aria-hidden="true" />
             {data.balance.toLocaleString()}
           </p>
           {data.coinsPerCase > 0 && (
@@ -271,7 +270,7 @@ export default function Coins() {
                 return (
                   <Card key={reward.id} className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-bold text-ink">{reward.name}</p>
+                      <p className="font-semibold text-ink">{reward.name}</p>
                       <CoinAmount value={reward.cost} className="shrink-0 text-ink" />
                     </div>
                     {reward.description && <p className="text-sm text-muted">{reward.description}</p>}
@@ -300,7 +299,7 @@ export default function Coins() {
             <div className="grid gap-3 sm:grid-cols-2">
               {foundations.map((foundation) => (
                 <Card key={foundation.id} className="flex flex-col gap-3">
-                  <p className="font-bold text-ink">{foundation.name}</p>
+                  <p className="font-semibold text-ink">{foundation.name}</p>
                   {foundation.description && <p className="text-sm text-muted">{foundation.description}</p>}
                   <div className="mt-auto flex items-center justify-between gap-3">
                     <span className="text-xs text-muted">
@@ -319,14 +318,14 @@ export default function Coins() {
           <div className="flex flex-col gap-5">
             {data.redemptions.length > 0 && (
               <section className="flex flex-col gap-2">
-                <h2 className="text-sm font-bold text-ink">{t('คำขอแลกของรางวัล')}</h2>
+                <h2 className="text-subheading text-ink">{t('คำขอแลกของรางวัล')}</h2>
                 {data.redemptions.map((r) => (
                   <div key={r.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-ink">{r.rewardName}</p>
                       <p className="text-xs text-muted">{formatDateTime(Date.parse(r.createdAt))}</p>
                     </div>
-                    <span className={clsx('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', REDEMPTION_STATUS[r.status].className)}>
+                    <span className={clsx('shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold', REDEMPTION_STATUS[r.status].className)}>
                       {t(REDEMPTION_STATUS[r.status].label)}
                     </span>
                   </div>
@@ -344,7 +343,7 @@ export default function Coins() {
                       <span
                         className={clsx(
                           'flex size-9 shrink-0 items-center justify-center rounded-full',
-                          entry.amount > 0 ? 'bg-success/10 text-success' : 'bg-skyblue-light text-primary',
+                          entry.amount > 0 ? 'bg-success/10 text-success-ink' : 'bg-skyblue-light text-primary',
                         )}
                       >
                         <Icon className="size-4" />
@@ -353,7 +352,7 @@ export default function Coins() {
                         <p className="truncate text-sm font-semibold text-ink">{ledgerLabel(entry)}</p>
                         <p className="text-xs text-muted">{formatDateTime(Date.parse(entry.createdAt))}</p>
                       </div>
-                      <span className={clsx('shrink-0 text-sm font-bold tabular-nums', entry.amount > 0 ? 'text-success' : 'text-ink')}>
+                      <span className={clsx('shrink-0 text-sm font-semibold tabular-nums', entry.amount > 0 ? 'text-success-ink' : 'text-ink')}>
                         {entry.amount > 0 ? '+' : '−'}
                         {Math.abs(entry.amount).toLocaleString()}
                       </span>
@@ -371,8 +370,7 @@ export default function Coins() {
   return (
     <AppShell variant="dashboard" title={t('เหรียญของฉัน')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">{body}</div>
+        <div>{body}</div>
       </div>
 
       <ConfirmationModal

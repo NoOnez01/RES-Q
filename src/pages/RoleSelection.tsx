@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { User, PhoneIncoming, Ambulance, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { RoleCard } from '@/components/RoleCard'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import type { Role } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
 
@@ -77,16 +76,11 @@ export default function RoleSelection() {
   return (
     <AppShell variant="public" title={t('เลือกบทบาทผู้ใช้งาน')}>
       <div className="relative">
-        <AnimatedBackground variant="auth" />
-        <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
-          <p className="text-sm text-muted">{t('เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ')}</p>
-          <div className="mt-6 flex flex-col gap-3">
-            {ROLES.map((item, i) => (
-              <div
-                key={item.role}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'backwards' }}
-              >
+        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+          <p className="text-small text-muted">{t('เลือกบทบาทที่คุณต้องการใช้งานในระบบ ResQ')}</p>
+          <div className="mt-5 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+            {ROLES.map((item) => (
+              <div key={item.role}>
                 <RoleCard
                   icon={item.icon}
                   title={t(item.title)}

@@ -83,7 +83,7 @@ export function PatientInformationCard({
   return (
     <Card className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-bold text-ink">{t('ข้อมูลผู้ป่วย')}</h3>
+        <h3 className="text-heading text-ink">{t('ข้อมูลผู้ป่วย')}</h3>
         {patient.recordedAt && (
           <span className="text-xs text-muted">{t('บันทึกเมื่อ {date}', { date: formatDateTime(patient.recordedAt) })}</span>
         )}
@@ -122,7 +122,7 @@ export function PatientInformationCard({
               <p className="text-xs text-muted">
                 {letter} - {t(label)}
                 {key === 'exsanguinatingHemorrhage' && survey?.hemorrhageClass && (
-                  <span className="ml-1 font-bold text-emergency">{HEMORRHAGE_CLASS_LABEL[survey.hemorrhageClass]}</span>
+                  <span className="ml-1 font-semibold text-emergency">{HEMORRHAGE_CLASS_LABEL[survey.hemorrhageClass]}</span>
                 )}
               </p>
               <p className="text-sm font-semibold text-ink truncate">{survey?.[key] || '-'}</p>

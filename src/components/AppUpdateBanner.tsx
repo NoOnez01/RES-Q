@@ -33,7 +33,7 @@ export function AppUpdateBanner() {
   }
 
   return createPortal(
-    <div className="fixed inset-x-0 top-0 z-[150] flex items-center gap-3 bg-primary px-4 py-2.5 text-sm text-white shadow-card">
+    <div className="fixed inset-x-0 top-0 z-[150] flex items-center gap-3 bg-primary-fill px-4 py-2.5 text-sm text-white shadow-card">
       <Download className="size-4 shrink-0" />
       <p className="min-w-0 flex-1 truncate">
         {t('มีเวอร์ชันใหม่ (v{version}) พร้อมใช้งาน', { version: update.version })}

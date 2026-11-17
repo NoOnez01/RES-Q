@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom'
 import { Ban, CheckCircle2, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
@@ -136,8 +135,7 @@ export default function NavigationPage() {
     return (
       <AppShell variant="flow" title={t('กำลังนำทาง')} showBack onBack={() => navigate(-1)}>
         <div className="relative">
-          <AnimatedBackground variant="map" />
-          <div className="relative z-10">
+          <div>
             <ErrorState
               title={t('ไม่พบเหตุนี้')}
               description={t('เหตุนี้อาจถูกลบหรือไม่มีอยู่ในระบบ')}
@@ -154,8 +152,7 @@ export default function NavigationPage() {
     return (
       <AppShell variant="flow" title={t('กำลังนำทาง')} showBack onBack={() => navigate(`/rescue/case/${c.id}`)}>
         <div className="relative">
-          <AnimatedBackground variant="map" />
-          <div className="relative z-10">
+          <div>
             <Card className="flex flex-col items-center gap-3 py-10 text-center">
               <p className="font-semibold text-ink">{t('เหตุนี้ไม่อยู่ในสถานะที่ต้องนำทาง')}</p>
               <Link to={`/rescue/case/${c.id}`} className="text-sm font-semibold text-primary hover:text-primary-bright">
@@ -261,11 +258,10 @@ export default function NavigationPage() {
   return (
     <AppShell variant="flow" title={t('กำลังนำทาง')} showBack onBack={() => navigate(`/rescue/case/${c.id}`)}>
       <div className="relative">
-        <AnimatedBackground variant="map" />
-        <div className="relative z-10 flex flex-col gap-4 pb-24">
+        <div className="flex flex-col gap-4 pb-24">
           <div className="flex flex-wrap items-center gap-2">
             {!arrived && (
-              <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-surface/90 px-3 py-1.5 text-xs font-bold text-primary shadow-card" aria-live="off">
+              <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-surface/90 px-2.5 py-1 text-xs font-semibold text-primary" aria-live="off">
                 <PulseRing tone="primary" size="sm" />
                 {t('กำลังติดตามตำแหน่ง')}
               </div>
@@ -282,7 +278,7 @@ export default function NavigationPage() {
           </div>
 
           {gpsMode && gpsErrorMessage && (
-            <p className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">{t(gpsErrorMessage)}</p>
+            <p className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning-ink">{t(gpsErrorMessage)}</p>
           )}
           {gpsMode && !gpsErrorMessage && !gpsPos && (
             <p className="rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted">{t('กำลังค้นหาตำแหน่ง GPS...')}</p>
@@ -290,8 +286,8 @@ export default function NavigationPage() {
 
           <ETAWidget etaMin={etaMin} distanceKm={distanceKm} progressPct={displayPct} route={route} />
 
-          <Card className="!p-0 overflow-hidden">
-            <MapPanel pins={pins} showRoute routePoints={progress?.points ?? route?.points} height="360px" />
+          <Card className="p-0 overflow-hidden">
+            <MapPanel className="!rounded-none !border-0" pins={pins} showRoute routePoints={progress?.points ?? route?.points} height="360px" />
           </Card>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4">
@@ -303,7 +299,7 @@ export default function NavigationPage() {
 
           <Card className="flex items-center justify-center gap-2 py-4 text-center">
             {arrived ? (
-              <span className="flex items-center gap-2 font-semibold text-success">
+              <span className="flex items-center gap-2 font-semibold text-success-ink">
                 <CheckCircle2 className="size-5" /> {t('ถึง{destination}แล้ว', { destination: destinationLabel })}
               </span>
             ) : (
@@ -320,7 +316,7 @@ export default function NavigationPage() {
 
           {c.patientInfo && (
             <Card className="space-y-3">
-              <h3 className="font-bold text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
+              <h3 className="text-heading text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
               {c.patientUpdates.length > 0 && (
                 <div className="rounded-xl bg-skyblue-pale p-3">
                   <p className="text-sm text-ink whitespace-pre-wrap">
@@ -349,7 +345,7 @@ export default function NavigationPage() {
           )}
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 p-4 backdrop-blur sm:relative sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:relative sm:border-0 sm:bg-transparent sm:p-0">
           <div className="mx-auto max-w-2xl">
             <Button
               variant="primary"

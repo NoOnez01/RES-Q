@@ -92,20 +92,20 @@ export function HospitalSelector({
                 key={h.id}
                 onClick={() => handleCardClick(h)}
                 className={clsx(
-                  'relative flex flex-col gap-3 rounded-2xl border-2 bg-surface text-left transition-all hover:shadow-card-lg',
-                  selected ? 'border-primary bg-skyblue-light' : 'border-border hover:border-primary/50',
-                  isTop ? 'p-5 shadow-card-lg sm:col-span-2 sm:p-6' : 'p-4',
+                  'relative flex flex-col gap-3 rounded-2xl border bg-surface text-left transition-colors',
+                  selected ? 'border-primary bg-primary/[0.04] ring-1 ring-primary' : 'border-input hover:border-muted/50 hover:bg-surface-alt',
+                  isTop ? 'p-5 sm:col-span-2' : 'p-4',
                 )}
               >
                 {selected && (
-                  <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-primary text-white">
+                  <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-primary-fill text-white">
                     <CheckCircle2 className="size-4" />
                   </span>
                 )}
                 {(isTop || assessed) && (
                   <div className="flex flex-wrap items-center gap-2 pr-8">
                     {isTop && (
-                      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white">
+                      <span className="inline-flex w-fit items-center gap-1 rounded-md bg-primary-fill px-2 py-0.5 text-[11px] font-semibold text-white">
                         {t('เหมาะสมที่สุด')}
                       </span>
                     )}
@@ -122,7 +122,7 @@ export function HospitalSelector({
                     <Building2 className={isTop ? 'size-6' : 'size-5'} />
                   </div>
                   <div className="min-w-0">
-                    <p className={clsx('font-bold text-ink leading-snug', isTop && 'text-lg')}>{h.name}</p>
+                    <p className={clsx('font-semibold text-ink leading-snug', isTop && 'text-lg')}>{h.name}</p>
                     <p className="text-xs text-muted mt-0.5">{h.location.address}</p>
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export function HospitalSelector({
                     <span
                       className={clsx(
                         'rounded-full px-2.5 py-1 font-semibold',
-                        h.erAvailable ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted',
+                        h.erAvailable ? 'bg-success/10 text-success-ink' : 'bg-muted/10 text-muted',
                       )}
                     >
                       {h.erAvailable ? t('ห้องฉุกเฉินพร้อมรับผู้ป่วย') : t('ห้องฉุกเฉินเต็ม')}

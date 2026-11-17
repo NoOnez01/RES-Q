@@ -1,13 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Phone } from 'lucide-react'
-import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CallScreen } from '@/components/call/CallScreen'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
@@ -118,29 +116,21 @@ export default function Contact1669() {
   return (
     <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack onBack={() => navigate(backTo)}>
       <div className="relative">
-        <AnimatedBackground variant="call" />
-        <div className="relative z-10 flex flex-col gap-5 pb-8">
-          <Card className="flex flex-col items-center gap-2 text-center">
-            <div className="relative flex size-20 items-center justify-center">
-              {isCallActive && (
-                <span className="bg-fx absolute inset-0 rounded-full bg-emergency/15 animate-ping-slow" aria-hidden="true" />
-              )}
-              <div
-                className={clsx(
-                  'relative flex size-20 items-center justify-center rounded-full bg-emergency/10 text-emergency transition-shadow duration-300',
-                  isCallActive && 'animate-pulse-glow shadow-red-glow',
-                )}
-              >
-                <Phone className="size-9" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tracking-wide text-emergency">1669</p>
-            <p className="text-sm font-semibold text-ink">{t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}</p>
+        <div className="flex flex-col gap-5 pb-8">
+          <Card className="flex flex-col items-center gap-1 py-7 text-center">
+            <p className="flex items-center gap-3 text-[2.75rem] font-bold leading-none tabular-nums tracking-tight text-emergency">
+              <Phone className="size-8" strokeWidth={2.25} aria-hidden="true" />
+              1669
+            </p>
+            <p className="mt-2 text-small text-muted">{t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.callStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}</p>
+              <p className="mt-3 flex items-center gap-2 text-sm font-medium text-ink" role="status">
+                <PulseRing tone="emergency" size="sm" />
+                {t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}
+              </p>
             )}
             {c.callStatus === 'in-call' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-success/10 px-2 py-0.5 text-xs font-semibold tabular-nums text-success-ink">
                 <PulseRing tone="success" size="sm" />
                 {formatDuration(c.callDurationSec)}
               </span>

@@ -214,15 +214,8 @@ export function MapPanel({
 
   return (
     <div
-      className={className}
-      style={{
-        position: 'relative',
-        height,
-        borderRadius: 20,
-        overflow: 'hidden',
-        border: '1px solid #D9E7F2',
-        cursor: onPickLocation ? 'crosshair' : undefined,
-      }}
+      className={clsx('relative overflow-hidden rounded-xl border border-border', className)}
+      style={{ height, cursor: onPickLocation ? 'crosshair' : undefined }}
     >
       <BasemapPicker />
       <MapContainer

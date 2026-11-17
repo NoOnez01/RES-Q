@@ -76,9 +76,9 @@ export function SoundSettingsCard({ style }: { style?: CSSProperties }) {
   const uiOn = useUiSoundsEnabled()
 
   return (
-    <Card className="space-y-4 animate-fade-in-up" style={style}>
-      <h3 className="flex items-center gap-2 font-bold text-ink">
-        <Volume2 className="size-4 text-primary" /> {t('เสียง')}
+    <Card className="space-y-4" style={style}>
+      <h3 className="text-heading text-ink">
+        {t('เสียง')}
       </h3>
 
       <div className="space-y-2">

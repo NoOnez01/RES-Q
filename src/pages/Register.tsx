@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { User, Ambulance, PhoneIncoming, Building2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { RoleCard } from '@/components/RoleCard'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { PrivacyLink } from '@/components/PrivacyLink'
 import { PRIVACY_NOTE_SIGNUP } from '@/lib/privacyNotice'
@@ -54,16 +53,11 @@ export default function Register() {
   return (
     <AppShell variant="public" title={t('สมัครสมาชิก')}>
       <div className="relative">
-        <AnimatedBackground variant="auth" />
-        <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
-          <p className="text-sm text-muted">{t('เลือกประเภทบัญชีที่ตรงกับการใช้งานของคุณเพื่อเริ่มสมัครสมาชิก')}</p>
-          <div className="mt-6 flex flex-col gap-3">
-            {OPTIONS.map((o, i) => (
-              <div
-                key={o.path}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'backwards' }}
-              >
+        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+          <p className="text-small text-muted">{t('เลือกประเภทบัญชีที่ตรงกับการใช้งานของคุณเพื่อเริ่มสมัครสมาชิก')}</p>
+          <div className="mt-5 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+            {OPTIONS.map((o) => (
+              <div key={o.path}>
                 <RoleCard
                   icon={o.icon}
                   title={t(o.title)}

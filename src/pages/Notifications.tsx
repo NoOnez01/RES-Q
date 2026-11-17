@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { Button } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
@@ -48,21 +47,19 @@ export default function Notifications() {
   return (
     <AppShell variant="dashboard" title={t('การแจ้งเตือน')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">
+        <div className="mx-auto w-full max-w-3xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm text-muted">
+              {t('รายการที่ยังไม่ได้อ่าน')}
               <span
-                key={unreadCount}
                 className={clsx(
-                  'inline-flex min-w-8 items-center justify-center rounded-full px-2.5 py-1 text-sm font-bold animate-count-pop',
-                  unreadCount > 0 ? 'bg-emergency/10 text-emergency' : 'bg-skyblue-light text-muted',
+                  'inline-flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-xs font-semibold tabular-nums',
+                  unreadCount > 0 ? 'bg-primary-fill text-white' : 'bg-skyblue-light text-muted',
                 )}
               >
                 {unreadCount}
               </span>
-              <p className="text-sm font-medium text-muted">{t('รายการที่ยังไม่ได้อ่าน')}</p>
-            </div>
+            </p>
             <Button
               variant="outline"
               size="sm"
@@ -73,7 +70,7 @@ export default function Notifications() {
             </Button>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-border bg-surface p-3 shadow-card sm:p-5">
+          <div className="mt-4">
             <NotificationCenter
               notifications={filtered}
               onMarkRead={markNotificationRead}

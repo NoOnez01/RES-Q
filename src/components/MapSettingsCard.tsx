@@ -32,9 +32,9 @@ export function MapSettingsCard({ style }: { style?: CSSProperties }) {
   ]
 
   return (
-    <Card className="space-y-5 animate-fade-in-up" style={style}>
-      <h3 className="flex items-center gap-2 font-bold text-ink">
-        <MapIcon className="size-4 text-primary" /> {t('แผนที่')}
+    <Card className="space-y-5" style={style}>
+      <h3 className="text-heading text-ink">
+        {t('แผนที่')}
       </h3>
 
       {/* Without a Longdo key there's only OpenStreetMap -- nothing to choose. */}
@@ -48,7 +48,7 @@ export function MapSettingsCard({ style }: { style?: CSSProperties }) {
             options={basemaps.map((b) => ({ value: b.id, label: t(b.label), icon: ICONS[b.id] }))}
           />
           <p className="text-xs text-muted">{t(chosen.description)}</p>
-          {failedOver && <p className="text-xs text-warning">{t('{label} ไม่ตอบสนอง กำลังใช้ OpenStreetMap แทน', { label: t(chosen.label) })}</p>}
+          {failedOver && <p className="text-xs text-warning-ink">{t('{label} ไม่ตอบสนอง กำลังใช้ OpenStreetMap แทน', { label: t(chosen.label) })}</p>}
           <p className="text-xs text-muted">{t('ใช้กับแผนที่ทุกหน้าในแอป เปลี่ยนได้จากปุ่มมุมขวาบนของแผนที่ด้วย')}</p>
         </div>
       )}

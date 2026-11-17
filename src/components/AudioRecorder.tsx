@@ -96,7 +96,7 @@ export function AudioRecorder({
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-4">
-      <p className="text-sm font-semibold text-ink mb-3">{resolvedLabel}</p>
+      <p className="mb-2 text-label text-ink">{resolvedLabel}</p>
 
       {!supported && (
         <p className="text-xs text-muted mb-2">{t('อุปกรณ์นี้ไม่รองรับการบันทึกเสียง กรุณาพิมพ์ข้อความแทน')}</p>

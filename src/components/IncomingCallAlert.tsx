@@ -40,7 +40,7 @@ export function IncomingCallAlert({
       >
         <CallAvatar role={callerRole} size="sm" ringing />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold">{title}</p>
+          <p className="truncate text-sm font-semibold">{title}</p>
           <p className="truncate text-xs text-white/70">{message}</p>
         </div>
         <button

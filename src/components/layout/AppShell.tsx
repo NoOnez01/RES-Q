@@ -48,7 +48,9 @@ export function AppShell({ variant, title, showBack, onBack, children }: AppShel
         />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <TopNavigation variant="dashboard" title={title} onMenuClick={() => setMenuOpen(true)} homePath={homePath} />
-          <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pb-8 lg:px-8">{children}</main>
+          <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-10">
+            <div className="mx-auto w-full max-w-[88rem]">{children}</div>
+          </main>
           <BottomNavigation items={items} />
         </div>
       </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Truck, Clock, CheckCircle2, Building2, Users, BedDouble, DoorOpen, DoorClosed, XCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { Card } from '@/components/ui/Card'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { CaseQueue, QueueSection, byUrgency, reachedAt, type QueueDetail } from '@/components/CaseQueue'
@@ -140,12 +140,12 @@ export default function HospitalDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3 p-5">
               <div className="flex items-center gap-2.5">
                 {hospitalAcceptingCases ? (
-                  <DoorOpen className="size-5 shrink-0 text-success" />
+                  <DoorOpen className="size-5 shrink-0 text-success-ink" />
                 ) : (
                   <DoorClosed className="size-5 shrink-0 text-emergency" />
                 )}
                 <div>
-                  <p className="text-sm font-bold text-ink">
+                  <p className="text-sm font-semibold text-ink">
                     {hospitalAcceptingCases ? t('เปิดรับผู้ป่วย') : t('ปิดรับผู้ป่วยชั่วคราว')}
                   </p>
                   <p className="text-xs text-muted">
@@ -155,7 +155,7 @@ export default function HospitalDashboard() {
                   </p>
                 </div>
               </div>
-              <Button size="sm" variant={hospitalAcceptingCases ? 'danger' : 'success'} onClick={handleToggleAccepting}>
+              <Button size="sm" variant={hospitalAcceptingCases ? 'danger-outline' : 'success'} onClick={handleToggleAccepting}>
                 {hospitalAcceptingCases ? t('ปิดรับผู้ป่วย') : t('เปิดรับผู้ป่วย')}
               </Button>
             </div>
@@ -166,9 +166,9 @@ export default function HospitalDashboard() {
               <div className="flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                    <BedDouble className="size-4 text-primary" /> {t('เตียงว่าง')}
+                    <BedDouble className="size-4 text-muted" /> {t('เตียงว่าง')}
                   </span>
-                  <span key={bedsRemaining} className="text-sm font-bold text-primary animate-count-pop">
+                  <span key={bedsRemaining} className="text-sm font-semibold text-primary animate-count-pop">
                     {t('{n} เตียง', { n: bedsRemaining })}
                   </span>
                 </div>
@@ -305,7 +305,7 @@ function ReadinessChip({ icon, label, ready }: { icon: React.ReactNode; label: s
       <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
         {icon} {label}
       </span>
-      <span className={clsx('flex items-center gap-1.5 text-xs font-bold', ready ? 'text-success' : 'text-warning')}>
+      <span className={clsx('flex items-center gap-1.5 text-xs font-semibold', ready ? 'text-success-ink' : 'text-warning-ink')}>
         {ready && <PulseRing tone="success" size="sm" />}
         {ready ? t('พร้อม') : t('ภาระงานสูง')}
       </span>

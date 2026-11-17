@@ -763,7 +763,7 @@ export function CallScreen({
         <div className={clsx('min-w-0 pt-0.5 text-center', isDocked ? 'max-w-[10rem]' : 'max-w-[46vw]')}>
           {!hero && (
             <>
-              <p className="flex items-center justify-center gap-1.5 font-bold">
+              <p className="flex items-center justify-center gap-1.5 font-semibold">
                 <span className="truncate">{title}</span>
                 {headerPerson && !headerPerson.micOn && (
                   <MicOff className="size-4 shrink-0 text-white/80" aria-label={t('ปิดไมโครโฟนอยู่')} />

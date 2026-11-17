@@ -5,43 +5,56 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Design tokens resolve through CSS variables (defined for :root and
-        // .dark in index.css) instead of fixed hex values, so dark mode is a
-        // matter of swapping the variables, not touching every className
-        // that uses these colors. The `rgb(var(...) / <alpha-value>)` form
-        // keeps Tailwind's opacity modifiers (e.g. bg-surface/90) working.
+        // Every color resolves through a CSS variable (index.css holds the
+        // light and dark values), so a theme switch swaps variables instead
+        // of classNames. `rgb(var(...) / <alpha-value>)` keeps opacity
+        // modifiers like bg-surface/90 working.
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           bright: 'rgb(var(--color-primary-bright) / <alpha-value>)',
+          foreground: 'rgb(var(--color-primary-foreground) / <alpha-value>)',
+          // Background of filled controls carrying white text.
+          fill: 'rgb(var(--color-primary-fill) / <alpha-value>)',
+          'fill-hover': 'rgb(var(--color-primary-fill-hover) / <alpha-value>)',
         },
-        // Fixed dark navy -- used deliberately as a dark color (modal
-        // scrims, video-call panel backgrounds, badges) that should stay
-        // dark in both themes, so it does NOT swap with the theme.
+        // Fixed dark navy: scrims, call backgrounds -- stays dark in both themes.
         navy: 'rgb(var(--color-navy) / <alpha-value>)',
-        // Primary heading/body text color -- swaps to a light tone in dark
-        // mode. Kept separate from `navy` (see above) even though they
-        // share the same light-mode value, because the two need to move in
-        // opposite directions when the theme changes.
+        // Foreground text. Same light value as navy, but inverts in dark mode.
         ink: 'rgb(var(--color-ink) / <alpha-value>)',
+        foreground: 'rgb(var(--color-ink) / <alpha-value>)',
+        // Hover and selected tints. Kept under their historic names because
+        // ~100 call sites use them; `accent` is the semantic alias.
         skyblue: {
           light: 'rgb(var(--color-skyblue-light) / <alpha-value>)',
           pale: 'rgb(var(--color-skyblue-pale) / <alpha-value>)',
         },
+        accent: 'rgb(var(--color-skyblue-light) / <alpha-value>)',
         bg: 'rgb(var(--color-bg) / <alpha-value>)',
         border: 'rgb(var(--color-border) / <alpha-value>)',
+        // Form-control stroke: one step stronger than a hairline divider.
+        input: 'rgb(var(--color-input) / <alpha-value>)',
+        ring: 'rgb(var(--color-primary) / <alpha-value>)',
         muted: 'rgb(var(--color-muted) / <alpha-value>)',
         emergency: {
           DEFAULT: 'rgb(var(--color-emergency) / <alpha-value>)',
           dark: 'rgb(var(--color-emergency-dark) / <alpha-value>)',
         },
-        warning: 'rgb(var(--color-warning) / <alpha-value>)',
-        moderate: 'rgb(var(--color-moderate) / <alpha-value>)',
-        success: 'rgb(var(--color-success) / <alpha-value>)',
-        // Card/panel/header backgrounds -- what used to be plain `white`.
-        // Literal `white`/`black` are left alone since those are almost
-        // always text/icons sitting on a saturated color that doesn't
-        // change between themes (e.g. white text on the emergency-red
-        // button), not a surface that should invert.
+        destructive: 'rgb(var(--color-emergency) / <alpha-value>)',
+        info: 'rgb(var(--color-primary) / <alpha-value>)',
+        // Status fills keep the brand values; `-ink` is the same hue dark
+        // enough to read as text on a light surface (4.5:1).
+        warning: {
+          DEFAULT: 'rgb(var(--color-warning) / <alpha-value>)',
+          ink: 'rgb(var(--color-warning-ink) / <alpha-value>)',
+        },
+        moderate: {
+          DEFAULT: 'rgb(var(--color-moderate) / <alpha-value>)',
+          ink: 'rgb(var(--color-moderate-ink) / <alpha-value>)',
+        },
+        success: {
+          DEFAULT: 'rgb(var(--color-success) / <alpha-value>)',
+          ink: 'rgb(var(--color-success-ink) / <alpha-value>)',
+        },
         surface: {
           DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
           alt: 'rgb(var(--color-surface-alt) / <alpha-value>)',
@@ -50,128 +63,94 @@ export default {
       fontFamily: {
         sans: ['"Noto Sans Thai"', '"Noto Sans"', 'system-ui', 'sans-serif'],
       },
-      borderRadius: {
-        xl2: '1.25rem',
-        xl3: '1.75rem',
+      // Type scale. Thai stacks vowels and tone marks above and below the
+      // line, so leading never drops under ~1.35 even on headings.
+      fontSize: {
+        display: ['1.875rem', { lineHeight: '2.5rem', fontWeight: '700' }],
+        title: ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
+        heading: ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }],
+        subheading: ['0.875rem', { lineHeight: '1.25rem', fontWeight: '600' }],
+        body: ['0.9375rem', { lineHeight: '1.5rem' }],
+        small: ['0.8125rem', { lineHeight: '1.25rem' }],
+        label: ['0.8125rem', { lineHeight: '1.25rem', fontWeight: '500' }],
+        meta: ['0.75rem', { lineHeight: '1rem' }],
       },
+      // A tight, enterprise radius scale. Tailwind's own steps are redefined
+      // so every existing rounded-* call site moves with it: controls sit at
+      // 6-8px, panels at 10-12px, and only avatars, dots and the emergency
+      // call control stay fully round.
+      borderRadius: {
+        sm: '0.1875rem',
+        DEFAULT: '0.25rem',
+        md: '0.375rem',
+        lg: '0.375rem',
+        xl: '0.5rem',
+        '2xl': '0.625rem',
+        '3xl': '0.75rem',
+      },
+      // Borders carry structure; shadows are only for things that float.
       boxShadow: {
-        card: '0 2px 8px 0 rgba(18, 48, 74, 0.06), 0 1px 2px 0 rgba(18, 48, 74, 0.04)',
-        'card-lg': '0 8px 24px 0 rgba(18, 48, 74, 0.10), 0 2px 6px 0 rgba(18, 48, 74, 0.06)',
-        'red-glow': '0 0 0 8px rgba(217, 45, 32, 0.10), 0 12px 32px 0 rgba(217, 45, 32, 0.35)',
-        'red-glow-lg': '0 0 0 14px rgba(217, 45, 32, 0.12), 0 20px 48px 0 rgba(217, 45, 32, 0.40)',
+        card: '0 1px 2px 0 rgb(16 24 40 / 0.04)',
+        'card-lg': '0 4px 12px -2px rgb(16 24 40 / 0.10), 0 2px 4px -2px rgb(16 24 40 / 0.05)',
+        overlay: '0 24px 48px -12px rgb(16 24 40 / 0.22), 0 4px 10px -4px rgb(16 24 40 / 0.08)',
+        // The emergency call control is the one element allowed a colored shadow.
+        'red-glow': '0 1px 2px 0 rgb(180 35 24 / 0.25), 0 10px 24px -8px rgb(217 45 32 / 0.45)',
+        'red-glow-lg': '0 1px 2px 0 rgb(180 35 24 / 0.25), 0 16px 32px -10px rgb(217 45 32 / 0.5)',
+      },
+      transitionTimingFunction: {
+        out: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
+        // A soft ring for a live state. Tinted by --pulse (an RGB triplet,
+        // primary by default); red controls set [--pulse:var(--color-emergency)].
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(217, 45, 32, 0.35), 0 12px 32px 0 rgba(217, 45, 32, 0.30)' },
-          '50%': { boxShadow: '0 0 0 18px rgba(217, 45, 32, 0), 0 12px 32px 0 rgba(217, 45, 32, 0.30)' },
+          '0%': { boxShadow: '0 0 0 0 rgb(var(--pulse, var(--color-primary)) / 0.35)' },
+          '70%, 100%': { boxShadow: '0 0 0 8px rgb(var(--pulse, var(--color-primary)) / 0)' },
         },
         'fade-in': {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        // Content entering the page: a short fade, barely any travel.
+        'fade-in-up': {
           from: { opacity: 0, transform: 'translateY(4px)' },
           to: { opacity: 1, transform: 'translateY(0)' },
         },
-        'fade-in-up': {
-          from: { opacity: 0, transform: 'translateY(12px)' },
-          to: { opacity: 1, transform: 'translateY(0)' },
-        },
         'scale-in': {
-          from: { opacity: 0, transform: 'scale(0.96)' },
-          to: { opacity: 1, transform: 'scale(1)' },
+          from: { opacity: 0, transform: 'scale(0.98) translateY(4px)' },
+          to: { opacity: 1, transform: 'scale(1) translateY(0)' },
+        },
+        'slide-in-left': {
+          from: { transform: 'translateX(-100%)' },
+          to: { transform: 'translateX(0)' },
         },
         'toast-in': {
-          from: { opacity: 0, transform: 'translateY(-8px) scale(0.98)' },
-          to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+          from: { opacity: 0, transform: 'translateY(-6px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
         },
         spin: {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
         },
-        'spin-reverse': {
-          from: { transform: 'rotate(360deg)' },
-          to: { transform: 'rotate(0deg)' },
-        },
         'ping-slow': {
-          '75%, 100%': { transform: 'scale(1.6)', opacity: 0 },
-        },
-        'float-a': {
-          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
-          '50%': { transform: 'translate(14px, -18px) scale(1.05)' },
-        },
-        'float-b': {
-          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
-          '50%': { transform: 'translate(-18px, 14px) scale(0.96)' },
-        },
-        'float-c': {
-          '0%, 100%': { transform: 'translate(0, 0)' },
-          '50%': { transform: 'translate(10px, 16px)' },
-        },
-        'grid-drift': {
-          from: { backgroundPosition: '0 0' },
-          to: { backgroundPosition: '48px 48px' },
-        },
-        'wave-drift': {
-          from: { transform: 'translateX(0)' },
-          to: { transform: 'translateX(-50%)' },
-        },
-        'mesh-breathe': {
-          '0%, 100%': { opacity: 0.55, transform: 'scale(1)' },
-          '50%': { opacity: 0.85, transform: 'scale(1.04)' },
-        },
-        'glow-breathe': {
-          '0%, 100%': { opacity: 0.35 },
-          '50%': { opacity: 0.65 },
-        },
-        'particle-float': {
-          '0%': { transform: 'translateY(0) scale(1)', opacity: 0 },
-          '10%': { opacity: 0.8 },
-          '90%': { opacity: 0.5 },
-          '100%': { transform: 'translateY(-120px) scale(0.6)', opacity: 0 },
-        },
-        'scan-line': {
-          '0%': { transform: 'translateY(-10%)', opacity: 0 },
-          '10%': { opacity: 1 },
-          '90%': { opacity: 1 },
-          '100%': { transform: 'translateY(110%)', opacity: 0 },
-        },
-        'dash-flow': {
-          to: { strokeDashoffset: -40 },
-        },
-        heartbeat: {
-          '0%, 100%': { transform: 'scaleY(1)' },
-          '50%': { transform: 'scaleY(1.35)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
+          '75%, 100%': { transform: 'scale(1.8)', opacity: 0 },
         },
         'count-pop': {
           '0%': { transform: 'scale(1)' },
-          '40%': { transform: 'scale(1.18)' },
+          '40%': { transform: 'scale(1.08)' },
           '100%': { transform: 'scale(1)' },
         },
       },
       animation: {
-        'pulse-glow': 'pulse-glow 2.4s ease-in-out infinite',
-        'fade-in': 'fade-in 0.25s ease-out',
-        'fade-in-up': 'fade-in-up 0.35s ease-out',
-        'scale-in': 'scale-in 0.2s ease-out',
-        'toast-in': 'toast-in 0.25s ease-out',
-        'spin-slow': 'spin 1.4s linear infinite',
-        'ping-slow': 'ping-slow 2.2s cubic-bezier(0, 0, 0.2, 1) infinite',
-        'orbit-slow': 'spin 50s linear infinite',
-        'orbit-slower': 'spin-reverse 70s linear infinite',
-        'float-a': 'float-a 14s ease-in-out infinite',
-        'float-b': 'float-b 17s ease-in-out infinite',
-        'float-c': 'float-c 11s ease-in-out infinite',
-        'grid-drift': 'grid-drift 9s linear infinite',
-        'wave-drift': 'wave-drift 16s linear infinite',
-        'mesh-breathe': 'mesh-breathe 10s ease-in-out infinite',
-        'glow-breathe': 'glow-breathe 6s ease-in-out infinite',
-        'particle-float': 'particle-float 8s ease-in-out infinite',
-        'scan-line': 'scan-line 3.2s ease-in-out infinite',
-        'dash-flow': 'dash-flow 1.4s linear infinite',
-        heartbeat: 'heartbeat 1.8s ease-in-out infinite',
-        shimmer: 'shimmer 2.4s linear infinite',
-        'count-pop': 'count-pop 0.4s ease-out',
+        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+        'fade-in': 'fade-in 0.15s ease-out',
+        'fade-in-up': 'fade-in-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        'scale-in': 'scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in-left': 'slide-in-left 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        'toast-in': 'toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        'spin-slow': 'spin 1s linear infinite',
+        'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'count-pop': 'count-pop 0.3s ease-out',
       },
     },
   },

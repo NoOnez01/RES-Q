@@ -1,7 +1,6 @@
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { PieChart as PieChartIcon } from 'lucide-react'
+import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Card } from './ui/Card'
-import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
+import { CHART_COLORS, CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 import type { EmergencyCase, Severity } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -43,8 +42,7 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
 
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-2 text-base font-bold text-ink">
-        <PieChartIcon className="size-4.5 text-primary" />
+      <h2 className="text-heading text-ink">
         {title}
       </h2>
       {total === 0 ? (
@@ -52,7 +50,7 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
       ) : (
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={counts} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+            <BarChart data={counts} layout="vertical" margin={{ top: 0, right: 32, bottom: 0, left: 0 }}>
               <XAxis type="number" allowDecimals={false} hide />
               <YAxis type="category" dataKey="label" width={72} tickLine={false} axisLine={false} tick={CHART_TICK_STYLE} />
               <Tooltip
@@ -60,10 +58,11 @@ export default function SeverityDistributionChart({ title, cases }: { title: str
                 contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(value) => [t('{n} เหตุ', { n: value as number }), t('จำนวน')]}
               />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
+              <Bar dataKey="count" radius={[0, 3, 3, 0]} maxBarSize={20}>
                 {counts.map((c) => (
                   <Cell key={c.severity} fill={SEVERITY_CHART_COLORS[c.severity]} />
                 ))}
+                <LabelList dataKey="count" position="right" offset={8} style={{ ...CHART_TICK_STYLE, fill: CHART_COLORS.navy, fontWeight: 600 }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

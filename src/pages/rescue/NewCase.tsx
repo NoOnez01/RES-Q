@@ -9,7 +9,6 @@ import { Input, Select, SearchableSelect, Textarea } from '@/components/ui/Field
 import { RadioCard } from '@/components/ui/RadioCard'
 import { MapPanel } from '@/components/MapPanel'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
@@ -167,10 +166,9 @@ export default function RescueNewCase() {
   return (
     <AppShell variant="dashboard" title={t('พบเหตุด้วยตนเอง')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
+        <div className="mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('บันทึกเหตุที่พบด้วยตนเอง')}</h1>
+            <h1 className="text-title text-ink">{t('บันทึกเหตุที่พบด้วยตนเอง')}</h1>
             <p className="mt-1.5 text-sm text-muted">
               {t('สำหรับเหตุที่หน่วยของคุณพบเองระหว่างปฏิบัติงาน โดยไม่มีการแจ้งเหตุหรือมอบหมายจากศูนย์สั่งการ ระบบจะสร้างรายการเหตุและมอบหมายให้หน่วยของคุณ')}{' '}
               <span className="font-semibold text-ink">{myTeam.name}</span> {t('ทันที')}
@@ -263,7 +261,7 @@ export default function RescueNewCase() {
 
           <Card className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
-              <Activity className="size-4 text-primary" />
+              <Activity className="size-4 text-muted" />
               <label className="text-sm font-semibold text-ink">
                 {t('ลักษณะการบาดเจ็บ')}<span className="ml-0.5 text-emergency">*</span>
               </label>

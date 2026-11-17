@@ -10,8 +10,7 @@ import { RadioCard } from '@/components/ui/RadioCard'
 import { MapPanel } from '@/components/MapPanel'
 import { SpeechToTextPanel } from '@/components/SpeechToTextPanel'
 import { ErrorState } from '@/components/States'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { INCIDENT_TYPES, DEFAULT_INCIDENT_LOCATION } from '@/lib/mockData'
@@ -236,19 +235,18 @@ export default function DispatchEmergencyAssessment() {
   return (
     <AppShell variant="dashboard" title={t('กรอกรายละเอียดเหตุการณ์')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 mx-auto flex max-w-2xl flex-col gap-5">
+        <div className="mx-auto flex max-w-2xl flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('รายละเอียดเหตุการณ์และการประเมิน')}</h1>
+            <h1 className="text-title text-ink">{t('รายละเอียดเหตุการณ์และการประเมิน')}</h1>
             <p className="mt-1.5 text-sm text-muted">
               {t('เหตุหมายเลข {caseNumber}: กรอกรายละเอียดจากการสนทนากับผู้แจ้งเหตุ และประเมินระดับความรุนแรง', { caseNumber: c.caseNumber })}
             </p>
           </div>
 
           <Card className="space-y-3">
-            <h2 className="text-sm font-bold text-ink">{t('ข้อมูลจากผู้แจ้งเหตุ')}</h2>
+            <h2 className="text-subheading text-ink">{t('ข้อมูลจากผู้แจ้งเหตุ')}</h2>
             <div className="flex items-start gap-2 text-sm">
-              <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
+              <Phone className="mt-0.5 size-4 shrink-0 text-muted" />
               <span className="text-ink">{c.reporterPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
             </div>
             {c.photos.length > 0 && (
@@ -368,7 +366,7 @@ export default function DispatchEmergencyAssessment() {
 
           <Card className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
-              <Activity className="size-4 text-primary" />
+              <Activity className="size-4 text-muted" />
               <label className="text-sm font-semibold text-ink">
                 {t('ลักษณะการบาดเจ็บ')}<span className="ml-0.5 text-emergency">*</span>
               </label>

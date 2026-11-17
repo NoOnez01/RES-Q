@@ -1,11 +1,11 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ClipboardList, ClipboardPlus, Loader2, CheckCircle2, Navigation, Check, X } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { StatBar, StatItem } from '@/components/DashboardCard'
 import { CaseQueue, QueueSection, byUrgency, isToday, reachedAt } from '@/components/CaseQueue'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -102,11 +102,9 @@ export default function RescueDashboard() {
         count={newCases.length}
         urgent
         aside={
-          <Link to="/rescue/new-case">
-            <Button variant="outline" size="sm" icon={<ClipboardPlus className="size-4" />}>
-              {t('พบเหตุด้วยตนเอง')}
-            </Button>
-          </Link>
+          <LinkButton to="/rescue/new-case" variant="outline" size="sm" icon={<ClipboardPlus className="size-4" />}>
+            {t('พบเหตุด้วยตนเอง')}
+          </LinkButton>
         }
       >
         <CaseQueue

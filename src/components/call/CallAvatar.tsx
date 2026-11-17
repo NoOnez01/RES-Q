@@ -46,7 +46,7 @@ export function CallAvatar({
       )}
       <span
         className={clsx(
-          'relative flex items-center justify-center rounded-full bg-gradient-to-br from-primary-bright to-primary text-white shadow-card-lg transition-shadow duration-200',
+          'relative flex items-center justify-center rounded-full bg-primary-fill text-white transition-shadow duration-200',
           s.box,
           speaking ? 'ring-4 ring-success/80' : 'ring-1 ring-white/20',
         )}

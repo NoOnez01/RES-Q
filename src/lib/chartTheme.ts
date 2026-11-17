@@ -7,12 +7,12 @@ export const CHART_COLORS = {
   primaryBright: '#1479C9',
   navy: '#12304A',
   muted: '#667085',
-  border: '#D9E7F2',
+  border: '#E3E8EF',
   emergency: '#D92D20',
   warning: '#F79009',
   moderate: '#F5C542',
   success: '#12B76A',
-  skyblueLight: '#EAF6FF',
+  skyblueLight: '#EDF3FA',
 } as const
 
 /** Same 1 (worst/most severe) -> 5 (best/least severe) ladder used
@@ -29,9 +29,9 @@ export const SEVERITY_CHART_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
 export const CHART_TICK_STYLE = { fontSize: 12, fill: CHART_COLORS.muted, fontFamily: 'inherit' }
 
 export const CHART_TOOLTIP_STYLE = {
-  borderRadius: 12,
+  borderRadius: 8,
   border: `1px solid ${CHART_COLORS.border}`,
-  boxShadow: '0 8px 24px rgba(18,48,74,.10), 0 2px 6px rgba(18,48,74,.06)',
+  boxShadow: '0 4px 12px -2px rgba(16,24,40,.10), 0 2px 4px -2px rgba(16,24,40,.05)',
   fontSize: 13,
   fontFamily: 'inherit',
 }

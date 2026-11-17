@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
@@ -116,9 +115,8 @@ export default function RegisterDispatch() {
   return (
     <AppShell variant="public" title={t('สมัครสมาชิกศูนย์สั่งการ')}>
       <div className="relative">
-        <AnimatedBackground variant="auth" />
-        <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
-          <Card className="animate-fade-in-up">
+        <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
+          <Card>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <Input
                 label={t('ชื่อ-นามสกุลเจ้าหน้าที่')}

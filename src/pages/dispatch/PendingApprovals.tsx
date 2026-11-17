@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { EmptyState, LoadingState } from '@/components/States'
@@ -183,8 +181,7 @@ export default function DispatchPendingApprovals() {
   return (
     <AppShell variant="dashboard" title={t('บัญชีรออนุมัติ')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {accounts === null ? (
             <LoadingState />
           ) : accounts.length === 0 ? (
@@ -194,11 +191,12 @@ export default function DispatchPendingApprovals() {
               description={t('คำขอสมัครสมาชิกใหม่จากหน่วยกู้ชีพ โรงพยาบาล หรือศูนย์สั่งการ จะแสดงที่นี่')}
             />
           ) : (
-            accounts.map((user) => (
-              <Card key={user.id} className="flex flex-col gap-3">
+            <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+            {accounts.map((user) => (
+              <div key={user.id} className="flex flex-col gap-3 px-5 py-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-bold text-ink">{user.name}</p>
+                    <p className="text-sm font-semibold text-ink">{user.name}</p>
                     <p className="text-sm text-muted">
                       {t(ROLE_LABEL[user.role])}
                       {orgName(user) && ` · ${orgName(user)}`}
@@ -236,14 +234,15 @@ export default function DispatchPendingApprovals() {
                     {t('กำหนดเป็นหัวหน้าหน่วยงาน (สามารถอนุมัติสมาชิกใหม่ในหน่วยงานเดียวกันได้)')}
                   </label>
                 )}
-              </Card>
-            ))
+              </div>
+            ))}
+            </div>
           )}
         </div>
 
         {currentUser?.isAdmin && (
           <div className="mt-8 flex flex-col gap-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการสิทธิ์ผู้ดูแลระบบ')}</h2>
+            <h2 className="text-heading text-ink">{t('จัดการสิทธิ์ผู้ดูแลระบบ')}</h2>
             {staff === null ? (
               <LoadingState />
             ) : staff.length === 0 ? (
@@ -253,12 +252,13 @@ export default function DispatchPendingApprovals() {
                 description={t('บัญชีศูนย์สั่งการ หน่วยกู้ชีพ หรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่')}
               />
             ) : (
-              staff.map((user) => (
-                <Card key={user.id} className="flex flex-wrap items-center justify-between gap-3">
+              <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+              {staff.map((user) => (
+                <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                   <div>
-                    <p className="font-bold text-ink">
+                    <p className="text-sm font-semibold text-ink">
                       {user.name}
-                      {user.isAdmin && <span className="ml-2 text-xs font-bold text-primary">{t('ผู้ดูแลระบบ')}</span>}
+                      {user.isAdmin && <span className="ml-2 rounded bg-primary/[0.07] px-1.5 py-px text-[11px] font-semibold text-primary">{t('ผู้ดูแลระบบ')}</span>}
                     </p>
                     <p className="text-sm text-muted">
                       {t(ROLE_LABEL[user.role])}
@@ -279,6 +279,7 @@ export default function DispatchPendingApprovals() {
                   ) : (
                     <Button
                       size="sm"
+                      variant="outline"
                       icon={<ShieldCheck className="size-3.5" />}
                       loading={adminBusyId === user.id}
                       onClick={() => handleSetAdmin(user, true)}
@@ -286,15 +287,16 @@ export default function DispatchPendingApprovals() {
                       {t('กำหนดเป็นผู้ดูแลระบบ')}
                     </Button>
                   )}
-                </Card>
-              ))
+                </div>
+              ))}
+              </div>
             )}
           </div>
         )}
 
         {canManageOrgLeads && (
           <div className="mt-8 flex flex-col gap-3">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('จัดการหัวหน้าหน่วยงาน')}</h2>
+            <h2 className="text-heading text-ink">{t('จัดการหัวหน้าหน่วยงาน')}</h2>
             {staff === null ? (
               <LoadingState />
             ) : (
@@ -307,12 +309,13 @@ export default function DispatchPendingApprovals() {
                     description={t('บัญชีหน่วยกู้ชีพหรือโรงพยาบาลที่ผ่านการอนุมัติจะแสดงที่นี่')}
                   />
                 ) : (
-                  orgStaff.map((user) => (
-                    <Card key={user.id} className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+                  {orgStaff.map((user) => (
+                    <div key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                       <div>
-                        <p className="font-bold text-ink">
+                        <p className="text-sm font-semibold text-ink">
                           {user.name}
-                          {user.isOrgLead && <span className="ml-2 text-xs font-bold text-primary">{t('หัวหน้าหน่วยงาน')}</span>}
+                          {user.isOrgLead && <span className="ml-2 rounded bg-primary/[0.07] px-1.5 py-px text-[11px] font-semibold text-primary">{t('หัวหน้าหน่วยงาน')}</span>}
                         </p>
                         <p className="text-sm text-muted">
                           {t(ROLE_LABEL[user.role])}
@@ -333,6 +336,7 @@ export default function DispatchPendingApprovals() {
                       ) : (
                         <Button
                           size="sm"
+                          variant="outline"
                           icon={<Crown className="size-3.5" />}
                           loading={orgLeadBusyId === user.id}
                           onClick={() => handleSetOrgLead(user, true)}
@@ -340,8 +344,9 @@ export default function DispatchPendingApprovals() {
                           {t('กำหนดเป็นหัวหน้าหน่วยงาน')}
                         </Button>
                       )}
-                    </Card>
-                  ))
+                    </div>
+                  ))}
+                  </div>
                 )
               })()
             )}

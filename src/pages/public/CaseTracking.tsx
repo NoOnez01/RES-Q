@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Building2, Ambulance, Share2, Phone, Coins } from 'lucide-react'
+import { CheckCircle2, Building2, Share2, Phone, Coins } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -15,7 +15,6 @@ import { CaseQrPanel } from '@/components/CaseQrPanel'
 import { CaseFeedbackForm } from '@/components/CaseFeedbackForm'
 import { CallScreen } from '@/components/call/CallScreen'
 import { ErrorState, LoadingState } from '@/components/States'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { fetchCaseReward } from '@/lib/coins'
@@ -256,9 +255,8 @@ export default function CaseTracking() {
   return (
     <AppShell variant="flow" title={t('ติดตามการช่วยเหลือ')} showBack onBack={() => navigate('/')}>
       <div className="relative">
-        <AnimatedBackground variant="emergency" />
 
-        <div className="relative z-10 flex flex-col gap-5 pb-8">
+        <div className="flex flex-col gap-5 pb-8">
           <CallScreen
             call={rescueCall}
             emergencyCase={activeCase}
@@ -270,16 +268,16 @@ export default function CaseTracking() {
           />
 
           {activeCase.status === 'completed' && (
-            <div className="flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 animate-fade-in-up">
-              <CheckCircle2 className="size-6 shrink-0 text-success" />
+            <div className="flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4">
+              <CheckCircle2 className="size-6 shrink-0 text-success-ink" />
               <p className="text-sm font-semibold text-ink">{t('การช่วยเหลือเสร็จสิ้นแล้ว ขอบคุณที่ใช้บริการ ResQ')}</p>
             </div>
           )}
 
           {isCompleted && earnedCoins !== null && (
-            <Card className="flex flex-wrap items-center justify-between gap-3 animate-fade-in-up">
+            <Card className="flex flex-wrap items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Coins className="size-5 shrink-0 text-warning" aria-hidden="true" />
+                <Coins className="size-5 shrink-0 text-warning-ink" aria-hidden="true" />
                 {t('คุณได้รับ {n} เหรียญจากการแจ้งเหตุครั้งนี้', { n: earnedCoins.toLocaleString() })}
               </p>
               <Button size="sm" variant="outline" onClick={() => navigate('/coins')}>
@@ -291,7 +289,7 @@ export default function CaseTracking() {
           {activeCase.status === 'completed' &&
             (activeCase.feedbackSubmitted || remoteFeedbackSubmitted ? (
               <Card className="flex items-center gap-3">
-                <CheckCircle2 className="size-5 shrink-0 text-success" />
+                <CheckCircle2 className="size-5 shrink-0 text-success-ink" />
                 <p className="text-sm font-medium text-ink">{t('ขอบคุณสำหรับความคิดเห็นของท่าน')}</p>
               </Card>
             ) : (
@@ -304,25 +302,24 @@ export default function CaseTracking() {
           <Card
             className={clsx(
               'flex flex-col gap-3 transition-all duration-500',
-              isCompleted ? 'border-success/40 bg-success/5' : 'border-primary/30 shadow-[0_0_0_4px_rgba(11,110,189,0.10)]',
+              isCompleted && 'border-success/40 bg-success/[0.04]',
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h1 className="text-lg font-bold text-ink">{activeCase.caseNumber}</h1>
+              <h1 className="font-mono text-heading tracking-tight text-ink">{activeCase.caseNumber}</h1>
               <StatusBadge status={activeCase.status} />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {activeCase.assessment && <SeverityBadge severity={activeCase.assessment.severity} />}
-              <span className="text-xs text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: formatDateTime(activeCase.createdAt) })}</span>
+              <span className="text-meta text-muted">{t('แจ้งเหตุเมื่อ {date}', { date: formatDateTime(activeCase.createdAt) })}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
+            <div className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
+              <Button variant="outline" icon={<Share2 className="size-4" />} onClick={() => setShareOpen(true)}>
                 {t('ส่งต่อให้ญาติติดตามสถานะ')}
               </Button>
               {!isRemoteOnly && !isCompleted && id && (
                 <Button
                   variant="outline"
-                  size="sm"
                   icon={<Phone className="size-4" />}
                   onClick={() => navigate(`/contact-1669/${id}`)}
                 >
@@ -336,11 +333,11 @@ export default function CaseTracking() {
 
           {team && (
             <Card className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Ambulance className="size-4 text-primary" /> {t('หน่วยกู้ชีพที่รับผิดชอบ')}
+              <div>
+                <h2 className="text-meta font-medium text-muted">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</h2>
+                <p className="mt-0.5 text-subheading text-ink">{team.name}</p>
               </div>
-              <div className="text-sm">
-                <p className="font-semibold text-ink">{team.name}</p>
+              <div className="-mt-2 text-small">
                 {activeCase.assignedVehicle && <p className="text-muted">{activeCase.assignedVehicle.vehicle}</p>}
                 {activeCase.status !== 'rescue-assigned' && activeCase.assignedVehicle?.driverName && (
                   <p className="mt-1 text-muted">
@@ -354,18 +351,12 @@ export default function CaseTracking() {
               </div>
               {etaMin !== null && (
                 <div className="flex flex-col gap-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-skyblue-light px-3 py-1 text-xs font-bold text-primary">
-                      {t('คาดว่าจะถึงในอีกประมาณ {n} นาที', { n: etaMin })}
-                    </span>
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <p className="text-sm font-semibold text-ink">{t('คาดว่าจะถึงในอีกประมาณ {n} นาที', { n: etaMin })}</p>
+                    <p className="text-meta tabular-nums text-muted">
                       {t('เดินทางแล้ว {n}%', { n: Math.round(activeCase.rescueEnRoutePct) })}
-                    </span>
-                    {route && (
-                      <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                        {t(routeBadge(route))}
-                      </span>
-                    )}
+                      {route && ` · ${t(routeBadge(route))}`}
+                    </p>
                   </div>
                   <RescueEnRouteProgress pct={activeCase.rescueEnRoutePct} />
                 </div>
@@ -377,7 +368,7 @@ export default function CaseTracking() {
           {activeCase.selectedHospital && (
             <Card className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Building2 className="size-4 text-primary" /> {t('โรงพยาบาลปลายทาง')}
+                <Building2 className="size-4 text-muted" /> {t('โรงพยาบาลปลายทาง')}
               </div>
               <p className="text-sm font-semibold text-ink">{activeCase.selectedHospital.name}</p>
               <p className="text-sm text-muted">{activeCase.selectedHospital.location.address}</p>
@@ -387,10 +378,10 @@ export default function CaseTracking() {
           <Card
             className={clsx(
               'transition-shadow duration-500',
-              justUpdated && 'ring-4 ring-primary/30',
+              justUpdated && 'ring-2 ring-primary/25',
             )}
           >
-            <h2 className="mb-4 text-sm font-bold text-ink">{t('ขั้นตอนการดำเนินการ')}</h2>
+            <h2 className="mb-4 text-subheading text-ink">{t('ขั้นตอนการดำเนินการ')}</h2>
             <CaseTimeline
               timeline={activeCase.timeline}
               currentStatus={activeCase.status}
@@ -400,7 +391,7 @@ export default function CaseTracking() {
 
           {activeCase.photos.length > 0 && (
             <Card className="flex flex-col gap-3">
-              <h2 className="text-sm font-bold text-ink">{t('รูปภาพที่แนบ')}</h2>
+              <h2 className="text-subheading text-ink">{t('รูปภาพที่แนบ')}</h2>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {activeCase.photos.map((p) => (
                   <img

@@ -21,24 +21,29 @@ export function FieldShell({ label, hint, error, required, children }: FieldShel
     // Marked so a failed submit can find and jump to it (lib/formErrors.ts).
     <div className="flex flex-col gap-1.5" data-field-error={error ? '' : undefined}>
       {label && (
-        <label className="text-sm font-semibold text-ink">
+        <label className="text-label text-ink">
           {label}
-          {required && <span className="text-emergency ml-0.5">*</span>}
+          {required && (
+            <span className="ml-0.5 text-emergency" aria-hidden="true">
+              *
+            </span>
+          )}
         </label>
       )}
       {children}
-      {hint && !error && <p className="text-xs text-muted">{hint}</p>}
+      {hint && !error && <p className="text-meta text-muted">{hint}</p>}
       {error && (
-        <p className="flex items-center gap-1 text-xs font-medium text-emergency">
-          <AlertCircle className="size-3.5" /> {error}
+        <p role="alert" className="flex items-start gap-1.5 text-meta font-medium text-emergency">
+          <AlertCircle className="mt-px size-3.5 shrink-0" /> {error}
         </p>
       )}
     </div>
   )
 }
 
+// 40px controls; 16px text on phones so iOS doesn't zoom into the field.
 const baseFieldClasses =
-  'w-full rounded-xl border bg-surface px-4 py-3 text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus:ring-4 focus:ring-primary/15'
+  'w-full min-h-10 rounded-lg border bg-surface px-3 py-2 text-base text-ink shadow-card placeholder:text-muted/80 transition-[border-color,box-shadow] duration-150 hover:border-muted/50 focus:outline-none focus:ring-[3px] focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-alt disabled:text-muted sm:text-sm'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -59,7 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
-          error ? 'border-emergency focus:ring-emergency/15' : 'border-border focus:border-primary',
+          error ? 'border-emergency focus:ring-emergency/15' : 'border-input focus:border-primary',
           className,
         )}
         {...props}
@@ -87,8 +92,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
-          'min-h-[100px] resize-y',
-          error ? 'border-emergency focus:ring-emergency/15' : 'border-border focus:border-primary',
+          'min-h-[96px] resize-y leading-relaxed',
+          error ? 'border-emergency focus:ring-emergency/15' : 'border-input focus:border-primary',
           className,
         )}
         {...props}
@@ -116,8 +121,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         aria-required={required || undefined}
         className={clsx(
           baseFieldClasses,
-          'appearance-none bg-[url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23667085" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>\')] bg-[right_0.9rem_center] bg-no-repeat pr-10',
-          error ? 'border-emergency focus:ring-emergency/15' : 'border-border focus:border-primary',
+          'appearance-none bg-[url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23667085" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>\')] bg-[length:18px] bg-[right_0.65rem_center] bg-no-repeat pr-9',
+          error ? 'border-emergency focus:ring-emergency/15' : 'border-input focus:border-primary',
           className,
         )}
         {...props}
@@ -244,18 +249,18 @@ export function SearchableSelect({
           className={clsx(
             baseFieldClasses,
             'pr-10',
-            error ? 'border-emergency focus:ring-emergency/15' : 'border-border focus:border-primary',
+            error ? 'border-emergency focus:ring-emergency/15' : 'border-input focus:border-primary',
             className,
           )}
         />
-        <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
         {open && (
           <div
             role="listbox"
-            className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-card-lg"
+            className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-surface p-1 shadow-card-lg"
           >
             {filtered.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-muted">{resolvedEmptyLabel}</p>
+              <p className="px-3 py-2.5 text-sm text-muted">{resolvedEmptyLabel}</p>
             ) : (
               <>
                 {visible.map((opt) => (
@@ -266,15 +271,15 @@ export function SearchableSelect({
                     aria-selected={opt.value === value}
                     onClick={() => selectOption(opt)}
                     className={clsx(
-                      'block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-skyblue-light',
-                      opt.value === value ? 'bg-skyblue-pale font-semibold text-primary' : 'text-ink',
+                      'block w-full rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-skyblue-light',
+                      opt.value === value ? 'bg-skyblue-light font-medium text-primary' : 'text-ink',
                     )}
                   >
                     {opt.label}
                   </button>
                 ))}
                 {overflowCount > 0 && (
-                  <p className="px-4 py-2.5 text-xs text-muted">
+                  <p className="px-2.5 py-2 text-meta text-muted">
                     และอีก {overflowCount.toLocaleString('th-TH')} รายการ — พิมพ์เพื่อค้นหาให้แคบลง
                   </p>
                 )}

@@ -14,10 +14,10 @@ export function PrivacyLink({ note, className }: { note?: string; className?: st
   const t = useT()
   return (
     <p className={clsx('flex items-start gap-1.5 text-xs text-muted', className)}>
-      <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
+      <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-muted" aria-hidden="true" />
       <span>
         {note && <>{t(note)} </>}
-        <Link to="/privacy" className="font-semibold text-primary hover:underline focus-visible:underline focus-visible:outline-none">
+        <Link to="/privacy" className="-my-2 inline-block py-2 font-semibold text-primary hover:underline focus-visible:underline focus-visible:outline-none">
           {t(PRIVACY_LINK_LABEL)}
         </Link>
       </span>

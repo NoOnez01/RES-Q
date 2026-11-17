@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Hourglass, MapPin, Users, Phone, Truck, CheckCircle2, Stethoscope } from 'lucide-react'
+import { Hourglass, MapPin, Users, Phone, CheckCircle2, Stethoscope } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -115,18 +114,17 @@ export default function HospitalCaseDetail() {
   return (
     <AppShell variant="dashboard" title={t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}>
       <div className="relative">
-        <AnimatedBackground variant="hospital" />
-        <div className="relative z-10 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
         {showAdmitSuccess && (
           <div
             role="status"
             className="flex items-center gap-3 rounded-2xl border border-success/20 bg-success/5 p-4 animate-scale-in"
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-success/10 text-success-ink">
               <CheckCircle2 className="size-6 animate-scale-in" />
             </span>
             <div>
-              <p className="font-bold text-ink">{t('ยืนยันรับผู้ป่วยเรียบร้อยแล้ว')}</p>
+              <p className="font-semibold text-ink">{t('ยืนยันรับผู้ป่วยเรียบร้อยแล้ว')}</p>
               <p className="text-sm text-muted">{t('กำลังเตรียมข้อมูลสำหรับขั้นตอนถัดไป')}</p>
             </div>
           </div>
@@ -134,8 +132,8 @@ export default function HospitalCaseDetail() {
 
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-sm font-bold text-primary">{c.caseNumber}</p>
-            <p className="mt-1 text-lg font-bold text-ink">
+            <p className="font-mono text-meta text-muted">{c.caseNumber}</p>
+            <p className="mt-0.5 text-title text-ink">
               {c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}
             </p>
           </div>
@@ -145,154 +143,151 @@ export default function HospitalCaseDetail() {
           </div>
         </div>
 
-        {c.incidentDetails && (
-          <Card className="space-y-3">
-            <h3 className="font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h3>
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
-              <div className="flex items-start gap-2">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-ink">{c.location?.address ?? c.incidentDetails.location}</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Users className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-ink">{t('ผู้ป่วย {n} คน', { n: c.incidentDetails.patientCount })}</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span className="text-ink">{c.incidentDetails.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
-              </div>
-            </div>
-            {c.assessment && (
-              <div className="border-t border-border pt-3">
-                <p className="text-sm font-semibold text-ink">{t('อาการบาดเจ็บ')}</p>
-                <p className="mt-1 text-sm text-muted whitespace-pre-wrap">
-                  {c.assessment.injuryDescription}
-                </p>
-              </div>
-            )}
-            {c.incidentDetails.notes && (
-              <div className="border-t border-border pt-3">
-                <p className="text-sm font-semibold text-ink">{t('หมายเหตุ')}</p>
-                <p className="mt-1 text-sm text-muted whitespace-pre-wrap">{c.incidentDetails.notes}</p>
-              </div>
-            )}
-          </Card>
-        )}
-
-        {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
-
-        {c.selectedHospital && c.hospitalDecision?.risk && (
-          <HospitalDecisionCard decision={c.hospitalDecision} hospitalName={c.selectedHospital.name} />
-        )}
-
-        <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />
-
-        <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
-
-        {c.assignedRescueTeam && (
-          <Card className="space-y-3">
-            <h3 className="flex items-center gap-2 font-bold text-ink">
-              <Truck className="size-4 text-primary" /> {t('หน่วยกู้ชีพที่นำส่ง')}
-            </h3>
-            <div className="grid gap-2 text-sm sm:grid-cols-3">
-              <div>
-                <p className="text-muted">{t('ชื่อหน่วย')}</p>
-                <p className="font-semibold text-ink">{c.assignedRescueTeam.name}</p>
-              </div>
-              <div>
-                <p className="text-muted">{t('ยานพาหนะ')}</p>
-                <p className="font-semibold text-ink">{c.assignedVehicle?.vehicle ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-muted">{t('เบอร์ติดต่อ')}</p>
-                <p className="font-semibold text-ink">{c.assignedRescueTeam.phone}</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        <Card>
-          <h3 className="mb-4 font-bold text-ink">{t('ลำดับการดำเนินการ')}</h3>
-          <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
-        </Card>
-
-        {(c.status === 'transporting' || c.status === 'hospital-arrived') && (
-          <Card className="flex flex-col items-start gap-3 border-primary/20 bg-skyblue-pale sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <span
-                className={clsx(
-                  'flex size-10 shrink-0 items-center justify-center rounded-full',
-                  teamReady ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary',
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] docked:lg:grid-cols-1 docked:2xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="flex min-w-0 flex-col gap-5">
+            {c.incidentDetails && (
+              <Card className="space-y-3">
+                <h3 className="text-heading text-ink">{t('รายละเอียดเหตุการณ์')}</h3>
+                <div className="grid gap-3 text-sm sm:grid-cols-2">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-muted" />
+                    <span className="text-ink">{c.location?.address ?? c.incidentDetails.location}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Users className="mt-0.5 size-4 shrink-0 text-muted" />
+                    <span className="text-ink">{t('ผู้ป่วย {n} คน', { n: c.incidentDetails.patientCount })}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Phone className="mt-0.5 size-4 shrink-0 text-muted" />
+                    <span className="text-ink">{c.incidentDetails.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
+                  </div>
+                </div>
+                {c.assessment && (
+                  <div className="border-t border-border pt-3">
+                    <p className="text-sm font-semibold text-ink">{t('อาการบาดเจ็บ')}</p>
+                    <p className="mt-1 text-sm text-muted whitespace-pre-wrap">
+                      {c.assessment.injuryDescription}
+                    </p>
+                  </div>
                 )}
-              >
-                <Stethoscope className="size-5" />
-              </span>
-              <div>
-                <p className="font-bold text-ink">{t('เตรียมทีมรักษา')}</p>
-                <p className="text-sm text-muted">{t('ทำเครื่องหมายเมื่อทีมแพทย์เตรียมพร้อมรับผู้ป่วย')}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {teamReady && <PulseRing tone="success" size="sm" />}
-              <Button
-                variant={teamReady ? 'primary' : 'outline'}
-                size="sm"
-                aria-pressed={teamReady}
-                aria-label={t('ทำเครื่องหมายว่าทีมแพทย์เตรียมพร้อม')}
-                onClick={() => setTeamReady((v) => !v)}
-              >
-                {teamReady ? t('ทีมพร้อมแล้ว') : t('ทำเครื่องหมายว่าพร้อม')}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {c.status === 'hospital-arrived' && (
-          <Card className="flex flex-col items-start gap-3 border-warning/30 bg-warning/5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-bold text-ink">{t('ผู้ป่วยถึงโรงพยาบาลแล้ว')}</p>
-              <p className="text-sm text-muted">{t('กรุณายืนยันเมื่อโรงพยาบาลได้รับตัวผู้ป่วยเรียบร้อยแล้ว')}</p>
-            </div>
-            <Button onClick={() => setAdmitOpen(true)}>{t('ยืนยันรับผู้ป่วย')}</Button>
-          </Card>
-        )}
-
-        {c.status === 'hospital-received' &&
-          (justClosed ? (
-            <SuccessState title={t('ปิดเหตุเรียบร้อยแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')} />
-          ) : (
-            <Card className="flex flex-col items-start gap-3 border-primary/30 bg-skyblue-pale sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-bold text-ink">{t('รับผู้ป่วยเรียบร้อยแล้ว')}</p>
-                <p className="text-sm text-muted">{t('ปิดเหตุเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')}</p>
-              </div>
-              <Button onClick={() => setCloseOpen(true)}>{t('ปิดเหตุ')}</Button>
-            </Card>
-          ))}
-
-        {c.status === 'completed' && (
-          <div className="relative">
-            {justClosed && (
-              <span className="absolute right-6 top-6" aria-hidden="true">
-                <PulseRing tone="success" size="lg" />
-              </span>
+                {c.incidentDetails.notes && (
+                  <div className="border-t border-border pt-3">
+                    <p className="text-sm font-semibold text-ink">{t('หมายเหตุ')}</p>
+                    <p className="mt-1 text-sm text-muted whitespace-pre-wrap">{c.incidentDetails.notes}</p>
+                  </div>
+                )}
+              </Card>
             )}
-            <SuccessState
-              title={justClosed ? t('ปิดเหตุเรียบร้อยแล้ว') : t('ดำเนินการเสร็จสิ้นแล้ว')}
-              description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')}
-            />
-          </div>
-        )}
 
-        {arrivedNotYet && (
-          <Card className="flex items-center gap-3 bg-bg">
-            <Hourglass className="size-5 shrink-0 text-muted" />
-            <div>
-              <p className="font-semibold text-ink">{t('ยังไม่มีผู้ป่วยถึงโรงพยาบาล')}</p>
-              <p className="text-sm text-muted">{t('ระบบจะแจ้งเตือนเมื่อผู้ป่วยถึงโรงพยาบาลของท่าน')}</p>
-            </div>
-          </Card>
-        )}
+            {c.patientInfo && <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />}
+
+            {c.selectedHospital && c.hospitalDecision?.risk && (
+              <HospitalDecisionCard decision={c.hospitalDecision} hospitalName={c.selectedHospital.name} />
+            )}
+
+            <CaseMediaGallery photos={c.photos} audioRecordings={c.audioRecordings} />
+
+            <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
+
+            {c.assignedRescueTeam && (
+              <Card className="space-y-3">
+                <h3 className="text-heading text-ink">
+                  {t('หน่วยกู้ชีพที่นำส่ง')}
+                </h3>
+                <div className="grid gap-2 text-sm sm:grid-cols-3">
+                  <div>
+                    <p className="text-muted">{t('ชื่อหน่วย')}</p>
+                    <p className="font-semibold text-ink">{c.assignedRescueTeam.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted">{t('ยานพาหนะ')}</p>
+                    <p className="font-semibold text-ink">{c.assignedVehicle?.vehicle ?? '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted">{t('เบอร์ติดต่อ')}</p>
+                    <p className="font-semibold text-ink">{c.assignedRescueTeam.phone}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
+          <div className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-[4.5rem] lg:self-start docked:lg:order-first docked:lg:static docked:2xl:order-none docked:2xl:sticky">
+            {(c.status === 'transporting' || c.status === 'hospital-arrived') && (
+              <Card className="flex flex-col items-start gap-3">
+                <div className="flex items-start gap-3">
+                  <Stethoscope className={clsx('mt-0.5 size-5 shrink-0', teamReady ? 'text-success-ink' : 'text-muted')} aria-hidden="true" />
+                  <div>
+                    <p className="text-subheading text-ink">{t('เตรียมทีมรักษา')}</p>
+                    <p className="mt-0.5 text-small text-muted">{t('ทำเครื่องหมายเมื่อทีมแพทย์เตรียมพร้อมรับผู้ป่วย')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {teamReady && <PulseRing tone="success" size="sm" />}
+                  <Button
+                    variant={teamReady ? 'primary' : 'outline'}
+                    size="sm"
+                    aria-pressed={teamReady}
+                    aria-label={t('ทำเครื่องหมายว่าทีมแพทย์เตรียมพร้อม')}
+                    onClick={() => setTeamReady((v) => !v)}
+                  >
+                    {teamReady ? t('ทีมพร้อมแล้ว') : t('ทำเครื่องหมายว่าพร้อม')}
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {c.status === 'hospital-arrived' && (
+              <Card className="flex flex-col items-start gap-3 border-warning/40 bg-warning/[0.06]">
+                <div>
+                  <p className="text-subheading text-ink">{t('ผู้ป่วยถึงโรงพยาบาลแล้ว')}</p>
+                  <p className="mt-0.5 text-small text-muted">{t('กรุณายืนยันเมื่อโรงพยาบาลได้รับตัวผู้ป่วยเรียบร้อยแล้ว')}</p>
+                </div>
+                <Button onClick={() => setAdmitOpen(true)}>{t('ยืนยันรับผู้ป่วย')}</Button>
+              </Card>
+            )}
+
+            {c.status === 'hospital-received' &&
+              (justClosed ? (
+                <SuccessState title={t('ปิดเหตุเรียบร้อยแล้ว')} description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')} />
+              ) : (
+                <Card className="flex flex-col items-start gap-3">
+                  <div>
+                    <p className="text-subheading text-ink">{t('รับผู้ป่วยเรียบร้อยแล้ว')}</p>
+                    <p className="mt-0.5 text-small text-muted">{t('ปิดเหตุเมื่อกระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์')}</p>
+                  </div>
+                  <Button onClick={() => setCloseOpen(true)}>{t('ปิดเหตุ')}</Button>
+                </Card>
+              ))}
+
+            {c.status === 'completed' && (
+              <div className="relative">
+                {justClosed && (
+                  <span className="absolute right-6 top-6" aria-hidden="true">
+                    <PulseRing tone="success" size="lg" />
+                  </span>
+                )}
+                <SuccessState
+                  title={justClosed ? t('ปิดเหตุเรียบร้อยแล้ว') : t('ดำเนินการเสร็จสิ้นแล้ว')}
+                  description={t('กระบวนการช่วยเหลือฉุกเฉินเสร็จสมบูรณ์แล้ว')}
+                />
+              </div>
+            )}
+
+            {arrivedNotYet && (
+              <Card className="flex items-start gap-3">
+                <Hourglass className="mt-0.5 size-5 shrink-0 text-muted" aria-hidden="true" />
+                <div>
+                  <p className="text-subheading text-ink">{t('ยังไม่มีผู้ป่วยถึงโรงพยาบาล')}</p>
+                  <p className="mt-0.5 text-small text-muted">{t('ระบบจะแจ้งเตือนเมื่อผู้ป่วยถึงโรงพยาบาลของท่าน')}</p>
+                </div>
+              </Card>
+            )}
+            <Card>
+              <h3 className="mb-4 text-heading text-ink">{t('ลำดับการดำเนินการ')}</h3>
+              <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
+            </Card>
+          </div>
+        </div>
         </div>
       </div>
 

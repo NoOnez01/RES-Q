@@ -2,8 +2,9 @@ import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
 import clsx from 'clsx'
 import { Loader2 } from 'lucide-react'
+import { Link, type LinkProps } from 'react-router-dom'
 
-type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success'
+type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'danger-outline' | 'success'
 type Size = 'sm' | 'md' | 'lg' | 'xl'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,25 +16,52 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconRight?: React.ReactNode
 }
 
+/**
+ * Filled variants carry one action per view; outline and ghost repeat.
+ * Danger is for destructive or genuinely urgent actions only.
+ */
 const variantClasses: Record<Variant, string> = {
-  primary:
-    'bg-primary text-white hover:bg-primary-bright active:bg-primary shadow-card hover:shadow-card-lg disabled:bg-primary/40',
-  secondary:
-    'bg-skyblue-light text-primary hover:bg-primary/10 active:bg-primary/15 disabled:opacity-50',
+  primary: 'bg-primary-fill text-primary-foreground shadow-card hover:bg-primary-fill-hover disabled:bg-primary-fill/45',
+  secondary: 'bg-primary/[0.08] text-primary hover:bg-primary/[0.13] disabled:opacity-50',
   outline:
-    'bg-surface text-ink border border-border hover:border-primary hover:text-primary active:bg-skyblue-pale disabled:opacity-50',
-  ghost: 'bg-transparent text-ink hover:bg-skyblue-light active:bg-skyblue-light/80 disabled:opacity-50',
-  danger:
-    'bg-emergency text-white hover:bg-emergency-dark active:bg-emergency-dark shadow-card disabled:bg-emergency/40',
-  success:
-    'bg-success text-white hover:brightness-95 active:brightness-90 shadow-card disabled:opacity-50',
+    'border border-input bg-surface text-ink shadow-card hover:border-muted/50 hover:bg-surface-alt disabled:opacity-50',
+  ghost: 'bg-transparent text-ink hover:bg-skyblue-light disabled:opacity-50',
+  danger: 'bg-emergency text-white shadow-card hover:bg-emergency-dark disabled:bg-emergency/45',
+  // A destructive action that repeats per row: quiet until hovered.
+  'danger-outline':
+    'border border-input bg-surface text-emergency shadow-card hover:border-emergency/40 hover:bg-emergency/[0.05] disabled:opacity-50',
+  success: 'bg-success-ink text-white shadow-card hover:brightness-110 disabled:opacity-50',
 }
 
+// Heights step 32 / 36 / 44 / 48. lg and xl are the touch sizes used on
+// phone-first flows; min-h lets a long Thai label wrap instead of clipping.
 const sizeClasses: Record<Size, string> = {
-  sm: 'text-sm px-3.5 py-2 gap-1.5 rounded-xl',
-  md: 'text-[15px] px-5 py-2.5 gap-2 rounded-xl',
-  lg: 'text-base px-6 py-3.5 gap-2.5 rounded-2xl',
-  xl: 'text-lg px-8 py-4 gap-3 rounded-2xl',
+  sm: 'min-h-8 gap-1.5 rounded-lg px-3 py-1 text-[13px] [&_svg]:size-3.5',
+  md: 'min-h-9 gap-2 rounded-lg px-3.5 py-1.5 text-sm [&_svg]:size-4',
+  lg: 'min-h-11 gap-2 rounded-xl px-5 py-2 text-[15px] [&_svg]:size-[18px]',
+  xl: 'min-h-12 gap-2.5 rounded-xl px-6 py-2.5 text-base [&_svg]:size-5',
+}
+
+const BASE =
+  'inline-flex select-none items-center justify-center text-center font-medium leading-tight transition-[background-color,border-color,color,filter] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed [&_svg]:shrink-0'
+
+/** Navigation styled as a button: one focusable element, not a button
+ * nested inside a link. */
+export function LinkButton({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+  icon,
+  className,
+  children,
+  ...props
+}: LinkProps & { variant?: Variant; size?: Size; fullWidth?: boolean; icon?: React.ReactNode }) {
+  return (
+    <Link className={clsx(BASE, variantClasses[variant], sizeClasses[size], fullWidth && 'w-full', className)} {...props}>
+      {icon}
+      <span>{children}</span>
+    </Link>
+  )
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -56,11 +84,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       onClick={onClick}
       className={clsx(
-        'inline-flex items-center justify-center font-semibold transition-all duration-150 select-none',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30',
-        'active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100',
+        BASE,
         variantClasses[variant],
         sizeClasses[size],
         fullWidth && 'w-full',
@@ -68,7 +95,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       {...props}
     >
-      {loading ? <Loader2 className="size-[1.1em] animate-spin-slow" /> : icon}
+      {loading ? <Loader2 className="animate-spin-slow" aria-hidden="true" /> : icon}
       <span>{children}</span>
       {!loading && iconRight}
     </button>

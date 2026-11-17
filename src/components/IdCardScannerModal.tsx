@@ -227,7 +227,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
         </button>
 
         <div className="mb-3 text-center text-white">
-          <p className="mt-1 text-lg font-bold">{t('สแกนบัตรประชาชน')}</p>
+          <p className="mt-1 text-lg font-semibold">{t('สแกนบัตรประชาชน')}</p>
           <p className="mt-0.5 text-sm text-white/70">
             {mode === 'camera' && t('กรุณาถ่ายภาพบัตรให้เห็นข้อความชัดเจน')}
             {mode === 'processing' && t('กำลังอ่านข้อมูลจากบัตร...')}
@@ -252,7 +252,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                 </div>
               )}
               {cameraStatus === 'unavailable' && (
-                <div className="flex size-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-navy to-primary/80 p-6 text-center text-white/85">
+                <div className="flex size-full flex-col items-center justify-center gap-3 bg-navy p-6 text-center text-white/85">
                   <CameraOff className="size-10" />
                   <p className="text-sm font-medium">{t('ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง')}</p>
                 </div>
@@ -262,7 +262,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
                   type="button"
                   onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
                   aria-label={t('สลับกล้องหน้า/หลัง')}
-                  className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                  className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
                 >
                   <SwitchCamera className="size-5" />
                 </button>
@@ -294,7 +294,7 @@ export function IdCardScannerModal({ open, onApply, onClose }: IdCardScannerModa
             <div className="flex flex-col gap-3 bg-surface p-4">
               {ocrError ? (
                 <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-ink">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-ink" />
                   {t('อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง')}
                 </div>
               ) : (

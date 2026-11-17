@@ -5,11 +5,10 @@ import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis
 import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { StatBar, StatItem } from '@/components/DashboardCard'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmptyState, ErrorState } from '@/components/States'
 import { useStore } from '@/lib/store'
 import { roleLabel } from '@/lib/nav'
-import { CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
+import { CHART_COLORS, CHART_TICK_STYLE, CHART_TOOLTIP_STYLE, SEVERITY_CHART_COLORS } from '@/lib/chartTheme'
 import type { EmergencyCase, Severity } from '@/lib/types'
 import { SEVERITY_SHORT_LABEL } from '@/lib/types'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -120,11 +119,9 @@ export default function PersonalStats() {
   return (
     <AppShell variant="dashboard" title={t('สถิติของฉัน')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('สถิติของฉัน')}</h1>
-            <p className="mt-1.5 text-sm text-muted">
+            <p className="text-body text-ink/80">
               {t(roleLabel(currentUser.role))} · {scopeLabel}
             </p>
           </div>
@@ -145,7 +142,7 @@ export default function PersonalStats() {
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card className="flex flex-col gap-3">
-                  <p className="text-sm font-bold text-ink">{t('แนวโน้มจำนวนเหตุรายเดือน')}</p>
+                  <p className="text-sm font-semibold text-ink">{t('แนวโน้มจำนวนเหตุรายเดือน')}</p>
                   {trend.every((item) => item.count === 0) ? (
                     <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีข้อมูลในช่วง {n} เดือนล่าสุด', { n: TREND_MONTHS })}</p>
                   ) : (
@@ -159,7 +156,7 @@ export default function PersonalStats() {
                             contentStyle={CHART_TOOLTIP_STYLE}
                             formatter={(value) => [t('{n} เหตุ', { n: value as number }), t('จำนวน')]}
                           />
-                          <Bar dataKey="count" fill="#0B6EBD" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                          <Bar dataKey="count" fill={CHART_COLORS.primary} radius={[3, 3, 0, 0]} maxBarSize={36} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -167,7 +164,7 @@ export default function PersonalStats() {
                 </Card>
 
                 <Card className="flex flex-col gap-3">
-                  <p className="text-sm font-bold text-ink">{t('สัดส่วนตามระดับความรุนแรง')}</p>
+                  <p className="text-sm font-semibold text-ink">{t('สัดส่วนตามระดับความรุนแรง')}</p>
                   {severityCounts.every((s) => s.count === 0) ? (
                     <p className="py-8 text-center text-sm text-muted">{t('ยังไม่มีเหตุที่ได้รับการประเมินระดับความรุนแรง')}</p>
                   ) : (
@@ -201,7 +198,7 @@ export default function PersonalStats() {
                             <div key={s.severity} className="flex items-center gap-2 text-xs">
                               <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_CHART_COLORS[s.severity] }} />
                               <span className="flex-1 text-ink">{t(s.label)}</span>
-                              <span className="font-bold text-ink">{s.count}</span>
+                              <span className="font-semibold text-ink">{s.count}</span>
                             </div>
                           ))}
                       </div>

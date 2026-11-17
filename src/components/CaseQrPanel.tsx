@@ -80,8 +80,8 @@ export function CaseQrPanel({ url }: { url: string }) {
 
   return (
     <Card className="flex flex-col items-center gap-3 text-center">
-      <p className="flex items-center gap-1.5 text-sm font-bold text-ink">
-        <QrCode className="size-4 text-primary" />
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+        <QrCode className="size-4 text-muted" />
         {t('สแกนเพื่อติดตามเหตุนี้')}
       </p>
       {qrDataUrl ? (

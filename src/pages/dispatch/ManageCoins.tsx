@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { Coins, Gift, HandHeart, Pencil, Plus, Settings2, Trash2, Inbox } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Field'
@@ -102,17 +101,17 @@ const EMPTY_FOUNDATION: FoundationInput = { name: '', description: '' }
 const EMPTY_REWARD = { name: '', description: '', cost: '', stock: '' }
 
 const REDEMPTION_STATUS: Record<Redemption['status'], { label: string; className: string }> = {
-  pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning' },
-  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success' },
+  pending: { label: 'รอดำเนินการ', className: 'bg-warning/10 text-warning-ink' },
+  fulfilled: { label: 'จัดส่งแล้ว', className: 'bg-success/10 text-success-ink' },
   cancelled: { label: 'ยกเลิก (คืนเหรียญแล้ว)', className: 'bg-bg text-muted' },
 }
 
-function SectionHeading({ icon: Icon, title, action }: { icon: typeof Coins; title: string; action?: React.ReactNode }) {
+/** `icon` is accepted for older call sites but not drawn -- section titles
+ * carry their own weight. */
+function SectionHeading({ title, action }: { icon?: typeof Coins; title: string; action?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-        <Icon className="size-4 text-primary" /> {title}
-      </h2>
+      <h2 className="text-heading text-ink">{title}</h2>
       {action}
     </div>
   )
@@ -374,17 +373,18 @@ export default function ManageCoins() {
           {redemptions.length === 0 ? (
             <EmptyState title={t('ยังไม่มีคำขอแลกของรางวัล')} icon={<Inbox className="size-6" />} />
           ) : (
-            redemptions.map((r) => (
-              <Card key={r.id} className="flex flex-wrap items-center justify-between gap-3">
+            <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+            {redemptions.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-bold text-ink">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
                     {r.rewardName}
-                    <span className={clsx('rounded-full px-2.5 py-0.5 text-xs font-bold', REDEMPTION_STATUS[r.status].className)}>
+                    <span className={clsx('rounded-md px-2 py-0.5 text-xs font-semibold', REDEMPTION_STATUS[r.status].className)}>
                       {t(REDEMPTION_STATUS[r.status].label)}
                     </span>
                   </p>
                   <p className="text-sm text-muted">{t('{name} · {phone}', { name: r.contactName, phone: r.contactPhone })}</p>
-                  <p className="text-xs text-muted">
+                  <p className="text-meta tabular-nums text-muted">
                     {t('{cost} เหรียญ', { cost: r.cost.toLocaleString() })} · {formatDateTime(Date.parse(r.createdAt))}
                   </p>
                 </div>
@@ -402,8 +402,9 @@ export default function ManageCoins() {
                     </Button>
                   </div>
                 )}
-              </Card>
-            ))
+              </div>
+            ))}
+            </div>
           )}
         </section>
 
@@ -429,7 +430,7 @@ export default function ManageCoins() {
               ) : (
                 <Card key={f.id} className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-bold text-ink">{f.name}</p>
+                    <p className="font-semibold text-ink">{f.name}</p>
                     {f.description && <p className="text-sm text-muted">{f.description}</p>}
                     <p className="text-xs text-muted">{t('ได้รับบริจาคแล้ว {n} เหรียญ', { n: (data.totals[f.id] ?? 0).toLocaleString() })}</p>
                   </div>
@@ -437,7 +438,7 @@ export default function ManageCoins() {
                     <Button size="sm" variant="outline" icon={<Pencil className="size-3.5" />} onClick={() => setFoundationForm(f.id)}>
                       {t('แก้ไข')}
                     </Button>
-                    <Button size="sm" variant="danger" icon={<Trash2 className="size-3.5" />} onClick={() => setRemoveFoundationTarget(f)}>
+                    <Button size="sm" variant="danger-outline" icon={<Trash2 className="size-3.5" />} onClick={() => setRemoveFoundationTarget(f)}>
                       {t('ลบ')}
                     </Button>
                   </div>
@@ -469,7 +470,7 @@ export default function ManageCoins() {
               ) : (
                 <Card key={r.id} className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-bold text-ink">{r.name}</p>
+                    <p className="font-semibold text-ink">{r.name}</p>
                     {r.description && <p className="text-sm text-muted">{r.description}</p>}
                     <p className="text-xs text-muted">
                       {r.stock === null
@@ -481,7 +482,7 @@ export default function ManageCoins() {
                     <Button size="sm" variant="outline" icon={<Pencil className="size-3.5" />} onClick={() => setRewardForm(r.id)}>
                       {t('แก้ไข')}
                     </Button>
-                    <Button size="sm" variant="danger" icon={<Trash2 className="size-3.5" />} onClick={() => setRemoveRewardTarget(r)}>
+                    <Button size="sm" variant="danger-outline" icon={<Trash2 className="size-3.5" />} onClick={() => setRemoveRewardTarget(r)}>
                       {t('ลบ')}
                     </Button>
                   </div>
@@ -497,8 +498,7 @@ export default function ManageCoins() {
   return (
     <AppShell variant="dashboard" title={t('จัดการระบบเหรียญ')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10">{body}</div>
+        <div>{body}</div>
       </div>
 
       <ConfirmationModal

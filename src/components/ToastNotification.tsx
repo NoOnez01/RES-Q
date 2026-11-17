@@ -10,10 +10,10 @@ registerTranslations({
 })
 
 const toneConfig: Record<ToastTone, { icon: React.ElementType; classes: string }> = {
-  info: { icon: Info, classes: 'border-primary/30 [&_svg]:text-primary' },
-  success: { icon: CheckCircle2, classes: 'border-success/30 [&_svg]:text-success' },
-  warning: { icon: AlertTriangle, classes: 'border-warning/30 [&_svg]:text-warning' },
-  error: { icon: XCircle, classes: 'border-emergency/30 [&_svg]:text-emergency' },
+  info: { icon: Info, classes: '[&>svg:first-child]:text-primary' },
+  success: { icon: CheckCircle2, classes: '[&>svg:first-child]:text-success-ink' },
+  warning: { icon: AlertTriangle, classes: '[&>svg:first-child]:text-warning-ink' },
+  error: { icon: XCircle, classes: '[&>svg:first-child]:text-emergency' },
 }
 
 export function ToastViewport() {
@@ -30,17 +30,13 @@ export function ToastViewport() {
         return (
           <div
             key={toastItem.id}
+            role={toastItem.tone === 'error' ? 'alert' : 'status'}
             className={clsx(
-              'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border bg-surface p-4 shadow-card-lg animate-toast-in',
+              'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-overlay animate-toast-in',
               classes,
             )}
           >
-            <span className="relative shrink-0">
-              {toastItem.tone === 'error' && (
-                <span className="bg-fx absolute inset-0 animate-ping-slow rounded-full bg-emergency/25" aria-hidden="true" />
-              )}
-              <Icon className="relative size-5 mt-0.5" />
-            </span>
+            <Icon className="mt-0.5 size-[18px] shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-ink">{toastItem.title}</p>
               {toastItem.message && <p className="text-xs text-muted mt-0.5">{toastItem.message}</p>}
@@ -48,7 +44,7 @@ export function ToastViewport() {
             <button
               onClick={() => dismiss(toastItem.id)}
               aria-label={t('ปิดการแจ้งเตือน')}
-              className="shrink-0 text-muted hover:text-ink"
+              className="-mr-1 shrink-0 rounded-md p-1 text-muted transition-colors hover:bg-skyblue-light hover:text-ink"
             >
               <X className="size-4" />
             </button>

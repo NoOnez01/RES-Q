@@ -45,8 +45,8 @@ function Elapsed({ ts, now }: { ts: number; now: number }) {
           : t('{h} ชม. {m} นาที', { h: Math.floor(min / 60), m: min % 60 })
   return (
     <span className="flex flex-col lg:items-end">
-      <span className="text-sm font-semibold tabular-nums text-ink">{label}</span>
-      {ms < DAY_MS && <span className="text-xs tabular-nums text-muted">{formatTime(ts)}</span>}
+      <span className="text-[13px] font-medium tabular-nums text-ink">{label}</span>
+      {ms < DAY_MS && <span className="text-meta tabular-nums text-muted">{formatTime(ts)}</span>}
     </span>
   )
 }
@@ -115,11 +115,11 @@ export function CaseQueue({
     'lg:grid-cols-[7.5rem_minmax(0,1.35fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_6rem_var(--queue-action)] lg:[grid-template-areas:"sev_case_place_status_time_action"]'
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card" style={style}>
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface" style={style}>
       {rows.length > 0 && (
         <div
           className={clsx(
-            'hidden gap-x-4 border-b border-border bg-surface-alt px-4 py-2.5 text-xs font-semibold text-muted lg:grid',
+            'hidden gap-x-4 border-b border-border bg-surface-alt px-4 py-2 text-meta font-medium text-muted lg:grid',
             columns,
           )}
         >
@@ -132,7 +132,7 @@ export function CaseQueue({
         </div>
       )}
       {rows.length === 0 ? (
-        <p className="px-4 py-5 text-sm text-muted">{empty}</p>
+        <p className="px-4 py-6 text-center text-sm text-muted">{empty}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map(({ case: c, to, action }) => {
@@ -149,7 +149,7 @@ export function CaseQueue({
               <li
                 key={c.id}
                 className={clsx(
-                  'group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-4 py-3.5 transition-colors hover:bg-skyblue-pale',
+                  'group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-4 py-2.5 transition-colors hover:bg-surface-alt',
                   // On a phone the action gets a row of its own, full width, so two
                   // buttons never crowd the status.
                   action
@@ -164,18 +164,18 @@ export function CaseQueue({
                   {c.assessment ? (
                     <SeverityBadge severity={c.assessment.severity} />
                   ) : (
-                    <span className="inline-flex items-center rounded-full border border-dashed border-emergency/40 px-2.5 py-1 text-xs font-semibold text-emergency-dark">
+                    <span className="inline-flex items-center rounded-md border border-dashed border-emergency/50 px-2 py-0.5 text-xs font-semibold leading-5 text-emergency-dark dark:text-emergency">
                       {t('ยังไม่ประเมิน')}
                     </span>
                   )}
                 </div>
 
                 <div className="min-w-0 [grid-area:case]">
-                  <p className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-muted">
+                  <p className="flex items-center gap-1.5 font-mono text-[11px] tabular-nums text-muted">
                     {c.caseNumber}
                     {issues.length > 0 && (
                       <AlertTriangle
-                        className="size-3.5 shrink-0 text-warning"
+                        className="size-3.5 shrink-0 text-warning-ink"
                         role="img"
                         aria-label={t('ข้อมูลของเหตุไม่สอดคล้องกัน')}
                       >
@@ -186,7 +186,7 @@ export function CaseQueue({
                   <Link
                     to={to}
                     className={clsx(
-                      'block truncate font-semibold outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-primary/50',
+                      'block truncate text-sm font-semibold outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-primary/50',
                       done ? 'text-ink/70' : 'text-ink',
                     )}
                   >
@@ -195,14 +195,14 @@ export function CaseQueue({
                 </div>
 
                 <div className="min-w-0 [grid-area:place]">
-                  <p className="line-clamp-2 break-words text-sm text-ink/85">{detail.primary}</p>
-                  {detail.secondary && <p className="line-clamp-2 break-words text-xs text-muted">{detail.secondary}</p>}
+                  <p className="line-clamp-2 break-words text-[13px] leading-5 text-ink/80 lg:line-clamp-1" title={detail.primary}>{detail.primary}</p>
+                  {detail.secondary && <p className="line-clamp-1 break-words text-meta text-muted">{detail.secondary}</p>}
                 </div>
 
                 <div className="flex min-w-0 flex-col items-start gap-1 [grid-area:status]">
                   <StatusBadge status={c.status} />
                   {unit && (
-                    <span className={clsx('max-w-full truncate text-xs', waiting ? 'font-semibold text-warning' : 'text-muted')}>
+                    <span className={clsx('max-w-full truncate text-xs', waiting ? 'font-semibold text-warning-ink' : 'text-muted')}>
                       {unit}
                     </span>
                   )}
@@ -212,7 +212,14 @@ export function CaseQueue({
                   <Elapsed ts={timeOf(c)} now={now} />
                 </div>
 
-                <div className="relative z-10 flex items-center justify-end gap-2 [grid-area:action] max-lg:mt-1.5 max-lg:w-full max-lg:[&>button]:flex-1 lg:justify-self-end [&_button]:whitespace-nowrap">
+                <div
+                  className={clsx(
+                    'relative z-10 flex items-center justify-end gap-2 [grid-area:action] max-lg:mt-1.5 max-lg:w-full max-lg:[&>button]:flex-1 lg:justify-self-end [&_button]:whitespace-nowrap',
+                    // With no action the phone layout has no "action" area; an
+                    // unplaced cell would add an implicit column and row.
+                    !action && 'max-lg:hidden',
+                  )}
+                >
                   {action}
                   <ChevronRight className="hidden size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 lg:block" aria-hidden="true" />
                 </div>
@@ -243,14 +250,14 @@ export function QueueSection({
   children: ReactNode
 }) {
   return (
-    <section className={clsx('mt-8', className)}>
+    <section className={clsx('mt-7', className)}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-base font-bold text-ink">
+        <h2 className="flex items-center gap-2 text-heading text-ink">
           {title}
           <span
             className={clsx(
-              'inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold tabular-nums',
-              urgent && count > 0 ? 'bg-emergency text-white' : 'bg-border/70 text-ink/70',
+              'inline-flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-xs font-semibold tabular-nums',
+              urgent && count > 0 ? 'bg-emergency text-white' : 'bg-skyblue-light text-muted',
             )}
           >
             {count}

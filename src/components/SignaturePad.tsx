@@ -99,8 +99,8 @@ export function SignaturePad({
   return (
     <div className="rounded-2xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-          <PenLine className="size-4 text-primary" />
+        <p className="flex items-center gap-1.5 text-label text-ink">
+          <PenLine className="size-4 text-muted" />
           {resolvedLabel}
         </p>
         {hasStroke && (

@@ -19,20 +19,19 @@ export function RoleCard({
     <button
       onClick={onClick}
       className={clsx(
-        'group flex w-full items-center gap-4 rounded-2xl border border-border bg-surface p-5 text-left shadow-card transition-all',
-        'hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card-lg',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
+        'group flex w-full items-center gap-4 border-border bg-surface px-4 py-4 text-left transition-colors sm:px-5',
+        'hover:bg-surface-alt',
         className,
       )}
     >
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-skyblue-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border text-primary [&>svg]:size-5">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-ink">{title}</p>
-        <p className="text-sm text-muted mt-0.5">{description}</p>
+        <p className="text-subheading text-ink">{title}</p>
+        <p className="mt-0.5 text-small text-muted">{description}</p>
       </div>
-      <ChevronRight className="size-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+      <ChevronRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
     </button>
   )
 }

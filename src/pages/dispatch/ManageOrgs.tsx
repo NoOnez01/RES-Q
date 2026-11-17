@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card, Checkbox } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
@@ -393,7 +392,7 @@ function TeamVehicles({
   return (
     <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
           <Truck className="size-3.5" /> {t('รถ/ทีม ({n})', { n: team.vehicles.length })}
         </p>
         {!(vehicleFormTarget?.teamId === team.id && vehicleFormTarget.vehicleId === 'new') && (
@@ -420,7 +419,7 @@ function TeamVehicles({
         vehicleFormTarget?.teamId === team.id && vehicleFormTarget.vehicleId === vehicle.id ? (
           <VehicleForm key={vehicle.id} initial={vehicle} onCancel={() => setVehicleFormTarget(null)} onSaved={handleVehicleSaved} />
         ) : (
-          <div key={vehicle.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-bg p-3">
+          <div key={vehicle.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
             <div>
               <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                 {vehicle.unitCode}
@@ -440,7 +439,7 @@ function TeamVehicles({
               >
                 {t('แก้ไข')}
               </Button>
-              <Button size="sm" variant="danger" icon={<Trash2 className="size-3" />} onClick={() => onDeleteVehicle(vehicle)}>
+              <Button size="sm" variant="danger-outline" icon={<Trash2 className="size-3" />} onClick={() => onDeleteVehicle(vehicle)}>
                 {t('ลบ')}
               </Button>
             </div>
@@ -533,12 +532,10 @@ export default function ManageOrgs() {
   return (
     <AppShell variant="dashboard" title={t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-8">
+        <div className="flex flex-col gap-8">
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-                <Ambulance className="size-4 text-primary" /> {t('หน่วยกู้ชีพ (สาขา/จังหวัด)')}
+              <h2 className="text-heading text-ink">{t('หน่วยกู้ชีพ (สาขา/จังหวัด)')}
               </h2>
               {teamFormOpen === null && (
                 <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => setTeamFormOpen('new')}>
@@ -561,7 +558,7 @@ export default function ManageOrgs() {
                   <Card key={team.id}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="font-bold text-ink">
+                        <p className="font-semibold text-ink">
                           {team.name} <span className="font-mono text-xs text-muted">{team.id}</span>
                         </p>
                         <p className="text-sm text-muted">{team.phone}</p>
@@ -572,7 +569,7 @@ export default function ManageOrgs() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="danger"
+                          variant="danger-outline"
                           icon={<Trash2 className="size-3.5" />}
                           onClick={() => setDeleteTeamTarget(team)}
                         >
@@ -596,8 +593,7 @@ export default function ManageOrgs() {
 
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
-                <Building2 className="size-4 text-primary" /> {t('โรงพยาบาล')}
+              <h2 className="text-heading text-ink">{t('โรงพยาบาล')}
               </h2>
               {hospitalFormOpen === null && (
                 <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => setHospitalFormOpen('new')}>
@@ -624,7 +620,7 @@ export default function ManageOrgs() {
                 ) : (
                   <Card key={hospital.id} className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-bold text-ink">
+                      <p className="font-semibold text-ink">
                         {hospital.name} <span className="font-mono text-xs text-muted">{hospital.id}</span>
                       </p>
                       <p className="text-sm text-muted">
@@ -642,7 +638,7 @@ export default function ManageOrgs() {
                       </Button>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="danger-outline"
                         icon={<Trash2 className="size-3.5" />}
                         onClick={() => setDeleteHospitalTarget(hospital)}
                       >

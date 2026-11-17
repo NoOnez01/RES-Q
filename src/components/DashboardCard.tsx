@@ -9,7 +9,7 @@ export function StatBar({ className, children }: { className?: string; children:
   return (
     <div
       className={clsx(
-        'grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-card sm:flex [&>*]:bg-surface [&>*:last-child:nth-child(odd)]:col-span-2',
+        'grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:flex [&>*]:bg-surface [&>*:last-child:nth-child(odd)]:col-span-2',
         className,
       )}
     >
@@ -21,12 +21,12 @@ export function StatBar({ className, children }: { className?: string; children:
 const TONE_TEXT: Record<string, string> = {
   primary: 'text-primary',
   emergency: 'text-emergency',
-  success: 'text-success',
-  warning: 'text-warning',
+  success: 'text-success-ink',
+  warning: 'text-warning-ink',
 }
 
-/** One figure: its label (with the tone's icon) over the number. `alert`
- * turns the number itself red -- for a count that means something is
+/** One figure: its label (with a muted icon) over the number. `alert`
+ * turns the number and its icon red -- for a count that means something is
  * waiting on this role right now, never for decoration. */
 export function StatItem({
   label,
@@ -42,12 +42,14 @@ export function StatItem({
   alert?: boolean
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-5 py-4">
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-        {icon && <span className={clsx('shrink-0 [&>svg]:size-4', TONE_TEXT[tone])}>{icon}</span>}
+    <div className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3.5 sm:px-5">
+      <p className="flex items-center gap-1.5 text-meta font-medium text-muted">
+        {icon && <span className={clsx('shrink-0 [&>svg]:size-3.5', alert ? TONE_TEXT.emergency : 'text-muted')}>{icon}</span>}
         <span className="leading-snug">{label}</span>
       </p>
-      <p className={clsx('text-2xl font-bold leading-none tabular-nums', alert ? 'text-emergency' : 'text-ink')}>{value}</p>
+      <p className={clsx('text-[1.625rem] font-semibold leading-none tabular-nums', alert ? 'text-emergency' : 'text-ink')}>
+        {value}
+      </p>
     </div>
   )
 }

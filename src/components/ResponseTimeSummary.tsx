@@ -72,13 +72,10 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
   const hasSample = dispatchMin != null || responseMin != null || transportMin != null
 
   return (
-    <Card className="flex flex-col gap-3">
-      <div>
-        <h2 className="flex items-center gap-2 text-base font-bold text-ink">
-          <Timer className="size-4.5 text-primary" />
-          {t('สรุปเวลาตอบสนองการช่วยเหลือ')}
-        </h2>
-        <p className="mt-0.5 text-xs text-muted">
+    <Card className="flex flex-col overflow-hidden p-0">
+      <div className="px-5 pb-4 pt-5">
+        <h2 className="text-heading text-ink">{t('สรุปเวลาตอบสนองการช่วยเหลือ')}</h2>
+        <p className="mt-0.5 text-meta text-muted">
           {hasSample
             ? t('ค่าเฉลี่ยจาก {n} เหตุที่มีข้อมูลเวลาครบถ้วน', { n: sampleCount })
             : t('ยังไม่มีข้อมูลเวลาเพียงพอสำหรับสรุปผล')}
@@ -86,7 +83,7 @@ export default function ResponseTimeSummary({ cases }: { cases: EmergencyCase[] 
       </div>
       {/* 2 x 2 rather than the shared StatBar row: this card only gets half
           the dashboard width, where four side-by-side stats crush their labels. */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-card [&>*]:bg-surface">
+      <div className="mt-auto grid grid-cols-2 gap-px border-t border-border bg-border [&>*]:bg-surface">
         <StatItem
           tone="primary"
           icon={<Siren className="size-5" />}

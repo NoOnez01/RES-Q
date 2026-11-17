@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Sparkles } from 'lucide-react'
+import { FAVICON_URL } from '@/lib/utils'
 import { useStore } from '@/lib/store'
 import { useT, registerTranslations } from '@/lib/i18n'
 import { RadioCard } from '@/components/ui/RadioCard'
@@ -48,28 +48,26 @@ export function FirstVisitSetup() {
 
   return createPortal(
     <div className="fixed inset-0 z-[220] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-fade-in bg-navy/50 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 animate-fade-in bg-navy/45" />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="first-visit-title"
-        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface p-6 shadow-card-lg animate-scale-in sm:max-w-md sm:rounded-3xl"
+        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-border bg-surface p-6 shadow-overlay animate-scale-in sm:max-w-md sm:rounded-2xl"
       >
-        <div className="mb-1 flex items-center gap-2 text-primary">
-          <Sparkles className="size-5" />
-          <p className="text-xs font-bold uppercase tracking-wide">{t('ยินดีต้อนรับสู่')} ResQ</p>
-        </div>
-        <h2 id="first-visit-title" className="text-lg font-bold text-ink">
-          {t('กรุณาเลือกภาษาที่ต้องการใช้งาน (เปลี่ยนภายหลังได้ที่หน้าตั้งค่า)')}
+        <img src={FAVICON_URL} alt="" className="size-8" />
+        <h2 id="first-visit-title" className="mt-4 text-heading text-ink">
+          {t('ยินดีต้อนรับสู่')} ResQ
         </h2>
+        <p className="mt-1 text-sm text-muted">{t('กรุณาเลือกภาษาที่ต้องการใช้งาน (เปลี่ยนภายหลังได้ที่หน้าตั้งค่า)')}</p>
 
         <div className="mt-5 space-y-2">
-          <p className="text-sm font-semibold text-ink">{t('ภาษา')}</p>
+          <p className="text-label text-ink">{t('ภาษา')}</p>
           <RadioCard selected={language === 'th'} onClick={() => setLanguage('th')} title="ไทย" description="Thai" />
           <RadioCard selected={language === 'en'} onClick={() => setLanguage('en')} title="English" description="อังกฤษ" />
         </div>
 
-        <Button variant="primary" fullWidth className="mt-6" onClick={finish}>
+        <Button variant="primary" size="lg" fullWidth className="mt-6" onClick={finish}>
           {t('เริ่มใช้งาน')}
         </Button>
       </div>

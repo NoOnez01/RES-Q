@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
@@ -140,8 +139,7 @@ export default function Login() {
   return (
     <AppShell variant="public" title={t('เข้าสู่ระบบ')}>
       <div className="relative">
-        <AnimatedBackground variant="auth" />
-        <div className="relative z-10 mx-auto max-w-md px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
           {status === 'pending' ? (
             <SuccessState
               title={t('รอการอนุมัติจากศูนย์สั่งการ')}
@@ -160,7 +158,7 @@ export default function Login() {
             />
           ) : (
             <>
-              <Card className="animate-fade-in-up">
+              <Card>
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                   <Input
                     label={t('อีเมล')}
@@ -216,7 +214,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => navigate('/register')}
-                    className="text-sm font-semibold text-primary hover:underline"
+                    className="inline-block py-2 text-sm font-semibold text-primary hover:underline"
                   >
                     {t('ยังไม่มีบัญชีผู้ใช้ สมัครสมาชิก')}
                   </button>

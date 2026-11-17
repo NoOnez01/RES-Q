@@ -76,55 +76,56 @@ export function CaseTimeline({
         const StepIcon = STEP_ICON[step.key]
 
         return (
-          <li key={step.key} className="relative flex gap-3 pb-6 last:pb-0">
+          <li key={step.key} className={clsx('relative flex gap-3', isDone || isCurrent ? 'pb-4' : 'pb-2.5', 'last:pb-0')}>
             {!isLast && (
               <span
-                className={clsx(
-                  'absolute left-[13px] top-6 h-full w-0.5 -translate-x-1/2',
-                  isDone ? 'bg-primary' : 'bg-border',
-                )}
+                className={clsx('absolute left-[10px] top-6 bottom-1 w-px -translate-x-1/2', isDone ? 'bg-primary/60' : 'bg-border')}
+                aria-hidden="true"
               />
             )}
             <span
               className={clsx(
-                'relative z-10 flex size-[26px] shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold',
-                isDone && 'border-primary bg-primary text-white',
-                !isDone && isCurrent && 'border-primary bg-surface text-primary animate-pulse-glow',
-                !isDone && isNext && 'border-primary/40 bg-surface text-primary/60',
-                !isDone && !isCurrent && !isNext && 'border-border bg-surface text-muted/50',
+                'relative z-10 mt-px flex size-5 shrink-0 items-center justify-center rounded-full border',
+                isDone && 'border-primary-fill bg-primary-fill text-white',
+                !isDone && isCurrent && 'border-primary bg-surface text-primary ring-4 ring-primary/15',
+                !isDone && isNext && 'border-primary/50 bg-surface text-primary/70',
+                !isDone && !isCurrent && !isNext && 'border-input bg-surface text-muted/60',
               )}
+              aria-hidden="true"
             >
-              {isDone ? <Check className="size-3.5" strokeWidth={3} /> : <StepIcon className="size-3.5" />}
+              {isDone ? <Check className="size-3" strokeWidth={3} /> : <StepIcon className="size-2.5" />}
             </span>
-            <div className="min-w-0 flex-1 pt-0.5">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <p
                   className={clsx(
-                    'font-semibold',
-                    isDone || isCurrent ? 'text-ink' : 'text-muted',
-                    compact && 'text-sm',
+                    'text-sm leading-5',
+                    isDone || isCurrent ? 'font-medium text-ink' : 'text-muted',
                   )}
                 >
                   {t(step.label)}
                 </p>
                 {isCurrent && !isDone && (
-                  <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-bold text-warning">
+                  <span className="rounded-md bg-warning/10 px-1.5 py-px text-[11px] font-semibold text-warning-ink">
                     {t('กำลังดำเนินการ')}
                   </span>
                 )}
                 {isNext && !isDone && (
-                  <span className="rounded-full bg-skyblue-light px-2 py-0.5 text-[11px] font-bold text-primary">
+                  <span className="rounded-md bg-skyblue-light px-1.5 py-px text-[11px] font-semibold text-primary">
                     {t('ขั้นตอนถัดไป')}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted mt-0.5">{t(step.org)}</p>
-              {event && (
-                <p className="text-xs text-muted mt-0.5">
-                  {formatDateTime(event.timestamp)}
-                  {event.note && ` · ${event.note}`}
-                </p>
-              )}
+              <p className={clsx('text-meta text-muted', !(isDone || isCurrent) && 'text-muted/80')}>
+                {t(step.org)}
+                {event && (
+                  <>
+                    <span aria-hidden="true"> · </span>
+                    <time className="tabular-nums">{formatDateTime(event.timestamp)}</time>
+                    {event.note && ` · ${event.note}`}
+                  </>
+                )}
+              </p>
             </div>
           </li>
         )

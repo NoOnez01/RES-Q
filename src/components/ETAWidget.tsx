@@ -29,24 +29,20 @@ export function ETAWidget({
   return (
     <div
       className={clsx(
-        'relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border bg-surface p-4 shadow-card',
+        'relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border bg-surface p-4',
         className,
       )}
     >
-      <span className="bg-fx pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/10 blur-2xl animate-glow-breathe" aria-hidden="true" />
-      <div className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-skyblue-light text-primary">
-        <span className="bg-fx absolute inset-0 animate-ping-slow rounded-full bg-primary/20" aria-hidden="true" />
-        <Clock3 className="relative size-5" />
-      </div>
+      <Clock3 className="size-5 shrink-0 self-start text-primary" aria-hidden="true" />
       <div className="relative min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <p className="text-xs text-muted">{t('เวลาที่คาดว่าจะถึงจุดหมาย')}</p>
           {route && (
-            <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-bold text-success">{t(routeBadge(route))}</span>
+            <span className="rounded bg-success/10 px-1.5 py-px text-[11px] font-semibold text-success-ink">{t(routeBadge(route))}</span>
           )}
         </div>
-        <p key={etaMin} className="animate-fade-in text-xl font-extrabold text-ink">
-          {etaMin} <span className="text-sm font-semibold text-muted">{t('นาที')}</span>
+        <p key={etaMin} className="mt-0.5 animate-fade-in text-2xl font-semibold tabular-nums text-ink">
+          {etaMin} <span className="text-sm font-medium text-muted">{t('นาที')}</span>
         </p>
         {typeof distanceKm === 'number' && (
           <p className="flex items-center gap-1 text-xs text-muted mt-0.5">
@@ -56,7 +52,7 @@ export function ETAWidget({
       </div>
       {typeof progressPct === 'number' && (
         <div className="hidden sm:block w-28 shrink-0">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-skyblue-light">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-skyblue-light">
             <div
               className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progressPct}%` }}

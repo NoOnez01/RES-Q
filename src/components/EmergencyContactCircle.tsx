@@ -14,6 +14,8 @@ registerTranslations({
   ยกเลิก: 'Cancel',
 })
 
+/** The citizen's one emergency control -- the only round, red, shadowed
+ * element on the public pages, so it can't be mistaken for anything else. */
 export function EmergencyContactCircle() {
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -36,23 +38,20 @@ export function EmergencyContactCircle() {
         onClick={() => setConfirmOpen(true)}
         aria-label={t('ติดต่อเจ้าหน้าที่เพื่อขอความช่วยเหลือฉุกเฉิน')}
         className="
-          group relative flex size-[220px] shrink-0 flex-col items-center justify-center gap-2
-          rounded-full bg-emergency text-white
-          shadow-red-glow animate-pulse-glow
-          transition-transform duration-200 ease-out
-          hover:scale-[1.04] hover:shadow-red-glow-lg
-          active:scale-[0.97]
-          focus-visible:outline-none focus-visible:ring-[6px] focus-visible:ring-emergency/40
-          md:size-[300px]
-          lg:size-[360px]
+          relative flex size-[216px] shrink-0 flex-col items-center justify-center gap-2 rounded-full
+          bg-emergency text-white shadow-red-glow ring-[10px] ring-emergency/[0.08]
+          transition-[background-color,box-shadow] duration-200
+          hover:bg-emergency-dark hover:shadow-red-glow-lg
+          active:bg-emergency-dark
+          focus-visible:outline-none focus-visible:ring-emergency/40
+          md:size-[256px] lg:size-[288px]
         "
       >
-        <span className="absolute inset-0 rounded-full bg-white/0 transition-colors duration-200 group-hover:bg-white/5" />
-        <PhoneCall className="size-12 md:size-14 lg:size-16" strokeWidth={2.2} />
-        <span className="text-xl font-extrabold leading-tight md:text-2xl lg:text-3xl">{t('ติดต่อเจ้าหน้าที่')}</span>
+        <PhoneCall className="size-11 md:size-12" strokeWidth={2} />
+        <span className="text-xl font-bold leading-snug md:text-2xl">{t('ติดต่อเจ้าหน้าที่')}</span>
         <span className="text-xs font-medium text-white/85 md:text-sm">{t('เพื่อขอความช่วยเหลือฉุกเฉิน')}</span>
       </button>
-      <p className="text-sm font-medium text-muted">{t('แตะปุ่มนี้เพื่อติดต่อเจ้าหน้าที่')}</p>
+      <p className="text-sm text-muted">{t('แตะปุ่มนี้เพื่อติดต่อเจ้าหน้าที่')}</p>
 
       <ConfirmationModal
         open={confirmOpen}
@@ -64,8 +63,8 @@ export function EmergencyContactCircle() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmOpen(false)}
         icon={
-          <span className="flex size-11 items-center justify-center rounded-full bg-emergency/10 text-emergency">
-            <Siren className="size-5" />
+          <span className="flex size-9 items-center justify-center rounded-full bg-emergency/10 text-emergency">
+            <Siren className="size-[18px]" />
           </span>
         }
       />

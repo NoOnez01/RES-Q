@@ -3,9 +3,9 @@ import type { VehicleLevel } from '@/lib/types'
 import { VEHICLE_LEVEL_LABEL } from '@/lib/types'
 
 const TONE: Record<VehicleLevel, string> = {
-  CLS: 'bg-emergency/10 text-emergency-dark border-emergency/30',
-  ALS: 'bg-primary/10 text-primary border-primary/30',
-  BLS: 'bg-muted/10 text-muted border-border',
+  CLS: 'bg-emergency/[0.07] text-emergency-dark border-emergency/25 dark:text-emergency',
+  ALS: 'bg-primary/[0.07] text-primary border-primary/20',
+  BLS: 'bg-surface-alt text-muted border-border',
 }
 
 /** Selected-state classes for a level toggle/segmented-control button --
@@ -26,7 +26,7 @@ export function VehicleLevelBadge({ level, className }: { level?: VehicleLevel; 
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold whitespace-nowrap',
+        'inline-flex items-center whitespace-nowrap rounded border px-1.5 py-px font-mono text-[11px] font-semibold tracking-wide',
         TONE[resolved],
         className,
       )}

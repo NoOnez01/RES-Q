@@ -90,7 +90,7 @@ function AccountMenu({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-ink hover:bg-skyblue-light"
+        className="flex h-9 items-center gap-2 rounded-lg px-2.5 text-sm font-medium text-ink transition-colors hover:bg-skyblue-light"
       >
         <span className="relative">
           <Avatar url={currentUser.avatarUrl} className="size-5" />
@@ -104,7 +104,7 @@ function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-surface py-1.5 shadow-card-lg"
+          className="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-xl border border-border bg-surface p-1 shadow-card-lg animate-fade-in"
         >
           {items.map((item) => (
             <button
@@ -115,18 +115,18 @@ function AccountMenu({
                 setOpen(false)
                 navigate(item.path)
               }}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-ink transition-colors hover:bg-skyblue-light"
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-ink transition-colors hover:bg-skyblue-light"
             >
               <item.icon className="size-4 text-muted" />
               {t(item.label)}
               {item.path === '/notifications' && unreadCount > 0 && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-emergency px-1 text-[10px] font-bold text-white">
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-md bg-emergency px-1 text-[11px] font-semibold tabular-nums text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
           ))}
-          <div className="my-1 border-t border-border" />
+          <div className="-mx-1 my-1 border-t border-border" />
           <button
             type="button"
             role="menuitem"
@@ -134,7 +134,7 @@ function AccountMenu({
               setOpen(false)
               onLogout()
             }}
-            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-emergency transition-colors hover:bg-emergency/5"
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-emergency transition-colors hover:bg-emergency/[0.06]"
           >
             <LogOut className="size-4" />
             {t('ออกจากระบบ')}
@@ -164,14 +164,14 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
   return (
     <header
       className={clsx(
-        'sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur sm:px-6',
+        'sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-surface px-3 sm:gap-3 sm:px-6',
       )}
     >
       {(variant === 'dashboard' || variant === 'public') && onMenuClick && (
         <button
           onClick={onMenuClick}
           aria-label={t('เปิดเมนู')}
-          className="rounded-lg p-2 text-ink hover:bg-skyblue-light lg:hidden docked:lg:inline-flex"
+          className="inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-skyblue-light hover:text-ink lg:hidden docked:lg:inline-flex"
         >
           <Menu className="size-5" />
         </button>
@@ -184,7 +184,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
         <button
           onClick={() => (onBack ? onBack() : navigate(-1))}
           aria-label={t('ย้อนกลับ')}
-          className="rounded-lg p-2 text-ink hover:bg-skyblue-light"
+          className="inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-skyblue-light hover:text-ink -ml-1"
         >
           <ArrowLeft className="size-5" />
         </button>
@@ -192,16 +192,21 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
 
       {/* On a wide dashboard the sidebar already carries the brand. */}
       {variant !== 'flow' && (
-        <Link to={homePath} aria-label="ResQ" className={clsx('flex shrink-0 items-center gap-2', variant === 'dashboard' && 'lg:hidden')}>
-          <img src={FAVICON_URL} alt="" className="size-8" />
-          <span className={clsx('text-lg font-extrabold text-ink', variant === 'dashboard' && title && 'hidden sm:inline')}>ResQ</span>
+        <Link to={homePath} aria-label="ResQ" className={clsx('flex h-10 min-w-10 shrink-0 items-center justify-center gap-2', variant === 'dashboard' && 'lg:hidden docked:lg:flex')}>
+          <img src={FAVICON_URL} alt="" className="size-7" />
+          <span className={clsx('text-base font-bold tracking-tight text-ink', variant === 'dashboard' && title && 'hidden sm:inline')}>ResQ</span>
         </Link>
       )}
 
-      {title && <h1 className="min-w-0 flex-1 truncate text-base font-bold text-ink sm:text-lg">{title}</h1>}
+      {title && (
+        <>
+          {variant === 'dashboard' && <span className="hidden h-5 w-px bg-border sm:block lg:hidden docked:lg:block" aria-hidden="true" />}
+          <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{title}</h1>
+        </>
+      )}
 
       {variant === 'public' && !title && (
-        <nav className="ml-4 hidden items-center gap-1 lg:flex">
+        <nav className="ml-6 hidden h-full items-stretch gap-1 lg:flex">
           {PUBLIC_NAV_LINKS.map((link) => {
             const active = link.href === '/' ? location.pathname === '/' : location.pathname + location.hash === link.href
             return (
@@ -209,12 +214,12 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
                 key={link.href}
                 to={link.href}
                 className={clsx(
-                  'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                  active ? 'text-primary' : 'text-ink hover:bg-skyblue-light',
+                  'relative flex items-center px-3 text-sm font-medium transition-colors',
+                  active ? 'text-ink' : 'text-muted hover:text-ink',
                 )}
               >
                 {t(link.label)}
-                {active && <span className="absolute inset-x-3 -bottom-[1px] h-0.5 rounded-full bg-primary" />}
+                {active && <span className="absolute inset-x-3 bottom-[-1px] h-0.5 bg-primary" />}
               </Link>
             )
           })}
@@ -257,11 +262,11 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
             <button
               onClick={() => navigate('/notifications')}
               aria-label={t('การแจ้งเตือน')}
-              className="relative rounded-lg p-2 text-ink hover:bg-skyblue-light"
+              className="relative inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-skyblue-light hover:text-ink"
             >
-              <Bell className="size-5" />
+              <Bell className="size-[18px]" />
               {unread > 0 && (
-                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-emergency text-[10px] font-bold text-white">
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emergency px-1 text-[10px] font-semibold tabular-nums text-white ring-2 ring-surface">
                   {unread > 9 ? '9+' : unread}
                 </span>
               )}
@@ -270,7 +275,7 @@ export function TopNavigation({ variant, title, onMenuClick, onBack, showBack, h
               <button
                 onClick={() => navigate('/profile')}
                 aria-label={t('ข้อมูลส่วนตัว')}
-                className="rounded-lg p-1.5 text-ink hover:bg-skyblue-light"
+                className="inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-skyblue-light hover:text-ink"
               >
                 <Avatar url={currentUser?.avatarUrl} className="size-6" />
               </button>

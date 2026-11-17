@@ -6,8 +6,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CallScreen } from '@/components/call/CallScreen'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
-import { PulseRing } from '@/components/backgrounds/PulseRing'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { formatDuration } from '@/lib/utils'
@@ -133,8 +132,7 @@ export default function RescueCallReporter() {
   return (
     <AppShell variant="flow" title={t('โทรหาผู้แจ้งเหตุ')} showBack onBack={() => navigate(`/rescue/case/${id}`)}>
       <div className="relative">
-        <AnimatedBackground variant="call" />
-        <div className="relative z-10 flex flex-col gap-5 pb-8">
+        <div className="flex flex-col gap-5 pb-8">
           <Card className="flex flex-col items-center gap-2 text-center">
             <div className="relative flex size-20 items-center justify-center">
               {isCallActive && (
@@ -152,10 +150,10 @@ export default function RescueCallReporter() {
             <p className="text-sm font-semibold text-ink">{c.reporterName ?? t('ผู้แจ้งเหตุ')}</p>
             <p className="text-xs text-muted">{t('เหตุหมายเลข {caseNumber}', { caseNumber: c.caseNumber })}</p>
             {c.rescueCallStatus === 'connecting' && (
-              <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอผู้แจ้งเหตุรับสาย')}</p>
+              <p className="text-xs font-medium text-warning-ink animate-pulse">{t('กำลังโทรออก รอผู้แจ้งเหตุรับสาย')}</p>
             )}
             {c.rescueCallStatus === 'in-call' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-success/10 px-2 py-0.5 text-xs font-semibold text-success-ink">
                 <PulseRing tone="success" size="sm" />
                 {formatDuration(c.rescueCallDurationSec ?? 0)}
               </span>

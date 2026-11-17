@@ -6,7 +6,7 @@ import { StatBar, StatItem } from '@/components/DashboardCard'
 import { CaseQueue, QueueSection, byUrgency, isToday, reachedAt } from '@/components/CaseQueue'
 import { RoadClosuresCard } from '@/components/RoadClosuresCard'
 import { ChartCardSkeleton } from '@/components/ChartCardSkeleton'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { useStore } from '@/lib/store'
 import { toast } from '@/lib/toast'
 import { useT, registerTranslations } from '@/lib/i18n'
@@ -122,11 +122,9 @@ export default function DispatchDashboard() {
         count={needsAction.length}
         urgent
         aside={
-          <Link to="/dispatch/new-case">
-            <Button size="sm" icon={<ClipboardPlus className="size-4" />}>
-              {t('บันทึกเหตุใหม่')}
-            </Button>
-          </Link>
+          <LinkButton to="/dispatch/new-case" size="sm" icon={<ClipboardPlus className="size-4" />}>
+            {t('บันทึกเหตุใหม่')}
+          </LinkButton>
         }
       >
         <CaseQueue rows={needsAction.map(row)} empty={t('ไม่มีเหตุที่รอดำเนินการ')} actionWidth="11.5rem" />
@@ -142,7 +140,7 @@ export default function DispatchDashboard() {
         aside={
           <Link
             to="/case-history"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-bright"
+            className="-my-2 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-primary hover:text-primary-bright"
           >
             {t('ดูประวัติเหตุทั้งหมด')}
             <ArrowRight className="size-4" />
@@ -153,7 +151,7 @@ export default function DispatchDashboard() {
       </QueueSection>
 
       <section className="mt-10">
-        <h2 className="mb-3 text-base font-bold text-ink">{t('สถิติการปฏิบัติงาน')}</h2>
+        <h2 className="mb-3 text-heading text-ink">{t('สถิติการปฏิบัติงาน')}</h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Suspense fallback={<ChartCardSkeleton />}>
             <ResponseTimeSummary cases={allCases} />

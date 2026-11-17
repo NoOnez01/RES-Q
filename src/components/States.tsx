@@ -13,9 +13,9 @@ registerTranslations({
 export function LoadingState({ label }: { label?: string }) {
   const t = useT()
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <Loader2 className="size-8 animate-spin-slow text-primary" />
-      <p className="text-sm font-medium text-muted">{label ?? t('กำลังโหลดข้อมูล...')}</p>
+    <div role="status" className="flex items-center justify-center gap-2.5 py-16 text-center">
+      <Loader2 className="size-4 animate-spin-slow text-muted" aria-hidden="true" />
+      <p className="text-sm text-muted">{label ?? t('กำลังโหลดข้อมูล...')}</p>
     </div>
   )
 }
@@ -32,13 +32,11 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-surface/60 py-14 px-6 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-skyblue-light text-primary">
-        {icon ?? <Inbox className="size-6" />}
-      </div>
-      <p className="font-semibold text-ink">{title}</p>
-      {description && <p className="max-w-sm text-sm text-muted">{description}</p>}
-      {action}
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-input bg-surface px-6 py-12 text-center">
+      <div className="text-muted/70 [&>svg]:size-6">{icon ?? <Inbox className="size-6" />}</div>
+      <p className="mt-3 text-subheading text-ink">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-small text-muted">{description}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   )
 }
@@ -59,14 +57,12 @@ export function ErrorState({
 }) {
   const t = useT()
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-emergency/20 bg-emergency/5 py-14 px-6 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-emergency/10 text-emergency">
-        <AlertCircle className="size-6" />
-      </div>
-      <p className="font-semibold text-ink">{title ?? t('เกิดข้อผิดพลาด')}</p>
-      <p className="max-w-sm text-sm text-muted">{description ?? t('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง')}</p>
+    <div role="alert" className="flex flex-col items-center justify-center rounded-2xl border border-border bg-surface px-6 py-12 text-center">
+      <AlertCircle className="size-6 text-emergency" aria-hidden="true" />
+      <p className="mt-3 text-subheading text-ink">{title ?? t('เกิดข้อผิดพลาด')}</p>
+      <p className="mt-1 max-w-sm text-small text-muted">{description ?? t('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง')}</p>
       {onRetry && (
-        <Button variant="outline" size="sm" onClick={onRetry}>
+        <Button variant="outline" size="sm" onClick={onRetry} className="mt-4">
           {retryLabel ?? t('ลองอีกครั้ง')}
         </Button>
       )}
@@ -84,13 +80,13 @@ export function SuccessState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-success/20 bg-success/5 py-14 px-6 text-center animate-scale-in">
-      <div className="flex size-16 items-center justify-center rounded-full bg-success/10 text-success">
-        <CheckCircle2 className="size-8" />
+    <div role="status" className="flex flex-col items-center justify-center rounded-2xl border border-border bg-surface px-6 py-12 text-center animate-fade-in">
+      <div className="flex size-10 items-center justify-center rounded-full bg-success/10 text-success-ink">
+        <CheckCircle2 className="size-5" aria-hidden="true" />
       </div>
-      <p className="text-lg font-bold text-ink">{title}</p>
-      {description && <p className="max-w-sm text-sm text-muted">{description}</p>}
-      {action}
+      <p className="mt-3 text-heading text-ink">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-small text-muted">{description}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   )
 }

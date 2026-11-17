@@ -1,29 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import {
-  UserCircle2,
-  ShieldCheck,
-  Trash2,
-  LogIn,
-  LogOut,
-  Radio,
-  Ambulance,
-  Building2,
-  ShieldAlert,
-  UserCheck,
-  Wrench,
-  Coins,
-  KeyRound,
-  Mail,
-  Sun,
-  Moon,
-  MonitorSmartphone,
-  Languages,
-} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Trash2, LogIn, LogOut, Radio, Ambulance, Building2, UserCheck, Wrench, Coins, KeyRound, Mail, Sun, Moon, MonitorSmartphone, Languages } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
@@ -294,11 +274,10 @@ export default function Settings() {
   return (
     <AppShell variant="dashboard" title={t('ตั้งค่า')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-5">
-        <Card className="space-y-4 animate-fade-in-up">
-          <h3 className="flex items-center gap-2 font-bold text-ink">
-            <UserCircle2 className="size-4 text-primary" /> {t('ข้อมูลผู้ใช้งาน')}
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <Card className="space-y-4">
+          <h3 className="text-heading text-ink">
+            {t('ข้อมูลผู้ใช้งาน')}
           </h3>
           {loggedIn && currentUser ? (
             <>
@@ -331,9 +310,9 @@ export default function Settings() {
           )}
         </Card>
 
-        <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '15ms', animationFillMode: 'backwards' }}>
-          <h3 className="flex items-center gap-2 font-bold text-ink">
-            <Sun className="size-4 text-primary" /> {t('การแสดงผลและภาษา')}
+        <Card className="space-y-4">
+          <h3 className="text-heading text-ink">
+            {t('การแสดงผลและภาษา')}
           </h3>
 
           <div className="space-y-2">
@@ -357,14 +336,14 @@ export default function Settings() {
           </div>
         </Card>
 
-        <SoundSettingsCard style={{ animationDelay: '22ms', animationFillMode: 'backwards' }} />
+        <SoundSettingsCard />
 
-        <MapSettingsCard style={{ animationDelay: '26ms', animationFillMode: 'backwards' }} />
+        <MapSettingsCard />
 
         {currentUser && !currentUser.isAnonymous && (
-          <Card className="space-y-4 animate-fade-in-up" style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}>
-            <h3 className="flex items-center gap-2 font-bold text-ink">
-              <ShieldCheck className="size-4 text-primary" /> {t('บัญชีและความปลอดภัย')}
+          <Card className="space-y-4">
+            <h3 className="text-heading text-ink">
+              {t('บัญชีและความปลอดภัย')}
             </h3>
 
             <div className="flex items-center gap-3">
@@ -399,7 +378,7 @@ export default function Settings() {
                     <span className="text-sm text-ink">Google</span>
                   </div>
                   {googleLinked ? (
-                    <span className="text-xs font-medium text-success">{t('เชื่อมต่อแล้ว')}</span>
+                    <span className="text-xs font-medium text-success-ink">{t('เชื่อมต่อแล้ว')}</span>
                   ) : (
                     <Button variant="outline" size="sm" onClick={handleLinkGoogle}>
                       {t('เชื่อมต่อ')}
@@ -426,7 +405,7 @@ export default function Settings() {
 
             <div className="flex flex-col gap-3 border-t border-border pt-4">
               <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                <KeyRound className="size-4 text-primary" /> {hasRealEmail ? t('เปลี่ยนรหัสผ่าน') : t('กำหนดอีเมลและรหัสผ่าน')}
+                <KeyRound className="size-4 text-muted" /> {hasRealEmail ? t('เปลี่ยนรหัสผ่าน') : t('กำหนดอีเมลและรหัสผ่าน')}
               </p>
               {!hasRealEmail && (
                 <p className="text-xs text-muted">{t('กำหนดอีเมลและรหัสผ่าน เพื่อให้เข้าสู่ระบบได้โดยไม่ต้องใช้ Google หรือ LINE')}</p>
@@ -468,9 +447,9 @@ export default function Settings() {
         )}
 
         {currentUser?.isAdmin && (
-          <Card className="space-y-3 animate-fade-in-up border-primary/30 bg-skyblue-pale">
-            <h3 className="flex items-center gap-2 font-bold text-ink">
-              <ShieldAlert className="size-4 text-primary" /> {t('มุมมองผู้ดูแลระบบ')}
+          <Card className="space-y-3 border-primary/30 bg-skyblue-pale">
+            <h3 className="text-heading text-ink">
+              {t('มุมมองผู้ดูแลระบบ')}
             </h3>
             <p className="text-sm text-muted">{t('เข้าดูหน้าภาพรวมของแต่ละหน่วยงานโดยไม่จำกัดขอบเขต (ทุกหน่วยกู้ชีพและทุกโรงพยาบาล)')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -488,28 +467,22 @@ export default function Settings() {
               ))}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Link to="/dispatch/pending-approvals">
-                <Button variant="outline" size="sm" fullWidth icon={<UserCheck className="size-4" />}>
-                  {t('บัญชีรออนุมัติ / จัดการสิทธิ์')}
-                </Button>
-              </Link>
-              <Link to="/manage-orgs">
-                <Button variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
-                  {t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}
-                </Button>
-              </Link>
-              <Link to="/manage-coins">
-                <Button variant="outline" size="sm" fullWidth icon={<Coins className="size-4" />}>
-                  {t('จัดการระบบเหรียญ')}
-                </Button>
-              </Link>
+              <LinkButton to="/dispatch/pending-approvals" variant="outline" size="sm" fullWidth icon={<UserCheck className="size-4" />}>
+                {t('บัญชีรออนุมัติ / จัดการสิทธิ์')}
+              </LinkButton>
+              <LinkButton to="/manage-orgs" variant="outline" size="sm" fullWidth icon={<Wrench className="size-4" />}>
+                {t('จัดการหน่วยกู้ชีพและโรงพยาบาล')}
+              </LinkButton>
+              <LinkButton to="/manage-coins" variant="outline" size="sm" fullWidth icon={<Coins className="size-4" />}>
+                {t('จัดการระบบเหรียญ')}
+              </LinkButton>
             </div>
           </Card>
         )}
 
-        <Card className="space-y-3 animate-fade-in-up" style={{ animationDelay: '60ms', animationFillMode: 'backwards' }}>
-          <h3 className="flex items-center gap-2 font-bold text-ink">
-            <ShieldCheck className="size-4 text-primary" /> {t('ข้อควรทราบ')}
+        <Card className="space-y-3">
+          <h3 className="text-heading text-ink">
+            {t('ข้อควรทราบ')}
           </h3>
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
             {NOTICES.map((notice) => (
@@ -520,9 +493,9 @@ export default function Settings() {
         </Card>
 
         {canReset && (
-          <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
+          <Card className="flex flex-col items-start gap-3 border-emergency/30 bg-emergency/5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-bold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
+              <p className="font-semibold text-ink">{t('ล้างข้อมูลตัวอย่าง')}</p>
               <p className="text-sm text-muted">{t('ลบข้อมูลเหตุทั้งหมด รวมถึงข้อมูลที่ซิงค์ไว้ในทุกอุปกรณ์')}</p>
             </div>
             <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setResetOpen(true)}>

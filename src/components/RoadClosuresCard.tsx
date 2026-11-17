@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Ban } from 'lucide-react'
+
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
 import { useStore } from '@/lib/store'
@@ -51,8 +51,8 @@ export function RoadClosuresCard({ className }: { className?: string }) {
   return (
     <Card className={clsx('flex flex-col gap-3 border-warning/30', className)}>
       <div>
-        <h2 className="flex items-center gap-2 font-bold text-ink">
-          <Ban className="size-4.5 text-warning" /> {t('เส้นทางที่ถูกปิด ({n})', { n: closures.length })}
+        <h2 className="text-heading text-ink">
+          {t('เส้นทางที่ถูกปิด ({n})', { n: closures.length })}
         </h2>
         <p className="mt-0.5 text-xs text-muted">{t('ระบบนำทางของทุกหน่วยจะเลี่ยงจุดเหล่านี้จนกว่าจะเปิดเส้นทางหรือหมดอายุ')}</p>
       </div>

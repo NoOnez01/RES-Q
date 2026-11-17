@@ -41,10 +41,10 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.value)}
             aria-pressed={value === opt.value}
             className={clsx(
-              'flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-semibold transition-all',
+              'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-medium transition-colors',
               value === opt.value
-                ? 'border-primary bg-skyblue-light text-primary'
-                : 'border-border bg-surface text-muted hover:border-primary/40',
+                ? 'border-primary bg-primary/[0.06] text-primary ring-1 ring-primary'
+                : 'border-input bg-surface text-muted hover:border-muted/50 hover:text-ink',
             )}
           >
             {opt.icon && <opt.icon className="size-5" />}
@@ -56,14 +56,17 @@ export function SegmentedControl<T extends string>({
   }
 
   return (
-    <div className={clsx('flex rounded-full border border-border bg-surface p-0.5 text-xs font-semibold shadow-card', className)}>
+    <div role="group" className={clsx('inline-flex rounded-lg border border-border bg-surface-alt p-0.5 text-[13px] font-medium', className)}>
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
-          className={clsx('rounded-full px-3 py-1.5 transition-colors', value === opt.value ? 'bg-primary text-white' : 'text-muted hover:text-ink')}
+          className={clsx(
+            'min-h-8 flex-1 whitespace-nowrap rounded-md px-3 py-1 transition-colors',
+            value === opt.value ? 'bg-surface text-ink shadow-card ring-1 ring-border' : 'text-muted hover:text-ink',
+          )}
         >
           {opt.label}
         </button>

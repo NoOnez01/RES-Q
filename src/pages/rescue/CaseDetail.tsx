@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCircle2, Check, MapPin, Phone, Users, AlertTriangle, Navigation as NavigationIcon, FileDown } from 'lucide-react'
 import clsx from 'clsx'
 import { AppShell } from '@/components/layout/AppShell'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -130,25 +129,26 @@ function WorkflowStepper({ status, hasHospital }: { status: CaseStatus; hasHospi
             <div className="flex flex-col items-center gap-1">
               <span
                 className={clsx(
-                  'flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-colors',
-                  done && 'border-primary bg-primary text-white',
-                  current && !done && 'border-primary bg-surface text-primary animate-pulse-glow',
-                  !done && !current && 'border-border bg-surface text-muted/50',
+                  'flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold tabular-nums transition-colors',
+                  done && 'border-primary-fill bg-primary-fill text-white',
+                  current && !done && 'border-primary bg-surface text-primary ring-4 ring-primary/15',
+                  !done && !current && 'border-input bg-surface text-muted',
                 )}
               >
                 {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
               </span>
               <span
                 className={clsx(
-                  'hidden max-w-[64px] text-center text-[10px] leading-tight sm:block',
-                  current ? 'font-bold text-primary' : done ? 'text-ink' : 'text-muted/60',
+                  'max-w-[72px] text-center text-[11px] leading-tight',
+                  current ? 'block font-semibold text-ink' : 'hidden sm:block',
+                  !current && (done ? 'text-ink/80' : 'text-muted'),
                 )}
               >
                 {t(label)}
               </span>
             </div>
             {i < WORKFLOW_STEPS.length - 1 && (
-              <span className={clsx('mt-3 h-0.5 flex-1', done ? 'bg-primary' : 'bg-border')} aria-hidden="true" />
+              <span className={clsx('mx-1 mt-3 h-px flex-1', done ? 'bg-primary/60' : 'bg-border')} aria-hidden="true" />
             )}
           </div>
         )
@@ -287,13 +287,12 @@ export default function RescueCaseDetail() {
   return (
     <AppShell variant="dashboard" title={t('รายละเอียดเหตุ')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-5">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="font-mono text-sm font-bold text-primary">{c.caseNumber}</p>
-              <p className="mt-1 text-lg font-bold text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
+              <p className="font-mono text-meta text-muted">{c.caseNumber}</p>
+              <p className="mt-0.5 text-title text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {c.assessment && <SeverityBadge severity={c.assessment.severity} />}
@@ -328,30 +327,30 @@ export default function RescueCaseDetail() {
         </Card>
 
         <Card>
-          <h3 className="mb-3 text-sm font-bold text-ink">{t('ความคืบหน้าการปฏิบัติงาน')}</h3>
+          <h3 className="mb-3 text-subheading text-ink">{t('ความคืบหน้าการปฏิบัติงาน')}</h3>
           <WorkflowStepper status={c.status} hasHospital={!!c.selectedHospital} />
         </Card>
 
         {c.incidentDetails && (
           <Card className="space-y-3">
-            <h3 className="font-bold text-ink">{t('รายละเอียดเหตุการณ์')}</h3>
+            <h3 className="text-heading text-ink">{t('รายละเอียดเหตุการณ์')}</h3>
             <div className="grid gap-3 text-sm sm:grid-cols-2">
               <div className="flex items-start gap-2">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
+                <MapPin className="mt-0.5 size-4 shrink-0 text-muted" />
                 <span className="text-ink">{c.location?.address ?? c.incidentDetails.location}</span>
               </div>
               <div className="flex items-start gap-2">
-                <Users className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Users className="mt-0.5 size-4 shrink-0 text-muted" />
                 <span className="text-ink">{t('ผู้ป่วย {n} คน', { n: c.incidentDetails.patientCount })}</span>
               </div>
               {c.assessment && (
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted" />
                   <span className="text-ink">{c.assessment.injuryDescription}</span>
                 </div>
               )}
               <div className="flex items-start gap-2">
-                <Phone className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Phone className="mt-0.5 size-4 shrink-0 text-muted" />
                 <span className="text-ink">{c.incidentDetails.callbackPhone || t('ยังไม่ระบุเบอร์ติดต่อกลับ')}</span>
               </div>
             </div>
@@ -366,21 +365,21 @@ export default function RescueCaseDetail() {
         <RelativeContacts caseId={c.id} contacts={c.relativeContacts} />
 
         {pins.length > 0 && (
-          <Card className="!p-0 overflow-hidden">
-            <MapPanel pins={pins} height="280px" />
+          <Card className="p-0 overflow-hidden">
+            <MapPanel className="!rounded-none !border-0" pins={pins} height="280px" />
           </Card>
         )}
 
         {c.assignedRescueTeam && (
           <Card className="space-y-3">
-            <h3 className="font-bold text-ink">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</h3>
+            <h3 className="text-heading text-ink">{t('หน่วยกู้ชีพที่รับผิดชอบ')}</h3>
             <p className="text-sm text-ink">{c.assignedRescueTeam.name}</p>
             <p className="text-xs text-muted">{c.assignedRescueTeam.phone}</p>
 
             {c.assignedVehicle ? (
               <div className="rounded-xl border border-primary/20 bg-skyblue-pale p-3">
                 <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                  <Truck className="size-4 text-primary" /> {c.assignedVehicle.unitCode}
+                  <Truck className="size-4 text-muted" /> {c.assignedVehicle.unitCode}
                   <VehicleLevelBadge level={c.assignedVehicle.level} />
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
@@ -401,7 +400,7 @@ export default function RescueCaseDetail() {
                       key={v.id}
                       selected={pendingVehicleId === v.id}
                       onClick={() => handlePickVehicle(v.id)}
-                      icon={<Truck className="size-5 text-primary" />}
+                      icon={<Truck className="size-5 text-muted" />}
                       title={v.unitCode}
                       description={t('{vehicle} · {n} คน', { vehicle: v.vehicle, n: v.members })}
                       badge={<VehicleLevelBadge level={v.level} />}
@@ -439,7 +438,7 @@ export default function RescueCaseDetail() {
             <PatientInformationCard patient={c.patientInfo} updates={c.patientUpdates} />
             {c.status !== 'completed' && (
               <Card className="space-y-3">
-                <h3 className="font-bold text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
+                <h3 className="text-heading text-ink">{t('รายงานอาการผู้ป่วย')}</h3>
                 <SpeechToTextPanel
                   value={updateNote}
                   onChange={setUpdateNote}
@@ -468,11 +467,11 @@ export default function RescueCaseDetail() {
         )}
 
         <Card>
-          <h3 className="mb-3 font-bold text-ink">{t('ลำดับเหตุการณ์')}</h3>
+          <h3 className="mb-3 text-heading text-ink">{t('ลำดับเหตุการณ์')}</h3>
           <CaseTimeline timeline={c.timeline} currentStatus={c.status} />
         </Card>
 
-        <Card className="sticky bottom-4 space-y-3">
+        <Card className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] space-y-3 shadow-card-lg lg:bottom-4">
           {c.status === 'rescue-assigned' && (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button variant="primary" size="lg" fullWidth onClick={() => setConfirmOpen('accept')}>
@@ -492,7 +491,7 @@ export default function RescueCaseDetail() {
 
           {c.status === 'rescue-arrived' && (
             <div className="space-y-3 text-center">
-              <div className="flex items-center justify-center gap-2 text-success">
+              <div className="flex items-center justify-center gap-2 text-success-ink">
                 <CheckCircle2 className="size-5" />
                 <p className="font-semibold">{t('ถึงจุดเกิดเหตุแล้ว')}</p>
               </div>
@@ -521,7 +520,7 @@ export default function RescueCaseDetail() {
           )}
 
           {(c.status === 'hospital-arrived' || c.status === 'hospital-received' || c.status === 'completed') && (
-            <div className="flex items-center justify-center gap-2 py-2 text-center text-success">
+            <div className="flex items-center justify-center gap-2 py-2 text-center text-success-ink">
               <CheckCircle2 className="size-5" />
               <p className="font-semibold">{t('ส่งมอบผู้ป่วยให้โรงพยาบาลเรียบร้อยแล้ว')}</p>
             </div>

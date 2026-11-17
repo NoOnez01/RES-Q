@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Phone, MapPin, Camera } from 'lucide-react'
-import clsx from 'clsx'
+import { Phone } from 'lucide-react'
+import { PulseRing } from '@/components/ui/PulseRing'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ConfirmationModal } from '@/components/ConfirmationModal'
 import { CallScreen } from '@/components/call/CallScreen'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { useStore } from '@/lib/store'
 import { useLiveKitCall } from '@/lib/useLiveKitCall'
 import { useAnsweredOnJoin, useKeepRinging } from '@/lib/calls'
@@ -157,76 +156,51 @@ export default function Call1669() {
   return (
     <AppShell variant="flow" title={t('ติดต่อศูนย์สั่งการ 1669')} showBack>
       <div className="relative">
-        <AnimatedBackground variant="call" />
 
-        <div className="relative z-10 flex flex-col gap-5 pb-28">
+        <div className="flex flex-col gap-5 pb-28">
           <div>
-            <h1 className="text-xl font-bold text-ink">{t('ติดต่อศูนย์สั่งการ 1669')}</h1>
-            <p className="mt-1.5 text-sm text-muted">{t('กรุณาโทรแจ้งเหตุเพื่อให้เจ้าหน้าที่ประสานความช่วยเหลือ')}</p>
+            <p className="text-body text-ink/80">{t('กรุณาโทรแจ้งเหตุเพื่อให้เจ้าหน้าที่ประสานความช่วยเหลือ')}</p>
           </div>
 
-          <Card className="flex flex-col items-center gap-2 text-center">
-            <div className="relative flex size-20 items-center justify-center">
-              {isCallActive && (
-                <>
-                  <span className="bg-fx absolute inset-0 rounded-full bg-emergency/20 animate-ping-slow" aria-hidden="true" />
-                  <span
-                    className="bg-fx absolute inset-0 rounded-full bg-emergency/15 animate-ping-slow"
-                    style={{ animationDelay: '0.5s' }}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="bg-fx absolute inset-0 rounded-full bg-emergency/10 animate-ping-slow"
-                    style={{ animationDelay: '1s' }}
-                    aria-hidden="true"
-                  />
-                </>
+          <Card className="overflow-hidden p-0">
+            <div className="flex flex-col items-center px-5 py-7 text-center">
+              <p className="text-small text-muted">{t('สายด่วนการแพทย์ฉุกเฉิน 1669')}</p>
+              <p className="mt-1 flex items-center gap-3 text-[2.75rem] font-bold leading-none tabular-nums tracking-tight text-emergency">
+                <Phone className="size-8" strokeWidth={2.25} aria-hidden="true" />
+                1669
+              </p>
+              {activeCase.callStatus === 'connecting' && (
+                <div className="mt-4 flex flex-col items-center gap-1" role="status">
+                  <p className="flex items-center gap-2 text-sm font-medium text-ink">
+                    <PulseRing tone="emergency" size="sm" />
+                    {t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}
+                  </p>
+                  <p className="text-meta text-muted">{t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')}</p>
+                </div>
               )}
-              <div
-                className={clsx(
-                  'relative flex size-20 items-center justify-center rounded-full bg-emergency/10 text-emergency transition-shadow duration-300',
-                  isCallActive && 'animate-pulse-glow shadow-red-glow',
-                )}
-              >
-                <Phone className="size-9" />
-              </div>
-            </div>
-            <p className="text-2xl font-extrabold tracking-wide text-emergency">1669</p>
-            <p className="text-sm font-semibold text-ink">{t('สายด่วนการแพทย์ฉุกเฉิน 1669')}</p>
-            {activeCase.callStatus === 'connecting' && (
-              <>
-                <p className="text-xs font-medium text-warning animate-pulse">{t('กำลังโทรออก รอเจ้าหน้าที่รับสาย')}</p>
-                <p className="text-xs text-muted">
-                  {t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก')}
+              {activeCase.callStatus === 'in-call' && (
+                <p className="mt-4 flex items-center gap-2 text-sm font-medium text-success-ink" role="status">
+                  <PulseRing tone="success" size="sm" />
+                  {t('เจ้าหน้าที่รับสายแล้ว กำลังสนทนา')}
                 </p>
-              </>
-            )}
-            {activeCase.callStatus === 'in-call' && (
-              <p className="text-xs font-medium text-success">{t('เจ้าหน้าที่รับสายแล้ว กำลังสนทนา')}</p>
-            )}
-          </Card>
-
-          <Card className="flex flex-col gap-2.5 text-sm">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-muted">{t('หมายเลขเหตุ')}</span>
-              <span className="font-semibold text-ink">{activeCase.caseNumber}</span>
+              )}
             </div>
-            <div className="flex items-start justify-between gap-2">
-              <span className="flex items-center gap-1.5 text-muted">
-                <MapPin className="size-4" /> {t('ตำแหน่ง')}
-              </span>
-              <span className="max-w-[65%] text-right font-medium text-ink">
-                {activeCase.location?.address ?? t('ยังไม่ระบุตำแหน่ง')}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5 text-muted">
-                <Camera className="size-4" /> {t('รูปภาพแนบ')}
-              </span>
-              <span className="font-medium text-ink">
-                {photoCount > 0 ? t('แนบรูปภาพแล้ว {n} รูป', { n: photoCount }) : t('ไม่มีรูปภาพแนบ')}
-              </span>
-            </div>
+            <dl className="divide-y divide-border border-t border-border text-sm">
+              <div className="flex items-start justify-between gap-4 px-5 py-3">
+                <dt className="shrink-0 text-muted">{t('หมายเลขเหตุ')}</dt>
+                <dd className="font-mono font-medium text-ink">{activeCase.caseNumber}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 px-5 py-3">
+                <dt className="shrink-0 text-muted">{t('ตำแหน่ง')}</dt>
+                <dd className="text-right font-medium text-ink">{activeCase.location?.address ?? t('ยังไม่ระบุตำแหน่ง')}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 px-5 py-3">
+                <dt className="shrink-0 text-muted">{t('รูปภาพแนบ')}</dt>
+                <dd className="text-right font-medium text-ink">
+                  {photoCount > 0 ? t('แนบรูปภาพแล้ว {n} รูป', { n: photoCount }) : t('ไม่มีรูปภาพแนบ')}
+                </dd>
+              </div>
+            </dl>
           </Card>
 
         </div>
@@ -244,7 +218,7 @@ export default function Call1669() {
         note={connecting ? t('สายจะรอจนกว่าเจ้าหน้าที่ 1669 จะรับสาย หรือคุณกดยกเลิก') : undefined}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mt-2 sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2.5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {canProceed ? (
             <Button variant="primary" size="lg" fullWidth onClick={handleProceed}>

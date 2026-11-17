@@ -123,10 +123,10 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
         </button>
 
         <div className="mb-3 text-center text-white">
-          <p className="text-xs font-bold text-white/60">
+          <p className="text-xs font-semibold text-white/60">
             {t('ภาพที่ {step} จาก {total}', { step: stepIndex, total: totalSteps })}
           </p>
-          <p className="mt-1 text-lg font-bold">{slot.label}</p>
+          <p className="mt-1 text-lg font-semibold">{slot.label}</p>
           <p className="mt-0.5 text-sm text-white/70">{slot.hint}</p>
         </div>
 
@@ -148,7 +148,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
             )}
 
             {status === 'unavailable' && (
-              <div className="flex size-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-navy to-primary/80 text-white/85 p-6 text-center">
+              <div className="flex size-full flex-col items-center justify-center gap-3 bg-navy text-white/85 p-6 text-center">
                 <CameraOff className="size-10" />
                 <p className="text-sm font-medium">{t('ไม่พบกล้องหรือไม่ได้รับอนุญาตให้ใช้กล้อง')}</p>
               </div>
@@ -159,7 +159,7 @@ export function PhotoCaptureModal({ open, slot, stepIndex, totalSteps, onCapture
                 type="button"
                 onClick={() => setFacingMode((m) => (m === 'environment' ? 'user' : 'environment'))}
                 aria-label={t('สลับกล้องหน้า/หลัง')}
-                className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white backdrop-blur-sm transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-navy/60 text-white transition-colors hover:bg-navy/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
               >
                 <SwitchCamera className="size-5" />
               </button>

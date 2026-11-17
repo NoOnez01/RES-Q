@@ -16,7 +16,7 @@ export function RescueEnRouteProgress({ pct }: { pct: number }) {
         <div className="h-full rounded-full bg-primary transition-all duration-700 ease-out" style={{ width: `${clamped}%` }} />
       </div>
       <div
-        className="absolute top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white shadow-card-lg transition-all duration-700 ease-out animate-pulse-glow"
+        className="absolute top-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary-fill text-white shadow-card-lg transition-all duration-700 ease-out animate-pulse-glow"
         style={{ left: `${clamped}%` }}
         aria-hidden="true"
       >

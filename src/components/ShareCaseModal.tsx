@@ -73,12 +73,12 @@ export function ShareCaseModal({ open, url, onClose, title, description }: Share
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-fade-in bg-navy/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 animate-fade-in bg-navy/45" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="share-case-title"
-        className="relative w-full overflow-y-auto rounded-t-3xl bg-surface p-6 shadow-card-lg animate-scale-in sm:max-w-sm sm:rounded-3xl"
+        className="relative w-full overflow-y-auto rounded-t-2xl bg-surface p-6 shadow-overlay animate-scale-in sm:max-w-sm sm:rounded-2xl"
       >
         <button
           onClick={onClose}
@@ -88,7 +88,7 @@ export function ShareCaseModal({ open, url, onClose, title, description }: Share
           <X className="size-5" />
         </button>
 
-        <h2 id="share-case-title" className="pr-8 text-lg font-bold text-ink">
+        <h2 id="share-case-title" className="pr-8 text-lg font-semibold text-ink">
           {resolvedTitle}
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">

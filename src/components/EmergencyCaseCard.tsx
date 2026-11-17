@@ -40,9 +40,9 @@ const RESCUE_RESPONSE_STYLE: Record<RescueResponseColor, { classes: string; labe
 type CardTone = 'completed' | 'new' | 'warning' | 'default'
 
 const CARD_TONE_STYLE: Record<CardTone, { card: string; caseNumber: string }> = {
-  completed: { card: 'border-success/30 bg-success/[0.04]', caseNumber: 'text-success' },
+  completed: { card: 'border-success/30 bg-success/[0.04]', caseNumber: 'text-success-ink' },
   new: { card: 'border-emergency/40 bg-emergency/[0.035] ring-1 ring-emergency/15', caseNumber: 'text-emergency-dark' },
-  warning: { card: 'border-warning/50 bg-warning/[0.04] ring-1 ring-warning/20', caseNumber: 'text-warning' },
+  warning: { card: 'border-warning/50 bg-warning/[0.04] ring-1 ring-warning/20', caseNumber: 'text-warning-ink' },
   default: { card: 'border-border bg-surface', caseNumber: 'text-primary' },
 }
 
@@ -82,7 +82,7 @@ export function EmergencyCaseCard({
   const t = useT()
 
   return (
-    <div className={clsx('relative rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-lg', CARD_TONE_STYLE[tone].card)}>
+    <div className={clsx('relative rounded-2xl border p-5 shadow-card transition-colors hover:border-primary/40', CARD_TONE_STYLE[tone].card)}>
       {hasIssues && (
         <span
           role="alert"
@@ -95,7 +95,7 @@ export function EmergencyCaseCard({
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className={clsx('font-mono text-sm font-bold', CARD_TONE_STYLE[tone].caseNumber)}>{c.caseNumber}</p>
+          <p className={clsx('font-mono text-sm font-semibold', CARD_TONE_STYLE[tone].caseNumber)}>{c.caseNumber}</p>
           <p className="mt-1 font-semibold text-ink">{c.incidentDetails?.incidentType ?? t('รอรายละเอียดเหตุการณ์')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -118,15 +118,15 @@ export function EmergencyCaseCard({
 
       <div className="mt-4 grid gap-2 text-sm text-muted sm:grid-cols-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <MapPin className="size-4 shrink-0 text-primary" />
+          <MapPin className="size-4 shrink-0 text-muted" />
           <span className="truncate">{c.location?.address ?? t('ยังไม่ระบุตำแหน่ง')}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Users className="size-4 shrink-0 text-primary" />
+          <Users className="size-4 shrink-0 text-muted" />
           <span>{t('ผู้ป่วย {n} คน', { n: c.incidentDetails?.patientCount ?? '-' })}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Clock className="size-4 shrink-0 text-primary" />
+          <Clock className="size-4 shrink-0 text-muted" />
           <span>{formatDateTime(c.createdAt)}</span>
         </div>
       </div>

@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Star, MessageSquareWarning, Ambulance } from 'lucide-react'
+import { Star } from 'lucide-react'
 import clsx from 'clsx'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '@/components/layout/AppShell'
-import { Card } from '@/components/ui/Card'
-import { AnimatedBackground } from '@/components/backgrounds/AnimatedBackground'
 import { EmptyState, LoadingState } from '@/components/States'
 import { fetchFeedbackStats, type FeedbackStats } from '@/lib/caseFeedback'
 import { formatDateTime } from '@/lib/utils'
@@ -33,7 +31,7 @@ function StarRow({ filled }: { filled: number }) {
   return (
     <div className="flex items-center gap-0.5" aria-hidden="true">
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} className={clsx('size-4', n <= filled ? 'fill-warning text-warning' : 'fill-transparent text-border')} />
+        <Star key={n} className={clsx('size-4', n <= filled ? 'fill-warning text-warning-ink' : 'fill-transparent text-border')} />
       ))}
     </div>
   )
@@ -62,8 +60,7 @@ export default function DispatchFeedbackStats() {
   return (
     <AppShell variant="dashboard" title={t('ประเมินหน่วยกู้ชีพ')}>
       <div className="relative">
-        <AnimatedBackground variant="dashboard" />
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           {loading ? (
             <LoadingState />
           ) : !stats || stats.count === 0 ? (
@@ -73,15 +70,15 @@ export default function DispatchFeedbackStats() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Card className="flex flex-col items-center gap-2 py-6 text-center">
-                  <p className="text-sm font-medium text-muted">{t('คะแนนเฉลี่ย')}</p>
-                  <p className="text-4xl font-extrabold text-ink">{stats.averageRating.toFixed(1)}</p>
+              <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface sm:grid-cols-[15rem_minmax(0,1fr)] sm:divide-x sm:divide-y-0">
+                <div className="flex flex-col items-center justify-center gap-1.5 p-5 text-center">
+                  <p className="text-meta font-medium text-muted">{t('คะแนนเฉลี่ย')}</p>
+                  <p className="text-[1.875rem] font-semibold leading-none tabular-nums text-ink">{stats.averageRating.toFixed(1)}</p>
                   <StarRow filled={Math.round(stats.averageRating)} />
                   <p className="text-xs text-muted">{t('จาก {n} การประเมิน', { n: stats.count })}</p>
-                </Card>
-                <Card className="flex flex-col gap-2 py-6">
-                  <p className="mb-1 text-sm font-medium text-muted">{t('การกระจายคะแนน')}</p>
+                </div>
+                <div className="flex flex-col gap-2 p-5">
+                  <p className="text-meta font-medium text-muted">{t('การกระจายคะแนน')}</p>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -104,7 +101,7 @@ export default function DispatchFeedbackStats() {
                           formatter={(value) => [t('{n} การประเมิน', { n: value as number }), t('จำนวน')]}
                           labelFormatter={(label) => t('คะแนน {n} ดาว', { n: String(label) })}
                         />
-                        <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={18}>
+                        <Bar dataKey="count" radius={[0, 3, 3, 0]} maxBarSize={18}>
                           {([5, 4, 3, 2, 1] as const).map((n) => (
                             <Cell key={n} fill={SEVERITY_CHART_COLORS[n]} />
                           ))}
@@ -112,66 +109,59 @@ export default function DispatchFeedbackStats() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </Card>
+                </div>
               </div>
 
               <div>
-                <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-                  <Ambulance className="size-4.5 text-primary" />
+                <h2 className="mb-3 text-heading text-ink">
                   {t('คะแนนแยกตามหน่วยกู้ชีพ ({n})', { n: stats.teamStats.length })}
                 </h2>
                 {stats.teamStats.length === 0 ? (
                   <p className="text-sm text-muted">{t('ยังไม่มีข้อมูลการประเมินหน่วยกู้ชีพ')}</p>
                 ) : (
-                  <div className="flex flex-col gap-2.5">
+                  <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
                     {stats.teamStats.map((teamStat, i) => (
-                      <Card
+                      <div
                         key={teamStat.teamId ?? teamStat.teamName}
-                        className={clsx(
-                          'flex flex-wrap items-center justify-between gap-3',
-                          teamStat.teamId === null && 'border-dashed opacity-70',
-                        )}
+                        className={clsx('flex flex-wrap items-center justify-between gap-3 px-5 py-3', teamStat.teamId === null && 'text-muted')}
                       >
                         <div className="flex items-center gap-3">
                           {teamStat.teamId !== null && (
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-skyblue-light text-xs font-extrabold text-primary">
-                              {i + 1}
-                            </span>
+                            <span className="w-5 shrink-0 text-right text-sm tabular-nums text-muted">{i + 1}</span>
                           )}
                           <div>
-                            <p className="font-semibold text-ink">{teamStat.teamName}</p>
-                            <p className="text-xs text-muted">{t('{n} การประเมิน', { n: teamStat.count })}</p>
+                            <p className="text-sm font-medium text-ink">{teamStat.teamName}</p>
+                            <p className="text-meta text-muted">{t('{n} การประเมิน', { n: teamStat.count })}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <StarRow filled={Math.round(teamStat.averageRating)} />
-                          <span className="text-sm font-bold text-ink">{teamStat.averageRating.toFixed(1)}</span>
+                          <span className="w-8 text-right text-sm font-semibold tabular-nums text-ink">{teamStat.averageRating.toFixed(1)}</span>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
 
               <div>
-                <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-                  <MessageSquareWarning className="size-4.5 text-primary" />
+                <h2 className="mb-3 text-heading text-ink">
                   {t('ความคิดเห็น/ข้อร้องเรียน ({n})', { n: stats.recentComplaints.length })}
                 </h2>
                 {stats.recentComplaints.length === 0 ? (
                   <p className="text-sm text-muted">{t('ยังไม่มีข้อความจากผู้แจ้งเหตุ')}</p>
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
                     {stats.recentComplaints.map((row) => (
-                      <Card key={row.id} className="flex flex-col gap-1.5">
+                      <div key={row.id} className="flex flex-col gap-1 px-5 py-3.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-ink">{t('เหตุหมายเลข {caseId}', { caseId: row.case_id })}</span>
                           <StarRow filled={row.rating} />
                         </div>
                         {row.rescue_team_name && <p className="text-xs text-muted">{t('หน่วยกู้ชีพ: {name}', { name: row.rescue_team_name })}</p>}
                         <p className="text-sm text-ink">{row.complaint}</p>
-                        <p className="text-xs text-muted">{formatDateTime(new Date(row.created_at).getTime())}</p>
-                      </Card>
+                        <p className="text-meta tabular-nums text-muted">{formatDateTime(new Date(row.created_at).getTime())}</p>
+                      </div>
                     ))}
                   </div>
                 )}
