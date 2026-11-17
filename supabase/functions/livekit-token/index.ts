@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
   let roomKind: unknown
   let requestedRole: unknown
   try {
-    ;({ caseId, roomKind, role: requestedRole } = await req.json())
+    ({ caseId, roomKind, role: requestedRole } = await req.json())
   } catch {
     return json({ error: 'invalid body' }, 400)
   }
